@@ -51,7 +51,6 @@ class SourceVariances
 		ParameterReader* paraRdr;
 
 		int USE_PLANE_PSI_ORDER;
-		int DO_ALL_DECAY_CHANNELS;
 		int INCLUDE_DELTA_F;
 		int GROUPING_PARTICLES;
 		double PARTICLE_DIFF_TOLERANCE;

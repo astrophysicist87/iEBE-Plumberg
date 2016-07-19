@@ -39,6 +39,8 @@ allParameterLists = [
     'urqmdParameters',
     'binUtilitiesControl',
     'binUtilitiesParameters',
+    'HotCoffeehControl',
+    'HotCoffeehParameters',
 ]
 
 controlParameterList = {
@@ -230,6 +232,39 @@ EbeCollectorControl = {
 EbeCollectorParameters = {
     'subfolderPattern'      :   '"event-(\d*)"',
     'databaseFilename'      :   'collected.db',
+}
+
+HoTCoffeehControl = {
+    'mainDir'                           :   'HotCoffeeh',
+    'operationDir'                      :   'results',
+    'executables'                       :   ('cfwr.e', 'svwr.e'),
+    'entryShell'                        :   'HoTCoffee.sh'
+}
+HoTCoffeehParameters = {
+    'npT'                            	:   15,
+    'npphi'                            	:   36,
+    'qtnpts'                            :   13,
+    'qxnpts'                            :   7,
+    'qynpts'                            :   7,
+    'qznpts'                            :   7,
+    'delta_qx'                          :   0.0125,
+    'delta_qy'                          :   0.0125,
+    'delta_qz'                          :   0.015,
+    'grouping_particles'                :   0,
+    'particle_diff_tolerance'           :   0.00,
+    'use_lambda'                        :   1,
+    'use_extrapolation'                 :   1,
+    'ignore_long_lived_resonances'      :   1,
+    'fit_with_projected_cfvals'         :   1,
+    'flesh_out_cf'                      :   1,
+    'chosenParticlesMode'               :   1,
+    'resonanceThreshold'                :   0.00,
+	'use_plane_psi_order'				:	0,
+	'include_delta_f'					:	0,
+	'n_order'							:	4,
+	'tolerance'							:	0.00,
+	'flag_negative_S'					:	1,
+	'max_lifetime'						:	100.0,
 }
 
 def readInParameters():
@@ -671,6 +706,56 @@ def iSWithResonancesWithHydroResultFiles(fileList):
     for aGlob in iSControl['saveResultGlobs']:
         worthStoring.extend(glob(path.join(iSOperationDirectory, aGlob)))
     for aFile in glob(path.join(iSOperationDirectory, "*")):
+        if aFile in worthStoring:
+            move(aFile, controlParameterList['eventResultDir'])
+
+def doHBTWithHydroResultFiles(fileList):
+    """
+        Perform HoTCoffeeh calculation.
+    """
+    ProcessNiceness = controlParameterList['niceness']
+    # set directory strings
+    HoTCoffeehDirectory = path.join(controlParameterList['rootDir'], 
+                            HoTCoffeehControl['mainDir'])
+    HoTCoffeehOperationDirectory = path.join(HoTCoffeehDirectory, HoTCoffeehControl['operationDir'])
+    HoTCoffeehExecutables = HoTCoffeehControl['executables']
+    HoTCoffeehExecutionEntry = HoTCoffeehControl['entryShell']
+
+    # check executable
+    checkExistenceOfExecutables(
+                    [path.join(HoTCoffeehDirectory, aExe) for aExe in HoTCoffeehExecutables])
+
+    # clean up operation folder
+    cleanUpFolder(HoTCoffeehOperationDirectory)
+
+    # check existence of hydro result files and move them to operation folder
+    for aFile in fileList:
+        if not path.exists(aFile):
+            raise ExecutionError("Hydro result file %s not found!" % aFile)
+        else:
+            move(aFile, HoTCoffeehOperationDirectory)
+
+    # calculate from threshold
+    if chosenParticlesMode == 0:
+        threshold = resonanceThreshold
+    # reading in from file
+    elif chosenParticlesMode == 1:
+        threshold = -1.0
+    
+    #copy(path.join(HoTCoffeehDirectory, 'EOS', 'chosen_particles_s95pv1.dat'), 
+    #     path.join(HoTCoffeehDirectory, 'EOS', 'chosen_particles.dat'))
+    copy(path.join(HoTCoffeehDirectory, 'EOS', 'pdg-s95pv1.dat'), 
+         path.join(HoTCoffeehDirectory, 'EOS', 'pdg.dat'))
+
+    # execute!
+    run("nice -n %d bash ./" % (ProcessNiceness) + HoTCoffeehExecutionEntry, 
+        cwd=HoTCoffeehDirectory)
+
+    # save some of the important result files
+    worthStoring = []
+    for aGlob in HoTCoffeehControl['saveResultGlobs']:
+        worthStoring.extend(glob(path.join(HoTCoffeehOperationDirectory, aGlob)))
+    for aFile in glob(path.join(HoTCoffeehOperationDirectory, "*")):
         if aFile in worthStoring:
             move(aFile, controlParameterList['eventResultDir'])
 
@@ -1172,6 +1257,10 @@ def sequentialEventDriverShell():
                 # now urqmd
                 urqmdOutputFilePath = urqmdFromOsc2uOutputFile(
                                                            osc2uOutputFilePath)
+
+            # Plumberg: add HBT calculations here (defined only for hydroResultFiles so far)
+            if simulation_type != 'hybrid':
+                doHBTWithHydroResultFiles(hydroResultFiles)
 
             #tarfile_name = (
             #             controlParameterList['eventResultDir'].split('/')[-1])

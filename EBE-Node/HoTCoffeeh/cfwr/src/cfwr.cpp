@@ -1139,7 +1139,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(FO_surf* FOsurf_ptr, i
 		}		//end of pt-loop
 	
 		//update cutoffs for correlation function calculation
-		int iidx = 0;
+		/*int iidx = 0;
 		for (int ipt = 0; ipt < n_interp_pT_pts; ++ipt)
 		for (int ipphi = 0; ipphi < n_interp_pphi_pts; ++ipphi)
 		{
@@ -1163,7 +1163,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(FO_surf* FOsurf_ptr, i
 				correlator_minus_one_cutoff_norms[ipt][ipphi][3] = iqz;
 
 			iidx+=2;
-		}
+		}*/
 
 		// Clean up
 		delete [] giant_array_C;

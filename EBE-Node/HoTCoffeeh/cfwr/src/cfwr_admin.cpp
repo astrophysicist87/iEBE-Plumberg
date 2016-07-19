@@ -23,17 +23,36 @@ template <typename T> int sgn(T val)
     return (T(0) < val) - (val < T(0));
 }
 
-CorrelationFunction::CorrelationFunction(particle_info* particle, particle_info* all_particles_in, int Nparticle_in,
-					FO_surf* FOsurf_ptr, vector<int> chosen_resonances_in, int particle_idx, ofstream& myout,
-					const int n_interp_pT_pts_in, const int n_interp_pphi_pts_in, const int qtnpts_in, const int qxnpts_in, const int qynpts_in, const int qznpts_in)
+CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_info* particle, particle_info* all_particles_in, int Nparticle_in,
+					FO_surf* FOsurf_ptr, vector<int> chosen_resonances_in, int particle_idx, ofstream& myout)
 {
+	paraRdr = paraRdr_in;
+
+	USE_PLANE_PSI_ORDER = paraRdr->getVal("use_plane_psi_order");
+	INCLUDE_DELTA_F = paraRdr->getVal("include_delta_f");
+	GROUPING_PARTICLES = paraRdr->getVal("grouping_particles");
+	PARTICLE_DIFF_TOLERANCE = paraRdr->getVal("particle_diff_tolerance");
+	USE_LAMBDA = paraRdr->getVal("use_lambda");
+	USE_EXTRAPOLATION = paraRdr->getVal("use_extrapolation");
+	IGNORE_LONG_LIVED_RESONANCES = paraRdr->getVal("ignore_long_lived_resonances");
+	FIT_WITH_PROJECTED_CFVALS = paraRdr->getVal("fit_with_projected_cfvals");
+	FLESH_OUT_CF = paraRdr->getVal("flesh_out_cf");
+	n_order = paraRdr->getVal("n_order");
+	tol = paraRdr->getVal("tolerance");
+	flagneg = paraRdr->getVal("flag_negative_S");
+	max_lifetime = paraRdr->getVal("max_lifetime");
+
 	//set header info
-	n_interp_pT_pts = n_interp_pT_pts_in;
-	n_interp_pphi_pts = n_interp_pphi_pts_in;
-	qtnpts = qtnpts_in;
-	qxnpts = qxnpts_in;
-	qynpts = qynpts_in;
-	qznpts = qznpts_in;
+	n_interp_pT_pts = paraRdr->getVal("npT");
+	n_interp_pphi_pts = paraRdr->getVal("npphi");
+	qtnpts = paraRdr->getVal("qtnpts");
+	qxnpts = paraRdr->getVal("qxnpts");
+	qynpts = paraRdr->getVal("qynpts");
+	qznpts = paraRdr->getVal("qznpts");
+	delta_qt = 0.1;	//dummy value; this gets reset later
+	delta_qx = paraRdr->getVal("delta_qx");
+	delta_qy = paraRdr->getVal("delta_qy");
+	delta_qz = paraRdr->getVal("delta_qz");
 	init_qt = -0.5*double(qtnpts-1)*delta_qt;
 	init_qx = -0.5*double(qxnpts-1)*delta_qx;
 	init_qy = -0.5*double(qynpts-1)*delta_qy;
@@ -1088,10 +1107,10 @@ void CorrelationFunction::Set_correlation_function_q_pts()
 // sets points in q-space for computing weighted spectra grid
 void CorrelationFunction::Set_q_points()
 {
-	q_pts = new double [qnpts];
-	for (int iq = 0; iq < qnpts; ++iq)
-		q_pts[iq] = init_q + (double)iq * delta_q;
-	q_axes = new double [3];
+	//q_pts = new double [qnpts];
+	//for (int iq = 0; iq < qnpts; ++iq)
+	//	q_pts[iq] = init_q + (double)iq * delta_q;
+	//q_axes = new double [3];
 
 	qt_pts = new double [qtnpts];
 	qx_pts = new double [qxnpts];
@@ -1101,11 +1120,11 @@ void CorrelationFunction::Set_q_points()
 	double local_pT_max = SPinterp_pT[n_interp_pT_pts-1];	//max pT value
 
 	//q0 maximized by maximizing pT, maximizing qo, and setting qs==ql==0
-	double mpion = all_particles[target_particle_id].mass;
+	double mtarget = all_particles[target_particle_id].mass;
 	double qxmax = abs(init_qx);
 	double qymax = abs(init_qy);
 	double qxymax = sqrt(qxmax*qxmax+qymax*qymax);
-	double xi2 = mpion*mpion + interp_pT_max*interp_pT_max + 0.25*qxymax*qxymax;	//pretend that Kphi == 0, qx == qo and qs == ql == 0, to maximize qtmax
+	double xi2 = mtarget*mtarget + interp_pT_max*interp_pT_max + 0.25*qxymax*qxymax;	//pretend that Kphi == 0, qx == qo and qs == ql == 0, to maximize qtmax
 	double qtmax = sqrt(xi2 + interp_pT_max*qxymax) - sqrt(xi2 - interp_pT_max*qxymax) + 1.e-10;
 
 	Fill_out_pts(qt_pts, qtnpts, qtmax, QT_POINTS_SPACING);

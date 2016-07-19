@@ -19,6 +19,7 @@
 #include "Arsenal.h"
 #include "gauss_quadrature.h"
 #include "chebyshev.h"
+#include "ParameterReader.h"
 
 using namespace std;
 
@@ -61,10 +62,27 @@ int Fittarget_correlfun3D_fdf_withlambda (const gsl_vector* xvec_ptr, void *para
 class CorrelationFunction
 {
 	private:
+		ParameterReader * paraRdr;
+
+		int USE_PLANE_PSI_ORDER;
+		int INCLUDE_DELTA_F;
+		int GROUPING_PARTICLES;
+		double PARTICLE_DIFF_TOLERANCE;
+		int USE_LAMBDA;
+		int USE_EXTRAPOLATION;
+		int IGNORE_LONG_LIVED_RESONANCES;
+		int FIT_WITH_PROJECTED_CFVALS;
+		int FLESH_OUT_CF;
+		int n_order;
+		double tol;
+		int flagneg;
+		double max_lifetime;
+
 		//header info
 		int n_interp_pT_pts, n_interp_pphi_pts;
 		int qtnpts, qxnpts, qynpts, qznpts;
 		double init_qt, init_qx, init_qy, init_qz;
+		double delta_qt, delta_qx, delta_qy, delta_qz;
 
 		//particle information 
 		string particle_name;
@@ -322,8 +340,6 @@ class CorrelationFunction
 		int list_daughters(int parent_resonance_index, set<int> * daughter_resonance_indices_ptr, particle_info * particle, int Nparticle);
 		void eiqxEdndp3(double ptr, double phir, double * results, int loc_verb = 0);
 		void Edndp3(double ptr, double phir, double * result, int loc_verb = 0);
-		void eiqxEdndp3_OLD(double ptr, double phir, double * results, int loc_verb = 0);
-		void Edndp3_OLD(double ptr, double phir, double * result, int loc_verb = 0);
 		void Set_correlation_function_q_pts();
 		void Set_q_points();
 		void Set_sorted_q_pts_list();
@@ -406,9 +422,8 @@ class CorrelationFunction
 		H5::H5File * resonance_file;
 		H5::DataSet * resonance_dataset;
 
-		CorrelationFunction(particle_info* particle, particle_info* all_particles_in, int Nparticle,
-				FO_surf* FOsurf_ptr, vector<int> chosen_resonances, int particle_idx, ofstream& myout,
-				const int n_interp_pT_pts, const int n_interp_pphi_pts, const int qtnpts, const int qxnpts, const int qynpts, const int qznpts);
+		CorrelationFunction(ParameterReader * paraRdr_in, particle_info* particle, particle_info* all_particles_in, int Nparticle,
+				FO_surf* FOsurf_ptr, vector<int> chosen_resonances, int particle_idx, ofstream& myout);
 		~CorrelationFunction();
 
 };

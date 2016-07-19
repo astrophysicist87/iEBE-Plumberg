@@ -37,7 +37,6 @@ SourceVariances::SourceVariances(ParameterReader* paraRdr_in, particle_info* par
 	paraRdr = paraRdr_in;
 
 	USE_PLANE_PSI_ORDER = paraRdr->getVal("use_plane_psi_order");
-	DO_ALL_DECAY_CHANNELS = paraRdr->getVal("do_all_decay_channels");
 	INCLUDE_DELTA_F = paraRdr->getVal("include_delta_f");
 	GROUPING_PARTICLES = paraRdr->getVal("grouping_particles");
 	PARTICLE_DIFF_TOLERANCE = paraRdr->getVal("particle_diff_tolerance");
@@ -181,7 +180,7 @@ SourceVariances::SourceVariances(ParameterReader* paraRdr_in, particle_info* par
 				
 				//check if particle lifetime is too long for inclusion in source variances
 				bool lifetime_is_too_long = false;
-				if (!DO_ALL_DECAY_CHANNELS && decay_channels[temp_idx].resonance_Gamma < hbarC / max_lifetime)
+				if (decay_channels[temp_idx].resonance_Gamma < hbarC / max_lifetime)
 					lifetime_is_too_long = true;		//i.e., for lifetimes longer than 100 fm/c, skip decay channel
 
 				if (VERBOSE > 0) *global_out_stream_ptr << "Resonance = " << decay_channels[temp_idx].resonance_name << ", decay channel " << idecay + 1
@@ -204,10 +203,7 @@ SourceVariances::SourceVariances(ParameterReader* paraRdr_in, particle_info* par
 				// if decay channel parent resonance is not too long-lived
 				// and decay channel contains at least one target daughter particle,
 				// include channel
-				if (DO_ALL_DECAY_CHANNELS)
-					decay_channels[temp_idx].include_channel = true;
-				else
-					decay_channels[temp_idx].include_channel = (!lifetime_is_too_long
+				decay_channels[temp_idx].include_channel = (!lifetime_is_too_long
 											&& !effective_br_is_too_small);
 
 				temp_idx++;

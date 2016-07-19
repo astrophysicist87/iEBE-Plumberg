@@ -228,9 +228,7 @@ bool SourceVariances::Do_this_decay_channel(int dc_idx)
 		local_name = decay_channels[dc_idx-1].resonance_name;
 		Get_current_decay_string(dc_idx, &current_decay_channel_string);
 	}
-	if (DO_ALL_DECAY_CHANNELS)
-		return true;
-	else if (decay_channels[dc_idx-1].include_channel)
+	if (decay_channels[dc_idx-1].include_channel)
 	{
 		;
 	}

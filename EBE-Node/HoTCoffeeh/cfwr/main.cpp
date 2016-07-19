@@ -16,49 +16,26 @@
 #include "src/cfwr.h"
 #include "src/generate_processing_record.h"
 #include "src/lib.h"
+#include "src/ParameterReader.h"
 #include "main.h"
 
 using namespace std;
 
 int main(int argc, char *argv[])
 {
-   /*cout << endl
-        << "                      iSpectra                   " << endl
+   cout << endl
+        << "                      iHoTCoffeeh                   " << endl
         << endl
-        << "  Ver 1.2   ----- Zhi Qiu & Chun Shen, 03/2012   " << endl;
+        << "  Ver 1.2   ----- Christopher Plumberg, 07/2016   " << endl;
    cout << endl << "**********************************************************" << endl;
    display_logo(2); // Hail to the king~
    cout << endl << "**********************************************************" << endl << endl;
    
    // Read-in parameters
-   ParameterReader *paraRdr = new ParameterReader;
+   ParameterReader * paraRdr = new ParameterReader;
    paraRdr->readFromFile("parameters.dat");
    paraRdr->readFromArguments(argc, argv);
    paraRdr->echo();
-
-   // Chun's input reading process
-   string path="results";
-
-   //load freeze out information
-   read_FOdata freeze_out_data(paraRdr, path);
-
-   int FO_length = 0;
-   FO_length = freeze_out_data.get_number_of_freezeout_cells();
-   cout <<"total number of cells: " <<  FO_length << endl;
-
-   FO_surf* FOsurf_ptr = new FO_surf[FO_length];
-   for(int i=0; i<FO_length; i++)
-     for(int j=0; j<Maxparticle; j++)
-         FOsurf_ptr[i].particle_mu[j] = 0.0e0;
-
-   freeze_out_data.read_in_freeze_out_data(FO_length, FOsurf_ptr);
-
-   //read the chemical potential on the freeze out surface
-   particle_info *particle = new particle_info [Maxparticle];
-   int Nparticle = freeze_out_data.read_in_chemical_potentials(path, FO_length, FOsurf_ptr, particle);
-   
-   cout << endl << " -- Read in data finished!" << endl << endl;*/
-
 
 ////////////////////////////////////////////////////////////////////
 // below are Chris' set-up for computing the correlation function
@@ -74,7 +51,7 @@ int main(int argc, char *argv[])
     string currentworkingdirectory = "./results";
 
 	//int folderindex = get_folder_index(currentworkingdirectory);
-	initialize_PRfile(currentworkingdirectory);
+	initialize_PRfile(paraRdr, currentworkingdirectory);
 
 	ostringstream filename_stream;
 	filename_stream << currentworkingdirectory << "/Processing_record.txt";
@@ -158,8 +135,9 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
+	double threshold = paraRdr->getVal("resonanceThreshold");
 	//double threshold = 0.60;	//include only enough of the most important resonances to account for fixed fraction of total resonance-decay pion(+)s
-	double threshold = atof(argv[7]);
+	//double threshold = atof(argv[7]);
 				//threshold = 1.0 means include all resonance-decay pion(+)s,
 				//threshold = 0.0 means include none of them
 	double net_fraction_resonance_contribution = 0.0;
@@ -184,10 +162,9 @@ int main(int argc, char *argv[])
 					<< "   ,   pc = " << particle[chosen_resonance_indices[ii]].percent_contribution << endl;
 	}
 
-if (1) exit(1);
+//if (1) exit(1);
 
-	CorrelationFunction correlation_function(&particle[particle_idx], particle, Nparticle, FOsurf_ptr, chosen_resonance_indices, particle_idx, output,
-												atoi(argv[1]), atoi(argv[2]), atoi(argv[3]), atoi(argv[4]), atoi(argv[5]), atoi(argv[6]));
+	CorrelationFunction correlation_function(paraRdr, &particle[particle_idx], particle, Nparticle, FOsurf_ptr, chosen_resonance_indices, particle_idx, output);
 
 	correlation_function.read_in_all_dN_dypTdpTdphi = false;
 	correlation_function.output_all_dN_dypTdpTdphi = !(correlation_function.read_in_all_dN_dypTdpTdphi);
@@ -222,11 +199,11 @@ if (1) exit(1);
 
 	output << "Calculating correlation function with all resonance decays..." << endl;
 	//do calculations
-	if (COMPUTE_RESONANCE_DECAYS)
-	{
+	//if (COMPUTE_RESONANCE_DECAYS)
+	//{
 		correlation_function.Fourier_transform_emission_function(FOsurf_ptr);
 		correlation_function.Compute_phase_space_integrals(FOsurf_ptr);
-	}
+	//}
 
 	correlation_function.Cal_correlationfunction();	//if we didn't compute resonance decays, must read them in from files
 

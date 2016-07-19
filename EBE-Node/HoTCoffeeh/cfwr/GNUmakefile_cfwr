@@ -14,7 +14,6 @@ export HDF5_CXX=$(shell ../../crank/configure_compiler_C++.sh)
 export HDF5_CXXLINKER=$(shell ../../crank/configure_compiler_C++.sh)
 export HDF5_CLINKER=$(shell ../../crank/configure_compiler_C++.sh)
 
-#CC := $(shell ../crank/configure_compiler_C++.sh)
 CC := h5c++
 CFLAGS= $(shell ../../crank/configure_compiler_C++_Flags.sh)
 CFLAGS += -lgsl -lgslcblas -g
@@ -28,7 +27,7 @@ SRCDIR		=	src
 # --------------- Files involved ------------------
 
 ifeq "$(MAIN)" ""
-MAIN		=	cfwr
+MAIN		=	cfwr.e
 endif
 
 SRC		=	main.cpp \
