@@ -510,7 +510,8 @@ int get_number_of_decay_channels(vector<int> chosen_resonances, particle_info * 
 
 
 
-void get_important_resonances(int chosen_target_particle_idx, vector<int> * chosen_resonance_indices_ptr, particle_info * particle, int Nparticle, double threshold, std::ofstream& output)
+void get_important_resonances(int chosen_target_particle_idx, vector<int> * chosen_resonance_indices_ptr, particle_info * particle, int Nparticle,
+								double threshold, double &running_total_percentage, std::ofstream& output)
 {
 	//**********************************************************************************
 	//SELECT RESONANCES TO INCLUDE IN SOURCE VARIANCES CALCULATIONS
@@ -524,7 +525,7 @@ void get_important_resonances(int chosen_target_particle_idx, vector<int> * chos
 	vector<size_t> sorted_resonance_indices = ordered(percent_contributions);
 	reverse(sorted_resonance_indices.begin(), sorted_resonance_indices.end());
 	//vector<int> chosen_resonance_indices_ptr;
-	double running_total_percentage = 0.0;
+	//double running_total_percentage = 0.0;
 	int count = 0;
 	if (threshold < 1e-12)
 	{

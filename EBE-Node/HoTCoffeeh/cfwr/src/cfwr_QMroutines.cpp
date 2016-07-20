@@ -16,10 +16,10 @@ void CorrelationFunction::Get_QM_HBTradii()
 
 	Allocate_fleshed_out_CF();
 
-	for (int ipt = 0; ipt < n_interp_pT_pts; ++ipt)
-	for (int ipphi = 0; ipphi < n_interp_pphi_pts; ++ipphi)
+	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 	{
-		*global_out_stream_ptr << "   --> Doing pT = " << SPinterp_pT[ipt] << ", pphi = " << SPinterp_pphi[ipphi] << "..." << endl;
+		*global_out_stream_ptr << "   --> Doing pT = " << SP_pT[ipt] << ", pphi = " << SP_pphi[ipphi] << "..." << endl;
 		
 		double sample_scale = 3.0;
 		Flesh_out_CF(ipt, ipphi, sample_scale);
@@ -39,7 +39,7 @@ void CorrelationFunction::Get_q_moments(double *** current_C_slice, int ipt, int
 	double invR2ij[3][3];
 	double norm = 0.0;
 
-	double ckp = cos_SPinterp_pphi[ipphi], skp = sin_SPinterp_pphi[ipphi];
+	double ckp = cos_SP_pphi[ipphi], skp = sin_SP_pphi[ipphi];
 
 	for (int iqx = 0; iqx < new_nqpts; ++iqx)
 	for (int iqy = 0; iqy < new_nqpts; ++iqy)
@@ -49,7 +49,7 @@ void CorrelationFunction::Get_q_moments(double *** current_C_slice, int ipt, int
 		double qx0 = qx_fleshed_out_pts[iqx];
 		double qy0 = qy_fleshed_out_pts[iqy];
 		double qz0 = qz_fleshed_out_pts[iqz];
-		cout << "QM CHECK: " << SPinterp_pT[ipt] << "   " << SPinterp_pphi[ipphi] << "   " << qx0 << "   " << qy0 << "   " << qz0 << "   " << C_at_q << endl;
+		cout << "QM CHECK: " << SP_pT[ipt] << "   " << SP_pphi[ipphi] << "   " << qx0 << "   " << qy0 << "   " << qz0 << "   " << C_at_q << endl;
 
 		double factor1 = 1.;
 		double factor2 = 1.;

@@ -79,8 +79,9 @@ class CorrelationFunction
 		double max_lifetime;
 
 		//header info
-		int n_interp_pT_pts, n_interp_pphi_pts;
+		int n_pT_pts, n_pphi_pts, nKT, nKphi;
 		int qtnpts, qxnpts, qynpts, qznpts;
+		double KT_min, KT_max;
 		double init_qt, init_qx, init_qy, init_qz;
 		double delta_qt, delta_qx, delta_qy, delta_qz;
 
@@ -144,17 +145,18 @@ class CorrelationFunction
 		double * Pp, * Pm, * currentPpm;
 
 		//SP momentum arrays for interpolation grid
-		double * SPinterp_pT, * SPinterp_pphi;
-		double * SPinterp_pT_wts, * SPinterp_pphi_wts;
-		double * sin_SPinterp_pphi, * cos_SPinterp_pphi;
-		double ** SPinterp_p0, ** SPinterp_pz;
+		double * SP_pT, * SP_pphi;
+		double * SP_pT_wts, * SP_pphi_wts;
+		double * sin_SP_pphi, * cos_SP_pphi;
+		double ** SP_p0, ** SP_pz;
+		double * plane_angle;
 
 		//Freeze-out surface information
-		FO_surf* current_FOsurf_ptr;
+		FO_surf* FOsurf_ptr;
 		double Tdec, Edec, Pdec, muRES, signRES, gRES, S_prefactor;
 	
 		//single particle spectra for plane angle determination
-		double SP_p_y;
+		double SP_p_y, mean_pT;
 		size_t *** most_important_FOcells;
 		double * giant_array_C, * giant_array_S, ** giant_array_slice;
 		int ** number_of_FOcells_above_cutoff_array;
@@ -243,13 +245,11 @@ class CorrelationFunction
 		
 		//miscellaneous
 		ofstream * global_out_stream_ptr;
-		int global_folderindex;
-		string global_path;
-		string global_runfolder;
-		string global_resultsfolder_stem;
+		string path;
 		string no_df_stem;
 		int n_resonance, n_decay_channels;
 		int n_body;
+		double global_plane_psi;
 		set<int> daughter_resonance_indices;
 
 		int current_ipt, current_ipphi;
@@ -266,9 +266,9 @@ class CorrelationFunction
 		inline void set_to_zero(double * array, size_t arraylength);
 		inline double dot_four_vectors(double * a, double * b);
 
-		void Determine_plane_angle(FO_surf* FOsurf_ptr, int dc_idx);
-		void Fourier_transform_emission_function(FO_surf* FOsurf_ptr);
-		void Compute_phase_space_integrals(FO_surf* FOsurf_ptr);
+		void Determine_plane_angle();
+		void Fourier_transform_emission_function();
+		void Compute_phase_space_integrals();
 		void Update_sourcefunction(particle_info* particle, int FOarray_length, int particle_idx);
 		bool fexists(const char *filename);
 
@@ -287,16 +287,16 @@ class CorrelationFunction
 		int Get_target_thermal_from_HDF_array(double * target_thermal_array_to_fill);
 		int Set_target_thermal_in_HDF_array(double * tta_array_to_use);
 
-		void Set_dN_dypTdpTdphi_moments(FO_surf* FOsurf_ptr, int dc_idx);
+		void Set_dN_dypTdpTdphi_moments(int dc_idx);
 		void Set_thermal_target_moments();
 		void Set_full_target_moments();
 		void form_trig_sign_z(int isurf, int ieta, int iqt, int iqx, int iqy, int iqz, int ii, double * results);
 		void Set_giant_arrays(int iqt, int iqx, int iqy, int iqz);
-		void Cal_dN_dypTdpTdphi(double** SP_p0, double** SP_px, double** SP_py, double** SP_pz, FO_surf* FOsurf_ptr);
-		void Cal_dN_dypTdpTdphi_heap(FO_surf* FOsurf_ptr, int local_pid, double cutoff);
-		void Cal_dN_dypTdpTdphi_with_weights(FO_surf* FOsurf_ptr, int local_pid);
-		double Cal_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi);
-		void Cal_dN_dypTdpTdphi_with_weights_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi,
+		void Cal_dN_dypTdpTdphi(double** SP_p0, double** SP_px, double** SP_py, double** SP_pz);
+		void Cal_dN_dypTdpTdphi_heap(int local_pid, double cutoff);
+		void Cal_dN_dypTdpTdphi_with_weights(int local_pid);
+		double Cal_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi);
+		void Cal_dN_dypTdpTdphi_with_weights_function(int local_pid, double pT, double pphi,
 												double qt, double qx, double qy, double qz, double * cosqx_dN_dypTdpTdphi, double * sinqx_dN_dypTdpTdphi);
 		void Do_resonance_integrals(int iKT, int iKphi, int dc_idx);
 		void Flatten_dN_dypTdpTdphi_moments(int parent_resonance_particle_id);
@@ -305,7 +305,7 @@ class CorrelationFunction
 		void Set_target_pphiavgd_CFs();
 		bool Do_this_decay_channel(int dc_idx);
 		bool Do_this_daughter_particle(int dc_idx, int daughter_idx, int * daughter_resonance_pid);
-		void Get_spacetime_moments(FO_surf* FOsurf_ptr, int dc_idx);
+		void Get_spacetime_moments(int dc_idx);
 		void Recycle_spacetime_moments();
 		void Load_resonance_and_daughter_spectra(int local_pid);
 		void Update_daughter_spectra(int local_pid);
@@ -316,22 +316,15 @@ class CorrelationFunction
 		void Load_decay_channel_info(int dc_idx, double K_T_local, double K_phi_local);
 		void Delete_decay_channel_info();
 		int Set_daughter_list(int parent_resonance_index);
-		void Regulate_CF(int ipt, int iqt, int iqx, int iqy, int iqz, double * CF, double * projCF);
-		void Regulate_CF_Hampel(int ipt, int iqx, int iqy, int iqz,
-												double * pphi_CF_slice, double * pphi_CF_slice_term1, double * pphi_CF_slice_term2, double * pphi_CF_slice_term3);
-		void Regulate_CF_Hampel_v2(int ipt, int iqx, int iqy, int iqz,
-												double * pphi_CF_slice, double * pphi_CF_slice_term1, double * pphi_CF_slice_term2, double * pphi_CF_slice_term3);
 
 		void Fill_out_pts(double * pointsarray, int numpoints, double max_val, int spacing_type);
 
 		//miscellaneous
-		void Set_ofstream(ofstream& myout);
-		void Set_path(string path);
-		void Set_resultsfolder_stem(string usrdef_stem);
-		void Set_runfolder(string runfolder);
-		void Set_use_delta_f(bool usrdef_usedeltaf);
-		void Set_particle_mass(double usrdef_particle_mass);
-		void Set_current_FOsurf_ptr(FO_surf* FOsurf_ptr);
+		void Set_path(string path_in);
+		void Set_use_delta_f();
+		void Set_FOsurf_ptr(FO_surf* FOsurf_ptr_in, int FO_length_in);
+		void Set_eiqx_matrices();
+
 		double get_Q();
 		double g(double s);
 		double place_in_range(double phi, double min, double max);
@@ -354,11 +347,8 @@ class CorrelationFunction
 		void Delete_S_p_withweight_array();
 		void Allocate_osc_arrays(int FOarray_length);
 		void Delete_osc_arrays();
-		void test_interpolator();
+		//void test_interpolator();
 		void R2_Fourier_transform(int ipt, double plane_psi, int mode);
-		double Extrapolate_Gaussian_1D(double q0, double qi0, double qi1, double f1, double f2);
-		double Extrapolate_Gaussian_2D(double * q0, double * qi0, double * qi1, double (*vals) [2]);
-		double Extrapolate_Gaussian_3D(double * q0, double * qi0, double * qi1, double (*vals) [2][2]);
 
 		// Gaussian fit / correlation function routines
 		void Allocate_CFvals();
@@ -412,7 +402,7 @@ class CorrelationFunction
 		int initial_event, currentfolderindex;
 		bool read_in_all_dN_dypTdpTdphi, output_all_dN_dypTdpTdphi;
 		double fraction_of_resonances;
-		double * SPinterp_pT_public, * pTdep_fractions_of_resonances;
+		//double * SP_pT_public, * pTdep_fractions_of_resonances;
 
 		// need to hold giant array stuff
 		H5::DataSpace * tta_dataspace, * tta_memspace;
@@ -423,7 +413,7 @@ class CorrelationFunction
 		H5::DataSet * resonance_dataset;
 
 		CorrelationFunction(ParameterReader * paraRdr_in, particle_info* particle, particle_info* all_particles_in, int Nparticle,
-				FO_surf* FOsurf_ptr, vector<int> chosen_resonances, int particle_idx, ofstream& myout);
+				vector<int> chosen_resonances, int particle_idx, ofstream& myout);
 		~CorrelationFunction();
 
 };

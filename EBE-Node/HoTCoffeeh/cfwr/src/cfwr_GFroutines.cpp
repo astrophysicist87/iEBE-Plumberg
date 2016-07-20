@@ -26,10 +26,10 @@ void CorrelationFunction::Get_GF_HBTradii()
 	if (FLESH_OUT_CF)
 		Allocate_fleshed_out_CF();
 
-	for (int ipt = 0; ipt < n_interp_pT_pts; ++ipt)
-	for (int ipphi = 0; ipphi < n_interp_pphi_pts; ++ipphi)
+	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 	{
-		*global_out_stream_ptr << "   --> Doing pT = " << SPinterp_pT[ipt] << ", pphi = " << SPinterp_pphi[ipphi] << "..." << endl;
+		*global_out_stream_ptr << "   --> Doing pT = " << SP_pT[ipt] << ", pphi = " << SP_pphi[ipphi] << "..." << endl;
 		
 		//determine whether to use fleshed out / projected CFvals
 		double *** CF_for_fitting = CFvals[ipt][ipphi];
@@ -79,13 +79,13 @@ void CorrelationFunction::Cal_correlationfunction()
 	*global_out_stream_ptr << "Computing the full correlator in XYZ coordinates..." << endl;
 	Stopwatch sw;
 	sw.Start();
-	for (int ipt = 0; ipt < n_interp_pT_pts; ++ipt)
-	for (int ipphi = 0; ipphi < n_interp_pphi_pts; ++ipphi)
+	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 	for (int iqx = 0; iqx < qxnpts; ++iqx)
 	for (int iqy = 0; iqy < qynpts; ++iqy)
 	for (int iqz = 0; iqz < qznpts; ++iqz)
 	{
-		Get_q_points(qx_pts[iqx], qy_pts[iqy], qz_pts[iqz], SPinterp_pT[ipt], SPinterp_pphi[ipphi], q_interp);
+		Get_q_points(qx_pts[iqx], qy_pts[iqy], qz_pts[iqz], SP_pT[ipt], SP_pphi[ipphi], q_interp);
 
 		//returns only projected value automatically if appropriate options are specified!
 		double tmp1 = 0.0, tmp2 = 0.0, tmp2a = 0.0, tmp3 = 0.0;
@@ -432,7 +432,7 @@ void CorrelationFunction::Fit_Correlationfunction3D(double *** Correl_3D, int ip
 	Correlfun3D_data.sigma = new double [data_length];
 
 	int idx = 0;
-	double ckp = cos_SPinterp_pphi[ipphi], skp = sin_SPinterp_pphi[ipphi];
+	double ckp = cos_SP_pphi[ipphi], skp = sin_SP_pphi[ipphi];
 	for (int i = 0; i < q1npts; i++)
 	for (int j = 0; j < q2npts; j++)
 	for (int k = 0; k < q3npts; k++)
@@ -598,7 +598,7 @@ void CorrelationFunction::Fit_Correlationfunction3D_withlambda(double *** Correl
 	Correlfun3D_data.sigma = new double [data_length];
 
 	int idx = 0;
-	double ckp = cos_SPinterp_pphi[ipphi], skp = sin_SPinterp_pphi[ipphi];
+	double ckp = cos_SP_pphi[ipphi], skp = sin_SP_pphi[ipphi];
 	for (int i = 0; i < q1npts; i++)
 	for (int j = 0; j < q2npts; j++)
 	for (int k = 0; k < q3npts; k++)

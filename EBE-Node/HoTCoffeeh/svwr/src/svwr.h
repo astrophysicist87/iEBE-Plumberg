@@ -18,13 +18,13 @@
 
 using namespace std;
 
-typedef struct
+/*typedef struct
 {
    double t, x, y, z;
    double r, phi;
    double tau, eta;
    double data;
-}Emissionfunction_data;
+}Emissionfunction_data;*/
 
 typedef struct
 {
@@ -134,7 +134,7 @@ class SourceVariances
 		double ** SPinterp_p0;
 		double ** SPinterp_pz;
 
-		FO_surf* current_FOsurf_ptr;
+		FO_surf* FOsurf_ptr;
 		//FO surface info that is constant - to save time
 		double Tdec, Edec, Pdec, muRES, signRES, gRES;
 		double S_prefactor;
@@ -180,10 +180,10 @@ class SourceVariances
 		//momentum_data**** Pplus;
 		
 		//Emission function
-		vector<Emissionfunction_data>* Emissionfunction_ptr;
+		//vector<Emissionfunction_data>* Emissionfunction_ptr;
 		int FO_length;
-		int Emissionfunction_length;
-		vector<Emissionfunction_data>* avgFOsurf_ptr;
+		//int Emissionfunction_length;
+		//vector<Emissionfunction_data>* avgFOsurf_ptr;
 		
 		double spectra;
 
@@ -213,10 +213,7 @@ class SourceVariances
 		
 		//miscellaneous
 		ofstream * global_out_stream_ptr;
-		int global_folderindex;
-		string global_path;
-		string global_runfolder;
-		string global_resultsfolder_stem;
+		string path;
 		string no_df_stem;
 		int n_resonance, n_decay_channels;
 		int n_body;
@@ -227,36 +224,32 @@ class SourceVariances
 
 	public:
 		SourceVariances(ParameterReader* paraRdr_in, particle_info* particle, particle_info* all_particles_in, int Nparticle,
-				FO_surf* FOsurf_ptr, vector<int> chosen_resonances, int particle_idx, ofstream& myout);
+				vector<int> chosen_resonances, int particle_idx, ofstream& myout);
 		~SourceVariances();
 
-		void Determine_plane_angle(FO_surf* FOsurf_ptr, int dc_idx);
-		void Analyze_sourcefunction(FO_surf* FOsurf_ptr);
-		void Update_sourcefunction(particle_info* particle, int FOarray_length, int particle_idx);
-		bool fexists(const char *filename);
+		void Determine_plane_angle();
+		void Analyze_sourcefunction();
 
-		double Cal_wfi_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi, int wfi);
-		double Cal_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi);
-		double Cal_xs_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi);
-		double Cal_xs2_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi);
-		double Cal_xo_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi);
-		double Cal_xo2_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi);
-		double Cal_xl_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi);
-		double Cal_xl2_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi);
-		double Cal_t_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi);
-		double Cal_t2_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi);
-		double Cal_xsxo_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi);
-		double Cal_xsxl_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi);
-		double Cal_xst_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi);
-		double Cal_xoxl_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi);
-		double Cal_xot_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi);
-		double Cal_xlt_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi);
+		double Cal_wfi_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi, int wfi);
+		double Cal_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi);
+		double Cal_xs_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi);
+		double Cal_xs2_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi);
+		double Cal_xo_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi);
+		double Cal_xo2_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi);
+		double Cal_xl_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi);
+		double Cal_xl2_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi);
+		double Cal_t_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi);
+		double Cal_t2_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi);
+		double Cal_xsxo_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi);
+		double Cal_xsxl_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi);
+		double Cal_xst_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi);
+		double Cal_xoxl_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi);
+		double Cal_xot_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi);
+		double Cal_xlt_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi);
 
-		void Set_dN_dypTdpTdphi_moments(FO_surf* FOsurf_ptr, int dc_idx);
-		void Cal_dN_dypTdpTdphi(double** SP_p0, double** SP_px, double** SP_py, double** SP_pz, FO_surf* FOsurf_ptr);
-		void Cal_dN_dypTdpTdphi_with_weights(FO_surf* FOsurf_ptr, int local_pid);
-		//double Cal_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi, int wfi = 0);
-		//double Emissionfunction(double p0, double px, double py, double pz, FO_surf* surf);
+		void Set_dN_dypTdpTdphi_moments(int dc_idx);
+		void Cal_dN_dypTdpTdphi(double** SP_p0, double** SP_px, double** SP_py, double** SP_pz);
+		void Cal_dN_dypTdpTdphi_with_weights(int local_pid);
 		void Do_resonance_integrals(int iKT, int iKphi, int dc_idx);
 		void get_rapidity_dependence(double * rap_indep_vector, double * rap_dep_vector, double rap_val);
 		void combine_sourcevariances(double * output, double * input, double * alpha_vec);
@@ -264,14 +257,14 @@ class SourceVariances
 		void Set_current_particle_info(int dc_idx);
 		bool Do_this_decay_channel(int dc_idx);
 		bool Do_this_daughter_particle(int dc_idx, int daughter_idx, int * daughter_resonance_pid);
-		void Get_spacetime_moments(FO_surf* FOsurf_ptr, int dc_idx);
+		void Get_spacetime_moments(int dc_idx);
 		void Recycle_spacetime_moments();
 		void Allocate_decay_channel_info();
 		void Load_decay_channel_info(int dc_idx, double K_T_local, double K_phi_local);
 		void Delete_decay_channel_info();
 		void Set_source_variances_grid();
 		void Interpolate_HBT_radii(int iKT, int iKphi);
-		//void test_function(FO_surf* FOsurf_ptr, int local_pid);
+		//void test_function(int local_pid);
 
 		void Get_source_variances(int, int);
 		void Calculate_R2_side(int, int);
@@ -283,32 +276,27 @@ class SourceVariances
 		void R2_Fourier_transform(int iKT, double plane_psi);
 
 		//miscellaneous
-		void Set_ofstream(ofstream& myout);
-		void Set_path(string path);
-		void Set_resultsfolder_stem(string usrdef_stem);
-		void Set_runfolder(string runfolder);
+		void Set_path(string path_in);
 		void Set_use_delta_f();
-		void Set_particle_mass(double usrdef_particle_mass);
-		void Set_current_FOsurf_ptr(FO_surf* FOsurf_ptr);
+		void Set_FOsurf_ptr(FO_surf* FOsurf_ptr_in, int FOlength_in);
 		double get_Q();
 		double g(double s);
 		inline void set_to_zero(double * array, size_t arraylength);
 		double place_in_range(double phi, double min, double max);
 		void Get_current_decay_string(int dc_idx, string * decay_string);
 		int lookup_resonance_idx_from_particle_id(int particle_id);
-		static inline double lin_int(double x1, double one_by_x2_m_x1, double f1, double f2, double x);
-		static inline double lin_int2(double x_m_x1, double one_by_x2_m_x1, double f1, double f2);
+		static inline double lin_int(double x_m_x1, double one_by_x2_m_x1, double f1, double f2);
 		double Edndp3(double ptr, double phir, int local_pid, int wfi);
 		void Edndp3(double ptr, double phir, double * results);
 
 		// input and output function prototypes
-		void Output_dN_dypTdpTdphi(int folderindex);
-		void Output_dN_dypTdpT(int folderindex);
-		void Output_all_dN_dypTdpTdphi(int folderindex);
-		void Output_total_target_dN_dypTdpTdphi(int folderindex);
-		void Output_results(int folderindex);
-		void Readin_results(int folderindex);
-		void Read_in_all_dN_dypTdpTdphi(int folderindex);
+		void Output_dN_dypTdpTdphi();
+		void Output_dN_dypTdpT();
+		void Output_all_dN_dypTdpTdphi();
+		void Output_total_target_dN_dypTdpTdphi();
+		void Output_results();
+		void Readin_results();
+		void Read_in_all_dN_dypTdpTdphi();
 		void Output_chosen_resonances();
 
 		//parameters that the user is free to define

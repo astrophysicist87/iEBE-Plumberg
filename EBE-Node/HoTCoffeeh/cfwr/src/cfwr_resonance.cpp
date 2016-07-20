@@ -84,11 +84,11 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 
 	if (n_body == 2)
 	{
-		for (int ipt = 0; ipt < n_interp_pT_pts; ++ipt)
-		for (int ipphi = 0; ipphi < n_interp_pphi_pts; ++ipphi)
+		for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		{
-			double local_pT = SPinterp_pT[ipt];
-			double local_pphi = SPinterp_pphi[ipphi];
+			double local_pT = SP_pT[ipt];
+			double local_pphi = SP_pphi[ipphi];
 			current_ipt = ipt;
 			current_ipphi = ipphi;
 			//current_qlist_slice = qlist[ipt];
@@ -186,11 +186,11 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 	}												// end of nbody == 2
 	else
 	{
-		for (int ipt = 0; ipt < n_interp_pT_pts; ++ipt)
-		for (int ipphi = 0; ipphi < n_interp_pphi_pts; ++ipphi)
+		for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		{
-			double local_pT = SPinterp_pT[ipt];
-			double local_pphi = SPinterp_pphi[ipphi];
+			double local_pT = SP_pT[ipt];
+			double local_pphi = SP_pphi[ipphi];
 			current_ipt = ipt;
 			current_ipphi = ipphi;
 			//current_qlist_slice = qlist[ipt];
@@ -307,19 +307,19 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 void CorrelationFunction::Flatten_dN_dypTdpTdphi_moments(int parent_resonance_particle_id)
 {
 	const int dim_loc = 2;
-	int npts_loc[dim_loc] = { n_interp_pT_pts, n_interp_pphi_pts };
-	int os[dim_loc] = { n_interp_pT_pts-1, n_interp_pphi_pts-1 };
+	int npts_loc[dim_loc] = { n_pT_pts, n_pphi_pts };
+	int os[dim_loc] = { n_pT_pts-1, n_pphi_pts-1 };
 	double lls[dim_loc] = { interp_pT_min, interp_pphi_min };
 	double uls[dim_loc] = { interp_pT_max, interp_pphi_max };
 	int modes_loc[dim_loc] = { 0, 0 };
 	//double lls[dim_loc] = { 0.0, interp_pphi_min };
-	//double uls[dim_loc] = { (1.-sin(M_PI/n_interp_pT_pts))/(1.+sin(M_PI/n_interp_pT_pts)), interp_pphi_max };
+	//double uls[dim_loc] = { (1.-sin(M_PI/n_pT_pts))/(1.+sin(M_PI/n_pT_pts)), interp_pphi_max };
 	//int modes_loc[dim_loc] = { 1, 0 };
 
 	int momidx = 0;
 
-	for (int ipt = 0; ipt < n_interp_pT_pts; ++ipt)
-	for (int ipphi = 0; ipphi < n_interp_pphi_pts; ++ipphi)
+	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 	{
 		// set index for looping
 		int qpt_cs_idx = 0;
@@ -373,39 +373,39 @@ void CorrelationFunction::Edndp3(double ptr, double phir, double * result, int l
 	double phi0, phi1;
 	double f1, f2;
 
-	int npphi_max = n_interp_pphi_pts - 1;
-	int npT_max = n_interp_pT_pts - 1;
+	int npphi_max = n_pphi_pts - 1;
+	int npT_max = n_pT_pts - 1;
 
 	// locate pT interval
 	int npt = 1;
-	while ((ptr > SPinterp_pT[npt]) &&
+	while ((ptr > SP_pT[npt]) &&
 			(npt < npT_max)) ++npt;
-	double pT0 = SPinterp_pT[npt-1];
-	double pT1 = SPinterp_pT[npt];
+	double pT0 = SP_pT[npt-1];
+	double pT1 = SP_pT[npt];
 
 	// locate pphi interval
 	int nphi = 1, nphim1 = 0;
-	if(phir < SPinterp_pphi[0])			//if angle is less than minimum angle grid point
+	if(phir < SP_pphi[0])			//if angle is less than minimum angle grid point
 	{
-		phi0 = SPinterp_pphi[npphi_max] - 2. * M_PI;
-		phi1 = SPinterp_pphi[0];
+		phi0 = SP_pphi[npphi_max] - 2. * M_PI;
+		phi1 = SP_pphi[0];
 		nphi = 0;
 		nphim1 = npphi_max;
 	}
-	else if(phir > SPinterp_pphi[npphi_max])	//if angle is greater than maximum angle grid point
+	else if(phir > SP_pphi[npphi_max])	//if angle is greater than maximum angle grid point
 	{
-		phi0 = SPinterp_pphi[npphi_max];
-		phi1 = SPinterp_pphi[0] + 2. * M_PI;
+		phi0 = SP_pphi[npphi_max];
+		phi1 = SP_pphi[0] + 2. * M_PI;
 		nphi = 0;
 		nphim1 = npphi_max;
 	}
 	else						//if angle is within grid range
 	{
-		while ((phir > SPinterp_pphi[nphi]) &&
+		while ((phir > SP_pphi[nphi]) &&
 				(nphi < npphi_max)) ++nphi;
 		nphim1 = nphi - 1;
-		phi0 = SPinterp_pphi[nphim1];
-		phi1 = SPinterp_pphi[nphi];
+		phi0 = SP_pphi[nphim1];
+		phi1 = SP_pphi[nphi];
 	}
 
 	if (pT0==pT1 || phi0==phi1)
@@ -476,39 +476,39 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double * results, 
 	double phi0, phi1;
 	double f1, f2;
 
-	int npphi_max = n_interp_pphi_pts - 1;
-	int npT_max = n_interp_pT_pts - 1;
+	int npphi_max = n_pphi_pts - 1;
+	int npT_max = n_pT_pts - 1;
 
 	// locate pT interval
 	int npt = 1;
-	while ((ptr > SPinterp_pT[npt]) &&
+	while ((ptr > SP_pT[npt]) &&
 			(npt < npT_max)) ++npt;
-	double pT0 = SPinterp_pT[npt-1];
-	double pT1 = SPinterp_pT[npt];
+	double pT0 = SP_pT[npt-1];
+	double pT1 = SP_pT[npt];
 
 	// locate pphi interval
 	int nphi = 1, nphim1 = 0;
-	if(phir < SPinterp_pphi[0])			//if angle is less than minimum angle grid point
+	if(phir < SP_pphi[0])			//if angle is less than minimum angle grid point
 	{
-		phi0 = SPinterp_pphi[npphi_max] - 2. * M_PI;
-		phi1 = SPinterp_pphi[0];
+		phi0 = SP_pphi[npphi_max] - 2. * M_PI;
+		phi1 = SP_pphi[0];
 		nphi = 0;
 		nphim1 = npphi_max;
 	}
-	else if(phir > SPinterp_pphi[npphi_max])	//if angle is greater than maximum angle grid point
+	else if(phir > SP_pphi[npphi_max])	//if angle is greater than maximum angle grid point
 	{
-		phi0 = SPinterp_pphi[npphi_max];
-		phi1 = SPinterp_pphi[0] + 2. * M_PI;
+		phi0 = SP_pphi[npphi_max];
+		phi1 = SP_pphi[0] + 2. * M_PI;
 		nphi = 0;
 		nphim1 = npphi_max;
 	}
 	else						//if angle is within grid range
 	{
-		while ((phir > SPinterp_pphi[nphi]) &&
+		while ((phir > SP_pphi[nphi]) &&
 				(nphi < npphi_max)) ++nphi;
 		nphim1 = nphi - 1;
-		phi0 = SPinterp_pphi[nphim1];
-		phi1 = SPinterp_pphi[nphi];
+		phi0 = SP_pphi[nphim1];
+		phi1 = SP_pphi[nphi];
 	}
 
 	if (pT0==pT1 || phi0==phi1)

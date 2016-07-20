@@ -25,14 +25,14 @@ const int RANK2D = 2;
 int CorrelationFunction::Initialize_resonance_HDF_array()
 {
 const int giant_FOslice_array_size = eta_s_npts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int chunk_size = n_interp_pT_pts * n_interp_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
+const int chunk_size = n_pT_pts * n_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
 const int small_array_size = qtnpts * qxnpts * qynpts * qznpts * ntrig;
 const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 
 	double * resonance_chunk = new double [chunk_size];
 
 	ostringstream filename_stream_ra;
-	filename_stream_ra << global_path << "/resonance_spectra.h5";
+	filename_stream_ra << path << "/resonance_spectra.h5";
 	H5std_string RESONANCE_FILE_NAME(filename_stream_ra.str().c_str());
 	H5std_string RESONANCE_DATASET_NAME("ra");
 
@@ -106,14 +106,14 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 int CorrelationFunction::Initialize_target_thermal_HDF_array()
 {
 const int giant_FOslice_array_size = eta_s_npts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int chunk_size = n_interp_pT_pts * n_interp_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
+const int chunk_size = n_pT_pts * n_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
 const int small_array_size = qtnpts * qxnpts * qynpts * qznpts * ntrig;
 const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 
 	double * tta_chunk = new double [chunk_size];
 
 	ostringstream filename_stream_ra;
-	filename_stream_ra << global_path << "/target_thermal_moments.h5";
+	filename_stream_ra << path << "/target_thermal_moments.h5";
 	H5std_string TARGET_THERMAL_FILE_NAME(filename_stream_ra.str().c_str());
 	H5std_string TARGET_THERMAL_DATASET_NAME("tta");
 
@@ -185,12 +185,12 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 int CorrelationFunction::Open_resonance_HDF_array(string resonance_local_file_name)
 {
 const int giant_FOslice_array_size = eta_s_npts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int chunk_size = n_interp_pT_pts * n_interp_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
+const int chunk_size = n_pT_pts * n_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
 const int small_array_size = qtnpts * qxnpts * qynpts * qznpts * ntrig;
 const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 
 	ostringstream filename_stream_ra;
-	filename_stream_ra << global_path << "/" << resonance_local_file_name;
+	filename_stream_ra << path << "/" << resonance_local_file_name;
 	H5std_string RESONANCE_FILE_NAME(filename_stream_ra.str().c_str());
 	H5std_string RESONANCE_DATASET_NAME("ra");
 
@@ -237,12 +237,12 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 int CorrelationFunction::Open_target_thermal_HDF_array()
 {
 const int giant_FOslice_array_size = eta_s_npts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int chunk_size = n_interp_pT_pts * n_interp_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
+const int chunk_size = n_pT_pts * n_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
 const int small_array_size = qtnpts * qxnpts * qynpts * qznpts * ntrig;
 const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 
 	ostringstream filename_stream_ra;
-	filename_stream_ra << global_path << "/target_thermal_moments.h5";
+	filename_stream_ra << path << "/target_thermal_moments.h5";
 	H5std_string TARGET_THERMAL_FILE_NAME(filename_stream_ra.str().c_str());
 	H5std_string TARGET_THERMAL_DATASET_NAME("tta");
 
@@ -288,7 +288,7 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 int CorrelationFunction::Close_resonance_HDF_array()
 {
 const int giant_FOslice_array_size = eta_s_npts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int chunk_size = n_interp_pT_pts * n_interp_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
+const int chunk_size = n_pT_pts * n_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
 const int small_array_size = qtnpts * qxnpts * qynpts * qznpts * ntrig;
 const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 
@@ -333,7 +333,7 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 int CorrelationFunction::Close_target_thermal_HDF_array()
 {
 const int giant_FOslice_array_size = eta_s_npts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int chunk_size = n_interp_pT_pts * n_interp_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
+const int chunk_size = n_pT_pts * n_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
 const int small_array_size = qtnpts * qxnpts * qynpts * qznpts * ntrig;
 const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 
@@ -379,7 +379,7 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 int CorrelationFunction::Set_resonance_in_HDF_array(int local_pid, double * resonance_array_to_use)
 {
 const int giant_FOslice_array_size = eta_s_npts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int chunk_size = n_interp_pT_pts * n_interp_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
+const int chunk_size = n_pT_pts * n_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
 const int small_array_size = qtnpts * qxnpts * qynpts * qznpts * ntrig;
 const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 
@@ -400,8 +400,8 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 
 		// use loaded chunk to fill resonance_array_to_fill
 		/*int iidx = 0;
-		for (int ipt = 0; ipt < n_interp_pT_pts; ++ipt)
-		for (int ipphi = 0; ipphi < n_interp_pphi_pts; ++ipphi)
+		for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		for (int iqt = 0; iqt < qtnpts; ++iqt)
 		for (int iqx = 0; iqx < qxnpts; ++iqx)
 		for (int iqy = 0; iqy < qynpts; ++iqy)
@@ -449,7 +449,7 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 int CorrelationFunction::Get_resonance_from_HDF_array(int local_pid, double * resonance_array_to_fill)
 {
 const int giant_FOslice_array_size = eta_s_npts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int chunk_size = n_interp_pT_pts * n_interp_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
+const int chunk_size = n_pT_pts * n_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
 const int small_array_size = qtnpts * qxnpts * qynpts * qznpts * ntrig;
 const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 
@@ -474,8 +474,8 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 
 		// use loaded chunk to fill resonance_array_to_fill
 		/*int iidx = 0;
-		for (int ipt = 0; ipt < n_interp_pT_pts; ++ipt)
-		for (int ipphi = 0; ipphi < n_interp_pphi_pts; ++ipphi)
+		for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		for (int iqt = 0; iqt < qtnpts; ++iqt)
 		for (int iqx = 0; iqx < qxnpts; ++iqx)
 		for (int iqy = 0; iqy < qynpts; ++iqy)
@@ -520,7 +520,7 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 int CorrelationFunction::Set_target_thermal_in_HDF_array(double * tta_array_to_use)
 {
 const int giant_FOslice_array_size = eta_s_npts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int chunk_size = n_interp_pT_pts * n_interp_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
+const int chunk_size = n_pT_pts * n_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
 const int small_array_size = qtnpts * qxnpts * qynpts * qznpts * ntrig;
 const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 
@@ -536,8 +536,8 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 
 		// use loaded chunk to fill resonance_array_to_fill
 		/*int iidx = 0;
-		for (int ipt = 0; ipt < n_interp_pT_pts; ++ipt)
-		for (int ipphi = 0; ipphi < n_interp_pphi_pts; ++ipphi)
+		for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		for (int iqt = 0; iqt < qtnpts; ++iqt)
 		for (int iqx = 0; iqx < qxnpts; ++iqx)
 		for (int iqy = 0; iqy < qynpts; ++iqy)
@@ -586,7 +586,7 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 int CorrelationFunction::Get_target_thermal_from_HDF_array(double * tta_to_fill)
 {
 const int giant_FOslice_array_size = eta_s_npts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int chunk_size = n_interp_pT_pts * n_interp_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
+const int chunk_size = n_pT_pts * n_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
 const int small_array_size = qtnpts * qxnpts * qynpts * qznpts * ntrig;
 const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 
@@ -604,8 +604,8 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 
 		// use loaded chunk to fill resonance_array_to_fill
 		/*int iidx = 0;
-		for (int ipt = 0; ipt < n_interp_pT_pts; ++ipt)
-		for (int ipphi = 0; ipphi < n_interp_pphi_pts; ++ipphi)
+		for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		for (int iqt = 0; iqt < qtnpts; ++iqt)
 		for (int iqx = 0; iqx < qxnpts; ++iqx)
 		for (int iqy = 0; iqy < qynpts; ++iqy)
@@ -650,7 +650,7 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 int CorrelationFunction::Copy_chunk(int current_resonance_index, int reso_idx_to_be_copied)
 {
 const int giant_FOslice_array_size = eta_s_npts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int chunk_size = n_interp_pT_pts * n_interp_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
+const int chunk_size = n_pT_pts * n_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
 const int small_array_size = qtnpts * qxnpts * qynpts * qznpts * ntrig;
 const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 
@@ -708,14 +708,14 @@ debugger(__LINE__, __FILE__);
 int CorrelationFunction::Dump_resonance_HDF_array_spectra(string output_filename, double * resonance_array_to_use)
 {
 const int giant_FOslice_array_size = eta_s_npts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int chunk_size = n_interp_pT_pts * n_interp_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
+const int chunk_size = n_pT_pts * n_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
 const int small_array_size = qtnpts * qxnpts * qynpts * qznpts * ntrig;
 const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 
 	double * resonance_chunk = new double [chunk_size];
 
 	ostringstream filename_stream;
-	filename_stream << global_path << "/" << output_filename;
+	filename_stream << path << "/" << output_filename;
 	ofstream out;
 	out.open(filename_stream.str().c_str());
 
@@ -734,8 +734,8 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 			resonance_dataset->read(resonance_array_to_use, PredType::NATIVE_DOUBLE, *resonance_memspace, *resonance_dataspace);
 
 			/*int iidx = 0;
-			for (int ipt = 0; ipt < n_interp_pT_pts; ++ipt)
-			for (int ipphi = 0; ipphi < n_interp_pphi_pts; ++ipphi)
+			for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 			for (int iqt = 0; iqt < qtnpts; ++iqt)
 			for (int iqx = 0; iqx < qxnpts; ++iqx)
 			for (int iqy = 0; iqy < qynpts; ++iqy)
@@ -743,9 +743,9 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 			for (int itrig = 0; itrig < ntrig; ++itrig)
 				resonance_array_to_use[ipt][ipphi][iqt][iqx][iqy][iqz][itrig] = resonance_chunk[iidx++];
 
-			for (int ipphi = 0; ipphi < n_interp_pphi_pts; ++ipphi)
+			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 			{
-				//for (int ipt = 0; ipt < n_interp_pT_pts; ++ipt)
+				//for (int ipt = 0; ipt < n_pT_pts; ++ipt)
 				//	out << scientific << setprecision(8) << setw(12) << resonance_array_to_use[ipt][ipphi][iqt0][iqx0][iqy0][iqz0][0] << "   ";
 				out << endl;
 			}*/

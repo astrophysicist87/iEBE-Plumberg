@@ -52,7 +52,7 @@ double SourceVariances::place_in_range(double phi, double min, double max)
 // ************************************************************
 // NEW AND IMPROVED version of Analyze_sourcefunction()
 // ************************************************************
-void SourceVariances::Analyze_sourcefunction(FO_surf* FOsurf_ptr)
+void SourceVariances::Analyze_sourcefunction()
 {
 	Stopwatch BIGsw;
 	*global_out_stream_ptr << "Plane angle calculations..." << endl;
@@ -62,7 +62,7 @@ void SourceVariances::Analyze_sourcefunction(FO_surf* FOsurf_ptr)
 	if (USE_PLANE_PSI_ORDER)
 	{
 		if (VERBOSE > 0) *global_out_stream_ptr << "Determine nth-order plane angles..." << endl;
-		Determine_plane_angle(current_FOsurf_ptr, 0);
+		Determine_plane_angle();
 		if (VERBOSE > 0) *global_out_stream_ptr << "Analyzing source function w.r.t. " << iorder << " th-order participant plane angle..." << endl;
 		if (VERBOSE > 0) *global_out_stream_ptr << "psi = " << plane_psi << endl;
 		plane_psi = plane_angle[iorder];
@@ -79,7 +79,7 @@ void SourceVariances::Analyze_sourcefunction(FO_surf* FOsurf_ptr)
 
 	if (read_in_all_dN_dypTdpTdphi)	//read in spectra if already calculated
 	{
-		Read_in_all_dN_dypTdpTdphi(currentfolderindex);
+		Read_in_all_dN_dypTdpTdphi();
 		if (VERBOSE > 0) *global_out_stream_ptr << "************************************************************" << endl
 												<< "* Read in all (thermal) space-time moments!" << endl
 												<< "************************************************************" << endl << endl;
@@ -110,7 +110,7 @@ void SourceVariances::Analyze_sourcefunction(FO_surf* FOsurf_ptr)
 			// ************************************************************
 			// decide whether to recycle old moments or calculate new moments
 			// ************************************************************
-			Get_spacetime_moments(FOsurf_ptr, idc);
+			Get_spacetime_moments(idc);
 		}	//computing all resonances' spacetime moments here first
 			//THEN do phase-space integrals
 	
@@ -122,7 +122,7 @@ void SourceVariances::Analyze_sourcefunction(FO_surf* FOsurf_ptr)
 	}
 	if (output_all_dN_dypTdpTdphi)
 	{
-		Output_all_dN_dypTdpTdphi(currentfolderindex);
+		Output_all_dN_dypTdpTdphi();
 		if (VERBOSE > 0) *global_out_stream_ptr << endl << "************************************************************"
 												<< endl << "* Output all (thermal) space-time moments!" << endl
 												<< "************************************************************" << endl << endl;
@@ -523,7 +523,7 @@ void SourceVariances::Recycle_spacetime_moments()
 	return;
 }
 
-void SourceVariances::Get_spacetime_moments(FO_surf* FOsurf_ptr, int dc_idx)
+void SourceVariances::Get_spacetime_moments(int dc_idx)
 {
 //**************************************************************
 //Set resonance name
@@ -569,7 +569,7 @@ void SourceVariances::Get_spacetime_moments(FO_surf* FOsurf_ptr, int dc_idx)
 				exit(1);
 			}
 		}
-		Set_dN_dypTdpTdphi_moments(FOsurf_ptr, current_resonance_particle_id);
+		Set_dN_dypTdpTdphi_moments(current_resonance_particle_id);
 	}
 //**************************************************************
 //Spacetime moments now set
@@ -577,7 +577,7 @@ void SourceVariances::Get_spacetime_moments(FO_surf* FOsurf_ptr, int dc_idx)
 	return;
 }
 
-void SourceVariances::Set_dN_dypTdpTdphi_moments(FO_surf* FOsurf_ptr, int local_pid)
+void SourceVariances::Set_dN_dypTdpTdphi_moments(int local_pid)
 {
 	double localmass = all_particles[local_pid].mass;
 	string local_name = "Thermal pion(+)";
@@ -598,12 +598,12 @@ void SourceVariances::Set_dN_dypTdpTdphi_moments(FO_surf* FOsurf_ptr, int local_
 		}
 	}
 	//if (local_pid != target_particle_id)						//skip thermal contributions for timebeing...
-		Cal_dN_dypTdpTdphi_with_weights(FOsurf_ptr, local_pid);
+		Cal_dN_dypTdpTdphi_with_weights(local_pid);
 
 	return;
 }
 
-void SourceVariances::Cal_dN_dypTdpTdphi_with_weights(FO_surf* FOsurf_ptr, int local_pid)
+void SourceVariances::Cal_dN_dypTdpTdphi_with_weights(int local_pid)
 {
 	double * local_temp_moments = new double [n_weighting_functions];
 	double *** temp_moments_array = new double ** [n_interp_pT_pts];
@@ -754,11 +754,9 @@ void SourceVariances::Cal_dN_dypTdpTdphi_with_weights(FO_surf* FOsurf_ptr, int l
 	return;
 }
 
-void SourceVariances::Determine_plane_angle(FO_surf* FOsurf_ptr, int dc_idx)
+void SourceVariances::Determine_plane_angle()
 {
 	double localmass = particle_mass;
-	if (dc_idx > 0) return;	//don't really care about thermal resonance distributions at the moment,
-				//so just skip this part
 	double* mT = new double [n_SP_pT];
 	double** px = new double* [n_SP_pT];
 	double** py = new double* [n_SP_pT];
@@ -797,7 +795,7 @@ void SourceVariances::Determine_plane_angle(FO_surf* FOsurf_ptr, int dc_idx)
 		}
 	}
 
-	Cal_dN_dypTdpTdphi(p0, px, py, pz, FOsurf_ptr);
+	Cal_dN_dypTdpTdphi(p0, px, py, pz);
 
 	for(int ipt=0; ipt<n_SP_pT; ++ipt)
   	{
@@ -1039,7 +1037,7 @@ void SourceVariances::Load_decay_channel_info(int dc_idx, double K_T_local, doub
 }
 
 
-void SourceVariances::Cal_dN_dypTdpTdphi(double** SP_p0, double** SP_px, double** SP_py, double** SP_pz, FO_surf* FOsurf_ptr)
+void SourceVariances::Cal_dN_dypTdpTdphi(double** SP_p0, double** SP_px, double** SP_py, double** SP_pz)
 {
 	double sign = particle_sign;
 	double degen = particle_gspin;
@@ -1302,7 +1300,7 @@ void SourceVariances::R2_Fourier_transform(int iKT, double plane_psi)
 
 //***************************************************************************************************
 
-/*void SourceVariances::test_function(FO_surf* FOsurf_ptr, int local_pid)
+/*void SourceVariances::test_function(int local_pid)
 {
 	ostringstream filename_stream_icpl;
 	filename_stream_icpl << global_path << "/interpolation_comparison_monval_" << all_particles[local_pid].monval << ".dat";
@@ -1324,7 +1322,7 @@ void SourceVariances::R2_Fourier_transform(int iKT, double plane_psi)
 	{
 		double local_pT = local_pT_min + ipt * Del_pT;
 		double local_pphi = local_pphi_min + ipphi * Del_pphi;
-		double result1 = Cal_dN_dypTdpTdphi_function(FOsurf_ptr, local_pid, local_pT, local_pphi);
+		double result1 = Cal_dN_dypTdpTdphi_function(local_pid, local_pT, local_pphi);
 		result2[0] = 0.0;
 if (ipt==(int)npt-1 && ipphi==(int)npphi-1 && local_pid == 1)
 	current_level_of_output = 1;

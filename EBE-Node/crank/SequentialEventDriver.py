@@ -257,8 +257,8 @@ HoTCoffeehParameters = {
     'ignore_long_lived_resonances'      :   1,
     'fit_with_projected_cfvals'         :   1,
     'flesh_out_cf'                      :   1,
-    'chosenParticlesMode'               :   1,
-    'resonanceThreshold'                :   0.00,
+    'chosenParticlesMode'               :   0,
+    'resonanceThreshold'                :   0.60,
 	'use_plane_psi_order'				:	0,
 	'include_delta_f'					:	0,
 	'n_order'							:	4,
@@ -734,13 +734,6 @@ def doHBTWithHydroResultFiles(fileList):
             raise ExecutionError("Hydro result file %s not found!" % aFile)
         else:
             move(aFile, HoTCoffeehOperationDirectory)
-
-    # calculate from threshold
-    if chosenParticlesMode == 0:
-        threshold = resonanceThreshold
-    # reading in from file
-    elif chosenParticlesMode == 1:
-        threshold = -1.0
     
     #copy(path.join(HoTCoffeehDirectory, 'EOS', 'chosen_particles_s95pv1.dat'), 
     #     path.join(HoTCoffeehDirectory, 'EOS', 'chosen_particles.dat'))

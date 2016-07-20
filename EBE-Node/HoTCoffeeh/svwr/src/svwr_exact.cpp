@@ -15,59 +15,59 @@
 
 using namespace std;
 
-double SourceVariances::Cal_wfi_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi, int wfi)
+double SourceVariances::Cal_wfi_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi, int wfi)
 {
 	double result = 0.0;
 
 	switch (wfi)
 	{
 		case 0:
-			result = Cal_dN_dypTdpTdphi_function(FOsurf_ptr, local_pid, pT, pphi);
+			result = Cal_dN_dypTdpTdphi_function(local_pid, pT, pphi);
 			break;
 		case 1:
-			result = Cal_xs_dN_dypTdpTdphi_function(FOsurf_ptr, local_pid, pT, pphi);
+			result = Cal_xs_dN_dypTdpTdphi_function(local_pid, pT, pphi);
 			break;
 		case 2:
-			result = Cal_xs2_dN_dypTdpTdphi_function(FOsurf_ptr, local_pid, pT, pphi);
+			result = Cal_xs2_dN_dypTdpTdphi_function(local_pid, pT, pphi);
 			break;
 		case 3:
-			result = Cal_xo_dN_dypTdpTdphi_function(FOsurf_ptr, local_pid, pT, pphi);
+			result = Cal_xo_dN_dypTdpTdphi_function(local_pid, pT, pphi);
 			break;
 		case 4:
-			result = Cal_xo2_dN_dypTdpTdphi_function(FOsurf_ptr, local_pid, pT, pphi);
+			result = Cal_xo2_dN_dypTdpTdphi_function(local_pid, pT, pphi);
 			break;
 		case 5:
-			//result = Cal_xl_dN_dypTdpTdphi_function(FOsurf_ptr, local_pid, pT, pphi);
+			//result = Cal_xl_dN_dypTdpTdphi_function(local_pid, pT, pphi);
 			result = 0.0;
 			break;
 		case 6:
-			result = Cal_xl2_dN_dypTdpTdphi_function(FOsurf_ptr, local_pid, pT, pphi);
+			result = Cal_xl2_dN_dypTdpTdphi_function(local_pid, pT, pphi);
 			break;
 		case 7:
-			result = Cal_t_dN_dypTdpTdphi_function(FOsurf_ptr, local_pid, pT, pphi);
+			result = Cal_t_dN_dypTdpTdphi_function(local_pid, pT, pphi);
 			break;
 		case 8:
-			result = Cal_t2_dN_dypTdpTdphi_function(FOsurf_ptr, local_pid, pT, pphi);
+			result = Cal_t2_dN_dypTdpTdphi_function(local_pid, pT, pphi);
 			break;
 		case 9:
-			result = Cal_xsxo_dN_dypTdpTdphi_function(FOsurf_ptr, local_pid, pT, pphi);
+			result = Cal_xsxo_dN_dypTdpTdphi_function(local_pid, pT, pphi);
 			break;
 		case 10:
-			//result = Cal_xsxl_dN_dypTdpTdphi_function(FOsurf_ptr, local_pid, pT, pphi);
+			//result = Cal_xsxl_dN_dypTdpTdphi_function(local_pid, pT, pphi);
 			result = 0.0;
 			break;
 		case 11:
-			result = Cal_xst_dN_dypTdpTdphi_function(FOsurf_ptr, local_pid, pT, pphi);
+			result = Cal_xst_dN_dypTdpTdphi_function(local_pid, pT, pphi);
 			break;
 		case 12:
-			//result = Cal_xoxl_dN_dypTdpTdphi_function(FOsurf_ptr, local_pid, pT, pphi);
+			//result = Cal_xoxl_dN_dypTdpTdphi_function(local_pid, pT, pphi);
 			result = 0.0;
 			break;
 		case 13:
-			result = Cal_xot_dN_dypTdpTdphi_function(FOsurf_ptr, local_pid, pT, pphi);
+			result = Cal_xot_dN_dypTdpTdphi_function(local_pid, pT, pphi);
 			break;
 		case 14:
-			//result = Cal_xlt_dN_dypTdpTdphi_function(FOsurf_ptr, local_pid, pT, pphi);
+			//result = Cal_xlt_dN_dypTdpTdphi_function(local_pid, pT, pphi);
 			result = 0.0;
 			break;
 		default:
@@ -77,7 +77,7 @@ double SourceVariances::Cal_wfi_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int
 	return (result);
 }
 
-double SourceVariances::Cal_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi)
+double SourceVariances::Cal_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi)
 {
 	// set particle information
 	double sign = all_particles[local_pid].sign;
@@ -162,7 +162,7 @@ double SourceVariances::Cal_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int loc
 	return dN_dypTdpTdphi;
 }
 
-double SourceVariances::Cal_xs_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi)
+double SourceVariances::Cal_xs_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi)
 {
 	// set particle information
 	double sign = all_particles[local_pid].sign;
@@ -249,7 +249,7 @@ double SourceVariances::Cal_xs_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int 
 	return dN_dypTdpTdphi;
 }
 
-double SourceVariances::Cal_xs2_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi)
+double SourceVariances::Cal_xs2_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi)
 {
 	// set particle information
 	double sign = all_particles[local_pid].sign;
@@ -335,7 +335,7 @@ double SourceVariances::Cal_xs2_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int
 	return dN_dypTdpTdphi;
 }
 
-double SourceVariances::Cal_xo_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi)
+double SourceVariances::Cal_xo_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi)
 {
 	// set particle information
 	double sign = all_particles[local_pid].sign;
@@ -422,7 +422,7 @@ double SourceVariances::Cal_xo_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int 
 	return dN_dypTdpTdphi;
 }
 
-double SourceVariances::Cal_xo2_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi)
+double SourceVariances::Cal_xo2_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi)
 {
 	// set particle information
 	double sign = all_particles[local_pid].sign;
@@ -509,7 +509,7 @@ double SourceVariances::Cal_xo2_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int
 	return dN_dypTdpTdphi;
 }
 
-double SourceVariances::Cal_xl_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi)
+double SourceVariances::Cal_xl_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi)
 {
 	// set particle information
 	double sign = all_particles[local_pid].sign;
@@ -595,7 +595,7 @@ double SourceVariances::Cal_xl_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int 
 	return dN_dypTdpTdphi;
 }
 
-double SourceVariances::Cal_xl2_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi)
+double SourceVariances::Cal_xl2_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi)
 {
 	// set particle information
 	double sign = all_particles[local_pid].sign;
@@ -681,7 +681,7 @@ double SourceVariances::Cal_xl2_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int
 	return dN_dypTdpTdphi;
 }
 
-double SourceVariances::Cal_t_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi)
+double SourceVariances::Cal_t_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi)
 {
 	// set particle information
 	double sign = all_particles[local_pid].sign;
@@ -767,7 +767,7 @@ double SourceVariances::Cal_t_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int l
 	return dN_dypTdpTdphi;
 }
 
-double SourceVariances::Cal_t2_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi)
+double SourceVariances::Cal_t2_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi)
 {
 	// set particle information
 	double sign = all_particles[local_pid].sign;
@@ -853,7 +853,7 @@ double SourceVariances::Cal_t2_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int 
 	return dN_dypTdpTdphi;
 }
 
-double SourceVariances::Cal_xsxo_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi)
+double SourceVariances::Cal_xsxo_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi)
 {
 	// set particle information
 	double sign = all_particles[local_pid].sign;
@@ -941,7 +941,7 @@ double SourceVariances::Cal_xsxo_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, in
 	return dN_dypTdpTdphi;
 }
 
-double SourceVariances::Cal_xsxl_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi)
+double SourceVariances::Cal_xsxl_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi)
 {
 	// set particle information
 	double sign = all_particles[local_pid].sign;
@@ -1029,7 +1029,7 @@ double SourceVariances::Cal_xsxl_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, in
 	return dN_dypTdpTdphi;
 }
 
-double SourceVariances::Cal_xst_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi)
+double SourceVariances::Cal_xst_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi)
 {
 	// set particle information
 	double sign = all_particles[local_pid].sign;
@@ -1117,7 +1117,7 @@ double SourceVariances::Cal_xst_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int
 	return dN_dypTdpTdphi;
 }
 
-double SourceVariances::Cal_xoxl_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi)
+double SourceVariances::Cal_xoxl_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi)
 {
 	// set particle information
 	double sign = all_particles[local_pid].sign;
@@ -1205,7 +1205,7 @@ double SourceVariances::Cal_xoxl_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, in
 	return dN_dypTdpTdphi;
 }
 
-double SourceVariances::Cal_xot_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi)
+double SourceVariances::Cal_xot_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi)
 {
 	// set particle information
 	double sign = all_particles[local_pid].sign;
@@ -1293,7 +1293,7 @@ double SourceVariances::Cal_xot_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int
 	return dN_dypTdpTdphi;
 }
 
-double SourceVariances::Cal_xlt_dN_dypTdpTdphi_function(FO_surf* FOsurf_ptr, int local_pid, double pT, double pphi)
+double SourceVariances::Cal_xlt_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi)
 {
 	// set particle information
 	double sign = all_particles[local_pid].sign;

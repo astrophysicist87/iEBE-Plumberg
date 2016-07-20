@@ -24,9 +24,9 @@ using namespace std;
 int main(int argc, char *argv[])
 {
    cout << endl
-        << "                      iHoTCoffeeh                   " << endl
+        << "            Correlation functions with resonances            " << endl
         << endl
-        << "  Ver 1.2   ----- Christopher Plumberg, 07/2016   " << endl;
+        << "  Ver 1.0   ----- Christopher Plumberg, 07/2016   " << endl;
    cout << endl << "**********************************************************" << endl;
    display_logo(2); // Hail to the king~
    cout << endl << "**********************************************************" << endl << endl;
@@ -47,18 +47,18 @@ int main(int argc, char *argv[])
 	sw.Start();
 
 	bool generatedcorrfuncs = false;
-	//string currentworkingdirectory = get_selfpath();
-    string currentworkingdirectory = "./results";
+	//string workingDirectory = get_selfpath();
+    string workingDirectory = "./results";
 
-	//int folderindex = get_folder_index(currentworkingdirectory);
-	initialize_PRfile(paraRdr, currentworkingdirectory);
+	//int folderindex = get_folder_index(workingDirectory);
+	initialize_PRfile(paraRdr, workingDirectory);
 
 	ostringstream filename_stream;
-	filename_stream << currentworkingdirectory << "/Processing_record.txt";
+	filename_stream << workingDirectory << "/Processing_record.txt";
 	ofstream output(filename_stream.str().c_str(), ios::app);
 
 	output << "/**********Processing output**********/" << endl;
-	output << "entering folder: " << currentworkingdirectory << endl;
+	output << "entering folder: " << workingDirectory << endl;
 
 	//load freeze out and particle information
 	int FO_length = 0;
@@ -66,36 +66,37 @@ int main(int argc, char *argv[])
 
 	ostringstream decdatfile;
 	output << "Loading the decoupling data...." << endl;
-	decdatfile << currentworkingdirectory << "/decdat2.dat";
+	decdatfile << workingDirectory << "/decdat2.dat";
 	output << decdatfile.str() << endl;
 	FO_length=get_filelength(decdatfile.str().c_str());
 	output << "Total number of freeze out fluid cell: " <<  FO_length << endl;
 
 	//read the data arrays for the decoupling information
 	FO_surf* FOsurf_ptr = new FO_surf[FO_length];
-	read_decdat(FO_length, FOsurf_ptr, currentworkingdirectory, false);
+	read_decdat(FO_length, FOsurf_ptr, workingDirectory, false);
    
 	//read the positions of the freeze out surface
-	read_surfdat(FO_length, FOsurf_ptr, currentworkingdirectory);
+	read_surfdat(FO_length, FOsurf_ptr, workingDirectory);
    
 	//read the chemical potential on the freeze out surface
 	int N_stableparticle;
-	ifstream particletable("/home/plumberg.1/HBTPlumberg/EOS/EOS_particletable.dat");
+	//ifstream particletable("/home/plumberg.1/HBTPlumberg/EOS/EOS_particletable.dat");
+	ifstream particletable("EOS/EOS_particletable.dat");
 	particletable >> N_stableparticle;
 	double ** particle_mu = new double * [N_stableparticle];
-	for(int i=0; i<N_stableparticle; i++)
+	for(int i = 0; i < N_stableparticle; i++)
 		particle_mu[i] = new double [FO_length];
-	for(int i=0; i<N_stableparticle; i++)
-	for(int j=0; j<FO_length; j++)
+	for(int i = 0; i < N_stableparticle; i++)
+	for(int j = 0; j < FO_length; j++)
 		particle_mu[i][j] = 0.0;
 	if(N_stableparticle > 0)
-		read_decdat_mu(FO_length, N_stableparticle, particle_mu, currentworkingdirectory);
+		read_decdat_mu(FO_length, N_stableparticle, particle_mu, workingDirectory);
 
 	//read particle resonance decay table
 	particle_info *particle = new particle_info [Maxparticle];
-	int Nparticle=read_resonance(particle);
-	output <<"read in total " << Nparticle << " particles!" << endl;
-	output << "Calculating "<< particle[particle_idx].name << endl;
+	int Nparticle = read_resonance(particle);
+	output << "read in total " << Nparticle << " particles!" << endl;
+	output << "Calculating " << particle[particle_idx].name << endl;
 	if(N_stableparticle >0)
 	{
 		output << " EOS is partially chemical equilibrium " << endl;
@@ -135,24 +136,15 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	double threshold = paraRdr->getVal("resonanceThreshold");
-	//double threshold = 0.60;	//include only enough of the most important resonances to account for fixed fraction of total resonance-decay pion(+)s
-	//double threshold = atof(argv[7]);
-				//threshold = 1.0 means include all resonance-decay pion(+)s,
-				//threshold = 0.0 means include none of them
-	double net_fraction_resonance_contribution = 0.0;
-	output << "Working with threshold = " << threshold << endl;
+	// Get chosen particles
+	double threshold = 1.0;
+	double net_fraction_resonance_contribution = 1.0;
 	vector<int> chosen_resonance_indices;
-	if (threshold > 1.0 + 1.e-10)
+
+	if ((int)(paraRdr->getVal("chosenParticlesMode")) == 0)				// calculate chosen resonances from threshold
 	{
-		int single_chosen_resonance = 183;	//index in all_particles array
-		chosen_resonance_indices.push_back(single_chosen_resonance);
-		output << "\t --> Looking only at contributions from " << particle[single_chosen_resonance].name << " and descendants" << endl;
-		//get_all_descendants(&chosen_resonance_indices, particle, Nparticle, output);
-		sort_by_mass(&chosen_resonance_indices, particle, Nparticle, output);
-	}
-	else
-	{
+		threshold = paraRdr->getVal("resonanceThreshold");
+		output << "Working with threshold = " << threshold << endl;
 		get_important_resonances(particle_idx, &chosen_resonance_indices, particle, Nparticle, threshold, net_fraction_resonance_contribution, output);
 		get_all_descendants(&chosen_resonance_indices, particle, Nparticle, output);
 		sort_by_mass(&chosen_resonance_indices, particle, Nparticle, output);
@@ -161,26 +153,53 @@ int main(int argc, char *argv[])
 					<< "   ,   Gamma = " << particle[chosen_resonance_indices[ii]].width
 					<< "   ,   pc = " << particle[chosen_resonance_indices[ii]].percent_contribution << endl;
 	}
+	else if ((int)(paraRdr->getVal("chosenParticlesMode")) == 1)		// read chosen resonances in from file
+	{
+		ifstream chosenParticlesStream("EOS/chosen_particles.dat");
+		int len = 0;
+		while (!chosenParticlesStream.eof())
+		{
+			long tmp;
+			chosenParticlesStream >> tmp;
+			chosen_resonance_indices.push_back(lookup_particle_id_from_monval(particle, Nparticle, tmp));
+			len++;
+		}
 
-//if (1) exit(1);
+		chosenParticlesStream.close();
+		output << "Read in " << len << " particles from EOS/chosen_particles.dat:" << endl;
 
-	CorrelationFunction correlation_function(paraRdr, &particle[particle_idx], particle, Nparticle, FOsurf_ptr, chosen_resonance_indices, particle_idx, output);
+		// sort chosen particles by mass
+		sort_by_mass(&chosen_resonance_indices, particle, Nparticle, output);
+		for (int ii = 0; ii < (int)chosen_resonance_indices.size(); ii++)
+			output << ii << "   " << chosen_resonance_indices[ii] << "   " << particle[chosen_resonance_indices[ii]].name
+					<< "   ,   Gamma = " << particle[chosen_resonance_indices[ii]].width
+					<< "   ,   pc = " << particle[chosen_resonance_indices[ii]].percent_contribution << endl;
+
+		// erase the last element of sorted list, which will generally include the target particle
+		chosen_resonance_indices.erase (chosen_resonance_indices.end());
+	}
+	else																// otherwise, you did something wrong!
+	{
+		cerr << "chosenParticlesMode = " << (int)(paraRdr->getVal("chosenParticlesMode")) << " not supported!  Exiting..." << endl;
+		exit(1);
+	}
+
+if (1) exit(1);
+
+	// Create CorrelationFunction object
+	CorrelationFunction correlation_function(paraRdr, &particle[particle_idx], particle, Nparticle, chosen_resonance_indices, particle_idx, output);
+
+	// Set path and freeze-out surface information
+	correlation_function.Set_path(workingDirectory);
+	correlation_function.Set_FOsurf_ptr(FOsurf_ptr, FO_length);
 
 	correlation_function.read_in_all_dN_dypTdpTdphi = false;
 	correlation_function.output_all_dN_dypTdpTdphi = !(correlation_function.read_in_all_dN_dypTdpTdphi);
-	//correlation_function.currentfolderindex = folderindex;
-	correlation_function.Set_path(currentworkingdirectory);
-	correlation_function.Set_use_delta_f(true);
-	correlation_function.Set_ofstream(output);
-	correlation_function.Set_current_FOsurf_ptr(FOsurf_ptr);
+	//correlation_function.Set_use_delta_f(true);
+	//correlation_function.Set_ofstream(output);
+	//correlation_function.Set_current_FOsurf_ptr(FOsurf_ptr);
 
-	bool rescale_truncated_resonance_contributions = true;
-	if (rescale_truncated_resonance_contributions)
-		correlation_function.fraction_of_resonances = net_fraction_resonance_contribution;
-	else
-		correlation_function.fraction_of_resonances = 1.0;	//i.e., no rescaling
-
-	correlation_function.Update_sourcefunction(&particle[particle_idx], FO_length, particle_idx);
+	correlation_function.fraction_of_resonances = net_fraction_resonance_contribution;
 
 	bool omit_specific_resonances = false;
 	if (omit_specific_resonances)
@@ -201,11 +220,11 @@ int main(int argc, char *argv[])
 	//do calculations
 	//if (COMPUTE_RESONANCE_DECAYS)
 	//{
-		correlation_function.Fourier_transform_emission_function(FOsurf_ptr);
-		correlation_function.Compute_phase_space_integrals(FOsurf_ptr);
+		correlation_function.Fourier_transform_emission_function();
+		correlation_function.Compute_phase_space_integrals();
 	//}
 
-	correlation_function.Cal_correlationfunction();	//if we didn't compute resonance decays, must read them in from files
+	correlation_function.Cal_correlationfunction();		//if we didn't compute resonance decays, must read them in from files
 
 	//output results
 	correlation_function.Output_total_target_dN_dypTdpTdphi();
@@ -217,7 +236,9 @@ int main(int argc, char *argv[])
 	output << "Finished calculating correlation function with all resonance decays..." << endl;
 
 	//if there's a full 3D grid to fit over, do the Gaussian fit and get the HBT radii too
-	if (atoi(argv[4]) > 1 && atoi(argv[5]) > 1 && atoi(argv[6]) > 1)
+	if ( (int)(paraRdr->getVal("qxnpts")) > 1
+		&& (int)(paraRdr->getVal("qynpts")) > 1
+		&& (int)(paraRdr->getVal("qznpts")) > 1 )
 	{
 		output << "Calculating HBT radii via Gaussian fit method..." << endl;
 		correlation_function.Get_GF_HBTradii();
@@ -260,9 +281,9 @@ int main(int argc, char *argv[])
 
 	output.close();
 
-	//checkforfiles_PRfile(currentworkingdirectory);
+	//checkforfiles_PRfile(workingDirectory);
 
-	finalize_PRfile(currentworkingdirectory);
+	finalize_PRfile(workingDirectory);
 
 	return 0;
 }

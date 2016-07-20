@@ -81,12 +81,8 @@ const double interp_pT_max = 4.0;
 const double interp_pphi_max = 2.*M_PI;
 
 //pair momentum info
-const int n_localp_T = 101;
-const double localp_T_min = 0.01;
-const double localp_T_max = 1.01;
-const int n_localp_phi = 48;
-const double localp_phi_min = 0.0;
-const double localp_phi_max = 2*M_PI;
+const double Kphi_min = 0.0;
+const double Kphi_max = 2*M_PI;
 
 const size_t fit_max_iterations = 1000;  // stop at this point if not converged 
 const double fit_tolerance = 1e-6;

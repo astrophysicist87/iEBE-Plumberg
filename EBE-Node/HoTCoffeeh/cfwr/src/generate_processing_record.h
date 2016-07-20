@@ -53,8 +53,8 @@ void initialize_PRfile(ParameterReader* paraRdr, string currentworkingdirectory,
 	output << "      --> eta_s_f: " << eta_s_f << endl;
 
 	output << "   - Single-particle momentum information:" << endl;
-	output << "      --> n_interp_pT_pts: " << paraRdr->getVal("npT") << endl;
-	output << "      --> n_interp_pphi_pts: " << paraRdr->getVal("npphi") << endl;
+	output << "      --> n_pT_pts: " << paraRdr->getVal("npT") << endl;
+	output << "      --> n_pphi_pts: " << paraRdr->getVal("npphi") << endl;
 	output << "      --> interp_pT_min: " << interp_pT_min << endl;
 	output << "      --> interp_pT_max: " << interp_pT_max << endl;
 	output << "      --> interp_pphi_min: " << interp_pphi_min << endl;
@@ -80,12 +80,12 @@ void initialize_PRfile(ParameterReader* paraRdr, string currentworkingdirectory,
 	//output << "      --> init_qz: " << init_qz << endl;
 
 	output << "   - Pair momentum information:" << endl;
-	output << "      --> n_localp_T: " << n_localp_T << endl;
-	output << "      --> localp_T_min: " << localp_T_min << endl;
-	output << "      --> localp_T_max: " << localp_T_max << endl;
-	output << "      --> n_localp_phi: " << n_localp_phi << endl;
-	output << "      --> localp_phi_min: " << localp_phi_min << endl;
-	output << "      --> localp_phi_max: " << localp_phi_max << endl;
+	output << "      --> nKT: " << paraRdr->getVal("nKT") << endl;
+	output << "      --> KT_min: " << paraRdr->getVal("KTmin") << endl;
+	output << "      --> KT_max: " << paraRdr->getVal("KTmax") << endl;
+	output << "      --> nKphi: " << paraRdr->getVal("nKphi") << endl;
+	output << "      --> Kphi_min: " << Kphi_min << endl;
+	output << "      --> Kphi_max: " << Kphi_max << endl;
 
 	output << "   - HBT Fourier information:" << endl;
 	output << "      --> n_order: " << paraRdr->getVal("n_order") << endl;

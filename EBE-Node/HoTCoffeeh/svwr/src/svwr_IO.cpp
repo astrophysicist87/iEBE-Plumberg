@@ -37,31 +37,31 @@ void replace_parentheses(std::string & tempstring)
 	return;
 }
 
-void SourceVariances::Output_results(int folderindex)
+void SourceVariances::Output_results()
 {
 	ostringstream filename_stream_HBT;
-	filename_stream_HBT << global_path << "/HBTradii_SVWR_ev" << folderindex << no_df_stem << ".dat";
+	filename_stream_HBT << path << "/HBTradii_SVWR_ev" << no_df_stem << ".dat";
 	ofstream outputHBT;
 	outputHBT.open(filename_stream_HBT.str().c_str());
 	ostringstream filename_stream_HBTcfs;
-	filename_stream_HBTcfs << global_path << "/HBTradii_SVWR_cfs_ev" << folderindex << no_df_stem << ".dat";
+	filename_stream_HBTcfs << path << "/HBTradii_SVWR_cfs_ev" << no_df_stem << ".dat";
 	ofstream outputHBTcoeffs(filename_stream_HBTcfs.str().c_str());
 	ostringstream filename_stream_S;
-	filename_stream_S << global_path << "/Sourcefunction_variances_WR" << no_df_stem << ".dat";
+	filename_stream_S << path << "/Sourcefunction_variances_WR" << no_df_stem << ".dat";
 	ofstream output_Svars(filename_stream_S.str().c_str());
 
 	for(int iKT = 0; iKT < n_localp_T; iKT++)
 	{
 		for(int Morder=0; Morder<n_order; Morder++)
 		{
-			outputHBTcoeffs << folderindex << "  " << K_T[iKT] << "  " << Morder
+			outputHBTcoeffs << K_T[iKT] << "  " << Morder
 				<< "  " << R2_side_C[iKT][Morder] << "   " << R2_side_S[iKT][Morder] << "  " << R2_out_C[iKT][Morder] << "  " << R2_out_S[iKT][Morder]
 				<< "  " << R2_outside_C[iKT][Morder] << "   " << R2_outside_S[iKT][Morder] << "  " << R2_long_C[iKT][Morder] << "  " << R2_long_S[iKT][Morder]
 				<< "  " << R2_sidelong_C[iKT][Morder] << "   " << R2_sidelong_S[iKT][Morder] << "  " << R2_outlong_C[iKT][Morder] << "  " << R2_outlong_S[iKT][Morder] << endl;
 		}
 		for(int iKphi = 0; iKphi < n_localp_phi; iKphi++)
 		{
-			outputHBT << folderindex << "  " << K_T[iKT] << "  " << K_phi[iKphi]
+			outputHBT << K_T[iKT] << "  " << K_phi[iKphi]
 				<< "  " << R2_side[iKT][iKphi] << "  " << R2_out[iKT][iKphi]
 				<< "  " << R2_outside[iKT][iKphi] << "  " << R2_long[iKT][iKphi]
 				<< "  " << R2_sidelong[iKT][iKphi] << "  " << R2_outlong[iKT][iKphi] << endl;
@@ -84,14 +84,14 @@ void SourceVariances::Output_results(int folderindex)
 	return;
 }
 
-void SourceVariances::Readin_results(int folderindex)
+void SourceVariances::Readin_results()
 {
 	double dummy;
 	ostringstream filename_stream_HBT;
-	filename_stream_HBT << global_path << "/HBTradii_SVWR_ev" << folderindex << no_df_stem << ".dat";
+	filename_stream_HBT << path << "/HBTradii_SVWR_ev" << no_df_stem << ".dat";
 	ifstream inputHBT(filename_stream_HBT.str().c_str());
 	ostringstream filename_stream_S;
-	filename_stream_S << global_path << "/Sourcefunction_variances_WR" << no_df_stem << ".dat";
+	filename_stream_S << path << "/Sourcefunction_variances_WR" << no_df_stem << ".dat";
 	ifstream input_Svars(filename_stream_S.str().c_str());
 
 	for(int iKT = 0; iKT < n_localp_T; iKT++)
@@ -137,11 +137,11 @@ void SourceVariances::Readin_results(int folderindex)
 	return;
 }
 
-/*void SourceVariances::Readin_ev_plane_psi(int folderindex)
+/*void SourceVariances::Readin_ev_plane_psi()
 {
 	ostringstream filename_stream_planepsi;
-	//filename_stream_planepsi << path << folderindex << "/plane_psi_ev" << folderindex << ".dat";
-	filename_stream_planepsi << global_path << "/plane_psi_ev" << folderindex << no_df_stem << ".dat";
+	//filename_stream_planepsi << path << "/plane_psi_ev.dat";
+	filename_stream_planepsi << path << "/plane_psi_ev" << no_df_stem << ".dat";
 	ifstream inputplanepsi(filename_stream_planepsi.str().c_str());
 
 	inputplanepsi >> global_plane_psi;
@@ -151,11 +151,11 @@ void SourceVariances::Readin_results(int folderindex)
 	return;
 }
 
-void SourceVariances::Output_ev_plane_psi(int folderindex)
+void SourceVariances::Output_ev_plane_psi()
 {
 	ostringstream filename_stream_planepsi;
-	//filename_stream_planepsi << path << folderindex << "/plane_psi_ev" << folderindex << ".dat";
-	filename_stream_planepsi << global_path << "/plane_psi_ev" << folderindex << no_df_stem << ".dat";
+	//filename_stream_planepsi << path << "/plane_psi_ev.dat";
+	filename_stream_planepsi << path << "/plane_psi_ev" << no_df_stem << ".dat";
 	ofstream outputplanepsi(filename_stream_planepsi.str().c_str());
 
 	outputplanepsi << global_plane_psi << endl;
@@ -165,11 +165,11 @@ void SourceVariances::Output_ev_plane_psi(int folderindex)
 	return;
 }
 
-void SourceVariances::Output_ev_plane_psis(int folderindex)
+void SourceVariances::Output_ev_plane_psis()
 {
 	ostringstream filename_stream_planepsis;
-	//filename_stream_planepsis << path << folderindex << "/plane_psis_ev" << folderindex << ".dat";
-	filename_stream_planepsis << global_path << "/plane_psis_ev" << folderindex << no_df_stem << ".dat";
+	//filename_stream_planepsis << path << "/plane_psis_ev.dat";
+	filename_stream_planepsis << path << "/plane_psis_ev" << no_df_stem << ".dat";
 	ofstream outputplanepsis(filename_stream_planepsis.str().c_str());
 
 	for (int i = 0; i < n_order; i++)
@@ -180,10 +180,10 @@ void SourceVariances::Output_ev_plane_psis(int folderindex)
 	return;
 }*/
 
-void SourceVariances::Output_dN_dypTdpTdphi(int folderindex)
+void SourceVariances::Output_dN_dypTdpTdphi()
 {
 	ostringstream filename_stream_dN_dypTdpTdphi;
-	filename_stream_dN_dypTdpTdphi << global_path << "/dN_dypTdpTdphi_ev" << folderindex << no_df_stem << ".dat";
+	filename_stream_dN_dypTdpTdphi << path << "/dN_dypTdpTdphi_ev" << no_df_stem << ".dat";
 	ofstream output_dN_dypTdpTdphi(filename_stream_dN_dypTdpTdphi.str().c_str());
 
 	for(int iphi=0; iphi<n_SP_pphi; iphi++)
@@ -195,10 +195,10 @@ void SourceVariances::Output_dN_dypTdpTdphi(int folderindex)
 	return;
 }
 
-void SourceVariances::Output_dN_dypTdpT(int folderindex)
+void SourceVariances::Output_dN_dypTdpT()
 {
 	ostringstream filename_stream_dN_dypTdpT;
-	filename_stream_dN_dypTdpT << global_path << "/dN_dypTdpT_ev" << folderindex << no_df_stem << ".dat";
+	filename_stream_dN_dypTdpT << path << "/dN_dypTdpT_ev" << no_df_stem << ".dat";
 	ofstream output_dN_dypTdpT(filename_stream_dN_dypTdpT.str().c_str());
 
 	for(int ipt=0; ipt<n_SP_pT; ipt++)
@@ -209,13 +209,13 @@ void SourceVariances::Output_dN_dypTdpT(int folderindex)
 	return;
 }
 
-void SourceVariances::Output_all_dN_dypTdpTdphi(int folderindex)
+void SourceVariances::Output_all_dN_dypTdpTdphi()
 {
 	for(int wfi = 0; wfi < n_weighting_functions; wfi++)
 	{
 		ostringstream filename_stream_all_dN_dypTdpTdphi;
-		filename_stream_all_dN_dypTdpTdphi << global_path << "/all_res_dN_dypTdpTdphi_mom_"
-						<< setfill('0') << setw(2) << wfi << "_ev" << folderindex << no_df_stem << ".dat";
+		filename_stream_all_dN_dypTdpTdphi << path << "/all_res_dN_dypTdpTdphi_mom_"
+						<< setfill('0') << setw(2) << wfi << "_ev" << no_df_stem << ".dat";
 		ofstream output_all_dN_dypTdpTdphi(filename_stream_all_dN_dypTdpTdphi.str().c_str());
 		for(int ii = 0; ii < Nparticle; ii++)
 		for(int iphi = 0; iphi < n_interp_pphi_pts; iphi++)
@@ -230,7 +230,7 @@ void SourceVariances::Output_all_dN_dypTdpTdphi(int folderindex)
 	return;
 }
 
-void SourceVariances::Output_total_target_dN_dypTdpTdphi(int folderindex)
+void SourceVariances::Output_total_target_dN_dypTdpTdphi()
 {
 	string local_name = all_particles[target_particle_id].name;
 	replace_parentheses(local_name);
@@ -238,8 +238,8 @@ void SourceVariances::Output_total_target_dN_dypTdpTdphi(int folderindex)
 	for(int wfi = 0; wfi < n_weighting_functions; wfi++)
 	{
 		ostringstream filename_stream_target_dN_dypTdpTdphi;
-		filename_stream_target_dN_dypTdpTdphi << global_path << "/total_" << local_name << "_dN_dypTdpTdphi_mom_"
-								<< setfill('0') << setw(2) << wfi << "_ev" << folderindex << no_df_stem << ".dat";
+		filename_stream_target_dN_dypTdpTdphi << path << "/total_" << local_name << "_dN_dypTdpTdphi_mom_"
+								<< setfill('0') << setw(2) << wfi << "_ev" << no_df_stem << ".dat";
 		ofstream output_target_dN_dypTdpTdphi(filename_stream_target_dN_dypTdpTdphi.str().c_str());
 	
 		for(int iphi = 0; iphi < n_interp_pphi_pts; iphi++)
@@ -258,7 +258,7 @@ void SourceVariances::Output_total_target_dN_dypTdpTdphi(int folderindex)
 void SourceVariances::Output_chosen_resonances()
 {
 	ostringstream filename_stream_crf;
-	filename_stream_crf << global_path << "/chosen_resonances.dat";
+	filename_stream_crf << path << "/chosen_resonances.dat";
 	ofstream output_crf(filename_stream_crf.str().c_str());
 
 	output_crf << particle_monval << endl;
@@ -270,13 +270,13 @@ void SourceVariances::Output_chosen_resonances()
 	return;
 }
 
-void SourceVariances::Read_in_all_dN_dypTdpTdphi(int folderindex)
+void SourceVariances::Read_in_all_dN_dypTdpTdphi()
 {
 	for(int wfi = 0; wfi < n_weighting_functions; wfi++)
 	{
 		ostringstream filename_stream_all_dN_dypTdpTdphi;
-		filename_stream_all_dN_dypTdpTdphi << global_path << "/all_res_dN_dypTdpTdphi_mom_"
-								<< setfill('0') << setw(2) << wfi << "_ev" << folderindex << no_df_stem << ".dat";
+		filename_stream_all_dN_dypTdpTdphi << path << "/all_res_dN_dypTdpTdphi_mom_"
+								<< setfill('0') << setw(2) << wfi << "_ev" << no_df_stem << ".dat";
 		ifstream input_all_dN_dypTdpTdphi(filename_stream_all_dN_dypTdpTdphi.str().c_str());
 	
 		int local_filelength = get_filelength(filename_stream_all_dN_dypTdpTdphi.str().c_str());
@@ -287,7 +287,7 @@ void SourceVariances::Read_in_all_dN_dypTdpTdphi(int folderindex)
 		{
 			cerr << "Read_in_all_dN_dypTdpTdphi(): Mismatch in dimensions in file "
 				<< "all_res_dN_dypTdpTdphi_mom_" << setfill('0') << setw(2) << wfi
-				<< "_ev" << folderindex << no_df_stem << ".dat!" << endl;
+				<< "_ev" << no_df_stem << ".dat!" << endl;
 			exit(1);
 		}
 	
@@ -311,10 +311,10 @@ void SourceVariances::Read_in_all_dN_dypTdpTdphi(int folderindex)
 
 
 	ostringstream filename_stream_pTpts;
-	filename_stream_pTpts << global_path << "/pT_gauss_table.dat";
+	filename_stream_pTpts << path << "/pT_gauss_table.dat";
 	ifstream input_pTpts(filename_stream_pTpts.str().c_str());
 	ostringstream filename_stream_pphipts;
-	filename_stream_pphipts << global_path << "/phi_gauss_table.dat";
+	filename_stream_pphipts << path << "/phi_gauss_table.dat";
 	ifstream input_pphipts(filename_stream_pphipts.str().c_str());
 
 	double * dummy_pT_wts = new double [n_interp_pT_pts];

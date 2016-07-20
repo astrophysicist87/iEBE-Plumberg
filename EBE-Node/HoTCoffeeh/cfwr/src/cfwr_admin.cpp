@@ -24,7 +24,7 @@ template <typename T> int sgn(T val)
 }
 
 CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_info* particle, particle_info* all_particles_in, int Nparticle_in,
-					FO_surf* FOsurf_ptr, vector<int> chosen_resonances_in, int particle_idx, ofstream& myout)
+					vector<int> chosen_resonances_in, int particle_idx, ofstream& myout)
 {
 	paraRdr = paraRdr_in;
 
@@ -43,8 +43,12 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	max_lifetime = paraRdr->getVal("max_lifetime");
 
 	//set header info
-	n_interp_pT_pts = paraRdr->getVal("npT");
-	n_interp_pphi_pts = paraRdr->getVal("npphi");
+	n_pT_pts = paraRdr->getVal("npT");
+	n_pphi_pts = paraRdr->getVal("npphi");
+	nKT = paraRdr->getVal("nKT");
+	nKphi = paraRdr->getVal("nKphi");
+	KT_min = paraRdr->getVal("KTmin");
+	KT_max = paraRdr->getVal("KTmax");
 	qtnpts = paraRdr->getVal("qtnpts");
 	qxnpts = paraRdr->getVal("qxnpts");
 	qynpts = paraRdr->getVal("qynpts");
@@ -79,7 +83,7 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	NchosenParticle = (int)chosen_resonances_in.size();
 	read_in_all_dN_dypTdpTdphi = false;
 	output_all_dN_dypTdpTdphi = true;
-	currentfolderindex = -1;
+	//currentfolderindex = -1;
 	current_level_of_output = 0;
 	//qspace_cs_slice_length = qnpts*qnpts*qnpts*qnpts*2;		//factor of 2 for sin or cos
 	qspace_cs_slice_length = qtnpts*qxnpts*qynpts*qznpts*2;		//factor of 2 for sin or cos
@@ -103,10 +107,7 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	zeta_min = 0.;
 	zeta_max = M_PI;
 	
-	//default: use delta_f in calculations
-	use_delta_f = true;
-	no_df_stem = "";
-	current_FOsurf_ptr = FOsurf_ptr;
+	Set_use_delta_f();
 
 //****************************************************************************************************
 //OLD CODE FOR READING IN SELECTED decay_channels...
@@ -224,7 +225,7 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	}
 
 	//try flattening
-	const int giant_flat_array_size = n_interp_pT_pts * n_interp_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
+	const int giant_flat_array_size = n_pT_pts * n_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
 	thermal_target_dN_dypTdpTdphi_moments = new double [giant_flat_array_size];
 	current_dN_dypTdpTdphi_moments = new double [giant_flat_array_size];
 	current_ln_dN_dypTdpTdphi_moments = new double [giant_flat_array_size];
@@ -253,15 +254,15 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 		qidx++;
 	}
 
-	res_log_info = new double ** [n_interp_pT_pts];
-	res_sign_info = new double ** [n_interp_pT_pts];
-	res_moments_info = new double ** [n_interp_pT_pts];
-	for (int ipt = 0; ipt < n_interp_pT_pts; ++ipt)
+	res_log_info = new double ** [n_pT_pts];
+	res_sign_info = new double ** [n_pT_pts];
+	res_moments_info = new double ** [n_pT_pts];
+	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
 	{
-		res_log_info[ipt] = new double * [n_interp_pphi_pts];
-		res_sign_info[ipt] = new double * [n_interp_pphi_pts];
-		res_moments_info[ipt] = new double * [n_interp_pphi_pts];
-		for (int ipphi = 0; ipphi < n_interp_pphi_pts; ++ipphi)
+		res_log_info[ipt] = new double * [n_pphi_pts];
+		res_sign_info[ipt] = new double * [n_pphi_pts];
+		res_moments_info[ipt] = new double * [n_pphi_pts];
+		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		{
 			res_log_info[ipt][ipphi] = new double [qspace_cs_slice_length];
 			res_sign_info[ipt][ipphi] = new double [qspace_cs_slice_length];
@@ -277,19 +278,19 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	sign_spectra = new double ** [Nparticle];
 	for (int ir = 0; ir < Nparticle; ++ir)
 	{
-		spectra[ir] = new double * [n_interp_pT_pts];
-		abs_spectra[ir] = new double * [n_interp_pT_pts];
-		thermal_spectra[ir] = new double * [n_interp_pT_pts];
-		log_spectra[ir] = new double * [n_interp_pT_pts];
-		sign_spectra[ir] = new double * [n_interp_pT_pts];
-		for (int ipT = 0; ipT < n_interp_pT_pts; ++ipT)
+		spectra[ir] = new double * [n_pT_pts];
+		abs_spectra[ir] = new double * [n_pT_pts];
+		thermal_spectra[ir] = new double * [n_pT_pts];
+		log_spectra[ir] = new double * [n_pT_pts];
+		sign_spectra[ir] = new double * [n_pT_pts];
+		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		{
-			spectra[ir][ipT] = new double [n_interp_pphi_pts];
-			abs_spectra[ir][ipT] = new double [n_interp_pphi_pts];
-			thermal_spectra[ir][ipT] = new double [n_interp_pphi_pts];
-			log_spectra[ir][ipT] = new double [n_interp_pphi_pts];
-			sign_spectra[ir][ipT] = new double [n_interp_pphi_pts];
-			for (int ipphi = 0; ipphi < n_interp_pphi_pts; ++ipphi)
+			spectra[ir][ipT] = new double [n_pphi_pts];
+			abs_spectra[ir][ipT] = new double [n_pphi_pts];
+			thermal_spectra[ir][ipT] = new double [n_pphi_pts];
+			log_spectra[ir][ipT] = new double [n_pphi_pts];
+			sign_spectra[ir][ipT] = new double [n_pphi_pts];
+			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 			{
 				spectra[ir][ipT][ipphi] = 0.0;
 				abs_spectra[ir][ipT][ipphi] = 0.0;
@@ -300,8 +301,8 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 		}
 	}
 
-	flat_spectra = new double [n_interp_pT_pts*n_interp_pphi_pts];
-	for (int iii = 0; iii < n_interp_pT_pts*n_interp_pphi_pts; ++iii)
+	flat_spectra = new double [n_pT_pts*n_pphi_pts];
+	for (int iii = 0; iii < n_pT_pts*n_pphi_pts; ++iii)
 		flat_spectra[iii] = 0.0;
 
 	tmp_moments_real = new double **** [qtnpts];
@@ -320,9 +321,9 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 				tmp_moments_imag[iqt][iqx][iqy] = new double * [qznpts];
 				for (int iqz = 0; iqz < qznpts; ++iqz)
 				{
-					tmp_moments_real[iqt][iqx][iqy][iqz] = new double [n_interp_pT_pts*n_interp_pphi_pts];
-					tmp_moments_imag[iqt][iqx][iqy][iqz] = new double [n_interp_pT_pts*n_interp_pphi_pts];
-					for (int iii = 0; iii < n_interp_pT_pts*n_interp_pphi_pts; ++iii)
+					tmp_moments_real[iqt][iqx][iqy][iqz] = new double [n_pT_pts*n_pphi_pts];
+					tmp_moments_imag[iqt][iqx][iqy][iqz] = new double [n_pT_pts*n_pphi_pts];
+					for (int iii = 0; iii < n_pT_pts*n_pphi_pts; ++iii)
 					{
 						tmp_moments_real[iqt][iqx][iqy][iqz][iii] = 0.0;
 						tmp_moments_imag[iqt][iqx][iqy][iqz][iii] = 0.0;	
@@ -334,15 +335,15 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 
 	// used for keeping track of how many FO cells are important for given pT, pphi
 	// also set up q-space cutoffs array
-	number_of_FOcells_above_cutoff_array = new int * [n_interp_pT_pts];
-	current_q_space_cutoff = new double * [n_interp_pT_pts];
-	correlator_minus_one_cutoff_norms = new int ** [n_interp_pT_pts];
-	for (int ipT = 0; ipT < n_interp_pT_pts; ++ipT)
+	/*number_of_FOcells_above_cutoff_array = new int * [n_pT_pts];
+	current_q_space_cutoff = new double * [n_pT_pts];
+	correlator_minus_one_cutoff_norms = new int ** [n_pT_pts];
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 	{
-		number_of_FOcells_above_cutoff_array[ipT] = new int [n_interp_pphi_pts];
-		current_q_space_cutoff[ipT] = new double [n_interp_pphi_pts];
-		correlator_minus_one_cutoff_norms[ipT] = new int * [n_interp_pphi_pts];
-		for (int ipphi = 0; ipphi < n_interp_pphi_pts; ++ipphi)
+		number_of_FOcells_above_cutoff_array[ipT] = new int [n_pphi_pts];
+		current_q_space_cutoff[ipT] = new double [n_pphi_pts];
+		correlator_minus_one_cutoff_norms[ipT] = new int * [n_pphi_pts];
+		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		{
 			correlator_minus_one_cutoff_norms[ipT][ipphi] = new int [4];
 			for (int ii = 0; ii < 4; ++ii)
@@ -351,7 +352,7 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 			number_of_FOcells_above_cutoff_array[ipT][ipphi] = 0;
 			current_q_space_cutoff[ipT][ipphi] = 0.0;
 		}
-	}
+	}*/
 
 	// set-up integration points for resonance integrals
 	v_pts = new double [n_v_pts];
@@ -364,42 +365,44 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	gauss_quadrature(n_v_pts, 1, 0.0, 0.0, v_min, v_max, v_pts, v_wts);
 
 	//set pT and pphi points
-	SPinterp_pT = new double [n_interp_pT_pts];
-	SPinterp_pT_wts = new double [n_interp_pT_pts];
-	SPinterp_pphi = new double [n_interp_pphi_pts];
-	SPinterp_pphi_wts = new double [n_interp_pphi_pts];
-	sin_SPinterp_pphi = new double [n_interp_pphi_pts];
-	cos_SPinterp_pphi = new double [n_interp_pphi_pts];
-	gauss_quadrature(n_interp_pT_pts, 5, 0.0, 0.0, 0.0, 13.0, SPinterp_pT, SPinterp_pT_wts);
-	gauss_quadrature(n_interp_pphi_pts, 1, 0.0, 0.0, interp_pphi_min, interp_pphi_max, SPinterp_pphi, SPinterp_pphi_wts);
-	for(int ipphi=0; ipphi<n_interp_pphi_pts; ipphi++)
+	SP_pT = new double [n_pT_pts];
+	SP_pT_wts = new double [n_pT_pts];
+	SP_pphi = new double [n_pphi_pts];
+	SP_pphi_wts = new double [n_pphi_pts];
+	sin_SP_pphi = new double [n_pphi_pts];
+	cos_SP_pphi = new double [n_pphi_pts];
+	gauss_quadrature(n_pT_pts, 5, 0.0, 0.0, 0.0, 13.0, SP_pT, SP_pT_wts);
+	gauss_quadrature(n_pphi_pts, 1, 0.0, 0.0, interp_pphi_min, interp_pphi_max, SP_pphi, SP_pphi_wts);
+	for(int ipphi=0; ipphi<n_pphi_pts; ipphi++)
 	{
-		sin_SPinterp_pphi[ipphi] = sin(SPinterp_pphi[ipphi]);
-		cos_SPinterp_pphi[ipphi] = cos(SPinterp_pphi[ipphi]);
+		sin_SP_pphi[ipphi] = sin(SP_pphi[ipphi]);
+		cos_SP_pphi[ipphi] = cos(SP_pphi[ipphi]);
 	}
 
 	//set p0 and pz points
-	SPinterp_p0 = new double * [n_interp_pT_pts];
-	SPinterp_pz = new double * [n_interp_pT_pts];
-	for(int ipt = 0; ipt < n_interp_pT_pts; ++ipt)
+	SP_p0 = new double * [n_pT_pts];
+	SP_pz = new double * [n_pT_pts];
+	for(int ipt = 0; ipt < n_pT_pts; ++ipt)
 	{
-		SPinterp_p0[ipt] = new double [eta_s_npts];
-		SPinterp_pz[ipt] = new double [eta_s_npts];
+		SP_p0[ipt] = new double [eta_s_npts];
+		SP_pz[ipt] = new double [eta_s_npts];
 	}
 
+	plane_angle = new double [n_order];
+
 	//pair momentum
-	K_T = new double [n_localp_T];
-	double dK_T = (localp_T_max - localp_T_min)/(n_localp_T - 1 + 1e-100);
-	for (int i = 0; i < n_localp_T; ++i)
-		K_T[i] = localp_T_min + i*dK_T;
+	K_T = new double [nKT];
+	double dK_T = (KT_max - KT_min)/(nKT - 1 + 1e-100);
+	for (int i = 0; i < nKT; ++i)
+		K_T[i] = KT_min + i*dK_T;
 	//K_y = p_y;
 	K_y = 0.;
 	ch_K_y = cosh(K_y);
 	sh_K_y = sinh(K_y);
 	beta_l = sh_K_y/ch_K_y;
-	K_phi = new double [n_localp_phi];
-	K_phi_weight = new double [n_localp_phi];
-	gauss_quadrature(n_localp_phi, 1, 0.0, 0.0, localp_phi_min, localp_phi_max, K_phi, K_phi_weight);
+	K_phi = new double [nKphi];
+	K_phi_weight = new double [nKphi];
+	gauss_quadrature(nKphi, 1, 0.0, 0.0, Kphi_min, Kphi_max, K_phi, K_phi_weight);
 
 	//spatial rapidity grid
 	eta_s = new double [eta_s_npts];
@@ -413,92 +416,90 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 		sh_eta_s[ieta] = sinh(eta_s[ieta]);
 	}
 
-//debugger(__LINE__, __FILE__);
-
 	//set HBT radii
-	R2_side_GF = new double * [n_interp_pT_pts];
-	R2_out_GF = new double * [n_interp_pT_pts];
-	R2_long_GF = new double * [n_interp_pT_pts];
-	R2_outside_GF = new double * [n_interp_pT_pts];
-	R2_sidelong_GF = new double * [n_interp_pT_pts];
-	R2_outlong_GF = new double * [n_interp_pT_pts];
+	R2_side_GF = new double * [n_pT_pts];
+	R2_out_GF = new double * [n_pT_pts];
+	R2_long_GF = new double * [n_pT_pts];
+	R2_outside_GF = new double * [n_pT_pts];
+	R2_sidelong_GF = new double * [n_pT_pts];
+	R2_outlong_GF = new double * [n_pT_pts];
 
-	R2_side_GF_C = new double * [n_localp_T];
-	R2_out_GF_C = new double * [n_localp_T];
-	R2_long_GF_C = new double * [n_localp_T];
-	R2_outside_GF_C = new double * [n_localp_T];
-	R2_sidelong_GF_C = new double * [n_localp_T];
-	R2_outlong_GF_C = new double * [n_localp_T];
+	R2_side_GF_C = new double * [nKT];
+	R2_out_GF_C = new double * [nKT];
+	R2_long_GF_C = new double * [nKT];
+	R2_outside_GF_C = new double * [nKT];
+	R2_sidelong_GF_C = new double * [nKT];
+	R2_outlong_GF_C = new double * [nKT];
 
-	R2_side_GF_S = new double * [n_localp_T];
-	R2_out_GF_S = new double * [n_localp_T];
-	R2_long_GF_S = new double * [n_localp_T];
-	R2_outside_GF_S = new double * [n_localp_T];
-	R2_sidelong_GF_S = new double * [n_localp_T];
-	R2_outlong_GF_S = new double * [n_localp_T];
+	R2_side_GF_S = new double * [nKT];
+	R2_out_GF_S = new double * [nKT];
+	R2_long_GF_S = new double * [nKT];
+	R2_outside_GF_S = new double * [nKT];
+	R2_sidelong_GF_S = new double * [nKT];
+	R2_outlong_GF_S = new double * [nKT];
 
-	R2_side_err = new double * [n_interp_pT_pts];
-	R2_out_err = new double * [n_interp_pT_pts];
-	R2_long_err = new double * [n_interp_pT_pts];
-	R2_outside_err = new double * [n_interp_pT_pts];
-	R2_sidelong_err = new double * [n_interp_pT_pts];
-	R2_outlong_err = new double * [n_interp_pT_pts];
+	R2_side_err = new double * [n_pT_pts];
+	R2_out_err = new double * [n_pT_pts];
+	R2_long_err = new double * [n_pT_pts];
+	R2_outside_err = new double * [n_pT_pts];
+	R2_sidelong_err = new double * [n_pT_pts];
+	R2_outlong_err = new double * [n_pT_pts];
 
-	R2_side_QM = new double * [n_interp_pT_pts];
-	R2_out_QM = new double * [n_interp_pT_pts];
-	R2_long_QM = new double * [n_interp_pT_pts];
-	R2_outside_QM = new double * [n_interp_pT_pts];
-	R2_sidelong_QM = new double * [n_interp_pT_pts];
-	R2_outlong_QM = new double * [n_interp_pT_pts];
+	R2_side_QM = new double * [n_pT_pts];
+	R2_out_QM = new double * [n_pT_pts];
+	R2_long_QM = new double * [n_pT_pts];
+	R2_outside_QM = new double * [n_pT_pts];
+	R2_sidelong_QM = new double * [n_pT_pts];
+	R2_outlong_QM = new double * [n_pT_pts];
 
-	R2_side_QM_C = new double * [n_localp_T];
-	R2_out_QM_C = new double * [n_localp_T];
-	R2_long_QM_C = new double * [n_localp_T];
-	R2_outside_QM_C = new double * [n_localp_T];
-	R2_sidelong_QM_C = new double * [n_localp_T];
-	R2_outlong_QM_C = new double * [n_localp_T];
+	R2_side_QM_C = new double * [nKT];
+	R2_out_QM_C = new double * [nKT];
+	R2_long_QM_C = new double * [nKT];
+	R2_outside_QM_C = new double * [nKT];
+	R2_sidelong_QM_C = new double * [nKT];
+	R2_outlong_QM_C = new double * [nKT];
 
-	R2_side_QM_S = new double * [n_localp_T];
-	R2_out_QM_S = new double * [n_localp_T];
-	R2_long_QM_S = new double * [n_localp_T];
-	R2_outside_QM_S = new double * [n_localp_T];
-	R2_sidelong_QM_S = new double * [n_localp_T];
-	R2_outlong_QM_S = new double * [n_localp_T];
+	R2_side_QM_S = new double * [nKT];
+	R2_out_QM_S = new double * [nKT];
+	R2_long_QM_S = new double * [nKT];
+	R2_outside_QM_S = new double * [nKT];
+	R2_sidelong_QM_S = new double * [nKT];
+	R2_outlong_QM_S = new double * [nKT];
 
-	lambda_Correl = new double * [n_interp_pT_pts];
-	lambda_Correl_err = new double * [n_interp_pT_pts];
+	lambda_Correl = new double * [n_pT_pts];
+	lambda_Correl_err = new double * [n_pT_pts];
 
-	lambda_QM = new double * [n_interp_pT_pts];
+	lambda_QM = new double * [n_pT_pts];
 
-	for(int ipt = 0; ipt < n_interp_pT_pts; ++ipt)
+	for(int ipt = 0; ipt < n_pT_pts; ++ipt)
 	{
-		R2_side_GF[ipt] = new double [n_interp_pphi_pts];
-		R2_out_GF[ipt] = new double [n_interp_pphi_pts];
-		R2_outside_GF[ipt] = new double [n_interp_pphi_pts];
-		R2_long_GF[ipt] = new double [n_interp_pphi_pts];
-		R2_sidelong_GF[ipt] = new double [n_interp_pphi_pts];
-		R2_outlong_GF[ipt] = new double [n_interp_pphi_pts];
+		R2_side_GF[ipt] = new double [n_pphi_pts];
+		R2_out_GF[ipt] = new double [n_pphi_pts];
+		R2_outside_GF[ipt] = new double [n_pphi_pts];
+		R2_long_GF[ipt] = new double [n_pphi_pts];
+		R2_sidelong_GF[ipt] = new double [n_pphi_pts];
+		R2_outlong_GF[ipt] = new double [n_pphi_pts];
 
-		R2_side_QM[ipt] = new double [n_interp_pphi_pts];
-		R2_out_QM[ipt] = new double [n_interp_pphi_pts];
-		R2_outside_QM[ipt] = new double [n_interp_pphi_pts];
-		R2_long_QM[ipt] = new double [n_interp_pphi_pts];
-		R2_sidelong_QM[ipt] = new double [n_interp_pphi_pts];
-		R2_outlong_QM[ipt] = new double [n_interp_pphi_pts];
+		R2_side_QM[ipt] = new double [n_pphi_pts];
+		R2_out_QM[ipt] = new double [n_pphi_pts];
+		R2_outside_QM[ipt] = new double [n_pphi_pts];
+		R2_long_QM[ipt] = new double [n_pphi_pts];
+		R2_sidelong_QM[ipt] = new double [n_pphi_pts];
+		R2_outlong_QM[ipt] = new double [n_pphi_pts];
 
-		R2_side_err[ipt] = new double [n_interp_pphi_pts];
-		R2_out_err[ipt] = new double [n_interp_pphi_pts];
-		R2_long_err[ipt] = new double [n_interp_pphi_pts];
-		R2_outside_err[ipt] = new double [n_interp_pphi_pts];
-		R2_sidelong_err[ipt] = new double [n_interp_pphi_pts];
-		R2_outlong_err[ipt] = new double [n_interp_pphi_pts];
+		R2_side_err[ipt] = new double [n_pphi_pts];
+		R2_out_err[ipt] = new double [n_pphi_pts];
+		R2_long_err[ipt] = new double [n_pphi_pts];
+		R2_outside_err[ipt] = new double [n_pphi_pts];
+		R2_sidelong_err[ipt] = new double [n_pphi_pts];
+		R2_outlong_err[ipt] = new double [n_pphi_pts];
 
-		lambda_Correl[ipt] = new double [n_interp_pphi_pts];
-		lambda_Correl_err[ipt] = new double [n_interp_pphi_pts];
+		lambda_Correl[ipt] = new double [n_pphi_pts];
+		lambda_Correl_err[ipt] = new double [n_pphi_pts];
 
-		lambda_QM[ipt] = new double [n_interp_pphi_pts];
+		lambda_QM[ipt] = new double [n_pphi_pts];
 
-		for (int ipphi = 0; ipphi < n_interp_pphi_pts; ++ipphi)
+		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		{
 			R2_side_GF[ipt][ipphi] = 0.;
 			R2_out_GF[ipt][ipphi] = 0.;
@@ -519,7 +520,7 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 		}
 	}
 
-	for (int iKT = 0; iKT < n_localp_T; ++iKT)
+	for (int iKT = 0; iKT < nKT; ++iKT)
 	{
 		R2_side_GF_C[iKT] = new double [n_order];
 		R2_out_GF_C[iKT] = new double [n_order];
@@ -667,15 +668,15 @@ void CorrelationFunction::Delete_osc_arrays()
 	}
 }
 
-void CorrelationFunction::Update_sourcefunction(particle_info* particle, int FOarray_length, int particle_idx)
+void CorrelationFunction::Set_eiqx_matrices()
 {
-	full_FO_length = FOarray_length * eta_s_npts;
+	full_FO_length = FO_length * eta_s_npts;
 
-	Allocate_osc_arrays(FOarray_length);
+	Allocate_osc_arrays(FO_length);
 
-	for (int isurf = 0; isurf < FOarray_length; ++isurf)
+	for (int isurf = 0; isurf < FO_length; ++isurf)
 	{
-		FO_surf * surf = &current_FOsurf_ptr[isurf];
+		FO_surf * surf = &FOsurf_ptr[isurf];
 
 		double tau = surf->tau;
 		double xpt = surf->xpt;
@@ -712,27 +713,18 @@ void CorrelationFunction::Update_sourcefunction(particle_info* particle, int FOa
 		}
 	}
 
-	S_p_withweight_array = new double ** [n_interp_pT_pts];
-	for (int ipt = 0; ipt < n_interp_pT_pts; ++ipt)
-		S_p_withweight_array[ipt] = new double * [n_interp_pphi_pts];
-
-   //particle information
-   particle_name = particle->name;
-   particle_mass = particle->mass;
-   particle_sign = particle->sign;
-   particle_gspin = particle->gspin;
-   particle_id = particle_idx;
-
-	*global_out_stream_ptr << "Inside Update_sourcefunction(...): using fraction_of_resonances = " << fraction_of_resonances << endl;
-
-   FO_length = FOarray_length;
+	S_p_withweight_array = new double ** [n_pT_pts];
+	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+		S_p_withweight_array[ipt] = new double * [n_pphi_pts];
 
 	// set the rest later
-	most_important_FOcells = new size_t ** [n_interp_pT_pts];
-	for(int ipt=0; ipt<n_interp_pT_pts; ipt++)
-		most_important_FOcells[ipt] = new size_t * [n_interp_pphi_pts];
+	most_important_FOcells = new size_t ** [n_pT_pts];
+	for(int ipt = 0; ipt < n_pT_pts; ipt++)
+		most_important_FOcells[ipt] = new size_t * [n_pphi_pts];
 
-   return;
+	*global_out_stream_ptr << "Using fraction_of_resonances = " << fraction_of_resonances << endl;
+
+	return;
 }
 
 void CorrelationFunction::Fill_out_pts(double * pointsarray, int numpoints, double max_val, int spacing_type)
@@ -769,7 +761,7 @@ CorrelationFunction::~CorrelationFunction()
    delete [] eta_s;
    delete [] eta_s_weight;
 
-	for(int ipt=0; ipt<n_interp_pT_pts; ipt++)
+	for(int ipt=0; ipt<n_pT_pts; ipt++)
 	{
 		delete [] lambda_Correl[ipt];
 		delete [] R2_side_GF[ipt];
@@ -805,7 +797,7 @@ CorrelationFunction::~CorrelationFunction()
 
 	for (int ir = 0; ir < Nparticle; ++ir)
 	{
-		for (int ipT = 0; ipT < n_interp_pT_pts; ++ipT)
+		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 			delete [] spectra[ir][ipT];
 		delete [] spectra[ir];
 	}
@@ -818,17 +810,17 @@ CorrelationFunction::~CorrelationFunction()
 
 void CorrelationFunction::Allocate_CFvals()
 {
-	CFvals = new double **** [n_interp_pT_pts];
-	thermalCFvals = new double **** [n_interp_pT_pts];
-	crosstermCFvals = new double **** [n_interp_pT_pts];
-	resonancesCFvals = new double **** [n_interp_pT_pts];
-	for (int ipT = 0; ipT < n_interp_pT_pts; ++ipT)
+	CFvals = new double **** [n_pT_pts];
+	thermalCFvals = new double **** [n_pT_pts];
+	crosstermCFvals = new double **** [n_pT_pts];
+	resonancesCFvals = new double **** [n_pT_pts];
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 	{
-		CFvals[ipT] = new double *** [n_interp_pphi_pts];
-		thermalCFvals[ipT] = new double *** [n_interp_pphi_pts];
-		crosstermCFvals[ipT] = new double *** [n_interp_pphi_pts];
-		resonancesCFvals[ipT] = new double *** [n_interp_pphi_pts];
-		for (int ipphi = 0; ipphi < n_interp_pphi_pts; ++ipphi)
+		CFvals[ipT] = new double *** [n_pphi_pts];
+		thermalCFvals[ipT] = new double *** [n_pphi_pts];
+		crosstermCFvals[ipT] = new double *** [n_pphi_pts];
+		resonancesCFvals[ipT] = new double *** [n_pphi_pts];
+		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		{
 			CFvals[ipT][ipphi] = new double ** [qxnpts];
 			thermalCFvals[ipT][ipphi] = new double ** [qxnpts];
@@ -863,9 +855,9 @@ void CorrelationFunction::Allocate_CFvals()
 
 void CorrelationFunction::Delete_CFvals()
 {
-	for (int ipT = 0; ipT < n_interp_pT_pts; ++ipT)
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 	{
-		for (int ipphi = 0; ipphi < n_interp_pphi_pts; ++ipphi)
+		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		{
 			for (int iqx = 0; iqx < qxnpts; ++iqx)
 			{
@@ -902,7 +894,7 @@ void CorrelationFunction::Delete_CFvals()
 
 void CorrelationFunction::Delete_S_p_withweight_array()
 {
-	for (int ipt = 0; ipt < n_interp_pT_pts; ++ipt)
+	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
 		delete [] S_p_withweight_array[ipt];
 	delete [] S_p_withweight_array;
 
@@ -1107,17 +1099,12 @@ void CorrelationFunction::Set_correlation_function_q_pts()
 // sets points in q-space for computing weighted spectra grid
 void CorrelationFunction::Set_q_points()
 {
-	//q_pts = new double [qnpts];
-	//for (int iq = 0; iq < qnpts; ++iq)
-	//	q_pts[iq] = init_q + (double)iq * delta_q;
-	//q_axes = new double [3];
-
 	qt_pts = new double [qtnpts];
 	qx_pts = new double [qxnpts];
 	qy_pts = new double [qynpts];
 	qz_pts = new double [qznpts];
 
-	double local_pT_max = SPinterp_pT[n_interp_pT_pts-1];	//max pT value
+	double local_pT_max = SP_pT[n_pT_pts-1];	//max pT value
 
 	//q0 maximized by maximizing pT, maximizing qo, and setting qs==ql==0
 	double mtarget = all_particles[target_particle_id].mass;
@@ -1210,52 +1197,26 @@ bool CorrelationFunction::fexists(const char *filename)
 }
 
 //print output to output filestream, one line at a time
-void CorrelationFunction::Set_ofstream(ofstream& myout)
+void CorrelationFunction::Set_path(string path_in)
 {
-	global_out_stream_ptr = &myout;
-
+	path = path_in;
 	return;
 }
 
-//print output to output filestream, one line at a time
-void CorrelationFunction::Set_path(string localpath)
+void CorrelationFunction::Set_use_delta_f()
 {
-	global_path = localpath;
-
-	return;
-}
-
-void CorrelationFunction::Set_runfolder(string localrunfolder)
-{
-	global_runfolder = localrunfolder;
-
-	return;
-}
-
-void CorrelationFunction::Set_resultsfolder_stem(string usrdef_resultsfolder_stem)
-{
-	global_resultsfolder_stem = usrdef_resultsfolder_stem;
-
-	return;
-}
-
-void CorrelationFunction::Set_use_delta_f(bool usrdef_usedeltaf)
-{
-	use_delta_f = usrdef_usedeltaf;
-	if (!use_delta_f)
+	use_delta_f = INCLUDE_DELTA_F;
+	if (!INCLUDE_DELTA_F)
 		no_df_stem = "_no_df";
 	return;
 }
 
-void CorrelationFunction::Set_particle_mass(double usrdef_particle_mass)
+void CorrelationFunction::Set_FOsurf_ptr(FO_surf* FOsurf_ptr_in, int FO_length_in)
 {
-	particle_mass = usrdef_particle_mass;
-	return;
-}
+	FOsurf_ptr = FOsurf_ptr_in;
+	FO_length = FO_length_in;
 
-void CorrelationFunction::Set_current_FOsurf_ptr(FO_surf* FOsurf_ptr)
-{
-	current_FOsurf_ptr = FOsurf_ptr;
+	Set_eiqx_matrices();
 	return;
 }
 
@@ -1364,7 +1325,7 @@ void CorrelationFunction::Zero_resonance_running_sum_vector(double * vec)
 
 void CorrelationFunction::Setup_current_daughters_dN_dypTdpTdphi_moments(int n_daughter)
 {
-	const int giant_flat_array_size = n_interp_pT_pts * n_interp_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
+	const int giant_flat_array_size = n_pT_pts * n_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
 	current_daughters_dN_dypTdpTdphi_moments = new double * [n_daughter];
 	current_daughters_ln_dN_dypTdpTdphi_moments = new double * [n_daughter];
 	current_daughters_sign_of_dN_dypTdpTdphi_moments = new double * [n_daughter];
