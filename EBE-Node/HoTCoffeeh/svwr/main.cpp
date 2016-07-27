@@ -69,13 +69,15 @@ int main(int argc, char *argv[])
 
 	//read the data arrays for the decoupling information
 	FO_surf* FOsurf_ptr = new FO_surf[FO_length];
-	read_decdat(FO_length, FOsurf_ptr, workingDirectory, false);
+	bool including_bulkpi = paraRdr->getVal("include_bulk_pi");
+	read_decdat(FO_length, FOsurf_ptr, workingDirectory, including_bulkpi);
    
 	//read the positions of the freeze out surface
 	read_surfdat(FO_length, FOsurf_ptr, workingDirectory);
    
 	//read the chemical potential on the freeze out surface
 	int N_stableparticle;
+	//ifstream particletable("/home/plumberg.1/HBTPlumberg/EOS/EOS_particletable.dat");
 	ifstream particletable("EOS/EOS_particletable.dat");
 	particletable >> N_stableparticle;
 	double** particle_mu = new double* [N_stableparticle];
@@ -99,12 +101,12 @@ int main(int argc, char *argv[])
 	output << "Calculating "<< particle[particle_idx].name << endl;
 	if (N_stableparticle > 0)
 	{
-		output << " EOS is partially chemical equilibrium " << endl;
+		output << "EOS is partially chemical equilibrium " << endl;
 		calculate_particle_mu(7, Nparticle, FOsurf_ptr, FO_length, particle, particle_mu);
 	}
 	else
 	{
-		output << " EOS is chemical equilibrium. " << endl;
+		output << "EOS is chemical equilibrium. " << endl;
 		for(int j=0; j<Nparticle; j++)
 		{
 			particle[j].mu = 0.0e0;
@@ -120,7 +122,7 @@ int main(int argc, char *argv[])
 	compute_total_contribution_percentages(particle_idx, Nparticle, particle);
 	//sort all particles by importance of their percentage contributions, then compute resonance SVs for only contributions up to some threshold
    sw.Stop();
-   output << "read in data finished!" << endl;
+   output << "Read in data finished!" << endl;
    output << "Used " << sw.printTime() << " sec." << endl;
 
    //HBT calculations begin ...
@@ -134,13 +136,13 @@ int main(int argc, char *argv[])
      }
 
 	// Get chosen particles
-	double threshold = 1.0;
-	double net_fraction_resonance_contribution = 1.0;
+	double threshold = 0.0;
+	double net_fraction_resonance_contribution = 0.0;
 	vector<int> chosen_resonance_indices;
 
 	if ((int)(paraRdr->getVal("chosenParticlesMode")) == 0)				// calculate chosen resonances from threshold
 	{
-		threshold = paraRdr->getVal("resonanceThreshold");
+		threshold = paraRdr->getVal("SV_resonanceThreshold");
 		output << "Working with threshold = " << threshold << endl;
 		get_important_resonances(particle_idx, &chosen_resonance_indices, particle, Nparticle, threshold, net_fraction_resonance_contribution, output);
 		get_all_descendants(&chosen_resonance_indices, particle, Nparticle, output);
@@ -174,6 +176,7 @@ int main(int argc, char *argv[])
 
 		// erase the last element of sorted list, which will generally include the target particle
 		chosen_resonance_indices.erase (chosen_resonance_indices.end());
+		net_fraction_resonance_contribution = 1.0;
 	}
 	else																// otherwise, you did something wrong!
 	{
@@ -181,7 +184,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-if (1) exit(1);
+//if (1) return(0);
 
 	// Create SourceVariances object
 	SourceVariances Source_function(paraRdr, &particle[particle_idx], particle, Nparticle, chosen_resonance_indices, particle_idx, output);

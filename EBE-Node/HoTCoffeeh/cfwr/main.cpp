@@ -73,7 +73,8 @@ int main(int argc, char *argv[])
 
 	//read the data arrays for the decoupling information
 	FO_surf* FOsurf_ptr = new FO_surf[FO_length];
-	read_decdat(FO_length, FOsurf_ptr, workingDirectory, false);
+	bool including_bulkpi = paraRdr->getVal("include_bulk_pi");
+	read_decdat(FO_length, FOsurf_ptr, workingDirectory, including_bulkpi);
    
 	//read the positions of the freeze out surface
 	read_surfdat(FO_length, FOsurf_ptr, workingDirectory);
@@ -84,12 +85,12 @@ int main(int argc, char *argv[])
 	ifstream particletable("EOS/EOS_particletable.dat");
 	particletable >> N_stableparticle;
 	double ** particle_mu = new double * [N_stableparticle];
-	for(int i = 0; i < N_stableparticle; i++)
+	for (int i = 0; i < N_stableparticle; i++)
 		particle_mu[i] = new double [FO_length];
-	for(int i = 0; i < N_stableparticle; i++)
-	for(int j = 0; j < FO_length; j++)
+	for (int i = 0; i < N_stableparticle; i++)
+	for (int j = 0; j < FO_length; j++)
 		particle_mu[i][j] = 0.0;
-	if(N_stableparticle > 0)
+	if (N_stableparticle > 0)
 		read_decdat_mu(FO_length, N_stableparticle, particle_mu, workingDirectory);
 
 	//read particle resonance decay table
@@ -97,14 +98,14 @@ int main(int argc, char *argv[])
 	int Nparticle = read_resonance(particle);
 	output << "read in total " << Nparticle << " particles!" << endl;
 	output << "Calculating " << particle[particle_idx].name << endl;
-	if(N_stableparticle >0)
+	if (N_stableparticle > 0)
 	{
-		output << " EOS is partially chemical equilibrium " << endl;
+		output << "EOS is partially chemical equilibrium " << endl;
 		calculate_particle_mu(7, Nparticle, FOsurf_ptr, FO_length, particle, particle_mu);
 	}
 	else
 	{
-		output << " EOS is chemical equilibrium. " << endl;
+		output << "EOS is chemical equilibrium. " << endl;
 		for(int j=0; j<Nparticle; j++)
 		{
 			particle[j].mu = 0.0e0;
@@ -115,15 +116,12 @@ int main(int argc, char *argv[])
 	//calculate (semi-analytic approximation of) pure thermal spectra for all particle species
 	calculate_thermal_particle_yield(Nparticle, particle, FOsurf_ptr[0].Tdec);
 
-	//do the same thing for all pT values
-	calculate_thermal_particle_yield(Nparticle, particle, FOsurf_ptr[0].Tdec);
-
 	//use this to estimate resonance-decay contributions from each particles species to final state particle, here, pion(+),
 	//as well as set effective branching ratios
 	compute_total_contribution_percentages(particle_idx, Nparticle, particle);
 	//sort all particles by importance of their percentage contributions, then compute resonance SVs for only contributions up to some threshold
 	sw.Stop();
-	output << "read in data finished!" << endl;
+	output << "Read in data finished!" << endl;
 	output << "Used " << sw.printTime() << " sec." << endl;
 
 	//HBT calculations begin ...
@@ -137,13 +135,13 @@ int main(int argc, char *argv[])
 	}
 
 	// Get chosen particles
-	double threshold = 1.0;
-	double net_fraction_resonance_contribution = 1.0;
+	double threshold = 0.0;
+	double net_fraction_resonance_contribution = 0.0;
 	vector<int> chosen_resonance_indices;
 
 	if ((int)(paraRdr->getVal("chosenParticlesMode")) == 0)				// calculate chosen resonances from threshold
 	{
-		threshold = paraRdr->getVal("resonanceThreshold");
+		threshold = paraRdr->getVal("CF_resonanceThreshold");
 		output << "Working with threshold = " << threshold << endl;
 		get_important_resonances(particle_idx, &chosen_resonance_indices, particle, Nparticle, threshold, net_fraction_resonance_contribution, output);
 		get_all_descendants(&chosen_resonance_indices, particle, Nparticle, output);
@@ -177,6 +175,7 @@ int main(int argc, char *argv[])
 
 		// erase the last element of sorted list, which will generally include the target particle
 		chosen_resonance_indices.erase (chosen_resonance_indices.end());
+		net_fraction_resonance_contribution = 1.0;
 	}
 	else																// otherwise, you did something wrong!
 	{
@@ -184,7 +183,10 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-if (1) exit(1);
+//if (1) return(0);
+
+debugger(__LINE__, __FILE__);
+cout << n_zeta_pts << " at " << &n_zeta_pts << endl;
 
 	// Create CorrelationFunction object
 	CorrelationFunction correlation_function(paraRdr, &particle[particle_idx], particle, Nparticle, chosen_resonance_indices, particle_idx, output);

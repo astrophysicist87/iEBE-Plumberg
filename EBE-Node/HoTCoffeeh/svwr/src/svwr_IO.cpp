@@ -50,7 +50,7 @@ void SourceVariances::Output_results()
 	filename_stream_S << path << "/Sourcefunction_variances_WR" << no_df_stem << ".dat";
 	ofstream output_Svars(filename_stream_S.str().c_str());
 
-	for(int iKT = 0; iKT < n_localp_T; iKT++)
+	for(int iKT = 0; iKT < nKT; iKT++)
 	{
 		for(int Morder=0; Morder<n_order; Morder++)
 		{
@@ -59,7 +59,7 @@ void SourceVariances::Output_results()
 				<< "  " << R2_outside_C[iKT][Morder] << "   " << R2_outside_S[iKT][Morder] << "  " << R2_long_C[iKT][Morder] << "  " << R2_long_S[iKT][Morder]
 				<< "  " << R2_sidelong_C[iKT][Morder] << "   " << R2_sidelong_S[iKT][Morder] << "  " << R2_outlong_C[iKT][Morder] << "  " << R2_outlong_S[iKT][Morder] << endl;
 		}
-		for(int iKphi = 0; iKphi < n_localp_phi; iKphi++)
+		for(int iKphi = 0; iKphi < nKphi; iKphi++)
 		{
 			outputHBT << K_T[iKT] << "  " << K_phi[iKphi]
 				<< "  " << R2_side[iKT][iKphi] << "  " << R2_out[iKT][iKphi]
@@ -67,16 +67,16 @@ void SourceVariances::Output_results()
 				<< "  " << R2_sidelong[iKT][iKphi] << "  " << R2_outlong[iKT][iKphi] << endl;
 		}
 	}
-	for(int ipt = 0; ipt < n_interp_pT_pts; ipt++)
-	for(int ipphi = 0; ipphi < n_interp_pphi_pts; ipphi++)
+	for(int ipT = 0; ipT < n_pT_pts; ipT++)
+	for(int ipphi = 0; ipphi < n_pphi_pts; ipphi++)
 		output_Svars << setprecision(8) << setw(15) 
-			<< SPinterp_pT[ipt] << "   " << SPinterp_pphi[ipphi] << "   " << S_func[ipt][ipphi] << "   "
-			<< xs_S[ipt][ipphi] << "   " << xo_S[ipt][ipphi] << "   " << xl_S[ipt][ipphi] << "   "
-			<< t_S[ipt][ipphi]  << "   " << xs_t_S[ipt][ipphi] << "   "
-			<< xo_t_S[ipt][ipphi] << "   " << xl_t_S[ipt][ipphi] << "   "
-			<< xo_xs_S[ipt][ipphi] << "   " << xl_xs_S[ipt][ipphi] << "   "
-			<< xo_xl_S[ipt][ipphi] << "   " << xs2_S[ipt][ipphi] << "   " << xo2_S[ipt][ipphi] << "   "
-			<< xl2_S[ipt][ipphi] << "   " << t2_S[ipt][ipphi] << endl;
+			<< SP_pT[ipT] << "   " << SP_pphi[ipphi] << "   " << S_func[ipT][ipphi] << "   "
+			<< xs_S[ipT][ipphi] << "   " << xo_S[ipT][ipphi] << "   " << xl_S[ipT][ipphi] << "   "
+			<< t_S[ipT][ipphi]  << "   " << xs_t_S[ipT][ipphi] << "   "
+			<< xo_t_S[ipT][ipphi] << "   " << xl_t_S[ipT][ipphi] << "   "
+			<< xo_xs_S[ipT][ipphi] << "   " << xl_xs_S[ipT][ipphi] << "   "
+			<< xo_xl_S[ipT][ipphi] << "   " << xs2_S[ipT][ipphi] << "   " << xo2_S[ipT][ipphi] << "   "
+			<< xl2_S[ipT][ipphi] << "   " << t2_S[ipT][ipphi] << endl;
 
 	outputHBT.close();
 	output_Svars.close();
@@ -94,9 +94,9 @@ void SourceVariances::Readin_results()
 	filename_stream_S << path << "/Sourcefunction_variances_WR" << no_df_stem << ".dat";
 	ifstream input_Svars(filename_stream_S.str().c_str());
 
-	for(int iKT = 0; iKT < n_localp_T; iKT++)
+	for(int iKT = 0; iKT < nKT; iKT++)
 	{
-		for(int iKphi = 0; iKphi < n_localp_phi; iKphi++)
+		for(int iKphi = 0; iKphi < nKphi; iKphi++)
 		{
 			inputHBT >> dummy;
 			inputHBT >> dummy;
@@ -109,26 +109,26 @@ void SourceVariances::Readin_results()
 			inputHBT >> R2_outlong[iKT][iKphi];
 		}
 	}
-	for(int ipt = 0; ipt < n_interp_pT_pts; ipt++)
-	for(int ipphi = 0; ipphi < n_interp_pphi_pts; ipphi++)
+	for(int ipT = 0; ipT < n_pT_pts; ipT++)
+	for(int ipphi = 0; ipphi < n_pphi_pts; ipphi++)
 	{
          	input_Svars >> dummy;
         	input_Svars >> dummy;
-        	input_Svars >> S_func[ipt][ipphi];
-        	input_Svars >> xs_S[ipt][ipphi];
-        	input_Svars >> xo_S[ipt][ipphi];
-        	input_Svars >> xl_S[ipt][ipphi];
-        	input_Svars >> t_S[ipt][ipphi];
-        	input_Svars >> xs_t_S[ipt][ipphi];
-        	input_Svars >> xo_t_S[ipt][ipphi];
-        	input_Svars >> xl_t_S[ipt][ipphi];
-        	input_Svars >> xo_xs_S[ipt][ipphi];
-        	input_Svars >> xl_xs_S[ipt][ipphi];
-        	input_Svars >> xo_xl_S[ipt][ipphi];
-        	input_Svars >> xs2_S[ipt][ipphi];
-        	input_Svars >> xo2_S[ipt][ipphi];
-        	input_Svars >> xl2_S[ipt][ipphi];
-        	input_Svars >> t2_S[ipt][ipphi];
+        	input_Svars >> S_func[ipT][ipphi];
+        	input_Svars >> xs_S[ipT][ipphi];
+        	input_Svars >> xo_S[ipT][ipphi];
+        	input_Svars >> xl_S[ipT][ipphi];
+        	input_Svars >> t_S[ipT][ipphi];
+        	input_Svars >> xs_t_S[ipT][ipphi];
+        	input_Svars >> xo_t_S[ipT][ipphi];
+        	input_Svars >> xl_t_S[ipT][ipphi];
+        	input_Svars >> xo_xs_S[ipT][ipphi];
+        	input_Svars >> xl_xs_S[ipT][ipphi];
+        	input_Svars >> xo_xl_S[ipT][ipphi];
+        	input_Svars >> xs2_S[ipT][ipphi];
+        	input_Svars >> xo2_S[ipT][ipphi];
+        	input_Svars >> xl2_S[ipT][ipphi];
+        	input_Svars >> t2_S[ipT][ipphi];
 	}
 
 	inputHBT.close();
@@ -186,9 +186,9 @@ void SourceVariances::Output_dN_dypTdpTdphi()
 	filename_stream_dN_dypTdpTdphi << path << "/dN_dypTdpTdphi_ev" << no_df_stem << ".dat";
 	ofstream output_dN_dypTdpTdphi(filename_stream_dN_dypTdpTdphi.str().c_str());
 
-	for(int iphi=0; iphi<n_SP_pphi; iphi++)
-	for(int ipt=0; ipt<n_SP_pT; ipt++)
-		output_dN_dypTdpTdphi << SP_pT[ipt] << "   " << SP_pphi[iphi] << "   " << dN_dypTdpTdphi[ipt][iphi] << endl;
+	for(int ipphi = 0; ipphi < n_pphi_pts; ipphi++)
+	for(int ipT = 0; ipT < n_pT_pts; ipT++)
+		output_dN_dypTdpTdphi << SP_pT[ipT] << "   " << SP_pphi[ipphi] << "   " << dN_dypTdpTdphi[ipT][ipphi] << endl;
 
 	output_dN_dypTdpTdphi.close();
 
@@ -201,8 +201,8 @@ void SourceVariances::Output_dN_dypTdpT()
 	filename_stream_dN_dypTdpT << path << "/dN_dypTdpT_ev" << no_df_stem << ".dat";
 	ofstream output_dN_dypTdpT(filename_stream_dN_dypTdpT.str().c_str());
 
-	for(int ipt=0; ipt<n_SP_pT; ipt++)
-		output_dN_dypTdpT << SP_pT[ipt] << "   " << dN_dypTdpT[ipt] << endl;
+	for(int ipT = 0; ipT < n_pT_pts; ipT++)
+		output_dN_dypTdpT << SP_pT[ipT] << "   " << dN_dypTdpT[ipT] << endl;
 
 	output_dN_dypTdpT.close();
 
@@ -218,10 +218,10 @@ void SourceVariances::Output_all_dN_dypTdpTdphi()
 						<< setfill('0') << setw(2) << wfi << "_ev" << no_df_stem << ".dat";
 		ofstream output_all_dN_dypTdpTdphi(filename_stream_all_dN_dypTdpTdphi.str().c_str());
 		for(int ii = 0; ii < Nparticle; ii++)
-		for(int iphi = 0; iphi < n_interp_pphi_pts; iphi++)
+		for(int ipphi = 0; ipphi < n_pphi_pts; ipphi++)
 		{
-			for(int ipt = 0; ipt < n_interp_pT_pts; ipt++)
-				output_all_dN_dypTdpTdphi << scientific << setprecision(8) << setw(12) << dN_dypTdpTdphi_moments[ii][wfi][ipt][iphi] << "   ";
+			for(int ipT = 0; ipT < n_pT_pts; ipT++)
+				output_all_dN_dypTdpTdphi << scientific << setprecision(8) << setw(12) << dN_dypTdpTdphi_moments[ii][wfi][ipT][ipphi] << "   ";
 			output_all_dN_dypTdpTdphi << endl;
 		}
 		output_all_dN_dypTdpTdphi.close();
@@ -242,10 +242,10 @@ void SourceVariances::Output_total_target_dN_dypTdpTdphi()
 								<< setfill('0') << setw(2) << wfi << "_ev" << no_df_stem << ".dat";
 		ofstream output_target_dN_dypTdpTdphi(filename_stream_target_dN_dypTdpTdphi.str().c_str());
 	
-		for(int iphi = 0; iphi < n_interp_pphi_pts; iphi++)
+		for(int ipphi = 0; ipphi < n_pphi_pts; ipphi++)
 		{
-			for(int ipt = 0; ipt < n_interp_pT_pts; ipt++)
-				output_target_dN_dypTdpTdphi << scientific << setprecision(8) << setw(12) << dN_dypTdpTdphi_moments[target_particle_id][wfi][ipt][iphi] << "   ";
+			for(int ipT = 0; ipT < n_pT_pts; ipT++)
+				output_target_dN_dypTdpTdphi << scientific << setprecision(8) << setw(12) << dN_dypTdpTdphi_moments[target_particle_id][wfi][ipT][ipphi] << "   ";
 			output_target_dN_dypTdpTdphi << endl;
 		}
 	
@@ -283,7 +283,7 @@ void SourceVariances::Read_in_all_dN_dypTdpTdphi()
 		int local_filewidth = get_filewidth(filename_stream_all_dN_dypTdpTdphi.str().c_str());
 		if (VERBOSE > 0) *global_out_stream_ptr << "Read_in_all_dN_dypTdpTdphi(): nrows = "
 							<< local_filelength << " and ncols = " << local_filewidth << endl;
-		if ((Nparticle * n_interp_pphi_pts != local_filelength) || (n_interp_pT_pts != local_filewidth))
+		if ((Nparticle * n_pphi_pts != local_filelength) || (n_pT_pts != local_filewidth))
 		{
 			cerr << "Read_in_all_dN_dypTdpTdphi(): Mismatch in dimensions in file "
 				<< "all_res_dN_dypTdpTdphi_mom_" << setfill('0') << setw(2) << wfi
@@ -292,17 +292,17 @@ void SourceVariances::Read_in_all_dN_dypTdpTdphi()
 		}
 	
 		for(int ii = 0; ii < Nparticle; ii++)
-		for(int iphi = 0; iphi < n_interp_pphi_pts; iphi++)
-		for(int ipt = 0; ipt < n_interp_pT_pts; ipt++)
+		for(int ipphi = 0; ipphi < n_pphi_pts; ipphi++)
+		for(int ipT = 0; ipT < n_pT_pts; ipT++)
 		{
-			input_all_dN_dypTdpTdphi >> dN_dypTdpTdphi_moments[ii][wfi][ipt][iphi];
-			if (abs(dN_dypTdpTdphi_moments[ii][wfi][ipt][iphi]) > 1.e-100)
+			input_all_dN_dypTdpTdphi >> dN_dypTdpTdphi_moments[ii][wfi][ipT][ipphi];
+			if (abs(dN_dypTdpTdphi_moments[ii][wfi][ipT][ipphi]) > 1.e-100)
 			{
-				ln_dN_dypTdpTdphi_moments[ii][wfi][ipt][iphi] = log(abs(dN_dypTdpTdphi_moments[ii][wfi][ipt][iphi]));
-				sign_of_dN_dypTdpTdphi_moments[ii][wfi][ipt][iphi] = sgn(dN_dypTdpTdphi_moments[ii][wfi][ipt][iphi]);
+				ln_dN_dypTdpTdphi_moments[ii][wfi][ipT][ipphi] = log(abs(dN_dypTdpTdphi_moments[ii][wfi][ipT][ipphi]));
+				sign_of_dN_dypTdpTdphi_moments[ii][wfi][ipT][ipphi] = sgn(dN_dypTdpTdphi_moments[ii][wfi][ipT][ipphi]);
 			}
-			//cout << "Read in (pT, pphi, EdNdp3 ST moms) = " << SPinterp_pT[ipt] << "   " << SPinterp_pphi[iphi] << "   "
-			//	<< scientific << setprecision(8) << setw(12) << dN_dypTdpTdphi_moments[ii][wfi][ipt][iphi] << endl;
+			//cout << "Read in (pT, pphi, EdNdp3 ST moms) = " << SP_pT[ipT] << "   " << SP_pphi[ipphi] << "   "
+			//	<< scientific << setprecision(8) << setw(12) << dN_dypTdpTdphi_moments[ii][wfi][ipT][ipphi] << endl;
 		}
 	
 		input_all_dN_dypTdpTdphi.close();
@@ -317,14 +317,14 @@ void SourceVariances::Read_in_all_dN_dypTdpTdphi()
 	filename_stream_pphipts << path << "/phi_gauss_table.dat";
 	ifstream input_pphipts(filename_stream_pphipts.str().c_str());
 
-	double * dummy_pT_wts = new double [n_interp_pT_pts];
-	double * dummy_pphi_wts = new double [n_interp_pphi_pts];
+	double * dummy_pT_wts = new double [n_pT_pts];
+	double * dummy_pphi_wts = new double [n_pphi_pts];
 
-	for(int ipt = 0; ipt < n_interp_pT_pts; ipt++)
-		input_pTpts >> SPinterp_pT[ipt] >> dummy_pT_wts[ipt];
+	for(int ipT = 0; ipT < n_pT_pts; ipT++)
+		input_pTpts >> SP_pT[ipT] >> dummy_pT_wts[ipT];
 
-	for(int ipphi = 0; ipphi < n_interp_pphi_pts; ipphi++)
-		input_pphipts >> SPinterp_pphi[ipphi] >> dummy_pphi_wts[ipphi];
+	for(int ipphi = 0; ipphi < n_pphi_pts; ipphi++)
+		input_pphipts >> SP_pphi[ipphi] >> dummy_pphi_wts[ipphi];
 
 	if (VERBOSE > 0) *global_out_stream_ptr << "Read_in_all_dN_dypTdpTdphi(): read in pT and pphi points!" << endl;
 

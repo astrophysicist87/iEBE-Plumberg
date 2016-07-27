@@ -29,26 +29,20 @@ using namespace std;
     using namespace H5;
 #endif
 
-//HDF information
+// General information
 const int ntrig = 2;			// for cos or sin
-
 const double hbarC = 0.197327053;		//GeV*fm
 const double hbarC3 = 0.00768351405;
 const double hbarCm1 = 5.067728853;
 const double twopi = 2.*M_PI;
 const double MeVToGeV = 0.001;
 
-//particle information
+// Particle information
 const int Maxparticle=400;            //size of array for storage of the particles
 const int Maxdecaychannel=13;
 const int Maxdecaypart=5;
 
-//spatial rapidity information
-const int eta_s_npts = 15;
-const double eta_s_i = 0.0;
-const double eta_s_f = 4.0;
-
-//extrapolation information
+// Extrapolation information
 const int polynomial_fit_order = 4;
 const int UDPMsize = 15;
 static double usr_def_pc_markers[UDPMsize] = {
@@ -56,34 +50,34 @@ static double usr_def_pc_markers[UDPMsize] = {
 					0.83, 0.84, 0.85, 0.86, 0.87, 0.88, 0.89, 0.90
 				};
 
-//phase space integral info
-const int s_npts = 12;
-const int v_npts = 12;
-const int zeta_npts = 12;
+// Spatial rapidity information
+const int eta_s_npts = 15;
+const double eta_s_i = 0.0;
+const double eta_s_f = 4.0;
 
-//relative momentum information
+// Relative momentum information
 const double delta_qt = 0.00625;
 const double delta_qx = 0.0125;
 const double delta_qy = 0.0125;
 const double delta_qz = 0.015;
 const int new_nqpts = 51;	//for fleshing out
 
-//single particle spectra info
-const int n_SP_pT = 15;
-const int n_SP_pphi = 48;
+// Single particle spectra info
 const double SP_pT_min = 0.0;
-const double SP_pT_max = 3.0;
+const double SP_pphi_min = 0.0;
+const double SP_pT_max = 4.0;
+const double SP_pphi_max = 2.*M_PI;
 
-//parameters for interpolation grid
-const double interp_pT_min = 0.0;
-const double interp_pphi_min = 0.0;
-const double interp_pT_max = 4.0;
-const double interp_pphi_max = 2.*M_PI;
-
-//pair momentum info
+// Pair momentum info
 const double Kphi_min = 0.0;
 const double Kphi_max = 2*M_PI;
 
+// Phase-space integral information
+const int n_zeta_pts = 12;
+const int n_v_pts = 12;
+const int n_s_pts = 12;
+
+// Fitting information
 const size_t fit_max_iterations = 1000;  // stop at this point if not converged 
 const double fit_tolerance = 1e-6;
 

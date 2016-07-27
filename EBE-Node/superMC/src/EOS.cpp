@@ -44,7 +44,7 @@ void EOS::loadEOSFromFile(char* data_filename)
 // 2nd column: the pressure
 // 3rd column: the entropy density
 // 4th column: the temprature
-// The units are not relavent here; the external program is responsible
+// The units are not relevant here; the external program is responsible
 // for converting to the correct units in according to the EOS data file.
 {
     fstream fs(data_filename);

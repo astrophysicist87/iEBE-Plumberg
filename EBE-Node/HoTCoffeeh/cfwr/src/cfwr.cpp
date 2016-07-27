@@ -909,13 +909,13 @@ pc_cutoff_vals.resize( number_of_percentage_markers );
 					// store values to recycle later
 					double S_p_withweight = S_p*tau*eta_s_weight[ieta];		//don't include eta_s_symmetry_factor here, for consistency with later calculations...
 
-					//if (ipt==0 && ipphi==0)
-						//cout << "CPcout: " << isurf << "   " << ieta << "   " << scientific << setprecision(8) << setw(12)
-						//		<< prefactor << "   " << f0 << "   " << 1.+deltaf << "   " << p0*da0 + px*da1 + py*da2
-						//		<< "   " << p0 << "   " << da0 << "   " << px << "   " << da1 << "   " << py << "   " << da2
-						//		<< "   " << eta_s_symmetry_factor*tau*eta_s_weight[ieta] << "   " << eta_s_symmetry_factor*S_p_withweight << endl;
-						//cout << "CPcout: " << isurf << "   " << ieta << "   " << scientific << setprecision(8) << setw(12)
-						//		<< (gammaT*(p0*1. - px*vx - py*vy) - mu)*one_by_Tdec << "   " << eta_s_symmetry_factor*S_p_withweight << endl;
+					/*if (ipt==0 && ipphi==0)
+						cout << "CPcout: " << isurf << "   " << ieta << "   " << scientific << setprecision(8) << setw(12)
+								<< prefactor << "   " << f0 << "   " << 1.+deltaf << "   " << p0*da0 + px*da1 + py*da2
+								<< "   " << p0 << "   " << da0 << "   " << px << "   " << da1 << "   " << py << "   " << da2
+								<< "   " << eta_s_symmetry_factor*tau*eta_s_weight[ieta] << "   " << eta_s_symmetry_factor*S_p_withweight << endl;
+						cout << "CPcout: " << isurf << "   " << ieta << "   " << scientific << setprecision(8) << setw(12)
+								<< (gammaT*(p0*1. - px*vx - py*vy) - mu)*one_by_Tdec << "   " << eta_s_symmetry_factor*S_p_withweight << endl;*/
 
 					//ignore points where delta f is large or emission function goes negative from pdsigma
 					if ((1. + deltaf < 0.0) || (flagneg == 1 && S_p < tol))
@@ -1091,14 +1091,10 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid)
 		{
 			double ** slice1 = S_p_withweight_array[ipt];
 			size_t ** mif1 = most_important_FOcells[ipt];
-			int ** CMOCN_slice1 = correlator_minus_one_cutoff_norms[ipt];
 			int * NOFACA_slice1 = number_of_FOcells_above_cutoff_array[ipt];
 			double * ASTP_slice1 = abs_spec_this_pid[ipt];
 			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 			{
-				int * CMOCN_slice2 = CMOCN_slice1[ipphi];
-				if ( (CMOCN_slice2[0] < iqt) || (CMOCN_slice2[1] < iqx) || (CMOCN_slice2[2] < iqy) || (CMOCN_slice2[3] < iqz) )
-						continue;	//if we're outside the q-region where the correlator is large (for this pt-pphi combo), then continue
 				double * slice2 = slice1[ipphi];
 				size_t * most_important_FOcells_for_current_pt_and_pphi = mif1[ipphi];
 
@@ -1158,40 +1154,20 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid)
 		}		//end of pt-loop
 	
 		//update cutoffs for correlation function calculation
-		/*int iidx = 0;
+		int iidx = 0;
 		for (int ipt = 0; ipt < n_pT_pts; ++ipt)
 		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		{
-			double tempC = temp_moms_linear_array[iidx];
-			double tempS = temp_moms_linear_array[iidx+1];
-			double tmp = spectra[local_pid][ipt][ipphi];
-			if ( tempC*tempC + tempS*tempS >= tmp*tmp*correlator_minus_one_cutoff )
-			{
-				//current_dN_dypTdpTdphi_moments[ipt][ipphi][iqt][iqx][iqy][iqz][0] = tempC;
-				//current_dN_dypTdpTdphi_moments[ipt][ipphi][iqt][iqx][iqy][iqz][1] = tempS;
-				current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,0)] = tempC;
-				current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,1)] = tempS;
-			}
-			else if	( iqt!=iqt0 && iqx==iqx0 && iqy==iqy0 && iqz==iqz0 )
-				correlator_minus_one_cutoff_norms[ipt][ipphi][0] = iqt;
-			else if	( iqt==iqt0 && iqx!=iqx0 && iqy==iqy0 && iqz==iqz0 )
-				correlator_minus_one_cutoff_norms[ipt][ipphi][1] = iqx;
-			else if	( iqt==iqt0 && iqx==iqx0 && iqy!=iqy0 && iqz==iqz0 )
-				correlator_minus_one_cutoff_norms[ipt][ipphi][2] = iqy;
-			else if	( iqt==iqt0 && iqx==iqx0 && iqy==iqy0 && iqz!=iqz0 )
-				correlator_minus_one_cutoff_norms[ipt][ipphi][3] = iqz;
-
+			current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,0)] = temp_moms_linear_array[iidx];
+			current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,1)] = temp_moms_linear_array[iidx+1];
 			iidx+=2;
-		}*/
+		}
 
 		// Clean up
 		delete [] giant_array_C;
 		delete [] giant_array_S;
 
 		debug_sw2.Stop();
-		//*global_out_stream_ptr << "   --> Finished (iqt, iqx, iqy, iqz) = ("
-		//						<< iqt << ", " << iqx << ", " << iqy << ", " << iqz
-		//						<< ") in " << debug_sw2.printTime() << " seconds." << endl;
 	}		//end of first set of q-loops
 
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1303,9 +1279,9 @@ void CorrelationFunction::Load_decay_channel_info(int dc_idx, double K_T_local, 
 				double temp_cos_PPhi_tilde_loc = (mT*MT_loc*cosh(P_Y_loc-p_y) - Estar_loc*Mres)/(pT*PT_loc);
 				//assume that PPhi_tilde is +ve in next step...
 				double temp_sin_PPhi_tilde_loc = sqrt(1. - temp_cos_PPhi_tilde_loc*temp_cos_PPhi_tilde_loc);
-				double PPhi_tilde_loc = place_in_range( atan2(temp_sin_PPhi_tilde_loc, temp_cos_PPhi_tilde_loc), interp_pphi_min, interp_pphi_max);
-				VEC_n2_PPhi_tilde[iv][izeta] = place_in_range( K_phi_local + PPhi_tilde_loc, interp_pphi_min, interp_pphi_max);
-				VEC_n2_PPhi_tildeFLIP[iv][izeta] = place_in_range( K_phi_local - PPhi_tilde_loc, interp_pphi_min, interp_pphi_max);
+				double PPhi_tilde_loc = place_in_range( atan2(temp_sin_PPhi_tilde_loc, temp_cos_PPhi_tilde_loc), Kphi_min, Kphi_max);
+				VEC_n2_PPhi_tilde[iv][izeta] = place_in_range( K_phi_local + PPhi_tilde_loc, Kphi_min, Kphi_max);
+				VEC_n2_PPhi_tildeFLIP[iv][izeta] = place_in_range( K_phi_local - PPhi_tilde_loc, Kphi_min, Kphi_max);
 				VEC_n2_PT[iv][izeta] = PT_loc;
 				//set P^+ components
 				VEC_n2_Ppm[iv][izeta][0][0] = MT_loc * cosh(P_Y_loc);
@@ -1369,9 +1345,9 @@ void CorrelationFunction::Load_decay_channel_info(int dc_idx, double K_T_local, 
 					double temp_cos_PPhi_tilde_loc = (mT*MT_loc*cosh(P_Y_loc-p_y) - Estar_loc*Mres)/(pT*PT_loc);
 					//assume that PPhi_tilde is +ve in next step...
 					double temp_sin_PPhi_tilde_loc = sqrt(1. - temp_cos_PPhi_tilde_loc*temp_cos_PPhi_tilde_loc);
-					double PPhi_tilde_loc = place_in_range( atan2(temp_sin_PPhi_tilde_loc, temp_cos_PPhi_tilde_loc), interp_pphi_min, interp_pphi_max);
-					VEC_PPhi_tilde[is][iv][izeta] = place_in_range( K_phi_local + PPhi_tilde_loc, interp_pphi_min, interp_pphi_max);
-					VEC_PPhi_tildeFLIP[is][iv][izeta] = place_in_range( K_phi_local - PPhi_tilde_loc, interp_pphi_min, interp_pphi_max);
+					double PPhi_tilde_loc = place_in_range( atan2(temp_sin_PPhi_tilde_loc, temp_cos_PPhi_tilde_loc), Kphi_min, Kphi_max);
+					VEC_PPhi_tilde[is][iv][izeta] = place_in_range( K_phi_local + PPhi_tilde_loc, Kphi_min, Kphi_max);
+					VEC_PPhi_tildeFLIP[is][iv][izeta] = place_in_range( K_phi_local - PPhi_tilde_loc, Kphi_min, Kphi_max);
 					VEC_PT[is][iv][izeta] = PT_loc;
 					//set P^+ components
 					VEC_Ppm[is][iv][izeta][0][0] = MT_loc * cosh(P_Y_loc);
@@ -1578,36 +1554,36 @@ double CorrelationFunction::Cal_dN_dypTdpTdphi_function(int local_pid, double pT
 
 void CorrelationFunction::Determine_plane_angle()
 {
-	double * dN_dydphi = new double [n_SP_pphi];
-	for(int ipphi = 0; ipphi < n_SP_pphi; ++ipphi)
+	double * dN_dydphi = new double [n_pphi_pts];
+	for(int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		dN_dydphi[ipphi] = 0.0;
 	double ** dN_dypTdpTdphi = spectra[target_particle_id];
 
 	/*double localmass = particle_mass;
 
-	double * mT = new double [n_SP_pT];
-	double ** px = new double * [n_SP_pT];
-	double ** py = new double * [n_SP_pT];
-	double ** p0 = new double * [n_SP_pT];
-	double ** pz = new double * [n_SP_pT];
+	double * mT = new double [n_pT_pts];
+	double ** px = new double * [n_pT_pts];
+	double ** py = new double * [n_pT_pts];
+	double ** p0 = new double * [n_pT_pts];
+	double ** pz = new double * [n_pT_pts];
 	
 
-	for(int ipt=0; ipt<n_SP_pT; ++ipt)
+	for(int ipt=0; ipt<n_pT_pts; ++ipt)
 	{
-		px[ipt] = new double [n_SP_pphi];
-		py[ipt] = new double [n_SP_pphi];
+		px[ipt] = new double [n_pphi_pts];
+		py[ipt] = new double [n_pphi_pts];
 		p0[ipt] = new double [eta_s_npts];
 		pz[ipt] = new double [eta_s_npts];
 	}
    
-	for(int ipt=0; ipt<n_SP_pT; ++ipt)
+	for(int ipt=0; ipt<n_pT_pts; ++ipt)
 		mT[ipt] = sqrt(localmass*localmass + SP_pT[ipt]*SP_pT[ipt]);*/
 
-	for(int ipphi = 0; ipphi < n_SP_pphi; ++ipphi)
+	for(int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 	{
 		double cos_phi = cos(SP_pphi[ipphi]);
 		double sin_phi = sin(SP_pphi[ipphi]);
-		/*for(int ipt=0; ipt<n_SP_pT; ++ipt)
+		/*for(int ipt=0; ipt<n_pT_pts; ++ipt)
 		{
 			px[ipt][ipphi] = SP_pT[ipt]*cos_phi;
 			py[ipt][ipphi] = SP_pT[ipt]*sin_phi;
@@ -1619,37 +1595,37 @@ void CorrelationFunction::Determine_plane_angle()
 		double local_eta_s = eta_s[i];
 		double local_cosh = cosh(SP_p_y - local_eta_s);
 		double local_sinh = sinh(SP_p_y - local_eta_s);
-		for(int ipt=0; ipt<n_SP_pT; ++ipt)
+		for(int ipt=0; ipt<n_pT_pts; ++ipt)
 		{
 			p0[ipt][i] = mT[ipt]*local_cosh;
 			pz[ipt][i] = mT[ipt]*local_sinh;
 		}
 	}*/
 
-	for(int ipt = 0; ipt < n_SP_pT; ++ipt)
-	for(int ipphi = 0; ipphi < n_SP_pphi; ++ipphi)
+	for(int ipt = 0; ipt < n_pT_pts; ++ipt)
+	for(int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		dN_dydphi[ipphi] += dN_dypTdpTdphi[ipt][ipphi]*SP_pT[ipt]*SP_pT_wts[ipt];
 
    	double norm = 0.0e0;
-   	for(int ipphi = 0; ipphi < n_SP_pphi; ++ipphi)
+   	for(int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		norm += dN_dydphi[ipphi]*SP_pphi_wts[ipphi];
 
    	for(int iorder = 0; iorder < n_order; iorder++)
    	{
 		double cosine = 0.0e0;
 		double sine = 0.0e0;
-		for(int ipphi = 0; ipphi < n_SP_pphi; ++ipphi)
+		for(int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		{
 			cosine += dN_dydphi[ipphi]*cos(iorder*SP_pphi[ipphi])*SP_pphi_wts[ipphi];
 			sine += dN_dydphi[ipphi]*sin(iorder*SP_pphi[ipphi])*SP_pphi_wts[ipphi];
 			//get pT-differential v_n here
-			/*for(int ipt=0; ipt<n_SP_pT; ++ipt)
+			/*for(int ipt=0; ipt<n_pT_pts; ++ipt)
 			{
 				cosine_iorder[ipt][iorder] += dN_dypTdpTdphi[ipt][ipphi]*cos(iorder*SP_pphi[ipphi])*SP_pphi_wts[ipphi];
 				sine_iorder[ipt][iorder] += dN_dypTdpTdphi[ipt][ipphi]*sin(iorder*SP_pphi[ipphi])*SP_pphi_wts[ipphi];
 			}*/
 		}
-		/*for(int ipt=0; ipt<n_SP_pT; ++ipt)
+		/*for(int ipt=0; ipt<n_pT_pts; ++ipt)
 		{
 			cosine_iorder[ipt][iorder] /= dN_dypTdpT[ipt];
 			sine_iorder[ipt][iorder] /= dN_dypTdpT[ipt];
@@ -1662,17 +1638,17 @@ void CorrelationFunction::Determine_plane_angle()
 			plane_angle[iorder] = atan2(sine, cosine)/double(iorder);
    	}
 	
-	//for(int ipt=0; ipt<n_SP_pT; ++ipt)
+	//for(int ipt=0; ipt<n_pT_pts; ++ipt)
 	//	dN_dypTdpT[ipt] /= (2.*M_PI);
 	
 	/*mean_pT = 0.;
-	for(int ipphi=0; ipphi<n_SP_pphi; ++ipphi)
+	for(int ipphi=0; ipphi<n_pphi_pts; ++ipphi)
 		mean_pT += pTdN_dydphi[ipphi]*SP_pphi_wts[ipphi];
 	mean_pT /= norm;*/
 	plane_angle[0] = norm;
 
 	/*delete[] mT;
-	for(int ipt=0; ipt<n_SP_pT; ++ipt)
+	for(int ipt=0; ipt<n_pT_pts; ++ipt)
 	{
 		delete [] px[ipt];
 		delete [] py[ipt];

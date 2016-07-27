@@ -37,9 +37,10 @@ void initialize_PRfile(ParameterReader* paraRdr, string currentworkingdirectory,
 	output << "   - GROUPING_PARTICLES: " << return_boolean_string(paraRdr->getVal("grouping_particles")) << endl;
 	output << "   - PARTICLE_DIFF_TOLERANCE: " << paraRdr->getVal("particle_diff_tolerance") << endl;
 	output << "   - INCLUDE_DELTA_F: " << return_boolean_string(paraRdr->getVal("include_delta_f")) << endl;
+	output << "   - INCLUDE_BULK_PI: " << return_boolean_string(paraRdr->getVal("include_bulk_pi")) << endl;
 	output << "   - USE_LAMBDA: " << return_boolean_string(paraRdr->getVal("use_lambda")) << endl;
 	output << "   - USE_EXTRAPOLATION: " << return_boolean_string(paraRdr->getVal("use_extrapolation")) << endl;
-	output << "   - COMPUTE_RESONANCE_DECAYS: " << return_boolean_string(paraRdr->getVal("compute_resonance_decays")) << endl;
+	//output << "   - COMPUTE_RESONANCE_DECAYS: " << return_boolean_string(paraRdr->getVal("compute_resonance_decays")) << endl;
 	output << "   - IGNORE_LONG_LIVED_RESONANCES: " << return_boolean_string(paraRdr->getVal("ignore_long_lived_resonances")) << endl;
 	output << "   - FIT_WITH_PROJECTED_CFVALS: " << return_boolean_string(paraRdr->getVal("fit_with_projected_cfvals")) << endl;
 	output << "   - FLESH_OUT_CF: " << return_boolean_string(paraRdr->getVal("flesh_out_cf")) << endl;
@@ -53,31 +54,21 @@ void initialize_PRfile(ParameterReader* paraRdr, string currentworkingdirectory,
 	output << "      --> eta_s_f: " << eta_s_f << endl;
 
 	output << "   - Single-particle momentum information:" << endl;
-	output << "      --> n_pT_pts: " << paraRdr->getVal("npT") << endl;
-	output << "      --> n_pphi_pts: " << paraRdr->getVal("npphi") << endl;
-	output << "      --> interp_pT_min: " << interp_pT_min << endl;
-	output << "      --> interp_pT_max: " << interp_pT_max << endl;
-	output << "      --> interp_pphi_min: " << interp_pphi_min << endl;
-	output << "      --> interp_pphi_max: " << interp_pphi_max << endl;
-
-	output << "   - Phase-space integral information:" << endl;
-	output << "      --> s_npts: " << s_npts << endl;
-	output << "      --> v_npts: " << v_npts << endl;
-	output << "      --> zeta_npts: " << zeta_npts << endl;
+	output << "      --> n_pT_pts: " << paraRdr->getVal("CF_npT") << endl;
+	output << "      --> n_pphi_pts: " << paraRdr->getVal("CF_npphi") << endl;
+	output << "      --> SP_pT_min: " << SP_pT_min << endl;
+	output << "      --> SP_pT_max: " << SP_pT_max << endl;
+	output << "      --> SP_pphi_min: " << SP_pphi_min << endl;
+	output << "      --> SP_pphi_max: " << SP_pphi_max << endl;
 
 	output << "   - Relative momentum information:" << endl;
 	output << "      --> qtnpts: " << paraRdr->getVal("qtnpts") << endl;
 	output << "      --> qxnpts: " << paraRdr->getVal("qxnpts") << endl;
 	output << "      --> qynpts: " << paraRdr->getVal("qynpts") << endl;
 	output << "      --> qznpts: " << paraRdr->getVal("qznpts") << endl;
-	//output << "      --> delta_qt: " << delta_qt << endl;
 	output << "      --> delta_qx: " << paraRdr->getVal("delta_qx") << endl;
 	output << "      --> delta_qy: " << paraRdr->getVal("delta_qy") << endl;
 	output << "      --> delta_qz: " << paraRdr->getVal("delta_qz") << endl;
-	//output << "      --> init_qt: " << init_qt << endl;
-	//output << "      --> init_qx: " << init_qx << endl;
-	//output << "      --> init_qy: " << init_qy << endl;
-	//output << "      --> init_qz: " << init_qz << endl;
 
 	output << "   - Pair momentum information:" << endl;
 	output << "      --> nKT: " << paraRdr->getVal("nKT") << endl;
@@ -87,14 +78,19 @@ void initialize_PRfile(ParameterReader* paraRdr, string currentworkingdirectory,
 	output << "      --> Kphi_min: " << Kphi_min << endl;
 	output << "      --> Kphi_max: " << Kphi_max << endl;
 
+	output << "   - Phase-space integral information:" << endl;
+	output << "      --> n_s_pts: " << n_s_pts << endl;
+	output << "      --> n_v_pts: " << n_v_pts << endl;
+	output << "      --> n_zeta_pts: " << n_zeta_pts << endl;
+
 	output << "   - HBT Fourier information:" << endl;
 	output << "      --> n_order: " << paraRdr->getVal("n_order") << endl;
-	output << endl;
+
 	output << "   - Miscellaneous information:" << endl;
 	output << "      --> CWD: " << currentworkingdirectory << endl;
 	output << "      --> tol: " << paraRdr->getVal("tolerance") << endl;
 	output << "      --> flagneg: " << paraRdr->getVal("flag_negative_S") << endl;
-	if ( paraRdr->getVal("do_all_decay_channels") )
+	if ( ! paraRdr->getVal("ignore_long_lived_resonances") )
 		output << "      --> max_lifetime (fm/c): " << paraRdr->getVal("max_lifetime") << endl;
 	else
 		output << "      --> max_lifetime (fm/c): 10000000000.0" << endl;

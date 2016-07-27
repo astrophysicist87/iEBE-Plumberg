@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 (cd ..
-for ii in superMC VISHNew photonEmission iSS iS osc2u urqmd fs
+for ii in superMC VISHNew photonEmission iSS iS osc2u urqmd fs HoTCoffeeh
     do
     (cd $ii; make; make clean)
 done

@@ -59,6 +59,10 @@ class SourceVariances
 		int flagneg;
 		double max_lifetime;
 
+		//header info
+		int n_pT_pts, n_pphi_pts, nKT, nKphi;
+		double KT_min, KT_max;
+
 		//particle information 
 		string particle_name;
 		double particle_mass;
@@ -74,7 +78,6 @@ class SourceVariances
 		int target_particle_id;		//the particle whose spectra (with resonance contributions) you want to compute
 		int current_level_of_output;
 
-		int n_zeta_pts, n_v_pts, n_s_pts;
 		double v_min, v_max, zeta_min, zeta_max, s_min, s_max;
 		
 		//integrated space-time moments vars.
@@ -127,12 +130,10 @@ class SourceVariances
 		double * zvec;
 
 		//SP momentum arrays for interpolation grid
-		double * SPinterp_pT;
-		double * SPinterp_pphi;
-		double * sin_SPinterp_pphi;
-		double * cos_SPinterp_pphi;
-		double ** SPinterp_p0;
-		double ** SPinterp_pz;
+		double * sin_SP_pphi;
+		double * cos_SP_pphi;
+		double ** SP_p0;
+		double ** SP_pz;
 
 		FO_surf* FOsurf_ptr;
 		//FO surface info that is constant - to save time

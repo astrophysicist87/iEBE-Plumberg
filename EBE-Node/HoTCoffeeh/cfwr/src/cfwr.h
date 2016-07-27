@@ -180,7 +180,6 @@ class CorrelationFunction
 		double ***** tmp_moments_imag;
 
 		//points and weights for resonance integrals
-		int n_zeta_pts, n_v_pts, n_s_pts;
 		double v_min, v_max, zeta_min, zeta_max, s_min, s_max;
 		double * zeta_pts, * v_pts, * s_pts;
 		double * zeta_wts, * v_wts, * s_wts;
@@ -402,7 +401,6 @@ class CorrelationFunction
 		int initial_event, currentfolderindex;
 		bool read_in_all_dN_dypTdpTdphi, output_all_dN_dypTdpTdphi;
 		double fraction_of_resonances;
-		//double * SP_pT_public, * pTdep_fractions_of_resonances;
 
 		// need to hold giant array stuff
 		H5::DataSpace * tta_dataspace, * tta_memspace;

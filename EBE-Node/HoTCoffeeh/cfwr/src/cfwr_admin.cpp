@@ -43,8 +43,8 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	max_lifetime = paraRdr->getVal("max_lifetime");
 
 	//set header info
-	n_pT_pts = paraRdr->getVal("npT");
-	n_pphi_pts = paraRdr->getVal("npphi");
+	n_pT_pts = paraRdr->getVal("CF_npT");
+	n_pphi_pts = paraRdr->getVal("CF_npphi");
 	nKT = paraRdr->getVal("nKT");
 	nKphi = paraRdr->getVal("nKphi");
 	KT_min = paraRdr->getVal("KTmin");
@@ -85,8 +85,8 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	output_all_dN_dypTdpTdphi = true;
 	//currentfolderindex = -1;
 	current_level_of_output = 0;
-	//qspace_cs_slice_length = qnpts*qnpts*qnpts*qnpts*2;		//factor of 2 for sin or cos
-	qspace_cs_slice_length = qtnpts*qxnpts*qynpts*qznpts*2;		//factor of 2 for sin or cos
+	//qspace_cs_slice_length = qnpts*qnpts*qnpts*qnpts*ntrig;		//factor of 2 for sin or cos
+	qspace_cs_slice_length = qtnpts*qxnpts*qynpts*qznpts*ntrig;		//factor of 2 for sin or cos
 
 	gsl_set_error_handler_off();
 
@@ -97,10 +97,6 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 
 	//sort by proximity to origin (where CF is largest) and do those points first
 	Set_sorted_q_pts_list();
-
-	n_zeta_pts = zeta_npts;
-	n_v_pts = v_npts;
-	n_s_pts = s_npts;
 
 	v_min = -1.;
 	v_max = 1.;
@@ -301,6 +297,15 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 		}
 	}
 
+	// used for keeping track of how many FO cells are important for given pT, pphi
+	number_of_FOcells_above_cutoff_array = new int * [n_pT_pts];
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+	{
+		number_of_FOcells_above_cutoff_array[ipT] = new int [n_pphi_pts];
+		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+			number_of_FOcells_above_cutoff_array[ipT][ipphi] = 0;
+	}
+
 	flat_spectra = new double [n_pT_pts*n_pphi_pts];
 	for (int iii = 0; iii < n_pT_pts*n_pphi_pts; ++iii)
 		flat_spectra[iii] = 0.0;
@@ -333,32 +338,12 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 		}
 	}
 
-	// used for keeping track of how many FO cells are important for given pT, pphi
-	// also set up q-space cutoffs array
-	/*number_of_FOcells_above_cutoff_array = new int * [n_pT_pts];
-	current_q_space_cutoff = new double * [n_pT_pts];
-	correlator_minus_one_cutoff_norms = new int ** [n_pT_pts];
-	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
-	{
-		number_of_FOcells_above_cutoff_array[ipT] = new int [n_pphi_pts];
-		current_q_space_cutoff[ipT] = new double [n_pphi_pts];
-		correlator_minus_one_cutoff_norms[ipT] = new int * [n_pphi_pts];
-		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-		{
-			correlator_minus_one_cutoff_norms[ipT][ipphi] = new int [4];
-			for (int ii = 0; ii < 4; ++ii)
-				correlator_minus_one_cutoff_norms[ipT][ipphi][ii] = qtnpts*qtnpts + qxnpts*qxnpts + qynpts*qynpts + qznpts*qznpts;
-				// i.e., something larger than maximum q-array ranges, only made smaller if correlator cutoff threshhold reached, making large q-values redundant
-			number_of_FOcells_above_cutoff_array[ipT][ipphi] = 0;
-			current_q_space_cutoff[ipT][ipphi] = 0.0;
-		}
-	}*/
-
 	// set-up integration points for resonance integrals
 	v_pts = new double [n_v_pts];
 	v_wts = new double [n_v_pts];
 	zeta_pts = new double [n_zeta_pts];
 	zeta_wts = new double [n_zeta_pts];
+
 	//initialize all gaussian points for resonance integrals
 	//syntax: int gauss_quadrature(int order, int kind, double alpha, double beta, double a, double b, double x[], double w[])
 	gauss_quadrature(n_zeta_pts, 1, 0.0, 0.0, zeta_min, zeta_max, zeta_pts, zeta_wts);
@@ -372,7 +357,7 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	sin_SP_pphi = new double [n_pphi_pts];
 	cos_SP_pphi = new double [n_pphi_pts];
 	gauss_quadrature(n_pT_pts, 5, 0.0, 0.0, 0.0, 13.0, SP_pT, SP_pT_wts);
-	gauss_quadrature(n_pphi_pts, 1, 0.0, 0.0, interp_pphi_min, interp_pphi_max, SP_pphi, SP_pphi_wts);
+	gauss_quadrature(n_pphi_pts, 1, 0.0, 0.0, Kphi_min, Kphi_max, SP_pphi, SP_pphi_wts);
 	for(int ipphi=0; ipphi<n_pphi_pts; ipphi++)
 	{
 		sin_SP_pphi[ipphi] = sin(SP_pphi[ipphi]);
@@ -1111,8 +1096,8 @@ void CorrelationFunction::Set_q_points()
 	double qxmax = abs(init_qx);
 	double qymax = abs(init_qy);
 	double qxymax = sqrt(qxmax*qxmax+qymax*qymax);
-	double xi2 = mtarget*mtarget + interp_pT_max*interp_pT_max + 0.25*qxymax*qxymax;	//pretend that Kphi == 0, qx == qo and qs == ql == 0, to maximize qtmax
-	double qtmax = sqrt(xi2 + interp_pT_max*qxymax) - sqrt(xi2 - interp_pT_max*qxymax) + 1.e-10;
+	double xi2 = mtarget*mtarget + SP_pT_max*SP_pT_max + 0.25*qxymax*qxymax;	//pretend that Kphi == 0, qx == qo and qs == ql == 0, to maximize qtmax
+	double qtmax = sqrt(xi2 + SP_pT_max*qxymax) - sqrt(xi2 - SP_pT_max*qxymax) + 1.e-10;
 
 	Fill_out_pts(qt_pts, qtnpts, qtmax, QT_POINTS_SPACING);
 	Fill_out_pts(qx_pts, qxnpts, abs(init_qx), QX_POINTS_SPACING);
@@ -1162,10 +1147,10 @@ void CorrelationFunction::Set_sorted_q_pts_list()
 		sorted_q_pts_list[iq][2] += iqy0;
 		sorted_q_pts_list[iq][3] += iqz0;
 
-		cout << "   --> iq = " << iq << ": ";
-		for (size_t iqmu = 0; iqmu < 4; ++iqmu)
-			cout << sorted_q_pts_list[iq][iqmu] << "   ";
-		cout << endl;
+		//cout << "   --> iq = " << iq << ": ";
+		//for (size_t iqmu = 0; iqmu < 4; ++iqmu)
+		//	cout << sorted_q_pts_list[iq][iqmu] << "   ";
+		//cout << endl;
 	}
 
 	return;

@@ -175,12 +175,12 @@ void SourceVariances::Analyze_sourcefunction()
 	Set_source_variances_grid();
 
 	//compute HBT radii on grid
-	for(int ipt = 0; ipt < n_interp_pT_pts; ++ipt)
+	for(int ipt = 0; ipt < n_pT_pts; ++ipt)
 	{
-		double m_perp = sqrt(SPinterp_pT[ipt]*SPinterp_pT[ipt] + particle_mass*particle_mass);
-		beta_perp = SPinterp_pT[ipt]/(m_perp*cosh(K_y));
+		double m_perp = sqrt(SP_pT[ipt]*SP_pT[ipt] + particle_mass*particle_mass);
+		beta_perp = SP_pT[ipt]/(m_perp*cosh(K_y));
 
-		for(int ipphi = 0; ipphi < n_interp_pphi_pts; ++ipphi)
+		for(int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		{
 			Calculate_R2_side(ipt, ipphi);
 			Calculate_R2_out(ipt, ipphi);
@@ -192,21 +192,21 @@ void SourceVariances::Analyze_sourcefunction()
 	}
 
 	//then interpolate to desired pair-momentum values and Fourier transform
-	for(int iKT = 0; iKT < n_localp_T; ++iKT)
+	for(int iKT = 0; iKT < nKT; ++iKT)
 	{
 		if (abs(K_T[iKT]) < 1.e-10)
 			continue;
 
-		for(int iKphi = 0; iKphi < n_localp_phi; ++iKphi)
+		for(int iKphi = 0; iKphi < nKphi; ++iKphi)
 		{
 			Interpolate_HBT_radii(iKT, iKphi);
 			R2_Fourier_transform(iKT, plane_psi);
 		}
 	}
 
-	/*double tmp_R2_side[n_localp_T];
-	double tmp_R2_out[n_localp_T];
-	for (int iKT = 0; iKT < n_localp_T; ++iKT)
+	/*double tmp_R2_side[nKT];
+	double tmp_R2_out[nKT];
+	for (int iKT = 0; iKT < nKT; ++iKT)
 	{
 		tmp_R2_side[iKT] = R2_side_C[iKT][0];
 		tmp_R2_out[iKT] = R2_out_C[iKT][0];
@@ -512,8 +512,8 @@ bool SourceVariances::particles_are_the_same(int reso_idx1, int reso_idx2)
 void SourceVariances::Recycle_spacetime_moments()
 {
 	for(int wfi = 0; wfi < n_weighting_functions; ++wfi)
-	for(int ipt = 0; ipt < n_interp_pT_pts; ++ipt)
-	for(int iphi = 0; iphi < n_interp_pphi_pts; ++iphi)
+	for(int ipt = 0; ipt < n_pT_pts; ++ipt)
+	for(int iphi = 0; iphi < n_pphi_pts; ++iphi)
 	{
 		dN_dypTdpTdphi_moments[current_resonance_particle_id][wfi][ipt][iphi] = dN_dypTdpTdphi_moments[reso_particle_id_of_moments_to_recycle][wfi][ipt][iphi];
 		ln_dN_dypTdpTdphi_moments[current_resonance_particle_id][wfi][ipt][iphi] = ln_dN_dypTdpTdphi_moments[reso_particle_id_of_moments_to_recycle][wfi][ipt][iphi];
@@ -590,11 +590,11 @@ void SourceVariances::Set_dN_dypTdpTdphi_moments(int local_pid)
 		double local_cosh = cosh(SP_p_y - local_eta_s);
 		double local_sinh = sinh(SP_p_y - local_eta_s);
 
-		for(int ipt=0; ipt<n_interp_pT_pts; ++ipt)
+		for(int ipt=0; ipt<n_pT_pts; ++ipt)
 		{
-			double mT = sqrt(localmass*localmass + SPinterp_pT[ipt]*SPinterp_pT[ipt]);
-			SPinterp_p0[ipt][i] = mT*local_cosh;
-			SPinterp_pz[ipt][i] = mT*local_sinh;
+			double mT = sqrt(localmass*localmass + SP_pT[ipt]*SP_pT[ipt]);
+			SP_p0[ipt][i] = mT*local_cosh;
+			SP_pz[ipt][i] = mT*local_sinh;
 		}
 	}
 	//if (local_pid != target_particle_id)						//skip thermal contributions for timebeing...
@@ -606,11 +606,11 @@ void SourceVariances::Set_dN_dypTdpTdphi_moments(int local_pid)
 void SourceVariances::Cal_dN_dypTdpTdphi_with_weights(int local_pid)
 {
 	double * local_temp_moments = new double [n_weighting_functions];
-	double *** temp_moments_array = new double ** [n_interp_pT_pts];
-	for (int ipt = 0; ipt < n_interp_pT_pts; ipt++)
+	double *** temp_moments_array = new double ** [n_pT_pts];
+	for (int ipt = 0; ipt < n_pT_pts; ipt++)
 	{
-		temp_moments_array[ipt] = new double * [n_interp_pphi_pts];
-		for (int ipphi = 0; ipphi < n_interp_pphi_pts; ipphi++)
+		temp_moments_array[ipt] = new double * [n_pphi_pts];
+		for (int ipphi = 0; ipphi < n_pphi_pts; ipphi++)
 		{
 			temp_moments_array[ipt][ipphi] = new double [n_weighting_functions];
 			for (int wfi = 0; wfi < n_weighting_functions; wfi++)
@@ -637,16 +637,16 @@ void SourceVariances::Cal_dN_dypTdpTdphi_with_weights(int local_pid)
 	// set the rapidity-integration symmetry factor
 	double eta_odd_factor = 0.0, eta_even_factor = 2.0;
 
-	for(int ipt = 0; ipt < n_interp_pT_pts; ++ipt)
+	for(int ipt = 0; ipt < n_pT_pts; ++ipt)
 	{
-		double pT = SPinterp_pT[ipt];
-		double * p0_pTslice = SPinterp_p0[ipt];
-		double * pz_pTslice = SPinterp_pz[ipt];
+		double pT = SP_pT[ipt];
+		double * p0_pTslice = SP_p0[ipt];
+		double * pz_pTslice = SP_pz[ipt];
 
-		for(int iphi = 0; iphi < n_interp_pphi_pts; ++iphi)
+		for(int iphi = 0; iphi < n_pphi_pts; ++iphi)
 		{
-			double sin_pphi = sin_SPinterp_pphi[iphi];
-			double cos_pphi = cos_SPinterp_pphi[iphi];
+			double sin_pphi = sin_SP_pphi[iphi];
+			double cos_pphi = cos_SP_pphi[iphi];
 			double px = pT*cos_pphi;
 			double py = pT*sin_pphi;
 
@@ -733,8 +733,8 @@ void SourceVariances::Cal_dN_dypTdpTdphi_with_weights(int local_pid)
 
 	//set log of dN_dypTdpTdphi_moments...
 	for(int wfi = 0; wfi < n_weighting_functions; ++wfi)
-	for(int ipt = 0; ipt < n_interp_pT_pts; ++ipt)
-	for(int iphi = 0; iphi < n_interp_pphi_pts; ++iphi)
+	for(int ipt = 0; ipt < n_pT_pts; ++ipt)
+	for(int iphi = 0; iphi < n_pphi_pts; ++iphi)
 	{
 		double temp = temp_moments_array[ipt][iphi][wfi];
 		dN_dypTdpTdphi_moments[local_pid][wfi][ipt][iphi] = temp;
@@ -742,9 +742,9 @@ void SourceVariances::Cal_dN_dypTdpTdphi_with_weights(int local_pid)
 		sign_of_dN_dypTdpTdphi_moments[local_pid][wfi][ipt][iphi] = sgn(temp);
 	}
 
-	for(int ipt = 0; ipt < n_interp_pT_pts; ++ipt)
+	for(int ipt = 0; ipt < n_pT_pts; ++ipt)
 	{
-		for(int iphi = 0; iphi < n_interp_pphi_pts; ++iphi)
+		for(int iphi = 0; iphi < n_pphi_pts; ++iphi)
 			delete [] temp_moments_array[ipt][iphi];
 		delete [] temp_moments_array[ipt];
 	}
@@ -757,38 +757,38 @@ void SourceVariances::Cal_dN_dypTdpTdphi_with_weights(int local_pid)
 void SourceVariances::Determine_plane_angle()
 {
 	double localmass = particle_mass;
-	double* mT = new double [n_SP_pT];
-	double** px = new double* [n_SP_pT];
-	double** py = new double* [n_SP_pT];
-	double** p0 = new double* [n_SP_pT];
-	double** pz = new double* [n_SP_pT];
-	for(int ipt=0; ipt<n_SP_pT; ++ipt)
+	double* mT = new double [n_pT_pts];
+	double** px = new double* [n_pT_pts];
+	double** py = new double* [n_pT_pts];
+	double** p0 = new double* [n_pT_pts];
+	double** pz = new double* [n_pT_pts];
+	for(int ipt = 0; ipt < n_pT_pts; ++ipt)
 	{
-		px[ipt] = new double [n_SP_pphi];
-		py[ipt] = new double [n_SP_pphi];
+		px[ipt] = new double [n_pphi_pts];
+		py[ipt] = new double [n_pphi_pts];
 		p0[ipt] = new double [eta_s_npts];
 		pz[ipt] = new double [eta_s_npts];
 	}
    
-	for(int ipt=0; ipt<n_SP_pT; ++ipt)
+	for(int ipt = 0; ipt < n_pT_pts; ++ipt)
 		mT[ipt] = sqrt(localmass*localmass + SP_pT[ipt]*SP_pT[ipt]);
-	for(int iphi = 0; iphi<n_SP_pphi; ++iphi)
+	for(int iphi = 0; iphi < n_pphi_pts; ++iphi)
 	{
 		double cos_phi = cos(SP_pphi[iphi]);
 		double sin_phi = sin(SP_pphi[iphi]);
-		for(int ipt=0; ipt<n_SP_pT; ++ipt)
+		for(int ipt = 0; ipt < n_pT_pts; ++ipt)
 		{
 			px[ipt][iphi] = SP_pT[ipt]*cos_phi;
 			py[ipt][iphi] = SP_pT[ipt]*sin_phi;
 		}
 	}
 
-	for(int i=0; i<eta_s_npts; ++i)
+	for(int i = 0; i < eta_s_npts; ++i)
 	{
 		double local_eta_s = eta_s[i];
 		double local_cosh = cosh(SP_p_y - local_eta_s);
 		double local_sinh = sinh(SP_p_y - local_eta_s);
-		for(int ipt=0; ipt<n_SP_pT; ++ipt)
+		for(int ipt = 0; ipt < n_pT_pts; ++ipt)
 		{
 			p0[ipt][i] = mT[ipt]*local_cosh;
 			pz[ipt][i] = mT[ipt]*local_sinh;
@@ -797,9 +797,9 @@ void SourceVariances::Determine_plane_angle()
 
 	Cal_dN_dypTdpTdphi(p0, px, py, pz);
 
-	for(int ipt=0; ipt<n_SP_pT; ++ipt)
+	for(int ipt = 0; ipt < n_pT_pts; ++ipt)
   	{
-		for(int iphi=0; iphi<n_SP_pphi; ++iphi)
+		for(int iphi = 0; iphi < n_pphi_pts; ++iphi)
 		{
 			dN_dydphi[iphi] += dN_dypTdpTdphi[ipt][iphi]*SP_pT[ipt]*SP_pT_weight[ipt];
 			pTdN_dydphi[iphi] += dN_dypTdpTdphi[ipt][iphi]*SP_pT[ipt]*SP_pT[ipt]*SP_pT_weight[ipt];
@@ -807,24 +807,24 @@ void SourceVariances::Determine_plane_angle()
 		}
 	}
    	double norm = 0.0e0;
-   	for(int iphi=0; iphi<n_SP_pphi; ++iphi)
+   	for(int iphi=0; iphi<n_pphi_pts; ++iphi)
 		norm += dN_dydphi[iphi]*SP_pphi_weight[iphi];
    	for(int iorder=0; iorder < n_order; iorder++)
    	{
 		double cosine = 0.0e0;
 		double sine = 0.0e0;
-		for(int iphi=0; iphi<n_SP_pphi; ++iphi)
+		for(int iphi = 0; iphi < n_pphi_pts; ++iphi)
 		{
 			cosine += dN_dydphi[iphi]*cos(iorder*SP_pphi[iphi])*SP_pphi_weight[iphi];
 			sine += dN_dydphi[iphi]*sin(iorder*SP_pphi[iphi])*SP_pphi_weight[iphi];
 			//get pT-differential v_n here
-			for(int ipt=0; ipt<n_SP_pT; ++ipt)
+			for(int ipt = 0; ipt < n_pT_pts; ++ipt)
 			{
 				cosine_iorder[ipt][iorder] += dN_dypTdpTdphi[ipt][iphi]*cos(iorder*SP_pphi[iphi])*SP_pphi_weight[iphi];
 				sine_iorder[ipt][iorder] += dN_dypTdpTdphi[ipt][iphi]*sin(iorder*SP_pphi[iphi])*SP_pphi_weight[iphi];
 			}
 		}
-		for(int ipt=0; ipt<n_SP_pT; ++ipt)
+		for(int ipt = 0; ipt < n_pT_pts; ++ipt)
 		{
 			cosine_iorder[ipt][iorder] /= dN_dypTdpT[ipt];
 			sine_iorder[ipt][iorder] /= dN_dypTdpT[ipt];
@@ -837,17 +837,17 @@ void SourceVariances::Determine_plane_angle()
 			plane_angle[iorder] = atan2(sine, cosine)/double(iorder);
    	}
 	
-	for(int ipt=0; ipt<n_SP_pT; ++ipt)
+	for(int ipt = 0; ipt < n_pT_pts; ++ipt)
 		dN_dypTdpT[ipt] /= (2.*M_PI);
 	
 	mean_pT = 0.;
-	for(int iphi=0; iphi<n_SP_pphi; ++iphi)
+	for(int iphi = 0; iphi < n_pphi_pts; ++iphi)
 		mean_pT += pTdN_dydphi[iphi]*SP_pphi_weight[iphi];
 	mean_pT /= norm;
 	plane_angle[0] = norm;
 
 	delete[] mT;
-	for(int ipt=0; ipt<n_SP_pT; ++ipt)
+	for(int ipt = 0; ipt < n_pT_pts; ++ipt)
 	{
 		delete [] px[ipt];
 		delete [] py[ipt];
@@ -934,9 +934,9 @@ void SourceVariances::Load_decay_channel_info(int dc_idx, double K_T_local, doub
 				double temp_cos_PPhi_tilde_loc = (mT*MT_loc*cosh(P_Y_loc-p_y) - Estar_loc*Mres)/(pT*PT_loc);
 				//assume that PPhi_tilde is +ve in next step...
 				double temp_sin_PPhi_tilde_loc = sqrt(1. - temp_cos_PPhi_tilde_loc*temp_cos_PPhi_tilde_loc);
-				double PPhi_tilde_loc = place_in_range( atan2(temp_sin_PPhi_tilde_loc, temp_cos_PPhi_tilde_loc), interp_pphi_min, interp_pphi_max);
-				VEC_n2_PPhi_tilde[iv][izeta] = place_in_range( K_phi_local + PPhi_tilde_loc, interp_pphi_min, interp_pphi_max);
-				VEC_n2_PPhi_tildeFLIP[iv][izeta] = place_in_range( K_phi_local - PPhi_tilde_loc, interp_pphi_min, interp_pphi_max);
+				double PPhi_tilde_loc = place_in_range( atan2(temp_sin_PPhi_tilde_loc, temp_cos_PPhi_tilde_loc), SP_pphi_min, SP_pphi_max);
+				VEC_n2_PPhi_tilde[iv][izeta] = place_in_range( K_phi_local + PPhi_tilde_loc, SP_pphi_min, SP_pphi_max);
+				VEC_n2_PPhi_tildeFLIP[iv][izeta] = place_in_range( K_phi_local - PPhi_tilde_loc, SP_pphi_min, SP_pphi_max);
 				VEC_n2_PT[iv][izeta] = PT_loc;
 				check_for_NaNs("PT_loc", PT_loc, *global_out_stream_ptr);
 				check_for_NaNs("PPhi_tilde_loc", PPhi_tilde_loc, *global_out_stream_ptr);
@@ -1008,9 +1008,9 @@ void SourceVariances::Load_decay_channel_info(int dc_idx, double K_T_local, doub
 					double temp_cos_PPhi_tilde_loc = (mT*MT_loc*cosh(P_Y_loc-p_y) - Estar_loc*Mres)/(pT*PT_loc);
 					//assume that PPhi_tilde is +ve in next step...
 					double temp_sin_PPhi_tilde_loc = sqrt(1. - temp_cos_PPhi_tilde_loc*temp_cos_PPhi_tilde_loc);
-					double PPhi_tilde_loc = place_in_range( atan2(temp_sin_PPhi_tilde_loc, temp_cos_PPhi_tilde_loc), interp_pphi_min, interp_pphi_max);
-					VEC_PPhi_tilde[is][iv][izeta] = place_in_range( K_phi_local + PPhi_tilde_loc, interp_pphi_min, interp_pphi_max);
-					VEC_PPhi_tildeFLIP[is][iv][izeta] = place_in_range( K_phi_local - PPhi_tilde_loc, interp_pphi_min, interp_pphi_max);
+					double PPhi_tilde_loc = place_in_range( atan2(temp_sin_PPhi_tilde_loc, temp_cos_PPhi_tilde_loc), SP_pphi_min, SP_pphi_max);
+					VEC_PPhi_tilde[is][iv][izeta] = place_in_range( K_phi_local + PPhi_tilde_loc, SP_pphi_min, SP_pphi_max);
+					VEC_PPhi_tildeFLIP[is][iv][izeta] = place_in_range( K_phi_local - PPhi_tilde_loc, SP_pphi_min, SP_pphi_max);
 					///////////////////////////////////////////////////////////////
 					// Finally, set P^{+/-}
 					VEC_PT[is][iv][izeta] = PT_loc;
@@ -1073,10 +1073,10 @@ void SourceVariances::Cal_dN_dypTdpTdphi(double** SP_p0, double** SP_px, double*
 
 		double deltaf_prefactor = 1./(2.0*Tdec*Tdec*(Edec+Pdec));
       
-		for(int ipt = 0; ipt < n_SP_pT; ++ipt)
+		for(int ipt = 0; ipt < n_pT_pts; ++ipt)
 		{
 			double pT = SP_pT[ipt];
-			for(int iphi = 0; iphi < n_SP_pphi; ++iphi)
+			for(int iphi = 0; iphi < n_pphi_pts; ++iphi)
 			{
 				double px = SP_px[ipt][iphi];
 				double py = SP_py[ipt][iphi];
@@ -1119,8 +1119,8 @@ void SourceVariances::Cal_dN_dypTdpTdphi(double** SP_p0, double** SP_px, double*
 
 void SourceVariances::Set_source_variances_grid()
 {
-	for(int ipt = 0; ipt < n_interp_pT_pts; ipt++)
-	for(int ipphi = 0; ipphi < n_interp_pphi_pts; ipphi++)
+	for(int ipt = 0; ipt < n_pT_pts; ipt++)
+	for(int ipphi = 0; ipphi < n_pphi_pts; ipphi++)
 	{
 		S_func[ipt][ipphi] = dN_dypTdpTdphi_moments[target_particle_id][0][ipt][ipphi];
 		//if (INCLUDE_SOURCE_VARIANCES)
@@ -1140,7 +1140,7 @@ void SourceVariances::Set_source_variances_grid()
 			yt_S[ipt][ipphi] = dN_dypTdpTdphi_moments[target_particle_id][13][ipt][ipphi];
 			zt_S[ipt][ipphi] = dN_dypTdpTdphi_moments[target_particle_id][14][ipt][ipphi];
 
-			double cp = cos(SPinterp_pphi[ipphi]), sp = sin(SPinterp_pphi[ipphi]);
+			double cp = cos(SP_pphi[ipphi]), sp = sin(SP_pphi[ipphi]);
 			xs_S[ipt][ipphi] = -sp*x_S[ipt][ipphi] + cp*y_S[ipt][ipphi];
 			xs2_S[ipt][ipphi] = sp*sp*x2_S[ipt][ipphi] - 2.*sp*cp*xy_S[ipt][ipphi] + cp*cp*y2_S[ipt][ipphi];
 			xo_S[ipt][ipphi] = cp*x_S[ipt][ipphi] + sp*y_S[ipt][ipphi];
@@ -1166,12 +1166,12 @@ void SourceVariances::Interpolate_HBT_radii(int iKT, int iKphi)
 	//int interpolation_mode = 0;		//linear
 	int interpolation_mode = 1;		//cubic
 
-	R2_side[iKT][iKphi] = interpolate2D(SPinterp_pT, SPinterp_pphi, R2_side_grid, KT, phi_K, n_interp_pT_pts, n_interp_pphi_pts, interpolation_mode, false, false);
-	R2_out[iKT][iKphi] = interpolate2D(SPinterp_pT, SPinterp_pphi, R2_out_grid, KT, phi_K, n_interp_pT_pts, n_interp_pphi_pts, interpolation_mode, false, false);
-	R2_long[iKT][iKphi] = interpolate2D(SPinterp_pT, SPinterp_pphi, R2_long_grid, KT, phi_K, n_interp_pT_pts, n_interp_pphi_pts, interpolation_mode, false, false);
-	R2_outside[iKT][iKphi] = interpolate2D(SPinterp_pT, SPinterp_pphi, R2_outside_grid, KT, phi_K, n_interp_pT_pts, n_interp_pphi_pts, interpolation_mode, false, false);
-	R2_sidelong[iKT][iKphi] = interpolate2D(SPinterp_pT, SPinterp_pphi, R2_sidelong_grid, KT, phi_K, n_interp_pT_pts, n_interp_pphi_pts, interpolation_mode, false, false);
-	R2_outlong[iKT][iKphi] = interpolate2D(SPinterp_pT, SPinterp_pphi, R2_outlong_grid, KT, phi_K, n_interp_pT_pts, n_interp_pphi_pts, interpolation_mode, false, false);
+	R2_side[iKT][iKphi] = interpolate2D(SP_pT, SP_pphi, R2_side_grid, KT, phi_K, n_pT_pts, n_pphi_pts, interpolation_mode, false, false);
+	R2_out[iKT][iKphi] = interpolate2D(SP_pT, SP_pphi, R2_out_grid, KT, phi_K, n_pT_pts, n_pphi_pts, interpolation_mode, false, false);
+	R2_long[iKT][iKphi] = interpolate2D(SP_pT, SP_pphi, R2_long_grid, KT, phi_K, n_pT_pts, n_pphi_pts, interpolation_mode, false, false);
+	R2_outside[iKT][iKphi] = interpolate2D(SP_pT, SP_pphi, R2_outside_grid, KT, phi_K, n_pT_pts, n_pphi_pts, interpolation_mode, false, false);
+	R2_sidelong[iKT][iKphi] = interpolate2D(SP_pT, SP_pphi, R2_sidelong_grid, KT, phi_K, n_pT_pts, n_pphi_pts, interpolation_mode, false, false);
+	R2_outlong[iKT][iKphi] = interpolate2D(SP_pT, SP_pphi, R2_outlong_grid, KT, phi_K, n_pT_pts, n_pphi_pts, interpolation_mode, false, false);
 
 	return;
 }
@@ -1247,10 +1247,10 @@ void SourceVariances::Calculate_R2_sidelong(int ipt, int ipphi)
 
 void SourceVariances::R2_Fourier_transform(int iKT, double plane_psi)
 {
-	for(int Morder=0; Morder<n_order; ++Morder)
+	for(int Morder = 0; Morder < n_order; ++Morder)
 	{
-		double cos_mK_phi[n_localp_phi], sin_mK_phi[n_localp_phi];
-		for(int i=0; i<n_localp_phi; ++i)
+		double cos_mK_phi[nKphi], sin_mK_phi[nKphi];
+		for(int i = 0; i < nKphi; ++i)
 		{
 			cos_mK_phi[i] = cos(Morder*(K_phi[i] - plane_psi));
 			sin_mK_phi[i] = sin(Morder*(K_phi[i] - plane_psi));
@@ -1267,7 +1267,7 @@ void SourceVariances::R2_Fourier_transform(int iKT, double plane_psi)
 		double temp_sum_sidelong_sin = 0.0e0;
 		double temp_sum_outlong_cos = 0.0e0;
 		double temp_sum_outlong_sin = 0.0e0;
-		for(int i=0; i<n_localp_phi; ++i)
+		for(int i = 0; i < nKphi; ++i)
 		{
 			temp_sum_side_cos += R2_side[iKT][i]*cos_mK_phi[i]*K_phi_weight[i];
 			temp_sum_side_sin += R2_side[iKT][i]*sin_mK_phi[i]*K_phi_weight[i];

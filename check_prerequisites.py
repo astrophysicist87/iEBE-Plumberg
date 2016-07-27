@@ -108,6 +108,8 @@ def checkExecutables():
         path.join("photonEmission", "hydro_photonEmission.e"),
         path.join("osc2u", "osc2u.e"),
         path.join("urqmd", "urqmd.e"),
+        path.join("HoTCoffeeh", "svwr.e"),
+        path.join("HoTCoffeeh", "cfwr.e"),
     )
 
     # check for existence of all executables

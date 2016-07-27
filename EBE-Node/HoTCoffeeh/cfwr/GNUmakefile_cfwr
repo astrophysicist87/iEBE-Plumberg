@@ -84,7 +84,7 @@ $(OBJDIR)/%.o: %.cpp
 all:		mkobjdir $(TARGET)
 
 help:
-		@grep '^##' GNUmakefile
+		@grep '^##' GNUmakefile_cfwr
 
 mkobjdir:	
 		-@mkdir -p $(OBJDIR)
@@ -98,7 +98,8 @@ clean:
 
 distclean:	
 		-rm $(TARGET)
-		-rm -r obj
+		-rm $(OBJECTS)
+		-rm $(MAIN)
 
 install:	$(TARGET)
 		cp $(TARGET) $(INSTPATH)
@@ -109,7 +110,7 @@ $(SRCDIR)/ParameterReader.cpp: $(SRCDIR)/ParameterReader.h $(SRCDIR)/Arsenal.h
 $(SRCDIR)/readindata.cpp: $(SRCDIR)/readindata.h $(SRCDIR)/lib.h
 $(SRCDIR)/lib.cpp: $(SRCDIR)/lib.h
 $(SRCDIR)/cfwr_HDF_short.cpp: $(SRCDIR)/cfwr.h $(SRCDIR)/cfwr_lib.h $(SRCDIR)/lib.h
-$(SRCDIR)/cfwr_admin.cpp: $(SRCDIR)/cfwr.h $(SRCDIR)/Arsenal.h $(SRCDIR)/gauss_quadrature.h $(SRCDIR)/cfwr_lib.h $(SRCDIR)/lib.h
+$(SRCDIR)/cfwr_admin.cpp: $(SRCDIR)/cfwr.h $(SRCDIR)/Arsenal.h $(SRCDIR)/gauss_quadrature.h $(SRCDIR)/cfwr_lib.h $(SRCDIR)/lib.h $(SRCDIR)/parameters.h
 $(SRCDIR)/cfwr_IO.cpp: $(SRCDIR)/cfwr.h $(SRCDIR)/Arsenal.h $(SRCDIR)/gauss_quadrature.h $(SRCDIR)/lib.h
 $(SRCDIR)/cfwr_GFroutines.cpp: $(SRCDIR)/cfwr.h $(SRCDIR)/Arsenal.h $(SRCDIR)/gauss_quadrature.h $(SRCDIR)/Stopwatch.h $(SRCDIR)/cfwr_lib.h $(SRCDIR)/lib.h
 $(SRCDIR)/cfwr_QMroutines.cpp: $(SRCDIR)/cfwr.h $(SRCDIR)/lib.h

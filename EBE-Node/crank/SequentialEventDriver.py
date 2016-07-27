@@ -10,7 +10,7 @@
 
 from os import path, getcwd, remove, makedirs
 from sys import stdout
-from shutil import move, copy, rmtree
+from shutil import move, copy, copytree, rmtree
 from glob import glob
 from subprocess import call
 import numpy as np
@@ -39,8 +39,8 @@ allParameterLists = [
     'urqmdParameters',
     'binUtilitiesControl',
     'binUtilitiesParameters',
-    'HotCoffeehControl',
-    'HotCoffeehParameters',
+    'HoTCoffeehControl',
+    'HoTCoffeehParameters',
 ]
 
 controlParameterList = {
@@ -235,14 +235,38 @@ EbeCollectorParameters = {
 }
 
 HoTCoffeehControl = {
-    'mainDir'                           :   'HotCoffeeh',
+    'mainDir'                           :   'HoTCoffeeh',
     'operationDir'                      :   'results',
     'executables'                       :   ('cfwr.e', 'svwr.e'),
-    'entryShell'                        :   'HoTCoffee.sh'
+    'entryShell'                        :   'HoTCoffeeh.sh',
+	'saveResultGlobs'					:	['*'],
 }
 HoTCoffeehParameters = {
-    'npT'                            	:   15,
-    'npphi'                            	:   36,
+    'grouping_particles'                :   0,
+    'particle_diff_tolerance'           :   0.00,
+	'use_plane_psi_order'				:	0,
+    'ignore_long_lived_resonances'      :   1,
+	'max_lifetime'						:	100.0,
+	'include_delta_f'					:	1,
+	'include_bulk_pi'					:	1,
+	'n_order'							:	4,
+	'tolerance'							:	0.00,
+	'flag_negative_S'					:	1,
+    'chosenParticlesMode'               :   0,
+	'nKT'								:	101,
+	'nKphi'								:	48,
+	'KTmin'								:	0.01,
+	'KTmax'								:	1.01,
+    'SV_npT'                           	:   15,
+    'SV_npphi'                          :   48,
+    'SV_resonanceThreshold'             :   1.00,
+    'CF_npT'                           	:   15,
+    'CF_npphi'                          :   48,
+    'CF_resonanceThreshold'             :   0.60,
+    'use_lambda'                        :   1,
+    'use_extrapolation'                 :   1,
+    'fit_with_projected_cfvals'         :   1,
+    'flesh_out_cf'                      :   1,
     'qtnpts'                            :   13,
     'qxnpts'                            :   7,
     'qynpts'                            :   7,
@@ -250,21 +274,6 @@ HoTCoffeehParameters = {
     'delta_qx'                          :   0.0125,
     'delta_qy'                          :   0.0125,
     'delta_qz'                          :   0.015,
-    'grouping_particles'                :   0,
-    'particle_diff_tolerance'           :   0.00,
-    'use_lambda'                        :   1,
-    'use_extrapolation'                 :   1,
-    'ignore_long_lived_resonances'      :   1,
-    'fit_with_projected_cfvals'         :   1,
-    'flesh_out_cf'                      :   1,
-    'chosenParticlesMode'               :   0,
-    'resonanceThreshold'                :   0.60,
-	'use_plane_psi_order'				:	0,
-	'include_delta_f'					:	0,
-	'n_order'							:	4,
-	'tolerance'							:	0.00,
-	'flag_negative_S'					:	1,
-	'max_lifetime'						:	100.0,
 }
 
 def readInParameters():
@@ -678,7 +687,7 @@ def iSWithResonancesWithHydroResultFiles(fileList):
     iSOperationDirectory = path.join(iSDirectory, iSControl['operationDir'])
     iSExecutables = iSControl['executables']
     iSExecutionEntry = iSControl['entryShell']
-
+	
     # check executable
     checkExistenceOfExecutables(
                     [path.join(iSDirectory, aExe) for aExe in iSExecutables])
@@ -710,47 +719,52 @@ def iSWithResonancesWithHydroResultFiles(fileList):
             move(aFile, controlParameterList['eventResultDir'])
 
 def doHBTWithHydroResultFiles(fileList):
-    """
-        Perform HoTCoffeeh calculation.
-    """
-    ProcessNiceness = controlParameterList['niceness']
-    # set directory strings
-    HoTCoffeehDirectory = path.join(controlParameterList['rootDir'], 
-                            HoTCoffeehControl['mainDir'])
-    HoTCoffeehOperationDirectory = path.join(HoTCoffeehDirectory, HoTCoffeehControl['operationDir'])
-    HoTCoffeehExecutables = HoTCoffeehControl['executables']
-    HoTCoffeehExecutionEntry = HoTCoffeehControl['entryShell']
+	"""
+		Perform HoTCoffeeh calculation.
+	"""
+	ProcessNiceness = controlParameterList['niceness']
+	# set directory strings
+	HoTCoffeehDirectory = path.join(controlParameterList['rootDir'], 
+							HoTCoffeehControl['mainDir'])
+	HoTCoffeehOperationDirectory = path.join(HoTCoffeehDirectory, HoTCoffeehControl['operationDir'])
+	HoTCoffeehExecutables = HoTCoffeehControl['executables']
+	HoTCoffeehExecutionEntry = HoTCoffeehControl['entryShell']
+	print 'fileList =', fileList
 
-    # check executable
-    checkExistenceOfExecutables(
-                    [path.join(HoTCoffeehDirectory, aExe) for aExe in HoTCoffeehExecutables])
-
-    # clean up operation folder
-    cleanUpFolder(HoTCoffeehOperationDirectory)
-
-    # check existence of hydro result files and move them to operation folder
-    for aFile in fileList:
-        if not path.exists(aFile):
-            raise ExecutionError("Hydro result file %s not found!" % aFile)
-        else:
-            move(aFile, HoTCoffeehOperationDirectory)
+	# check executable
+	checkExistenceOfExecutables(
+					[path.join(HoTCoffeehDirectory, aExe) for aExe in HoTCoffeehExecutables])
+	
+	# clean up operation folder
+	cleanUpFolder(HoTCoffeehOperationDirectory)
+	#rmtree(HoTCoffeehOperationDirectory)
+	
+	#copytree( path.commonprefix(fileList), HoTCoffeehOperationDirectory )
+	
+	# check existence of hydro result files and move them to operation folder
+	for aFile in fileList:
+		if not path.exists(aFile):
+			raise ExecutionError("Hydro result file %s not found!" % aFile)
+		else:
+			move(aFile, HoTCoffeehOperationDirectory)
     
-    #copy(path.join(HoTCoffeehDirectory, 'EOS', 'chosen_particles_s95pv1.dat'), 
-    #     path.join(HoTCoffeehDirectory, 'EOS', 'chosen_particles.dat'))
-    copy(path.join(HoTCoffeehDirectory, 'EOS', 'pdg-s95pv1.dat'), 
-         path.join(HoTCoffeehDirectory, 'EOS', 'pdg.dat'))
+	# form assignment string
+	assignments = formAssignmentStringFromDict(HoTCoffeehParameters)
+	
+	# execute!
+	print 'Running', "nice -n %d bash ./" % (ProcessNiceness) \
+						+ HoTCoffeehExecutionEntry + " true true " + assignments
+	run("nice -n %d bash ./" % (ProcessNiceness) \
+			+ HoTCoffeehExecutionEntry + " true true " + assignments, \
+		cwd=HoTCoffeehDirectory)
 
-    # execute!
-    run("nice -n %d bash ./" % (ProcessNiceness) + HoTCoffeehExecutionEntry, 
-        cwd=HoTCoffeehDirectory)
-
-    # save some of the important result files
-    worthStoring = []
-    for aGlob in HoTCoffeehControl['saveResultGlobs']:
-        worthStoring.extend(glob(path.join(HoTCoffeehOperationDirectory, aGlob)))
-    for aFile in glob(path.join(HoTCoffeehOperationDirectory, "*")):
-        if aFile in worthStoring:
-            move(aFile, controlParameterList['eventResultDir'])
+	# save some of the important result files
+	worthStoring = []
+	for aGlob in HoTCoffeehControl['saveResultGlobs']:
+		worthStoring.extend(glob(path.join(HoTCoffeehOperationDirectory, aGlob)))
+	for aFile in glob(path.join(HoTCoffeehOperationDirectory, "*")):
+		if aFile in worthStoring:
+			move(aFile, controlParameterList['eventResultDir'])
 
 def iSSeventplaneAngleWithHydroResultFiles(fileList):
     """
@@ -1179,6 +1193,8 @@ def sequentialEventDriverShell():
                 copy(aInitialConditionFile, 
                      controlParameterList['eventResultDir'])
             
+            print controlParameterList['rootDir']
+            
             if simulationType == 'hydroEM_preEquilibrium':
                 # perform hydro calculations with pre-equilibrium evolution 
                 # and get a list of all the result filenames
@@ -1186,9 +1202,9 @@ def sequentialEventDriverShell():
                              hydro_with_pre_equilbirium(aInitialConditionFile)]
             else:
                 # perform hydro calculations and get a list of all the result 
-                # filenames
-                hydroResultFiles = [aFile for aFile in 
-                              hydroWithInitialCondition(aInitialConditionFile)]
+               	# filenames
+                hydroResultFiles = [aFile for aFile in hydroWithInitialCondition(aInitialConditionFile)]
+                print controlParameterList['rootDir']            
             
             # fork simulation type here
             if simulationType == 'hybrid':
@@ -1200,7 +1216,7 @@ def sequentialEventDriverShell():
                 urqmdOutputFilePath = urqmdFromOsc2uOutputFile(
                                                            osc2uOutputFilePath)
 
-                # copy and concatnate final results from all hydro events 
+                # copy and concatenate final results from all hydro events 
                 # into one file
                 combinedUrqmdFile = path.join(
                     controlParameterList['resultDir'], 
@@ -1214,9 +1230,16 @@ def sequentialEventDriverShell():
                 # delete the huge final UrQMD combined file
                 remove(urqmdOutputFilePath)
 
+            # Plumberg: add HBT calculations here (defined only for hydroResultFiles so far)
+            print controlParameterList['rootDir']            
+            if simulationType != 'hybrid':
+                doHBTWithHydroResultFiles(hydroResultFiles)
+
             elif simulationType == 'hydro':
                 # perform iS calculation and resonance decays
-                iSWithResonancesWithHydroResultFiles(hydroResultFiles)
+                print controlParameterList['rootDir']            
+               	iSWithResonancesWithHydroResultFiles(hydroResultFiles)
+                print controlParameterList['rootDir']            
             
             elif simulationType == 'hydroEM':
                 h5file = iSSeventplaneAngleWithHydroResultFiles(
@@ -1251,10 +1274,6 @@ def sequentialEventDriverShell():
                 urqmdOutputFilePath = urqmdFromOsc2uOutputFile(
                                                            osc2uOutputFilePath)
 
-            # Plumberg: add HBT calculations here (defined only for hydroResultFiles so far)
-            if simulation_type != 'hybrid':
-                doHBTWithHydroResultFiles(hydroResultFiles)
-
             #tarfile_name = (
             #             controlParameterList['eventResultDir'].split('/')[-1])
             #call("tar -cf %s.tar %s" % (tarfile_name, tarfile_name), 
@@ -1267,7 +1286,7 @@ def sequentialEventDriverShell():
             stdout.flush()
 
         # collect mostly used data into a database
-        collectEbeResultsToDatabaseFrom(resultDir)
+        #collectEbeResultsToDatabaseFrom(resultDir)
 
     except ExecutionError as e:
         print("Errors encountered during execution, aborting.")

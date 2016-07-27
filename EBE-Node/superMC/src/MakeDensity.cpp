@@ -22,7 +22,8 @@ MakeDensity::MakeDensity(ParameterReader *paraRdr_in)
 {
   paraRdr = paraRdr_in; // where all parameters are1
 
-  eos.loadEOSFromFile("EOS/s95p-v1/EOS_PST.dat","EOS/s95p-v1/coeff.dat");
+  //eos.loadEOSFromFile("EOS/s95p-v1/EOS_PST.dat","EOS/s95p-v1/coeff.dat");	//this coeff file doesn't exist for some reason
+  eos.loadEOSFromFile("EOS/s95p-PCE/EOS_converted.dat","EOS/s95p-PCE/coeff.dat");
 
   int which_mc_model = paraRdr->getVal("which_mc_model");
   finalFactor = paraRdr->getVal("finalFactor");

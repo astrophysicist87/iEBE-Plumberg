@@ -60,5 +60,4 @@ while keepWatching:
     keepWatching = False
 
 stdout.flush()
-call("python ./combineEbeDatabasesFromZippedResults.py %s %s" % (parentFolder, databaseFilename), shell=True)
-#call("python ./combineEbeDatabasesFromZippedResults.py %s %s" % (parentFolder, databaseFilename_particles), shell=True)
+#call("python ./combineEbeDatabasesFromZippedResults.py %s %s" % (parentFolder, databaseFilename), shell=True)

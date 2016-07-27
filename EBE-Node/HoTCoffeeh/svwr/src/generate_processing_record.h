@@ -47,41 +47,47 @@ void initialize_PRfile(ParameterReader* paraRdr, string currentworkingdirectory,
 	//output << "   - SPACETIME_MOMENTS_ONLY: " << return_boolean_string(paraRdr->getVal("spacetime_moments_only")) << endl;
 	//output << "   - INCLUDE_SOURCE_VARIANCES: " << return_boolean_string(paraRdr->getVal("include_source_variances")) << endl;
 	output << "   - INCLUDE_DELTA_F: " << return_boolean_string(paraRdr->getVal("include_delta_f")) << endl;
-	output << "   - DO_ALL_DECAY_CHANNELS: " << return_boolean_string(paraRdr->getVal("do_all_decay_channels")) << endl;
+	output << "   - INCLUDE_BULK_PI: " << return_boolean_string(paraRdr->getVal("include_bulk_pi")) << endl;
+	output << "   - IGNORE_LONG_LIVED_RESONANCES: " << return_boolean_string(paraRdr->getVal("ignore_long_lived_resonances")) << endl;
 	output << "   - USE_PLANE_PSI_ORDER: " << paraRdr->getVal("use_plane_psi_order") << endl;
+
 	output << endl;
+
 	output << "General initializations:" << endl;
 	output << "   - Spatial rapidity information:" << endl;
 	output << "      --> eta_s_npts: " << eta_s_npts << endl;
 	output << "      --> eta_s_i: " << eta_s_i << endl;
 	output << "      --> eta_s_f: " << eta_s_f << endl;
-	output << endl;
+
 	output << "   - Single particle momentum information:" << endl;
-	output << "      --> n_SP_pT: " << n_SP_pT << endl;
-	output << "      --> n_SP_pphi: " << n_SP_pphi << endl;
+	output << "      --> n_pT_pts: " << paraRdr->getVal("SV_npT") << endl;
+	output << "      --> n_pphi_pts: " << paraRdr->getVal("SV_npphi") << endl;
 	output << "      --> SP_pT_min: " << SP_pT_min << endl;
 	output << "      --> SP_pT_max: " << SP_pT_max << endl;
-	output << endl;
-	output << "   - Interpolation grid parameters:" << endl;
-	output << "      --> n_interp_pT_pts: " << n_interp_pT_pts << endl;
-	output << "      --> n_interp_pphi_pts: " << n_interp_pphi_pts << endl;
-	output << endl;
+	output << "      --> SP_pphi_min: " << SP_pphi_min << endl;
+	output << "      --> SP_pphi_max: " << SP_pphi_max << endl;
+
 	output << "   - Pair momentum information:" << endl;
-	output << "      --> n_localp_T: " << n_localp_T << endl;
-	output << "      --> localp_T_min: " << localp_T_min << endl;
-	output << "      --> localp_T_max: " << localp_T_max << endl;
-	output << "      --> n_localp_phi: " << n_localp_phi << endl;
-	output << "      --> localp_phi_min: " << localp_phi_min << endl;
-	output << "      --> localp_phi_max: " << localp_phi_max << endl;
-	output << endl;
+	output << "      --> nKT: " << paraRdr->getVal("nKT") << endl;
+	output << "      --> KT_min: " << paraRdr->getVal("KTmin") << endl;
+	output << "      --> KT_max: " << paraRdr->getVal("KTmax") << endl;
+	output << "      --> nKphi: " << paraRdr->getVal("nKphi") << endl;
+	output << "      --> Kphi_min: " << Kphi_min << endl;
+	output << "      --> Kphi_max: " << Kphi_max << endl;
+
+	output << "   - Phase-space integral information:" << endl;
+	output << "      --> n_s_pts: " << n_s_pts << endl;
+	output << "      --> n_v_pts: " << n_v_pts << endl;
+	output << "      --> n_zeta_pts: " << n_zeta_pts << endl;
+
 	output << "   - HBT Fourier information:" << endl;
 	output << "      --> n_order: " << paraRdr->getVal("n_order") << endl;
-	output << endl;
+
 	output << "   - Miscellaneous information:" << endl;
 	output << "      --> CWD: " << currentworkingdirectory << endl;
 	output << "      --> tol: " << paraRdr->getVal("tolerance") << endl;
 	output << "      --> flagneg: " << paraRdr->getVal("flag_negative_S") << endl;
-	if ( paraRdr->getVal("do_all_decay_channels") )
+	if ( ! paraRdr->getVal("ignore_long_lived_resonances") )
 		output << "      --> max_lifetime (fm/c): " << paraRdr->getVal("max_lifetime") << endl;
 	else
 		output << "      --> max_lifetime (fm/c): 10000000000.0" << endl;

@@ -115,7 +115,8 @@ EmissionFunctionArray::EmissionFunctionArray(ParameterReader* paraRdr_in, double
   last_particle_idx = -1;
 
   //arrays for bulk delta f coefficients
-  bulkdf_coeff = new Table ("tables/BulkDf_Coefficients_Hadrons_s95p-v0-PCE.dat");
+  //if (INCLUDE_BULKDELTAF == 1)
+  //   bulkdf_coeff = new Table ("tables/BulkDf_Coefficients_Hadrons_s95p-v0-PCE.dat");
 }
 
 
@@ -125,7 +126,8 @@ EmissionFunctionArray::~EmissionFunctionArray()
   if(CALCULATEDED3P == 1) delete dE_ptdptdphidy;
   delete[] chosen_particles_01_table;
   delete[] chosen_particles_sampling_table;
-  delete bulkdf_coeff;
+  //if (INCLUDE_BULKDELTAF == 1)
+  //   delete bulkdf_coeff;
 }
 
 

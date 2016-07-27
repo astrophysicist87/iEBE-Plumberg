@@ -1,5 +1,5 @@
 controlParameterList = {
-    'simulation_type'       :   'hydroEM_with_decaycocktail', 
+    'simulation_type'       :   'hydro', 
     # options: 'hybrid', 'hydro', 'hydroEM', 'hydroEM_with_decaycocktail', 
     #          'hydroEM_preEquilibrium', 'hydroEM_with_decaycocktail_with_urqmd'
     'niceness'              :   0,  
@@ -7,7 +7,7 @@ controlParameterList = {
 }
 
 initial_condition_control = {
-    'centrality': '30-40%',  # centrality bin
+    'centrality': '0-10%',  # centrality bin
     'cut_type': 'total_entropy',
     # centrality cut variable: total_entropy or Npart
     'initial_condition_type': 'superMC',
@@ -21,13 +21,13 @@ initial_condition_control = {
 
 superMCParameters = {
     'model_name'                    :   'MCGlb',    # MCGlb or MCKLN
-    'Aproj'                         :   208,
-    'Atarg'                         :   208,
-    'ecm'                           :   2760,
-    'finalFactor'                   :   56.763,
-    'alpha'                         :   0.118,      # WN/BC mixing ratio in MCGlb
-    'lambda'                        :   0.218,      # saturation scale parameter in MCKLN
-    'operation'                     :   2,
+    'Aproj'                         :   197,
+    'Atarg'                         :   197,
+    'ecm'                           :   200,
+    'finalFactor'                   :   28.656,
+    'alpha'                         :   0.14,      # WN/BC mixing ratio in MCGlb
+    'lambda'                        :   0.288,      # saturation scale parameter in MCKLN
+    'operation'                     :   1,
     'include_NN_correlation'        :   1,
     'cc_fluctuation_model'          :   6,
     'cc_fluctuation_Gamma_theta'    :   0.75,       
@@ -35,6 +35,7 @@ superMCParameters = {
     'maxy'                          :   13.0,       # grid size in y (fm)
     'dx'                            :   0.1,        # grid spacing in x (fm)
     'dy'                            :   0.1,        # grid spacing in y (fm)
+	'nev'							:	1,
 }
 
 # only effective when simulation_type == hydroEM_preEquilibrium
@@ -46,31 +47,33 @@ preEquilibriumParameters = {
 }
 
 hydroParameters = {
-    'vis'       :   0.08,
+    'vis'       	:   0.08,
     'Ivisflag'  :   0,        # flag to use temperature dependent eta/s(T)
     'IvisBulkFlag'  :   0,    # flag for temperature dependence of bulk viscosity
     'visbulknorm'   :   0.0,  # the overall normalization of the bulk viscosity 
                               # (set to 0.0 for shear only simulation)
-    'IviscousEqsType'  :  2,  # type of evolution equations for viscous quantities 
+    'IviscousEqsType'  :  1,  # type of evolution equations for viscous quantities 
                               # (1: Israel-Stewart eq. 2: DNMR eq.)
     'T0'        :   0.6,      # tau_0
     'dt'        :   0.02,     # dtau
-    'Edec'      :   0.18,
+    'Tdec'      :   0.12,
     'iLS'       :   130,      # lattice size in transverse plane 2*iLS+1
     'dx'        :   0.10,     # lattice spacing in x (fm) 
                               # need to be the same as dx in superMC
     'dy'        :   0.10,     # lattice spacing in y (fm)
                               # need to be the same as dy in superMC
-    'IhydroJetoutput' :   1,  # switch for output hydro evolution history
+    'ndx'       :   2,
+    'ndy'       :   2,
+    'IhydroJetoutput' :   0,  # switch for output hydro evolution history
     'InitialURead'    :   0,  # set it to be 1 when simulation_type == hydroEM_preEquilibrium
-    'Initialpitensor' :   0,  # initialization of pi tensor
+    'Initialpitensor' :   1,  # initialization of pi tensor
                               # 0: initialize to 0; 1: initialze to Navier-Stock value
 }
 
 iSSParameters = {
     'turn_on_bulk'                  :   0,
     'include_deltaf_bulk'           :   0,
-    'include_deltaf_shear'          :   0,
+    'include_deltaf_shear'          :   1,
     'calculate_vn'                  :   1,
     'MC_sampling'                   :   0,
     'number_of_repeated_sampling'   :   10,
@@ -78,6 +81,12 @@ iSSParameters = {
     'y_RB'                          :   2.5,
     'sample_y_minus_eta_s_range'    :   2.0,
 }
+
+iSParameters = {
+    'turn_on_bulk'                  :   0,
+    'turn_on_shear'					:   1,
+}
+
 
 photonEmissionParameters = {
     'dx'          :   0.3,
@@ -93,4 +102,10 @@ photonEmissionParameters = {
     'calHGIdFlag' :   0,
     'differential_flag'   :  0,
     'enable_polyakov_suppression'   :    0,
+}
+
+HoTCoffeehParameters = {
+	'include_delta_f'					:	1,
+    'SV_resonanceThreshold'             :   0.00,
+    'CF_resonanceThreshold'             :   0.00,
 }

@@ -309,11 +309,11 @@ void CorrelationFunction::Flatten_dN_dypTdpTdphi_moments(int parent_resonance_pa
 	const int dim_loc = 2;
 	int npts_loc[dim_loc] = { n_pT_pts, n_pphi_pts };
 	int os[dim_loc] = { n_pT_pts-1, n_pphi_pts-1 };
-	double lls[dim_loc] = { interp_pT_min, interp_pphi_min };
-	double uls[dim_loc] = { interp_pT_max, interp_pphi_max };
+	double lls[dim_loc] = { KT_min, Kphi_min };
+	double uls[dim_loc] = { KT_max, Kphi_max };
 	int modes_loc[dim_loc] = { 0, 0 };
-	//double lls[dim_loc] = { 0.0, interp_pphi_min };
-	//double uls[dim_loc] = { (1.-sin(M_PI/n_pT_pts))/(1.+sin(M_PI/n_pT_pts)), interp_pphi_max };
+	//double lls[dim_loc] = { 0.0, Kphi_min };
+	//double uls[dim_loc] = { (1.-sin(M_PI/n_pT_pts))/(1.+sin(M_PI/n_pT_pts)), Kphi_max };
 	//int modes_loc[dim_loc] = { 1, 0 };
 
 	int momidx = 0;

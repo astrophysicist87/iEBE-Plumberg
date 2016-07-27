@@ -67,9 +67,9 @@ void CorrelationFunction::Output_results(int mode)
 {
 	string modeString = "";
 	if (mode == 0)
-		modeString = "GF_";
+		modeString = "GF";
 	else if (mode == 1)
-		modeString = "QM_";
+		modeString = "QM";
 
 	ostringstream filename_stream_HBT_g0;
 	filename_stream_HBT_g0 << path << "/HBTradii_" << modeString << no_df_stem << "_grid0.dat";
@@ -80,7 +80,7 @@ void CorrelationFunction::Output_results(int mode)
 	ofstream outputHBT;
 	outputHBT.open(filename_stream_HBT.str().c_str());
 	ostringstream filename_stream_HBTcfs;
-	filename_stream_HBTcfs << path << "/HBTradii_" << modeString << no_df_stem << ".dat";
+	filename_stream_HBTcfs << path << "/HBTradii_" << modeString << "_cfs" << no_df_stem << ".dat";
 	ofstream outputHBTcfs;
 	outputHBTcfs.open(filename_stream_HBTcfs.str().c_str());
 
@@ -94,8 +94,8 @@ void CorrelationFunction::Output_results(int mode)
 
 	int npts_loc[2] = { n_pT_pts, n_pphi_pts };
 	int os[2] = { n_pT_pts-1, n_pphi_pts-1 };
-	double lls[2] = { interp_pT_min, interp_pphi_min };
-	double uls[2] = { interp_pT_max, interp_pphi_max };
+	double lls[2] = { KT_min, Kphi_min };
+	double uls[2] = { KT_max, Kphi_max };
 	int modes_loc[2] = { 0, 0 };
 
 	int iptipphi = 0;
@@ -277,9 +277,9 @@ void CorrelationFunction::Readin_results(int mode)
 {
 	string modeString = "";
 	if (mode == 0)
-		modeString = "GF_";
+		modeString = "GF";
 	else if (mode == 1)
-		modeString = "QM_";
+		modeString = "QM";
 
 	double dummy;
 	ostringstream filename_stream_HBT;
@@ -353,7 +353,7 @@ void CorrelationFunction::Output_total_target_eiqx_dN_dypTdpTdphi(double current
 	string current_fraction_string = (current_fraction >= 0.0) ? "_" + patch::to_string(current_fraction) : "";
 	replace_parentheses(local_name);
 	ostringstream filename_stream_target_dN_dypTdpTdphi;
-	filename_stream_target_dN_dypTdpTdphi << path << "/total_" << local_name << current_fraction_string << "_eiqx_dN_dypTdpTdphi_" << no_df_stem << ".dat";
+	filename_stream_target_dN_dypTdpTdphi << path << "/total_" << local_name << current_fraction_string << "_eiqx_dN_dypTdpTdphi" << no_df_stem << ".dat";
 	ofstream output_target_dN_dypTdpTdphi(filename_stream_target_dN_dypTdpTdphi.str().c_str());
 
 	//int HDFloadTargetSuccess = Get_resonance_from_HDF_array(target_particle_id, current_dN_dypTdpTdphi_moments);

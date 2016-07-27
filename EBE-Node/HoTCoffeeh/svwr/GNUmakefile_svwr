@@ -88,7 +88,8 @@ clean:
 
 distclean:	
 		-rm $(TARGET)
-		-rm -r obj
+		-rm $(OBJECTS)
+		-rm $(MAIN)
 
 install:	$(TARGET)
 		cp $(TARGET) $(INSTPATH)

@@ -42,6 +42,13 @@ SourceVariances::SourceVariances(ParameterReader* paraRdr_in, particle_info* par
 	flagneg = paraRdr->getVal("flag_negative_S");
 	max_lifetime = paraRdr->getVal("max_lifetime");
 
+	n_pT_pts = paraRdr->getVal("SV_npT");
+	n_pphi_pts = paraRdr->getVal("SV_npphi");
+	nKT = paraRdr->getVal("nKT");
+	nKphi = paraRdr->getVal("nKphi");
+	KT_min = paraRdr->getVal("KTmin");
+	KT_max = paraRdr->getVal("KTmax");
+
 	//set ofstream for output file
 	global_out_stream_ptr = &myout;
 	
@@ -61,7 +68,7 @@ SourceVariances::SourceVariances(ParameterReader* paraRdr_in, particle_info* par
 	Nparticle = Nparticle_in;
 	read_in_all_dN_dypTdpTdphi = false;
 	output_all_dN_dypTdpTdphi = true;
-	currentfolderindex = -1;
+	//currentfolderindex = -1;
 	current_level_of_output = 0;
 
 	//just need this for various dummy momentum calculations
@@ -69,9 +76,6 @@ SourceVariances::SourceVariances(ParameterReader* paraRdr_in, particle_info* par
 	Pp = new double [4];
 	Pm = new double [4];
 
-	n_zeta_pts = 12;
-	n_v_pts = 12;
-	n_s_pts = 12;
 	v_min = -1.;
 	v_max = 1.;
 	zeta_min = 0.;
@@ -209,22 +213,22 @@ SourceVariances::SourceVariances(ParameterReader* paraRdr_in, particle_info* par
 	dN_dypTdpTdphi_moments = new double *** [Nparticle];
 	ln_dN_dypTdpTdphi_moments = new double *** [Nparticle];
 	sign_of_dN_dypTdpTdphi_moments = new double *** [Nparticle];
-	for (int ir=0; ir<Nparticle; ir++)
+	for (int ir = 0; ir < Nparticle; ir++)
 	{
 		dN_dypTdpTdphi_moments[ir] = new double ** [n_weighting_functions];
 		ln_dN_dypTdpTdphi_moments[ir] = new double ** [n_weighting_functions];
 		sign_of_dN_dypTdpTdphi_moments[ir] = new double ** [n_weighting_functions];
-		for (int wfi=0; wfi<n_weighting_functions; wfi++)
+		for (int wfi = 0; wfi < n_weighting_functions; wfi++)
 		{
-			dN_dypTdpTdphi_moments[ir][wfi] = new double * [n_interp_pT_pts];
-			ln_dN_dypTdpTdphi_moments[ir][wfi] = new double * [n_interp_pT_pts];
-			sign_of_dN_dypTdpTdphi_moments[ir][wfi] = new double * [n_interp_pT_pts];
-			for (int ipT=0; ipT<n_interp_pT_pts; ipT++)
+			dN_dypTdpTdphi_moments[ir][wfi] = new double * [n_pT_pts];
+			ln_dN_dypTdpTdphi_moments[ir][wfi] = new double * [n_pT_pts];
+			sign_of_dN_dypTdpTdphi_moments[ir][wfi] = new double * [n_pT_pts];
+			for (int ipT = 0; ipT < n_pT_pts; ipT++)
 			{
-				dN_dypTdpTdphi_moments[ir][wfi][ipT] = new double [n_interp_pphi_pts];
-				ln_dN_dypTdpTdphi_moments[ir][wfi][ipT] = new double [n_interp_pphi_pts];
-				sign_of_dN_dypTdpTdphi_moments[ir][wfi][ipT] = new double [n_interp_pphi_pts];
-				for (int ipphi=0; ipphi<n_interp_pphi_pts; ipphi++)
+				dN_dypTdpTdphi_moments[ir][wfi][ipT] = new double [n_pphi_pts];
+				ln_dN_dypTdpTdphi_moments[ir][wfi][ipT] = new double [n_pphi_pts];
+				sign_of_dN_dypTdpTdphi_moments[ir][wfi][ipT] = new double [n_pphi_pts];
+				for (int ipphi = 0; ipphi < n_pphi_pts; ipphi++)
 					{
 						dN_dypTdpTdphi_moments[ir][wfi][ipT][ipphi] = 0.0;
 						ln_dN_dypTdpTdphi_moments[ir][wfi][ipT][ipphi] = 0.0;
@@ -252,81 +256,87 @@ SourceVariances::SourceVariances(ParameterReader* paraRdr_in, particle_info* par
 	
 
    //single particle spectra for plane angle determination
-   SP_pT = new double [n_SP_pT];
-   SP_pT_weight = new double [n_SP_pT];
-   gauss_quadrature(n_SP_pT, 1, 0.0, 0.0, SP_pT_min, SP_pT_max, SP_pT, SP_pT_weight);
-   SP_pphi = new double [n_SP_pphi];
-   SP_pphi_weight = new double [n_SP_pphi];
-   gauss_quadrature(n_SP_pphi, 1, 0.0, 0.0, 0.0, 2.*M_PI, SP_pphi, SP_pphi_weight);
+   /*SP_pT = new double [n_pT_pts];
+   SP_pT_weight = new double [n_pT_pts];
+   gauss_quadrature(n_pT_pts, 1, 0.0, 0.0, SP_pT_min, SP_pT_max, SP_pT, SP_pT_weight);
+   SP_pphi = new double [n_pphi_pts];
+   SP_pphi_weight = new double [n_pphi_pts];
+   gauss_quadrature(n_pphi_pts, 1, 0.0, 0.0, 0.0, 2.*M_PI, SP_pphi, SP_pphi_weight);*/
    SP_p_y = 0.0e0;
 
 //initialize and set evenly spaced grid of px-py points in transverse plane,
 //and corresponding p0 and pz points
-	SPinterp_pT = new double [n_interp_pT_pts];
-	SPinterp_pphi = new double [n_interp_pphi_pts];
-	sin_SPinterp_pphi = new double [n_interp_pphi_pts];
-	cos_SPinterp_pphi = new double [n_interp_pphi_pts];
-	SPinterp_p0 = new double* [n_interp_pT_pts];
-	SPinterp_pz = new double* [n_interp_pT_pts];
-	double * dummywts3 = new double [n_interp_pT_pts];
-	double * dummywts4 = new double [n_interp_pphi_pts];
-	for(int ipt=0; ipt<n_interp_pT_pts; ipt++)
+	SP_pT = new double [n_pT_pts];
+	SP_pphi = new double [n_pphi_pts];
+	sin_SP_pphi = new double [n_pphi_pts];
+	cos_SP_pphi = new double [n_pphi_pts];
+	SP_p0 = new double* [n_pT_pts];
+	SP_pz = new double* [n_pT_pts];
+	double * dummywts3 = new double [n_pT_pts];
+	double * dummywts4 = new double [n_pphi_pts];
+	for(int ipt=0; ipt<n_pT_pts; ipt++)
 	{
-		SPinterp_p0[ipt] = new double [eta_s_npts];
-		SPinterp_pz[ipt] = new double [eta_s_npts];
+		SP_p0[ipt] = new double [eta_s_npts];
+		SP_pz[ipt] = new double [eta_s_npts];
 	}
-	gauss_quadrature(n_interp_pT_pts, 5, 0.0, 0.0, 0.0, 13.0, SPinterp_pT, dummywts3);
-	gauss_quadrature(n_interp_pphi_pts, 1, 0.0, 0.0, interp_pphi_min, interp_pphi_max, SPinterp_pphi, dummywts4);
-	for(int ipphi=0; ipphi<n_interp_pphi_pts; ipphi++)
+	gauss_quadrature(n_pT_pts, 5, 0.0, 0.0, 0.0, 13.0, SP_pT, dummywts3);
+	gauss_quadrature(n_pphi_pts, 1, 0.0, 0.0, SP_pphi_min, SP_pphi_max, SP_pphi, dummywts4);
+
+	for(int ipphi=0; ipphi<n_pphi_pts; ipphi++)
 	{
-		sin_SPinterp_pphi[ipphi] = sin(SPinterp_pphi[ipphi]);
-		cos_SPinterp_pphi[ipphi] = cos(SPinterp_pphi[ipphi]);
+		sin_SP_pphi[ipphi] = sin(SP_pphi[ipphi]);
+		cos_SP_pphi[ipphi] = cos(SP_pphi[ipphi]);
 	}
 
-	dN_dypTdpTdphi = new double* [n_SP_pT];
-	cosine_iorder = new double* [n_SP_pT];
-	sine_iorder = new double* [n_SP_pT];
-	for(int i=0; i<n_SP_pT; i++)
+	dN_dypTdpTdphi = new double* [n_pT_pts];
+	cosine_iorder = new double* [n_pT_pts];
+	sine_iorder = new double* [n_pT_pts];
+
+	for(int i = 0; i < n_pT_pts; i++)
 	{
-		dN_dypTdpTdphi[i] = new double [n_SP_pphi];
+		dN_dypTdpTdphi[i] = new double [n_pphi_pts];
 		cosine_iorder[i] = new double [n_order];
 		sine_iorder[i] = new double [n_order];
 	}
-	dN_dydphi = new double [n_SP_pphi];
-	dN_dypTdpT = new double [n_SP_pT];
-	pTdN_dydphi = new double [n_SP_pphi];
-	for(int i=0; i<n_SP_pphi; i++)
+
+	dN_dydphi = new double [n_pphi_pts];
+	dN_dypTdpT = new double [n_pT_pts];
+	pTdN_dydphi = new double [n_pphi_pts];
+
+	for(int i = 0; i < n_pphi_pts; i++)
 	{
 		dN_dydphi[i] = 0.0e0;
 		pTdN_dydphi[i] = 0.0e0;
-		for(int j=0; j<n_SP_pT; j++)
+		for(int j=0; j<n_pT_pts; j++)
 			dN_dypTdpTdphi[j][i] = 0.0e0;
 	}
-	for(int i=0; i<n_SP_pT; i++)
+
+	for(int i = 0; i < n_pT_pts; i++)
 	{
 		dN_dypTdpT[i] = 0.0e0;
-		for(int j=0; j<n_order; j++)
+		for(int j = 0; j < n_order; j++)
 		{
 			cosine_iorder[i][j] = 0.0e0;
 			sine_iorder[i][j] = 0.0e0;
 		}
 	}
+
 	plane_angle = new double [n_order];
 
 	//pair momentum
-	K_T = new double [n_localp_T];
-	double dK_T = (localp_T_max - localp_T_min)/(n_localp_T - 1 + 1e-100);
-	for(int i=0; i<n_localp_T; i++) K_T[i] = localp_T_min + i*dK_T;
+	K_T = new double [nKT];
+	double dK_T = (KT_max - KT_min)/(nKT - 1 + 1e-100);
+	for(int i = 0; i < nKT; i++)
+		K_T[i] = KT_min + i*dK_T;
 
-//gauss_quadrature(n_localp_T, 5, 0.0, 0.0, 0.0, 13.0, K_T, dummywts3);	//use this one to agree with iS.e
 	//K_y = p_y;
 	K_y = 0.;
 	ch_K_y = cosh(K_y);
 	sh_K_y = sinh(K_y);
 	beta_l = sh_K_y/ch_K_y;
-	K_phi = new double [n_localp_phi];
-	K_phi_weight = new double [n_localp_phi];
-	gauss_quadrature(n_localp_phi, 1, 0.0, 0.0, localp_phi_min, localp_phi_max, K_phi, K_phi_weight);
+	K_phi = new double [nKphi];
+	K_phi_weight = new double [nKphi];
+	gauss_quadrature(nKphi, 1, 0.0, 0.0, Kphi_min, Kphi_max, K_phi, K_phi_weight);
 
 	//spatial rapidity grid
 	eta_s = new double [eta_s_npts];
@@ -340,130 +350,130 @@ SourceVariances::SourceVariances(ParameterReader* paraRdr_in, particle_info* par
 		sh_eta_s[ieta] = sinh(eta_s[ieta]);
 	}
 
-	S_func = new double* [n_interp_pT_pts];
-	xs_S = new double* [n_interp_pT_pts];
-	xs2_S = new double* [n_interp_pT_pts];
-	xo_S = new double* [n_interp_pT_pts];
-	xo2_S = new double* [n_interp_pT_pts];
-	xl_S = new double* [n_interp_pT_pts];
-	xl2_S = new double* [n_interp_pT_pts];
-	t_S = new double* [n_interp_pT_pts];
-	t2_S = new double* [n_interp_pT_pts];
-	xo_xs_S = new double* [n_interp_pT_pts];
-	xl_xs_S = new double* [n_interp_pT_pts];
-	xs_t_S = new double* [n_interp_pT_pts];
-	xo_xl_S = new double* [n_interp_pT_pts];
-	xo_t_S = new double* [n_interp_pT_pts];
-	xl_t_S = new double* [n_interp_pT_pts];
+	S_func = new double* [n_pT_pts];
+	xs_S = new double* [n_pT_pts];
+	xs2_S = new double* [n_pT_pts];
+	xo_S = new double* [n_pT_pts];
+	xo2_S = new double* [n_pT_pts];
+	xl_S = new double* [n_pT_pts];
+	xl2_S = new double* [n_pT_pts];
+	t_S = new double* [n_pT_pts];
+	t2_S = new double* [n_pT_pts];
+	xo_xs_S = new double* [n_pT_pts];
+	xl_xs_S = new double* [n_pT_pts];
+	xs_t_S = new double* [n_pT_pts];
+	xo_xl_S = new double* [n_pT_pts];
+	xo_t_S = new double* [n_pT_pts];
+	xl_t_S = new double* [n_pT_pts];
 
-        x_S = new double* [n_interp_pT_pts];
-        x2_S = new double* [n_interp_pT_pts];
-        y_S = new double* [n_interp_pT_pts];
-        y2_S = new double* [n_interp_pT_pts];
-        z_S = new double* [n_interp_pT_pts];
-        z2_S = new double* [n_interp_pT_pts];
-        t_S = new double* [n_interp_pT_pts];
-        t2_S = new double* [n_interp_pT_pts];
-        xy_S = new double* [n_interp_pT_pts];
-        xz_S = new double* [n_interp_pT_pts];
-        xt_S = new double* [n_interp_pT_pts];
-        yz_S = new double* [n_interp_pT_pts];
-        yt_S = new double* [n_interp_pT_pts];
-        zt_S = new double* [n_interp_pT_pts];
+        x_S = new double* [n_pT_pts];
+        x2_S = new double* [n_pT_pts];
+        y_S = new double* [n_pT_pts];
+        y2_S = new double* [n_pT_pts];
+        z_S = new double* [n_pT_pts];
+        z2_S = new double* [n_pT_pts];
+        t_S = new double* [n_pT_pts];
+        t2_S = new double* [n_pT_pts];
+        xy_S = new double* [n_pT_pts];
+        xz_S = new double* [n_pT_pts];
+        xt_S = new double* [n_pT_pts];
+        yz_S = new double* [n_pT_pts];
+        yt_S = new double* [n_pT_pts];
+        zt_S = new double* [n_pT_pts];
 
-	R2_side_grid = new double * [n_interp_pT_pts];
-	R2_out_grid = new double* [n_interp_pT_pts];
-	R2_outside_grid = new double* [n_interp_pT_pts];
-	R2_long_grid = new double* [n_interp_pT_pts];
-	R2_sidelong_grid = new double* [n_interp_pT_pts];
-	R2_outlong_grid = new double* [n_interp_pT_pts];
+	R2_side_grid = new double * [n_pT_pts];
+	R2_out_grid = new double* [n_pT_pts];
+	R2_outside_grid = new double* [n_pT_pts];
+	R2_long_grid = new double* [n_pT_pts];
+	R2_sidelong_grid = new double* [n_pT_pts];
+	R2_outlong_grid = new double* [n_pT_pts];
 
-	R2_side = new double* [n_localp_T];
-	R2_side_C = new double* [n_localp_T];
-	R2_side_S = new double* [n_localp_T];
-	R2_out = new double* [n_localp_T];
-	R2_out_C = new double* [n_localp_T];
-	R2_out_S = new double* [n_localp_T];
-	R2_long = new double* [n_localp_T];
-	R2_long_C = new double* [n_localp_T];
-	R2_long_S = new double* [n_localp_T];
-	R2_outside = new double* [n_localp_T];
-	R2_outside_C = new double* [n_localp_T];
-	R2_outside_S = new double* [n_localp_T];
-	R2_sidelong = new double* [n_localp_T];
-	R2_sidelong_C = new double* [n_localp_T];
-	R2_sidelong_S = new double* [n_localp_T];
-	R2_outlong = new double* [n_localp_T];
-	R2_outlong_C = new double* [n_localp_T];
-	R2_outlong_S = new double* [n_localp_T];
+	R2_side = new double* [nKT];
+	R2_side_C = new double* [nKT];
+	R2_side_S = new double* [nKT];
+	R2_out = new double* [nKT];
+	R2_out_C = new double* [nKT];
+	R2_out_S = new double* [nKT];
+	R2_long = new double* [nKT];
+	R2_long_C = new double* [nKT];
+	R2_long_S = new double* [nKT];
+	R2_outside = new double* [nKT];
+	R2_outside_C = new double* [nKT];
+	R2_outside_S = new double* [nKT];
+	R2_sidelong = new double* [nKT];
+	R2_sidelong_C = new double* [nKT];
+	R2_sidelong_S = new double* [nKT];
+	R2_outlong = new double* [nKT];
+	R2_outlong_C = new double* [nKT];
+	R2_outlong_S = new double* [nKT];
 
-	for(int i=0; i<n_interp_pT_pts; i++)
+	for(int i = 0; i < n_pT_pts; i++)
 	{
-		S_func[i] = new double [n_interp_pphi_pts];
-		xs_S[i] = new double [n_interp_pphi_pts];
-		xs2_S[i] = new double [n_interp_pphi_pts];
-		xo_S[i] = new double [n_interp_pphi_pts];
-		xo2_S[i] = new double [n_interp_pphi_pts];
-		xl_S[i] = new double [n_interp_pphi_pts];
-		xl2_S[i] = new double [n_interp_pphi_pts];
-		t_S[i] = new double [n_interp_pphi_pts];
-		t2_S[i] = new double [n_interp_pphi_pts];
-		xo_xs_S[i] = new double [n_interp_pphi_pts];
-		xl_xs_S[i] = new double [n_interp_pphi_pts];
-		xs_t_S[i] = new double [n_interp_pphi_pts];
-		xo_xl_S[i] = new double [n_interp_pphi_pts];
-		xo_t_S[i] = new double [n_interp_pphi_pts];
-		xl_t_S[i] = new double [n_interp_pphi_pts];
+		S_func[i] = new double [n_pphi_pts];
+		xs_S[i] = new double [n_pphi_pts];
+		xs2_S[i] = new double [n_pphi_pts];
+		xo_S[i] = new double [n_pphi_pts];
+		xo2_S[i] = new double [n_pphi_pts];
+		xl_S[i] = new double [n_pphi_pts];
+		xl2_S[i] = new double [n_pphi_pts];
+		t_S[i] = new double [n_pphi_pts];
+		t2_S[i] = new double [n_pphi_pts];
+		xo_xs_S[i] = new double [n_pphi_pts];
+		xl_xs_S[i] = new double [n_pphi_pts];
+		xs_t_S[i] = new double [n_pphi_pts];
+		xo_xl_S[i] = new double [n_pphi_pts];
+		xo_t_S[i] = new double [n_pphi_pts];
+		xl_t_S[i] = new double [n_pphi_pts];
 
-                x_S[i] = new double [n_interp_pphi_pts];
-                x2_S[i] = new double [n_interp_pphi_pts];
-                y_S[i] = new double [n_interp_pphi_pts];
-                y2_S[i] = new double [n_interp_pphi_pts];
-                z_S[i] = new double [n_interp_pphi_pts];
-                z2_S[i] = new double [n_interp_pphi_pts];
-                t_S[i] = new double [n_interp_pphi_pts];
-                t2_S[i] = new double [n_interp_pphi_pts];
-                xy_S[i] = new double [n_interp_pphi_pts];
-                xz_S[i] = new double [n_interp_pphi_pts];
-                xt_S[i] = new double [n_interp_pphi_pts];
-                yz_S[i] = new double [n_interp_pphi_pts];
-                yt_S[i] = new double [n_interp_pphi_pts];
-                zt_S[i] = new double [n_interp_pphi_pts];
+		x_S[i] = new double [n_pphi_pts];
+		x2_S[i] = new double [n_pphi_pts];
+		y_S[i] = new double [n_pphi_pts];
+		y2_S[i] = new double [n_pphi_pts];
+		z_S[i] = new double [n_pphi_pts];
+		z2_S[i] = new double [n_pphi_pts];
+		t_S[i] = new double [n_pphi_pts];
+		t2_S[i] = new double [n_pphi_pts];
+		xy_S[i] = new double [n_pphi_pts];
+		xz_S[i] = new double [n_pphi_pts];
+		xt_S[i] = new double [n_pphi_pts];
+		yz_S[i] = new double [n_pphi_pts];
+		yt_S[i] = new double [n_pphi_pts];
+		zt_S[i] = new double [n_pphi_pts];
 	
-		R2_side_grid[i] = new double [n_interp_pphi_pts];
-		R2_out_grid[i] = new double [n_interp_pphi_pts];
-		R2_outside_grid[i] = new double [n_interp_pphi_pts];
-		R2_long_grid[i] = new double [n_interp_pphi_pts];
-		R2_sidelong_grid[i] = new double [n_interp_pphi_pts];
-		R2_outlong_grid[i] = new double [n_interp_pphi_pts];
+		R2_side_grid[i] = new double [n_pphi_pts];
+		R2_out_grid[i] = new double [n_pphi_pts];
+		R2_outside_grid[i] = new double [n_pphi_pts];
+		R2_long_grid[i] = new double [n_pphi_pts];
+		R2_sidelong_grid[i] = new double [n_pphi_pts];
+		R2_outlong_grid[i] = new double [n_pphi_pts];
 	}
 
-	for(int i=0; i<n_localp_T; i++)
+	for(int i=0; i<nKT; i++)
 	{
-		R2_side[i] = new double [n_localp_phi];
+		R2_side[i] = new double [nKphi];
 		R2_side_C[i] = new double [n_order];
 		R2_side_S[i] = new double [n_order];
-		R2_out[i] = new double [n_localp_phi];
+		R2_out[i] = new double [nKphi];
 		R2_out_C[i] = new double [n_order];
 		R2_out_S[i] = new double [n_order];
-		R2_outside[i] = new double [n_localp_phi];
+		R2_outside[i] = new double [nKphi];
 		R2_outside_C[i] = new double [n_order];
 		R2_outside_S[i] = new double [n_order];
-		R2_long[i] = new double [n_localp_phi];
+		R2_long[i] = new double [nKphi];
 		R2_long_C[i] = new double [n_order];
 		R2_long_S[i] = new double [n_order];
-		R2_sidelong[i] = new double [n_localp_phi];
+		R2_sidelong[i] = new double [nKphi];
 		R2_sidelong_C[i] = new double [n_order];
 		R2_sidelong_S[i] = new double [n_order];
-		R2_outlong[i] = new double [n_localp_phi];
+		R2_outlong[i] = new double [nKphi];
 		R2_outlong_C[i] = new double [n_order];
 		R2_outlong_S[i] = new double [n_order];
 	}
 
 	//initialize all source variances and HBT radii/coeffs
-	for(int i=0; i<n_interp_pT_pts; i++)
+	for(int i=0; i<n_pT_pts; i++)
 	{
-		for(int j=0; j<n_interp_pphi_pts; j++)
+		for(int j=0; j<n_pphi_pts; j++)
 		{
 			S_func[i][j] = 0.;
 			xs_S[i][j] = 0.;
@@ -504,9 +514,9 @@ SourceVariances::SourceVariances(ParameterReader* paraRdr_in, particle_info* par
 			R2_outlong_grid[i][j] = 0.;
 		}
 	}
-	for(int i=0; i<n_localp_T; i++)
+	for(int i=0; i<nKT; i++)
 	{
-		for(int j=0; j<n_localp_phi; j++)
+		for(int j=0; j<nKphi; j++)
 		{
 			R2_side[i][j] = 0.;
 			R2_out[i][j] = 0.;
@@ -545,7 +555,7 @@ SourceVariances::~SourceVariances()
    delete[] dN_dydphi;
    delete[] dN_dypTdpT;
    delete[] pTdN_dydphi;
-   for(int i=0; i<n_SP_pT; i++)
+   for(int i=0; i<n_pT_pts; i++)
    {
       delete[] dN_dypTdpTdphi[i];
       delete[] cosine_iorder[i];
@@ -562,14 +572,14 @@ SourceVariances::~SourceVariances()
    delete[] eta_s;
    delete[] eta_s_weight;
 
-   for(int i=0; i<n_localp_T; i++)
+   for(int i=0; i<nKT; i++)
    {
       delete[] R2_side[i];
    }
 
    delete[] R2_side;
 
-   for(int i=0; i<n_interp_pT_pts; i++)
+   for(int i=0; i<n_pT_pts; i++)
    {
       delete[] S_func[i];
       delete[] xs_S[i];
