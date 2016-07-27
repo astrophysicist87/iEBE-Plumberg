@@ -1,0 +1,65 @@
+#############################################
+## Default parameters for HoTCoffeeh codes ##
+#############################################
+#################################################################
+## Define quantities which are the same for both SVWR and CFWR ##
+#################################################################
+grouping_particles = 0			# set to 1 to perform calculations for similar particles together
+particle_diff_tolerance = 0.00		# particles with mass and chemical potential (for each FO-cell) difference less than this value
+					# will be considered to be identical (b/c Cooper-Frye)
+use_plane_psi_order = 0			# specifies whether to do HBT relative to flow-plane angle,
+					# and at what order: 0 - use plane_psi = 0.0, !0 - use flow-plane angle at given order
+ignore_long_lived_resonances = 1	# do all decay channels (or don't)
+max_lifetime = 100.0			# resonance is ignored if its lifetime is longer than this value
+include_delta_f	= 1			# include viscous CF corrections
+include_bulk_pi = 1			# 1 means that there's an extra column in decdat2.dat,
+					# i.e., bulk pi is NOT(!!!) used in current calculation!!!
+n_order = 4				# sets max order for azimuthal averaging (0...nOrder-1)
+############################################################################
+tolerance = 0.00			# tolerance for flagging negative FO cells
+flag_negative_S = 1			# neglect all FO cells with negative emission function
+					# choose flag_negative_S == 0 to agree with iS.e
+					# choose flag_negative_S == 1 for the real world
+chosenParticlesMode = 0			# 0 - set with threshold
+					# 1 - read in chosen particles from file
+############################################################################
+nKT = 101				# size of pair momentum KT grid
+nKphi = 48				# size of pair momentum Kphi grid
+KTmin = 0.01				# minimum of pair momentum KT grid
+KTmax = 1.01				# maximum of pair momentum KT grid
+############################################################################
+## Also define some quantities which might be different for SVWR and CFWR ##
+############################################################################
+########
+## SV ##
+########
+SV_npT = 15				# size of pT grid for interpolation of (SV-weighted) single-particle spectra
+SV_npphi = 48				# size of pphi grid for interpolation of (SV-weighted) single-particle spectra
+SV_resonanceThreshold = 1.00		# (approximate) fraction of all resonance contributions to do
+					# code sums over all resonances in (approximately) decreasing order until this threshhold
+					# is reached, only skipping resonances with lifetimes > max_lifetime
+############################################################################
+########
+## CF ##
+########
+CF_npT = 15				# size of pT grid for interpolation of (Fourier-transformed) single-particle spectra
+CF_npphi = 36				# size of pphi grid for interpolation of (Fourier-transformed) single-particle spectra
+CF_resonanceThreshold = 0.60		# (approximate) fraction of all resonance contributions to do
+					# code sums over all resonances in (approximately) decreasing order until this threshhold
+					# is reached, only skipping resonances with lifetimes > max_lifetime
+use_lambda = 1				# fit correlation function with adjustable intercept parameter
+use_extrapolation = 1			# extrapolates results of CF integrals instead of competing them, false just calculates full integrals (slower)
+fit_with_projected_cfvals = 1		# as opposed to unprojected cfvals...
+flesh_out_cf = 1			# refines grid via interpolation before fitting
+############################################################################
+qtnpts = 13
+qxnpts = 7
+qynpts = 7
+qznpts = 7
+delta_qx = 0.0125
+delta_qy = 0.0125
+delta_qz = 0.015
+############################################################################
+#################
+## End of file ##
+#################
