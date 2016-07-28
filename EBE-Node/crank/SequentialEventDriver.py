@@ -239,7 +239,9 @@ HoTCoffeehControl = {
     'operationDir'                      :   'results',
     'executables'                       :   ('cfwr.e', 'svwr.e'),
     'entryShell'                        :   'HoTCoffeeh.sh',
-	'saveResultGlobs'					:	['*'],
+	'saveResultGlobs'					:	['all*dat', 'total*dat', 'correlfunct3D*.dat', 	\
+												'*spectra.dat', 'HBT*dat', 'resonance*h5', 	\
+												'target*h5', 'resonance_fraction.dat', 'chosen_resonances.dat'],
 }
 HoTCoffeehParameters = {
     'grouping_particles'                :   0,
