@@ -149,7 +149,7 @@ int read_resonance(particle_info* particle)
 {
    int Nparticle=0; 
    //cout << "Reading in particle resonance decay table...";
-   ifstream resofile("/home/plumberg.1/HBTPlumberg/EOS/pdg.dat");
+   ifstream resofile("EOS/pdg.dat");
    int local_i = 0;
    int dummy_int;
    while (!resofile.eof())
@@ -523,8 +523,7 @@ int set_stable_particle_monval()
    //else
    //{
       //cout << "Reading particle table and calculating chemical potential for particles...";
-      //ifstream particletable("EOS/EOS_particletable.dat");
-      ifstream particletable("/home/plumberg.1/HBTPlumberg/EOS/EOS_particletable.dat");
+      ifstream particletable("EOS/EOS_particletable.dat");
       particletable >> local_Nstable_particle;
       stable_particle_monval = new double [local_Nstable_particle];
       for(int i=0; i<local_Nstable_particle; i++)

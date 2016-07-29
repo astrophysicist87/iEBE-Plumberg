@@ -81,7 +81,6 @@ int main(int argc, char *argv[])
    
 	//read the chemical potential on the freeze out surface
 	int N_stableparticle;
-	//ifstream particletable("/home/plumberg.1/HBTPlumberg/EOS/EOS_particletable.dat");
 	ifstream particletable("EOS/EOS_particletable.dat");
 	particletable >> N_stableparticle;
 	double ** particle_mu = new double * [N_stableparticle];
