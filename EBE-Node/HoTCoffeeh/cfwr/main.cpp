@@ -182,11 +182,6 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-//if (1) return(0);
-
-debugger(__LINE__, __FILE__);
-cout << n_zeta_pts << " at " << &n_zeta_pts << endl;
-
 	// Create CorrelationFunction object
 	CorrelationFunction correlation_function(paraRdr, &particle[particle_idx], particle, Nparticle, chosen_resonance_indices, particle_idx, output);
 

@@ -48,7 +48,9 @@ CF_resonanceThreshold = 0.60		# (approximate) fraction of all resonance contribu
 					# code sums over all resonances in (approximately) decreasing order until this threshhold
 					# is reached, only skipping resonances with lifetimes > max_lifetime
 use_lambda = 1				# fit correlation function with adjustable intercept parameter
-use_extrapolation = 1			# extrapolates results of CF integrals instead of competing them, false just calculates full integrals (slower)
+use_log_fit = 1				# fits log of C-1 instead of C-1
+compute_or_read_in_CF = 1		# switch to determine whether CF is computed (default - 1) or read in (0)
+use_extrapolation = 1			# extrapolates results of CF integrals instead of computing them, false (0) just calculates full integrals (slower)
 fit_with_projected_cfvals = 1		# as opposed to unprojected cfvals...
 flesh_out_cf = 1			# refines grid via interpolation before fitting
 ############################################################################

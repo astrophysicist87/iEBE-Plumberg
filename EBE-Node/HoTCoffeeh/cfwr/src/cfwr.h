@@ -69,6 +69,8 @@ class CorrelationFunction
 		int GROUPING_PARTICLES;
 		double PARTICLE_DIFF_TOLERANCE;
 		int USE_LAMBDA;
+		int USE_LOG_FIT;
+		int COMPUTE_OR_READ_IN_CORRELATION_FUNCTION;
 		int USE_EXTRAPOLATION;
 		int IGNORE_LONG_LIVED_RESONANCES;
 		int FIT_WITH_PROJECTED_CFVALS;
@@ -369,6 +371,7 @@ class CorrelationFunction
 		void Fit_Correlationfunction3D(double *** Correl_3D, int ipt, int ipphi, bool fleshing_out_CF = true);
 		int print_fit_state_3D (size_t iteration, gsl_multifit_fdfsolver * solver_ptr);
 		void Fit_Correlationfunction3D_withlambda(double *** Correl_3D, int ipt, int ipphi, bool fleshing_out_CF = true);
+		void find_minimum_chisq_correlationfunction_full(double *** Correl_3D, int ipt, int ipphi, bool fleshing_out_CF = true);
 		int print_fit_state_3D_withlambda (size_t iteration, gsl_multifit_fdfsolver * solver_ptr);
 		inline double get_fit_results(int i, gsl_multifit_fdfsolver * solver_ptr);
 		inline double get_fit_err (int i, gsl_matrix * covariance_ptr);
@@ -387,6 +390,7 @@ class CorrelationFunction
 		void Read_in_all_dN_dypTdpTdphi();
 		void Output_chosen_resonances();
 		void Output_resonance_fraction();
+		void Read_in_correlationfunction();
 		void Output_correlationfunction();
 		void Output_fleshed_out_correlationfunction(int ipt, int ipphi);
 		void Dump_spectra_array(string output_filename, double *** array_to_dump);

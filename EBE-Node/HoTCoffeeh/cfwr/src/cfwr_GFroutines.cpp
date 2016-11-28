@@ -769,6 +769,176 @@ int CorrelationFunction::print_fit_state_3D_withlambda (size_t iteration, gsl_mu
 
 	return 0;
 }
+
+void CorrelationFunction::find_minimum_chisq_correlationfunction_full(double *** Correl_3D, int ipt, int ipphi, bool fleshing_out_CF /*== true*/)
+{
+	double * q1pts = qx_pts;
+	double * q2pts = qy_pts;
+	double * q3pts = qz_pts;
+	if (fleshing_out_CF)
+	{
+		q1npts = new_nqpts;
+		q2npts = new_nqpts;
+		q3npts = new_nqpts;
+		q1pts = qx_fleshed_out_pts;
+		q2pts = qy_fleshed_out_pts;
+		q3pts = qz_fleshed_out_pts;
+	}
+	const size_t data_length = q1npts*q2npts*q3npts;  // # of points
+
+    double lambda, R_o, R_s, R_l, R_os;
+    int dim = 5;
+    int s_gsl;
+
+    double *V = new double [dim];
+    double *qweight = new double [dim];
+    double **T = new double* [dim];
+    for(int i = 0; i < dim; i++)
+    {
+        V[i] = 0.0;
+        T[i] = new double [dim];
+        for(int j = 0; j < dim; j++)
+            T[i][j] = 0.0;
+    }
+
+    gsl_matrix * T_gsl = gsl_matrix_alloc (dim, dim);
+    gsl_matrix * T_inverse_gsl = gsl_matrix_alloc (dim, dim);
+    gsl_permutation * perm = gsl_permutation_alloc (dim);
+
+	double ckp = cos_SP_pphi[ipphi], skp = sin_SP_pphi[ipphi];
+	double CF_err = 1.e-3;
+	for (int i = 0; i < q1npts; i++)
+	for (int j = 0; j < q2npts; j++)
+	for (int k = 0; k < q3npts; k++)
+    {
+        double q_out_local = q1pts[i] * ckp + q2pts[j] * skp;
+        double q_side_local = -q1pts[i] * skp + q2pts[j] * ckp;
+        double q_long_local = q3pts[k];
+        double correl_local = Correl_3D[i][j][k]-1;
+        if(correl_local < 1e-15) continue;
+		//if (i==(q1npts-1)/2 && j==(q2npts-1)/2 && k==(q3npts-1)/2)
+		//	Correlfun3D_data.sigma[idx] = 1.e10;	//ignore central point
+        double sigma_k_prime = CF_err/correl_local;
+            
+        double inv_sigma_k_prime_sq = 1./(sigma_k_prime*sigma_k_prime);
+        double log_correl_over_sigma_sq = log(correl_local)*inv_sigma_k_prime_sq;
+
+        qweight[0] = - 1.0;
+        qweight[1] = q_out_local*q_out_local;
+        qweight[2] = q_side_local*q_side_local;
+        qweight[3] = q_long_local*q_long_local;
+        qweight[4] = q_out_local*q_side_local;
+
+        for(int ij = 0; ij < dim; ij++)
+        {
+            V[ij] += qweight[ij]*log_correl_over_sigma_sq;
+            T[0][ij] += qweight[ij]*inv_sigma_k_prime_sq;
+        }
+
+        for(int ij = 1; ij < dim; ij++)
+            T[ij][0] = T[0][ij];
+            
+
+        for(int ij = 1; ij < dim; ij++)
+        {
+            for(int lm = 1; lm < dim; lm++)
+                T[ij][lm] += -qweight[ij]*qweight[lm]*inv_sigma_k_prime_sq;
+        }
+    }
+    for(int i = 0; i < dim; i++)
+        for(int j = 0; j < dim; j++)
+            gsl_matrix_set(T_gsl, i, j, T[i][j]);
+
+    // Make LU decomposition of matrix T_gsl
+    gsl_linalg_LU_decomp (T_gsl, perm, &s_gsl);
+    // Invert the matrix m
+    gsl_linalg_LU_invert (T_gsl, perm, T_inverse_gsl);
+
+    double **T_inverse = new double* [dim];
+    for(int i = 0; i < dim; i++)
+    {
+        T_inverse[i] = new double [dim];
+        for(int j = 0; j < dim; j++)
+            T_inverse[i][j] = gsl_matrix_get(T_inverse_gsl, i, j);
+    }
+    double *results = new double [dim];
+    for(int i = 0; i < dim; i++)
+    {
+        results[i] = 0.0;
+        for(int j = 0; j < dim; j++)
+            results[i] += T_inverse[i][j]*V[j];
+    }
+
+    /*lambda = exp(results[0]);
+    R_o = sqrt(results[1])*hbarC;
+    R_s = sqrt(results[2])*hbarC;
+    R_l = sqrt(results[3])*hbarC;
+    // the cross term is not necessary positive
+    R_os = results[4]*hbarC*hbarC;
+    R_ol = results[5]*hbarC*hbarC;
+    R_sl = results[6]*hbarC*hbarC;
+    cout << "lambda = " << lambda << endl;
+    cout << "R_o = " << R_o << " fm, R_s = " << R_s << " fm, R_l = " << R_l << " fm" << endl;
+    cout << "R_os^2 = " << R_os << " fm^2, R_ol^2 = " << R_ol << " fm^2, R_sl^2 = " << R_sl << " fm^2." << endl;*/
+	lambda_Correl[ipt][ipphi] = exp(results[0]);
+	lambda_Correl_err[ipt][ipphi] = 0.0;
+	R2_out_GF[ipt][ipphi] = results[1]*hbarC*hbarC;
+	R2_side_GF[ipt][ipphi] = results[2]*hbarC*hbarC;
+	R2_long_GF[ipt][ipphi] = results[3]*hbarC*hbarC;
+	R2_outside_GF[ipt][ipphi] = results[4]*hbarC*hbarC;
+	R2_out_err[ipt][ipphi] = 0.0;
+	R2_side_err[ipt][ipphi] = 0.0;
+	R2_long_err[ipt][ipphi] = 0.0;
+	R2_outside_err[ipt][ipphi] = 0.0;
+
+
+    double chi_sq = 0.0;
+	for (int i = 0; i < q1npts; i++)
+	for (int j = 0; j < q2npts; j++)
+	for (int k = 0; k < q3npts; k++)
+    {
+        double q_out_local = q1pts[i] * ckp + q2pts[j] * skp;
+        double q_side_local = -q1pts[i] * skp + q2pts[j] * ckp;
+        double q_long_local = q3pts[k];
+        double correl_local = Correl_3D[i][j][k]-1;
+        if(correl_local < 1e-15) continue;
+        double sigma_k_prime = CF_err/correl_local;
+
+        chi_sq += pow((log(correl_local) - results[0] 
+                       + results[1]*q_out_local*q_out_local 
+                       + results[2]*q_side_local*q_side_local
+                       + results[3]*q_long_local*q_long_local
+                       + results[4]*q_out_local*q_side_local), 2)
+                  /sigma_k_prime/sigma_k_prime;
+    }
+    //cout << "chi_sq/d.o.f = " << chi_sq/(qnpts - dim) << endl;
+    //chi_sq_per_dof = chi_sq/(qnpts - dim);
+
+    /*lambda_Correl = lambda;
+    R_out_Correl = R_o;
+    R_side_Correl = R_s;
+    R_long_Correl = R_l;
+    R_os_Correl = R_os;
+    R_sl_Correl = R_sl;
+    R_ol_Correl = R_ol;*/
+
+    // clean up
+    gsl_matrix_free (T_gsl);
+    gsl_matrix_free (T_inverse_gsl);
+    gsl_permutation_free (perm);
+
+    delete [] qweight;
+    delete [] V;
+    for(int i = 0; i < dim; i++)
+    {
+        delete [] T[i];
+        delete [] T_inverse[i];
+    }
+    delete [] T;
+    delete [] T_inverse;
+    delete [] results;
+}
+
 //*********************************************************************
 //  Function returning the residuals for each point; that is, the 
 //  difference of the fit function using the current parameters

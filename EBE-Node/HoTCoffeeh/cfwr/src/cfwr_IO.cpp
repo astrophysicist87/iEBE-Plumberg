@@ -500,6 +500,33 @@ void CorrelationFunction::Readin_total_target_eiqx_dN_dypTdpTdphi()
 	return;
 }
 
+void CorrelationFunction::Readin_correlationfunction()
+{
+	ostringstream iCorrFunc_stream;
+	string temp_particle_name = particle_name;
+	replace_parentheses(temp_particle_name);
+
+	string CF_proj_string = "";
+	if (!FIT_WITH_PROJECTED_CFVALS)
+		CF_proj_string = "unprojected_";
+
+	iCorrFunc_stream << path << "/correlfunct3D_" << CF_proj_string << temp_particle_name << ".dat";
+	ifstream iCorrFunc;
+	iCorrFunc.open(iCorrFunc_stream.str().c_str());
+
+	double dummy;
+	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+	for (int iqx = 0; iqx < qxnpts; ++iqx)
+	for (int iqy = 0; iqy < qynpts; ++iqy)
+	for (int iqz = 0; iqz < qznpts; ++iqz)
+		iCorrFunc >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy >> CFvals[ipt][ipphi][iqx][iqy][iqz];
+
+	iCorrFunc.close();
+				
+	return;
+}
+
 void CorrelationFunction::Output_chosen_resonances()
 {
 	ostringstream filename_stream_crf;
