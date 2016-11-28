@@ -191,9 +191,6 @@ int main(int argc, char *argv[])
 
 	correlation_function.read_in_all_dN_dypTdpTdphi = false;
 	correlation_function.output_all_dN_dypTdpTdphi = !(correlation_function.read_in_all_dN_dypTdpTdphi);
-	//correlation_function.Set_use_delta_f(true);
-	//correlation_function.Set_ofstream(output);
-	//correlation_function.Set_current_FOsurf_ptr(FOsurf_ptr);
 
 	correlation_function.fraction_of_resonances = net_fraction_resonance_contribution;
 
@@ -212,24 +209,40 @@ int main(int argc, char *argv[])
 	// Actual calculations start here...
 	////////////////////////////////////////////
 
-	output << "Calculating correlation function with all resonance decays..." << endl;
 	//do calculations
-	//if (COMPUTE_RESONANCE_DECAYS)
-	//{
+	//decide whether to compute resonances or read them in
+	if ((int)(paraRdr->getVal("calculate_CF_mode")) == 0)
+	{
+		output << "Calculating correlation function with all resonance decays..." << endl;
 		correlation_function.Fourier_transform_emission_function();
 		correlation_function.Compute_phase_space_integrals();
-	//}
+	}
 
-	correlation_function.Cal_correlationfunction();		//if we didn't compute resonance decays, must read them in from files
+	//decide whether to compute correlation function or read it in
+	if ((int)(paraRdr->getVal("calculate_CF_mode")) < 2)
+	{
+		correlation_function.Cal_correlationfunction();		//if we didn't compute resonance decays, must read them in from files
+		output << "Finished calculating correlation function with all resonance decays..." << endl;
+	}
+	else
+	{
+		correlation_function.Read_in_correlationfunction();
+		output << "Read in correlation function with all resonance decays." << endl;
+	}
 
 	//output results
-	correlation_function.Output_total_target_dN_dypTdpTdphi();
-	correlation_function.Output_total_target_eiqx_dN_dypTdpTdphi();
-	correlation_function.Output_chosen_resonances();
-	correlation_function.Output_resonance_fraction();
-	correlation_function.Output_correlationfunction();
-
-	output << "Finished calculating correlation function with all resonance decays..." << endl;
+	//decide what to output
+	if ((int)(paraRdr->getVal("calculate_CF_mode")) < 2)
+	{
+		correlation_function.Output_correlationfunction();
+		if ((int)(paraRdr->getVal("calculate_CF_mode")) == 0)
+		{
+			correlation_function.Output_total_target_dN_dypTdpTdphi();
+			correlation_function.Output_total_target_eiqx_dN_dypTdpTdphi();
+			correlation_function.Output_chosen_resonances();
+			correlation_function.Output_resonance_fraction();
+		}
+	}
 
 	//if there's a full 3D grid to fit over, do the Gaussian fit and get the HBT radii too
 	if ( (int)(paraRdr->getVal("qxnpts")) > 1
@@ -244,7 +257,7 @@ int main(int argc, char *argv[])
 		correlation_function.Get_QM_HBTradii();
 		correlation_function.Output_results(folderindex, 1);	//1 means do QM R2ij
 		output << "Finished calculating HBT radii via q-moments method" << endl;*/
-//exit(1);
+
 	 	/*if (FLESH_OUT_CF)
 		{
 			output << "Allocating fleshed out CFvals..." << endl;

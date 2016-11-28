@@ -500,7 +500,7 @@ void CorrelationFunction::Readin_total_target_eiqx_dN_dypTdpTdphi()
 	return;
 }
 
-void CorrelationFunction::Readin_correlationfunction()
+void CorrelationFunction::Read_in_correlationfunction()
 {
 	ostringstream iCorrFunc_stream;
 	string temp_particle_name = particle_name;

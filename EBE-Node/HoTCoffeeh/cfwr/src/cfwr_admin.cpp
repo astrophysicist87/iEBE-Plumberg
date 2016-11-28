@@ -33,10 +33,12 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	GROUPING_PARTICLES = paraRdr->getVal("grouping_particles");
 	PARTICLE_DIFF_TOLERANCE = paraRdr->getVal("particle_diff_tolerance");
 	USE_LAMBDA = paraRdr->getVal("use_lambda");
+	USE_LOG_FIT = paraRdr->getVal("use_log_fit");
 	USE_EXTRAPOLATION = paraRdr->getVal("use_extrapolation");
 	IGNORE_LONG_LIVED_RESONANCES = paraRdr->getVal("ignore_long_lived_resonances");
 	FIT_WITH_PROJECTED_CFVALS = paraRdr->getVal("fit_with_projected_cfvals");
 	FLESH_OUT_CF = paraRdr->getVal("flesh_out_cf");
+	CALCULATE_CF_MODE = paraRdr->getVal("calculate_CF_mode");
 	n_order = paraRdr->getVal("n_order");
 	tol = paraRdr->getVal("tolerance");
 	flagneg = paraRdr->getVal("flag_negative_S");
