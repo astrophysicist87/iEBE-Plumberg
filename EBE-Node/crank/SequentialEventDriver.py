@@ -266,9 +266,11 @@ HoTCoffeehParameters = {
     'CF_npphi'                          :   48,
     'CF_resonanceThreshold'             :   0.60,
     'use_lambda'                        :   1,
+    'use_log_fit'                       :   1,
     'use_extrapolation'                 :   1,
     'fit_with_projected_cfvals'         :   1,
     'flesh_out_cf'                      :   1,
+	'calculate_CF_mode'                 :   0,
     'qtnpts'                            :   13,
     'qxnpts'                            :   7,
     'qynpts'                            :   7,
@@ -753,7 +755,20 @@ def doHBTWithHydroResultFiles(fileList):
 	# form assignment string
 	assignments = formAssignmentStringFromDict(HoTCoffeehParameters)
 	
+	#runSVWR = "true"
+	#runCFWR = "true"
+	#if HoTCoffeehExecutables[0]==0:
+	#	runSVWR = "false"
+	#
+	#if HoTCoffeehExecutables[1]==0:
+	#	runCFWR = "false"
+	
 	# execute!
+	#print 'Running', "nice -n %d bash ./" % (ProcessNiceness) \
+	#					+ HoTCoffeehExecutionEntry + " " + runSVWR + " " + runCFWR + " " + assignments
+	#run("nice -n %d bash ./" % (ProcessNiceness) \
+	#		+ HoTCoffeehExecutionEntry + " " + runSVWR + " " + runCFWR + " " + assignments, \
+	#	cwd=HoTCoffeehDirectory)
 	print 'Running', "nice -n %d bash ./" % (ProcessNiceness) \
 						+ HoTCoffeehExecutionEntry + " true true " + assignments
 	run("nice -n %d bash ./" % (ProcessNiceness) \
