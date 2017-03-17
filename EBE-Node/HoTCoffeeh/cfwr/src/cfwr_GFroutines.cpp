@@ -40,7 +40,9 @@ void CorrelationFunction::Get_GF_HBTradii()
 		}
 
 		//finally, do fits, depending on what kind you want to do
-		if (USE_LAMBDA)
+		if (USE_LOG_FIT)
+			find_minimum_chisq_correlationfunction_full( CF_for_fitting, ipt, ipphi, FLESH_OUT_CF );
+		else if (USE_LAMBDA)
 			Fit_Correlationfunction3D_withlambda( CF_for_fitting, ipt, ipphi, FLESH_OUT_CF );
 		else
 			Fit_Correlationfunction3D( CF_for_fitting, ipt, ipphi, FLESH_OUT_CF );
@@ -336,7 +338,6 @@ double CorrelationFunction::get_CF(int ipt, int ipphi, int iqt, int iqx, int iqy
 void CorrelationFunction::get_CF(double * totalresult, double * thermalresult, double * crosstermresult, double * resonanceresult,
 									int ipt, int ipphi, int iqt, int iqx, int iqy, int iqz, bool return_projected_value)
 {
-
 	//thermal
 	double nonFTd_tspectra = thermal_spectra[target_particle_id][ipt][ipphi];
 	double cos_transf_tspectra = thermal_target_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,0)];
@@ -363,32 +364,13 @@ void CorrelationFunction::get_CF(double * totalresult, double * thermalresult, d
 	*thermalresult = num / den;
 
 	num = 2.0 * (cosNT_spectra*cos_transf_tspectra+sinNT_spectra*sin_transf_tspectra);			//cross term
-	//den = nonFTd_tspectra*nonFTd_tspectra;
 	*crosstermresult = num / den;
 
 	num = cosNT_spectra*cosNT_spectra+sinNT_spectra*sinNT_spectra;								//resonances only
-	//den = nonFTd_tspectra*nonFTd_tspectra;
 	*resonanceresult = num / den;
 
 	num = cos_transf_spectra*cos_transf_spectra + sin_transf_spectra*sin_transf_spectra;
-	//den = nonFTd_spectra*nonFTd_spectra;
 	*totalresult = num / den;
-
-	//cout << "CHECK (" << ipt << ", " << ipphi << ", " << iqt << ", " << iqx << ", " << iqy << ", " << iqz << "): "
-	//		<< *thermalresult << "   " << *crosstermresult << "   " << *resonanceresult << "   " << *totalresult << endl;
-
-	//this is just for debugging: get rid of it if you don't remember what it does!
-	/*if (return_projected_value)
-	{
-		nonFTd_spectra = spectra[target_particle_id][ipt][ipphi];
-		cos_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,0)];
-		sin_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,1)];
-
-		double CF0 = (cos_transf_tspectra*cos_transf_tspectra + sin_transf_tspectra*sin_transf_tspectra) / (nonFTd_tspectra*nonFTd_tspectra);
-		double CF1 = (cos_transf_spectra*cos_transf_spectra + sin_transf_spectra*sin_transf_spectra) / (nonFTd_spectra*nonFTd_spectra);
-		*totalresult = CF0 + (CF1 - CF0) / fraction_of_resonances;
-	}*/
-
 
 	return;
 }
@@ -815,6 +797,7 @@ void CorrelationFunction::find_minimum_chisq_correlationfunction_full(double ***
         double q_side_local = -q1pts[i] * skp + q2pts[j] * ckp;
         double q_long_local = q3pts[k];
         double correl_local = Correl_3D[i][j][k]-1;
+		//*global_out_stream_ptr << "\t\t" << q1pts[i] << "   " << q2pts[i] << "   " << q3pts[i] << "   " << q_out_local << "   " << q_side_local << "   " << q_long_local << "   " << correl_local << endl;
         if(correl_local < 1e-15) continue;
 		//if (i==(q1npts-1)/2 && j==(q2npts-1)/2 && k==(q3npts-1)/2)
 		//	Correlfun3D_data.sigma[idx] = 1.e10;	//ignore central point

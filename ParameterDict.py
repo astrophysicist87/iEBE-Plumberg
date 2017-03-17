@@ -10,7 +10,7 @@ initial_condition_control = {
     'centrality': '0-10%',  # centrality bin
     'cut_type': 'total_entropy',
     # centrality cut variable: total_entropy or Npart
-    'initial_condition_type': 'superMC',
+    'initial_condition_type': 'pre-generated',
     # type of initial conditions: superMC or pre-generated
     'pre-generated_initial_file_path': 'initial_conditions', 
     # file path for the pre-generated initial condition files
@@ -62,6 +62,7 @@ hydroParameters = {
                               # need to be the same as dx in superMC
     'dy'        :   0.10,     # lattice spacing in y (fm)
                               # need to be the same as dy in superMC
+    'Edec'      :   0.5,  #
     'ndx'       :   2,
     'ndy'       :   2,
     'IhydroJetoutput' :   0,  # switch for output hydro evolution history
@@ -106,6 +107,7 @@ photonEmissionParameters = {
 
 HoTCoffeehParameters = {
 	'include_delta_f'					:	1,
-    'SV_resonanceThreshold'             :   0.00,
-    'CF_resonanceThreshold'             :   0.00,
+    'SV_resonanceThreshold'             :   0.60,
+    'CF_resonanceThreshold'             :   0.60,
+    'use_log_fit'                       :   1,
 }

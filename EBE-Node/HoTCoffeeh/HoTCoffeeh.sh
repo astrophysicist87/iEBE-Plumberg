@@ -4,6 +4,8 @@ RunSVWR=$1
 RunCFWR=$2
 AllArgs="${@:3}"
 
+#echo $AllArgs
+
 if [ "$RunSVWR" = true ]
 then
 	./svwr.e $AllArgs

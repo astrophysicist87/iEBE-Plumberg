@@ -392,6 +392,7 @@ class CorrelationFunction
 		void Output_resonance_fraction();
 		void Read_in_correlationfunction();
 		void Output_correlationfunction();
+		void Output_lambdas();
 		void Output_fleshed_out_correlationfunction(int ipt, int ipphi);
 		void Dump_spectra_array(string output_filename, double *** array_to_dump);
 		void Load_spectra_array(string output_filename, double *** array_to_read);

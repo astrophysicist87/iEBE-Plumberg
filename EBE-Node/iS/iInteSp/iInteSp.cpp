@@ -26,6 +26,7 @@
 
 using namespace std;
 
+string localpath;
 
 Table pT_tab("tables/pT_gauss_table.dat");
 int pT_tab_length = pT_tab.getNumberOfRows();
@@ -254,10 +255,10 @@ void perform_eta_integration(Table* total_N, Table& dN_dy, double mass)
 void calculate_and_output_spectra_and_vn(Table& dN_dy, Table& total_N, string particle_name, double mass, int to_order=9, double pT_cut_min=-1, double pT_cut_max=-1, int interp_mode=2)
 {
     ofstream of1,of2,of3,of4;
-    string vndata_filename = "results/%s_vndata.dat";
-    string vndata_inte_filename = "results/%s_integrated_vndata.dat";
-    string vndata_eta_filename ="results/%s_eta_vndata.dat";
-    string vndata_eta_inte_filename = "results/%s_eta_integrated_vndata.dat";
+    string vndata_filename = localpath + "/%s_vndata.dat";
+    string vndata_inte_filename = localpath + "/%s_integrated_vndata.dat";
+    string vndata_eta_filename =localpath + "/%s_eta_vndata.dat";
+    string vndata_eta_inte_filename = localpath + "/%s_eta_integrated_vndata.dat";
 
     char buffer[300];
     sprintf(buffer, vndata_filename.c_str(), particle_name.c_str());
@@ -284,6 +285,19 @@ int main()
     string particle_name, dN_file;
     double mass;
 
+	// Chris's input reading process
+	localpath="results";
+	std::ifstream pathfile("pathToWorkingDirectory.txt");
+	if (pathfile.good())
+	{
+		localpath = "";
+		pathfile >> localpath;
+	}
+	pathfile.close();
+
+	std::cout << "Using path = " << localpath << std::endl;
+//if (1) return(1);
+
     //----------------------------------
     // First, calcualtions for eta=0
     //----------------------------------
@@ -292,7 +306,7 @@ int main()
     // pion+
     double pion_mass = 0.13957; mass = pion_mass;
     particle_name = "pion_p";
-    Table pion_dN_dy("results/spec_211.dat");
+    Table pion_dN_dy(localpath + "/spec_211.dat");
     Table pion_total_N(pT_tab_length, phi_tab_length);
     perform_eta_integration(&pion_total_N, pion_dN_dy, mass);
     calculate_and_output_spectra_and_vn(pion_dN_dy, pion_total_N, particle_name, mass);
@@ -300,7 +314,7 @@ int main()
     // Kaon+
     double Kaon_mass = 0.49368; mass = Kaon_mass;
     particle_name = "Kaon_p";
-    Table Kaon_dN_dy("results/spec_321.dat");
+    Table Kaon_dN_dy(localpath + "/spec_321.dat");
     Table Kaon_total_N(pT_tab_length, phi_tab_length);
     perform_eta_integration(&Kaon_total_N, Kaon_dN_dy, mass);
     calculate_and_output_spectra_and_vn(Kaon_dN_dy, Kaon_total_N, particle_name, mass);
@@ -308,7 +322,7 @@ int main()
     // p
     double proton_mass = 0.93827; mass = proton_mass;
     particle_name = "proton";
-    Table proton_dN_dy("results/spec_2212.dat");
+    Table proton_dN_dy(localpath + "/spec_2212.dat");
     Table proton_total_N(pT_tab_length, phi_tab_length);
     perform_eta_integration(&proton_total_N, proton_dN_dy, mass);
     calculate_and_output_spectra_and_vn(proton_dN_dy, proton_total_N, particle_name, mass);
@@ -316,7 +330,7 @@ int main()
     // Sigma+
     double Sigma_p_mass = 1.18937; mass = Sigma_p_mass;
     particle_name = "Sigma_p";
-    Table Sigma_p_dN_dy("results/spec_3222.dat");
+    Table Sigma_p_dN_dy(localpath + "/spec_3222.dat");
     Table Sigma_p_total_N(pT_tab_length, phi_tab_length);
     perform_eta_integration(&Sigma_p_total_N, Sigma_p_dN_dy, mass);
     calculate_and_output_spectra_and_vn(Sigma_p_dN_dy, Sigma_p_total_N, particle_name, mass);
@@ -324,7 +338,7 @@ int main()
     // Sigma-
     double Sigma_m_mass = 1.19745; mass = Sigma_m_mass;
     particle_name = "Sigma_m";
-    Table Sigma_m_dN_dy("results/spec_3112.dat");
+    Table Sigma_m_dN_dy(localpath + "/spec_3112.dat");
     Table Sigma_m_total_N(pT_tab_length, phi_tab_length);
     perform_eta_integration(&Sigma_m_total_N, Sigma_m_dN_dy, mass);
     calculate_and_output_spectra_and_vn(Sigma_m_dN_dy, Sigma_m_total_N, particle_name, mass);
@@ -332,7 +346,7 @@ int main()
     // Xi-
     double Xi_mass = 1.32131; mass = Xi_mass;
     particle_name = "Xi_m";
-    Table Xi_dN_dy("results/spec_3312.dat");
+    Table Xi_dN_dy(localpath + "/spec_3312.dat");
     Table Xi_total_N(pT_tab_length, phi_tab_length);
     perform_eta_integration(&Xi_total_N, Xi_dN_dy, mass);
     calculate_and_output_spectra_and_vn(Xi_dN_dy, Xi_total_N, particle_name, mass);
@@ -341,7 +355,7 @@ int main()
     // Lambda
     double Lambda_mass = 1.11568; mass = Lambda_mass;
     particle_name = "Lambda";
-    Table Lambda_dN_dy("results/spec_3122.dat");
+    Table Lambda_dN_dy(localpath + "/spec_3122.dat");
     Table Lambda_total_N(pT_tab_length, phi_tab_length);
     perform_eta_integration(&Lambda_total_N, Lambda_dN_dy, mass);
     calculate_and_output_spectra_and_vn(Lambda_dN_dy, Lambda_total_N, particle_name, mass);
@@ -349,7 +363,7 @@ int main()
     // Omega
     double Omega_mass = 1.67243; mass = Omega_mass;
     particle_name = "Omega";
-    Table Omega_dN_dy("results/spec_3334.dat");
+    Table Omega_dN_dy(localpath + "/spec_3334.dat");
     Table Omega_total_N(pT_tab_length, phi_tab_length);
     perform_eta_integration(&Omega_total_N, Omega_dN_dy, mass);
     calculate_and_output_spectra_and_vn(Omega_dN_dy, Omega_total_N, particle_name, mass);
@@ -360,7 +374,7 @@ int main()
     // pion-
     double pion_A_mass = 0.13957; mass = pion_A_mass;
     particle_name = "pion_m";
-    Table pion_A_dN_dy("results/spec_A211.dat");
+    Table pion_A_dN_dy(localpath + "/spec_A211.dat");
     Table pion_A_total_N(pT_tab_length, phi_tab_length);
     perform_eta_integration(&pion_A_total_N, pion_A_dN_dy, mass);
     calculate_and_output_spectra_and_vn(pion_A_dN_dy, pion_A_total_N, particle_name, mass);
@@ -368,7 +382,7 @@ int main()
     // Kaon-
     double Kaon_A_mass = 0.49368; mass = Kaon_A_mass;
     particle_name = "Kaon_m";
-    Table Kaon_A_dN_dy("results/spec_A321.dat");
+    Table Kaon_A_dN_dy(localpath + "/spec_A321.dat");
     Table Kaon_A_total_N(pT_tab_length, phi_tab_length);
     perform_eta_integration(&Kaon_A_total_N, Kaon_A_dN_dy, mass);
     calculate_and_output_spectra_and_vn(Kaon_A_dN_dy, Kaon_A_total_N, particle_name, mass);
@@ -376,7 +390,7 @@ int main()
     // anti-p
     double proton_A_mass = 0.93827; mass = proton_A_mass;
     particle_name = "anti_proton";
-    Table proton_A_dN_dy("results/spec_A2212.dat");
+    Table proton_A_dN_dy(localpath + "/spec_A2212.dat");
     Table proton_A_total_N(pT_tab_length, phi_tab_length);
     perform_eta_integration(&proton_A_total_N, proton_A_dN_dy, mass);
     calculate_and_output_spectra_and_vn(proton_A_dN_dy, proton_A_total_N, particle_name, mass);
@@ -384,7 +398,7 @@ int main()
     // anti-Sigma+
     double Sigma_p_A_mass = 1.18937; mass = Sigma_p_A_mass;
     particle_name = "anti_Sigma_p";
-    Table Sigma_p_A_dN_dy("results/spec_A3222.dat");
+    Table Sigma_p_A_dN_dy(localpath + "/spec_A3222.dat");
     Table Sigma_p_A_total_N(pT_tab_length, phi_tab_length);
     perform_eta_integration(&Sigma_p_A_total_N, Sigma_p_A_dN_dy, mass);
     calculate_and_output_spectra_and_vn(Sigma_p_A_dN_dy, Sigma_p_A_total_N, particle_name, mass);
@@ -392,7 +406,7 @@ int main()
     // anti-Sigma-
     double Sigma_m_A_mass = 1.19745; mass = Sigma_m_A_mass;
     particle_name = "anti_Sigma_m";
-    Table Sigma_m_A_dN_dy("results/spec_A3112.dat");
+    Table Sigma_m_A_dN_dy(localpath + "/spec_A3112.dat");
     Table Sigma_m_A_total_N(pT_tab_length, phi_tab_length);
     perform_eta_integration(&Sigma_m_A_total_N, Sigma_m_A_dN_dy, mass);
     calculate_and_output_spectra_and_vn(Sigma_m_A_dN_dy, Sigma_m_A_total_N, particle_name, mass);
@@ -400,7 +414,7 @@ int main()
     // anti-Xi-
     double Xi_A_mass = 1.32131; mass = Xi_A_mass;
     particle_name = "anti_Xi";
-    Table Xi_A_dN_dy("results/spec_A3312.dat");
+    Table Xi_A_dN_dy(localpath + "/spec_A3312.dat");
     Table Xi_A_total_N(pT_tab_length, phi_tab_length);
     perform_eta_integration(&Xi_A_total_N, Xi_A_dN_dy, mass);
     calculate_and_output_spectra_and_vn(Xi_A_dN_dy, Xi_A_total_N, particle_name, mass);
@@ -410,42 +424,42 @@ int main()
     //for pion 0
     double pion_zero_mass = 0.13498; mass = pion_zero_mass;
     particle_name = "pion_0";
-    Table pion_zero_dN_dy("results/spec_111.dat");
+    Table pion_zero_dN_dy(localpath + "/spec_111.dat");
     Table pion_zero_total_N(pT_tab_length, phi_tab_length);
     perform_eta_integration(&pion_zero_total_N, pion_zero_dN_dy, mass);
     calculate_and_output_spectra_and_vn(pion_zero_dN_dy, pion_zero_total_N, particle_name, mass);
     //for eta
     double eta_mass = 0.54775; mass = eta_mass;
     particle_name = "eta";
-    Table eta_dN_dy("results/spec_221.dat");
+    Table eta_dN_dy(localpath + "/spec_221.dat");
     Table eta_total_N(pT_tab_length, phi_tab_length);
     perform_eta_integration(&eta_total_N, eta_dN_dy, mass);
     calculate_and_output_spectra_and_vn(eta_dN_dy, eta_total_N, particle_name, mass);
     //for omega
     double omega_mass = 0.78259; mass = omega_mass;
     particle_name = "omega_782";
-    Table omega_dN_dy("results/spec_223.dat");
+    Table omega_dN_dy(localpath + "/spec_223.dat");
     Table omega_total_N(pT_tab_length, phi_tab_length);
     perform_eta_integration(&omega_total_N, omega_dN_dy, mass);
     calculate_and_output_spectra_and_vn(omega_dN_dy, omega_total_N, particle_name, mass);
     //for eta prime
     double etaprime_mass = 0.95778; mass = etaprime_mass;
     particle_name = "etaprime";
-    Table etaprime_dN_dy("results/spec_331.dat");
+    Table etaprime_dN_dy(localpath + "/spec_331.dat");
     Table etaprime_total_N(pT_tab_length, phi_tab_length);
     perform_eta_integration(&etaprime_total_N, etaprime_dN_dy, mass);
     calculate_and_output_spectra_and_vn(etaprime_dN_dy, etaprime_total_N, particle_name, mass);
     //for phi
     double phi_mass = 1.01946; mass = phi_mass;
     particle_name = "phi";
-    Table phi_dN_dy("results/spec_333.dat");
+    Table phi_dN_dy(localpath + "/spec_333.dat");
     Table phi_total_N(pT_tab_length, phi_tab_length);
     perform_eta_integration(&phi_total_N, phi_dN_dy, mass);
     calculate_and_output_spectra_and_vn(phi_dN_dy, phi_total_N, particle_name, mass);
     //for Sigma0
     double Sigma0_mass = 1.19264; mass = Sigma0_mass;
     particle_name = "Sigma_0";
-    Table Sigma0_dN_dy("results/spec_3212.dat");
+    Table Sigma0_dN_dy(localpath + "/spec_3212.dat");
     Table Sigma0_total_N(pT_tab_length, phi_tab_length);
     perform_eta_integration(&Sigma0_total_N, Sigma0_dN_dy, mass);
     calculate_and_output_spectra_and_vn(Sigma0_dN_dy, Sigma0_total_N, particle_name, mass);
@@ -453,56 +467,56 @@ int main()
     //direct photons (short lived resonances)
     double gamma_mass = 0.0; mass = gamma_mass;
     particle_name = "direct_gamma_shortdecay";
-    Table gamma_direct_dN_dy("results/spec_22.dat");
+    Table gamma_direct_dN_dy(localpath + "/spec_22.dat");
     Table gamma_direct_total_N(pT_tab_length, phi_tab_length);
     perform_eta_integration(&gamma_direct_total_N, gamma_direct_dN_dy, mass);
     calculate_and_output_spectra_and_vn(gamma_direct_dN_dy, gamma_direct_total_N, particle_name, mass);
     //pi^0 decay photons
     mass = gamma_mass;
     particle_name = "decay_gamma_pi0";
-    Table gamma_pi0_dN_dy("results/spec_21.dat");
+    Table gamma_pi0_dN_dy(localpath + "/spec_21.dat");
     Table gamma_pi0_total_N(pT_tab_length, phi_tab_length);
     perform_eta_integration(&gamma_pi0_total_N, gamma_pi0_dN_dy, mass);
     calculate_and_output_spectra_and_vn(gamma_pi0_dN_dy, gamma_pi0_total_N, particle_name, mass);
     //eta decay photons
     mass = gamma_mass;
     particle_name = "decay_gamma_eta";
-    Table gamma_eta_dN_dy("results/spec_20.dat");
+    Table gamma_eta_dN_dy(localpath + "/spec_20.dat");
     Table gamma_eta_total_N(pT_tab_length, phi_tab_length);
     perform_eta_integration(&gamma_eta_total_N, gamma_eta_dN_dy, mass);
     calculate_and_output_spectra_and_vn(gamma_eta_dN_dy, gamma_eta_total_N, particle_name, mass);
     //omega decay photons
     mass = gamma_mass;
     particle_name = "decay_gamma_omega";
-    Table gamma_omega_dN_dy("results/spec_19.dat");
+    Table gamma_omega_dN_dy(localpath + "/spec_19.dat");
     Table gamma_omega_total_N(pT_tab_length, phi_tab_length);
     perform_eta_integration(&gamma_omega_total_N, gamma_omega_dN_dy, mass);
     calculate_and_output_spectra_and_vn(gamma_omega_dN_dy, gamma_omega_total_N, particle_name, mass);
     //eta prime decay photons
     mass = gamma_mass;
     particle_name = "decay_gamma_etaprime";
-    Table gamma_etaprime_dN_dy("results/spec_18.dat");
+    Table gamma_etaprime_dN_dy(localpath + "/spec_18.dat");
     Table gamma_etaprime_total_N(pT_tab_length, phi_tab_length);
     perform_eta_integration(&gamma_etaprime_total_N, gamma_etaprime_dN_dy, mass);
     calculate_and_output_spectra_and_vn(gamma_etaprime_dN_dy, gamma_etaprime_total_N, particle_name, mass);
     //phi decay photons
     mass = gamma_mass;
     particle_name = "decay_gamma_phi";
-    Table gamma_phi_dN_dy("results/spec_17.dat");
+    Table gamma_phi_dN_dy(localpath + "/spec_17.dat");
     Table gamma_phi_total_N(pT_tab_length, phi_tab_length);
     perform_eta_integration(&gamma_phi_total_N, gamma_phi_dN_dy, mass);
     calculate_and_output_spectra_and_vn(gamma_phi_dN_dy, gamma_phi_total_N, particle_name, mass);
     //Sigma0 decay photons
     mass = gamma_mass;
     particle_name = "decay_gamma_Sigma0";
-    Table gamma_Sigma0_dN_dy("results/spec_16.dat");
+    Table gamma_Sigma0_dN_dy(localpath + "/spec_16.dat");
     Table gamma_Sigma0_total_N(pT_tab_length, phi_tab_length);
     perform_eta_integration(&gamma_Sigma0_total_N, gamma_Sigma0_dN_dy, mass);
     calculate_and_output_spectra_and_vn(gamma_Sigma0_dN_dy, gamma_Sigma0_total_N, particle_name, mass);
     //rho0 decay photons
     mass = gamma_mass;
     particle_name = "decay_gamma_rho0";
-    Table gamma_rho0_dN_dy("results/spec_15.dat");
+    Table gamma_rho0_dN_dy(localpath + "/spec_15.dat");
     Table gamma_rho0_total_N(pT_tab_length, phi_tab_length);
     perform_eta_integration(&gamma_rho0_total_N, gamma_rho0_dN_dy, mass);
     calculate_and_output_spectra_and_vn(gamma_rho0_dN_dy, gamma_rho0_total_N, particle_name, mass);

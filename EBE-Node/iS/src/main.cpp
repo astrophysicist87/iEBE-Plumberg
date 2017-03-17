@@ -48,6 +48,17 @@ int main(int argc, char *argv[])
 
    // Chun's input reading process
    string path="results";
+   ifstream pathfile("pathToWorkingDirectory.txt");
+   if (pathfile.good())
+   {
+      path = "";
+      pathfile >> path;
+   }
+   pathfile.close();
+
+   cout << "Using path = " << path << endl;
+
+//if (1) exit(1);
 
    //load freeze out information
    read_FOdata freeze_out_data(paraRdr, path);
@@ -80,7 +91,7 @@ int main(int argc, char *argv[])
    Table pT_tab("tables/pT_gauss_table.dat"); // pt position and weight table
    Table phi_tab("tables/phi_gauss_table.dat"); // phi position and weight table
    Table eta_tab("tables/eta_gauss_table_15.dat"); // eta uniform dist table
-   EmissionFunctionArray efa(paraRdr, 0.0, &chosen_particles, &pT_tab, &phi_tab, &eta_tab, particle, Nparticle, FOsurf_ptr, FO_length);
+   EmissionFunctionArray efa(paraRdr, 0.0, &chosen_particles, &pT_tab, &phi_tab, &eta_tab, particle, Nparticle, FOsurf_ptr, FO_length, path);
 
    efa.calculate_dN_ptdptdphidy_and_flows_4all(9);
 

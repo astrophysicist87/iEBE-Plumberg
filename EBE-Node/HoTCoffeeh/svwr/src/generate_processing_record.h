@@ -87,7 +87,7 @@ void initialize_PRfile(ParameterReader* paraRdr, string currentworkingdirectory,
 	output << "      --> CWD: " << currentworkingdirectory << endl;
 	output << "      --> tol: " << paraRdr->getVal("tolerance") << endl;
 	output << "      --> flagneg: " << paraRdr->getVal("flag_negative_S") << endl;
-	if ( ! paraRdr->getVal("ignore_long_lived_resonances") )
+	if ( paraRdr->getVal("ignore_long_lived_resonances") )
 		output << "      --> max_lifetime (fm/c): " << paraRdr->getVal("max_lifetime") << endl;
 	else
 		output << "      --> max_lifetime (fm/c): 10000000000.0" << endl;

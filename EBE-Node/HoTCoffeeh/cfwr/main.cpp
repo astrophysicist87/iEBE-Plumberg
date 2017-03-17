@@ -154,10 +154,9 @@ int main(int argc, char *argv[])
 	{
 		ifstream chosenParticlesStream("EOS/chosen_particles.dat");
 		int len = 0;
-		while (!chosenParticlesStream.eof())
+		long tmp;
+		while (chosenParticlesStream >> tmp)
 		{
-			long tmp;
-			chosenParticlesStream >> tmp;
 			chosen_resonance_indices.push_back(lookup_particle_id_from_monval(particle, Nparticle, tmp));
 			len++;
 		}
@@ -167,13 +166,14 @@ int main(int argc, char *argv[])
 
 		// sort chosen particles by mass
 		sort_by_mass(&chosen_resonance_indices, particle, Nparticle, output);
+		// erase the last element of sorted list, which will generally include the target particle
+		chosen_resonance_indices.pop_back();
+
 		for (int ii = 0; ii < (int)chosen_resonance_indices.size(); ii++)
 			output << ii << "   " << chosen_resonance_indices[ii] << "   " << particle[chosen_resonance_indices[ii]].name
 					<< "   ,   Gamma = " << particle[chosen_resonance_indices[ii]].width
 					<< "   ,   pc = " << particle[chosen_resonance_indices[ii]].percent_contribution << endl;
 
-		// erase the last element of sorted list, which will generally include the target particle
-		chosen_resonance_indices.erase (chosen_resonance_indices.end());
 		net_fraction_resonance_contribution = 1.0;
 	}
 	else																// otherwise, you did something wrong!
@@ -193,6 +193,7 @@ int main(int argc, char *argv[])
 	correlation_function.output_all_dN_dypTdpTdphi = !(correlation_function.read_in_all_dN_dypTdpTdphi);
 
 	correlation_function.fraction_of_resonances = net_fraction_resonance_contribution;
+	output << "Using fraction_of_resonances = " << net_fraction_resonance_contribution << endl;
 
 	bool omit_specific_resonances = false;
 	if (omit_specific_resonances)
@@ -226,6 +227,8 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
+		correlation_function.Set_correlation_function_q_pts();
+		correlation_function.Allocate_CFvals();
 		correlation_function.Read_in_correlationfunction();
 		output << "Read in correlation function with all resonance decays." << endl;
 	}
@@ -252,6 +255,8 @@ int main(int argc, char *argv[])
 		output << "Calculating HBT radii via Gaussian fit method..." << endl;
 		correlation_function.Get_GF_HBTradii();
 		correlation_function.Output_results(0);	//0 means do GF R2ij
+		output << "Outputting lambdas..." << endl;
+		correlation_function.Output_lambdas();
 		output << "Finished calculating HBT radii via Gaussian fit method" << endl;
 		/*output << "Calculating HBT radii via q-moments method..." << endl;
 		correlation_function.Get_QM_HBTradii();

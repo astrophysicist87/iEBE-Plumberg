@@ -9,11 +9,12 @@
 # The main entry is the sequentialEventDriverShell function.
 
 from os import path, getcwd, remove, makedirs
-from sys import stdout
+from sys import stdout, exit
 from shutil import move, copy, copytree, rmtree
 from glob import glob
 from subprocess import call
 import numpy as np
+import re
 
 class ExecutionError(Exception): pass # used to signal my own exception
 
@@ -291,6 +292,18 @@ def readInParameters():
         raise ExecutionError("Errors trying to open/read the ParameterDict.py file!")
 
 
+def sorted_nicely( l ):
+    """ Sorts the given iterable in the way that is expected.
+ 
+    Required arguments:
+    l -- The iterable to be sorted.
+ 
+    """
+    convert = lambda text: int(text) if text.isdigit() else text
+    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
+    return sorted(l, key = alphanum_key)
+
+
 def translate_centrality_cut():
     """
     translate the centrality boundaries to Npart, dS/dy, b values and update
@@ -427,6 +440,7 @@ def get_initial_condition_list():
     elif initial_type == 'pre-generated':
         file_list = [
                 afile for afile in get_pre_generated_initial_conditions_list()]
+    file_list = sorted_nicely(file_list)	# make sure files are in correct order
     return(file_list)
 
 
@@ -437,7 +451,10 @@ def get_pre_generated_initial_conditions_list():
     # set directory strings
     initial_condition_path = path.join(controlParameterList['rootDir'], 
                                        'initial_conditions')
-
+    print 'Initial conditions path:', initial_condition_path
+    
+    #copytree( path.commonprefix(fileList), HoTCoffeehOperationDirectory )
+    
     # yield initial conditions
     file_list = glob(path.join(initial_condition_path,
               initial_condition_control['pre-generated_initial_file_pattern']))
@@ -1179,6 +1196,7 @@ def sequentialEventDriverShell():
         stdout.write("PROGRESS: %d events out of %d finished.\n" 
                      % (event_id, nev))
         stdout.flush()
+        #print initial_condition_list
 
         # loop over initial conditions
         for aInitialConditionFile in initial_condition_list:
@@ -1189,10 +1207,10 @@ def sequentialEventDriverShell():
             if path.exists(eventResultDir):
                 rmtree(eventResultDir)
             makedirs(eventResultDir)
-
+			
             # print current progress to terminal
             print("Starting event %d..." % event_id)
-           
+			
             initial_type = initial_condition_control['initial_condition_type']
             if initial_type == 'superMC':    # initial conditions from superMC
                 if superMCControl['saveICFile']:
@@ -1207,8 +1225,8 @@ def sequentialEventDriverShell():
                         copy(aFile, controlParameterList['eventResultDir'])
             elif initial_type == 'pre-generated':  
                 # initial conditions from pre-generated files
-                copy(aInitialConditionFile, 
-                     controlParameterList['eventResultDir'])
+                copy(aInitialConditionFile, controlParameterList['eventResultDir'])
+                print 'Associating ' + aInitialConditionFile + ' with event ' + str(event_id)
             
             print controlParameterList['rootDir']
             

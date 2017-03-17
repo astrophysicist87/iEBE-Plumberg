@@ -203,6 +203,21 @@ void CorrelationFunction::Output_results(int mode)
 	return;
 }
 
+void CorrelationFunction::Output_lambdas()
+{
+	ostringstream filename_stream_lambdas;
+	filename_stream_lambdas << path << "/lambdas.dat";
+	ofstream outputlambdas;
+	outputlambdas.open(filename_stream_lambdas.str().c_str());
+	
+	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+		outputlambdas << SP_pT[ipt] << "   " << SP_pphi[ipphi] << "   " << lambda_Correl[ipt][ipphi] << endl;
+
+	outputlambdas.close();
+	return;
+}
+
 void CorrelationFunction::Output_correlationfunction()
 {
 	ostringstream oCorrFunc_stream;
@@ -520,7 +535,11 @@ void CorrelationFunction::Read_in_correlationfunction()
 	for (int iqx = 0; iqx < qxnpts; ++iqx)
 	for (int iqy = 0; iqy < qynpts; ++iqy)
 	for (int iqz = 0; iqz < qznpts; ++iqz)
-		iCorrFunc >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy >> CFvals[ipt][ipphi][iqx][iqy][iqz];
+	{
+		iCorrFunc >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy
+					>> thermalCFvals[ipt][ipphi][iqx][iqy][iqz] >> crosstermCFvals[ipt][ipphi][iqx][iqy][iqz] >> resonancesCFvals[ipt][ipphi][iqx][iqy][iqz] >> CFvals[ipt][ipphi][iqx][iqy][iqz];
+		//*global_out_stream_ptr << "Read in CFvals[" << ipt << "][" << ipphi << "][" << iqx << "][" << iqy << "][" << iqz << "] = " << CFvals[ipt][ipphi][iqx][iqy][iqz] << endl;
+	}
 
 	iCorrFunc.close();
 				

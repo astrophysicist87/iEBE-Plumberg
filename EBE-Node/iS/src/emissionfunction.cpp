@@ -20,7 +20,7 @@ using namespace std;
 
 
 // Class EmissionFunctionArray ------------------------------------------
-EmissionFunctionArray::EmissionFunctionArray(ParameterReader* paraRdr_in, double particle_y_in, Table* chosen_particles_in, Table* pT_tab_in, Table* phi_tab_in, Table* eta_tab_in, particle_info* particles_in, int Nparticles_in, FO_surf* FOsurf_ptr_in, long FO_length_in)
+EmissionFunctionArray::EmissionFunctionArray(ParameterReader* paraRdr_in, double particle_y_in, Table* chosen_particles_in, Table* pT_tab_in, Table* phi_tab_in, Table* eta_tab_in, particle_info* particles_in, int Nparticles_in, FO_surf* FOsurf_ptr_in, long FO_length_in, string localpath /*= "results"*/)
 {
   paraRdr = paraRdr_in;
   particle_y = particle_y_in;
@@ -29,7 +29,7 @@ EmissionFunctionArray::EmissionFunctionArray(ParameterReader* paraRdr_in, double
   eta_tab = eta_tab_in; eta_tab_length = eta_tab->getNumberOfRows();
 
   dN_ptdptdphidy = new Table(pT_tab_length, phi_tab_length);
-  dN_ptdptdphidy_filename = "results/dN_ptdptdphidy.dat";
+  dN_ptdptdphidy_filename = localpath + "/dN_ptdptdphidy.dat";
 
   // get control parameters
   CALCULATEDED3P = paraRdr->getVal("calculate_dEd3p");
@@ -45,7 +45,7 @@ EmissionFunctionArray::EmissionFunctionArray(ParameterReader* paraRdr_in, double
   if(CALCULATEDED3P == 1)
   {
      dE_ptdptdphidy = new Table(pT_tab_length, phi_tab_length);
-     dE_ptdptdphidy_filename = "results/dE_ptdptdphidy.dat";
+     dE_ptdptdphidy_filename = localpath + "/dE_ptdptdphidy.dat";
   }
 
   particles = particles_in;
@@ -101,16 +101,16 @@ EmissionFunctionArray::EmissionFunctionArray(ParameterReader* paraRdr_in, double
         }
   }
 
-  flow_differential_filename_old =  "results/v2data.dat";
-  flow_integrated_filename_old = "results/v2data-inte.dat";
-  flow_differential_filename = "results/thermal_%d_vndata.dat";
-  flow_integrated_filename = "results/thermal_%d_integrated_vndata.dat";
+  flow_differential_filename_old =  localpath + "/v2data.dat";
+  flow_integrated_filename_old = localpath + "/v2data-inte.dat";
+  flow_differential_filename = localpath + "/thermal_%d_vndata.dat";
+  flow_integrated_filename = localpath + "/thermal_%d_integrated_vndata.dat";
   if(CALCULATEDED3P == 1)
   {
-     energyflow_differential_filename_old =  "results/ET_v2data.dat";
-     energyflow_integrated_filename_old = "results/ET_v2data-inte.dat";
-     energyflow_differential_filename = "results/thermal_%d_ET_vndata.dat";
-     energyflow_integrated_filename = "results/thermal_%d_ET_integrated_vndata.dat";
+     energyflow_differential_filename_old =  localpath + "/ET_v2data.dat";
+     energyflow_integrated_filename_old = localpath + "/ET_v2data-inte.dat";
+     energyflow_differential_filename = localpath + "/thermal_%d_ET_vndata.dat";
+     energyflow_integrated_filename = localpath + "/thermal_%d_ET_integrated_vndata.dat";
   }
   last_particle_idx = -1;
 

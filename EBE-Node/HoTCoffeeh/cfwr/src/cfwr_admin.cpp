@@ -195,8 +195,8 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 				
 				//check if particle lifetime is too long for inclusion in source variances
 				bool lifetime_is_too_long = false;
-				if (decay_channels[temp_idx].resonance_Gamma < hbarC / max_lifetime)
-					lifetime_is_too_long = true;		//i.e., for lifetimes longer than 100 fm/c, skip decay channel
+				//if (decay_channels[temp_idx].resonance_Gamma < hbarC / max_lifetime)
+				//	lifetime_is_too_long = true;		//i.e., for lifetimes longer than 100 fm/c, skip decay channel
 
 				if (VERBOSE > 0) *global_out_stream_ptr << "Resonance = " << decay_channels[temp_idx].resonance_name << ", decay channel " << idecay + 1
 						<< ": mu=" << decay_channels[temp_idx].resonance_mu
@@ -709,7 +709,7 @@ void CorrelationFunction::Set_eiqx_matrices()
 	for(int ipt = 0; ipt < n_pT_pts; ipt++)
 		most_important_FOcells[ipt] = new size_t * [n_pphi_pts];
 
-	*global_out_stream_ptr << "Using fraction_of_resonances = " << fraction_of_resonances << endl;
+	//*global_out_stream_ptr << "Using fraction_of_resonances = " << fraction_of_resonances << endl;
 
 	return;
 }

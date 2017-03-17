@@ -375,7 +375,6 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 
 /////////////////////////////////////////////
 
-//int CorrelationFunction::Set_resonance_in_HDF_array(int local_pid, double ******* resonance_array_to_use)
 int CorrelationFunction::Set_resonance_in_HDF_array(int local_pid, double * resonance_array_to_use)
 {
 const int giant_FOslice_array_size = eta_s_npts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
@@ -398,22 +397,6 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 		hsize_t count[RANK2D] = {1, chunk_size};				// == chunk_dims
 		resonance_dataspace->selectHyperslab(H5S_SELECT_SET, count, offset);
 
-		// use loaded chunk to fill resonance_array_to_fill
-		/*int iidx = 0;
-		for (int ipt = 0; ipt < n_pT_pts; ++ipt)
-		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-		for (int iqt = 0; iqt < qtnpts; ++iqt)
-		for (int iqx = 0; iqx < qxnpts; ++iqx)
-		for (int iqy = 0; iqy < qynpts; ++iqy)
-		for (int iqz = 0; iqz < qznpts; ++iqz)
-		for (int itrig = 0; itrig < ntrig; ++itrig)
-		{
-			double temp = resonance_array_to_use[ipt][ipphi][iqt][iqx][iqy][iqz][itrig];
-			resonance_chunk[iidx] = temp;
-			++iidx;
-		}*/
-
-		//resonance_dataset->write(resonance_chunk, PredType::NATIVE_DOUBLE, *resonance_memspace, *resonance_dataspace);
 		resonance_dataset->write(resonance_array_to_use, PredType::NATIVE_DOUBLE, *resonance_memspace, *resonance_dataspace);
    }
 
@@ -445,7 +428,6 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 
 /////////////////////////////////////////////
 
-//int CorrelationFunction::Get_resonance_from_HDF_array(int local_pid, double ******* resonance_array_to_fill)
 int CorrelationFunction::Get_resonance_from_HDF_array(int local_pid, double * resonance_array_to_fill)
 {
 const int giant_FOslice_array_size = eta_s_npts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
@@ -469,23 +451,7 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 		hsize_t count[RANK2D] = {1, chunk_size};				// == chunk_dims
 		resonance_dataspace->selectHyperslab(H5S_SELECT_SET, count, offset);
 
-		//resonance_dataset->read(resonance_chunk, PredType::NATIVE_DOUBLE, *resonance_memspace, *resonance_dataspace);
 		resonance_dataset->read(resonance_array_to_fill, PredType::NATIVE_DOUBLE, *resonance_memspace, *resonance_dataspace);
-
-		// use loaded chunk to fill resonance_array_to_fill
-		/*int iidx = 0;
-		for (int ipt = 0; ipt < n_pT_pts; ++ipt)
-		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-		for (int iqt = 0; iqt < qtnpts; ++iqt)
-		for (int iqx = 0; iqx < qxnpts; ++iqx)
-		for (int iqy = 0; iqy < qynpts; ++iqy)
-		for (int iqz = 0; iqz < qznpts; ++iqz)
-		for (int itrig = 0; itrig < ntrig; ++itrig)
-		{
-			double temp = resonance_chunk[iidx];
-			resonance_array_to_fill[ipt][ipphi][iqt][iqx][iqy][iqz][itrig] = temp;
-			++iidx;
-		}*/
    }
 
     catch(FileIException error)
@@ -516,7 +482,6 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 
 /////////////////////////////////////////////
 
-//int CorrelationFunction::Set_target_thermal_in_HDF_array(double ******* tta_array_to_use)
 int CorrelationFunction::Set_target_thermal_in_HDF_array(double * tta_array_to_use)
 {
 const int giant_FOslice_array_size = eta_s_npts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
@@ -534,22 +499,6 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 		hsize_t count[1] = {chunk_size};				// == chunk_dims
 		tta_dataspace->selectHyperslab(H5S_SELECT_SET, count, offset);
 
-		// use loaded chunk to fill resonance_array_to_fill
-		/*int iidx = 0;
-		for (int ipt = 0; ipt < n_pT_pts; ++ipt)
-		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-		for (int iqt = 0; iqt < qtnpts; ++iqt)
-		for (int iqx = 0; iqx < qxnpts; ++iqx)
-		for (int iqy = 0; iqy < qynpts; ++iqy)
-		for (int iqz = 0; iqz < qznpts; ++iqz)
-		for (int itrig = 0; itrig < ntrig; ++itrig)
-		{
-			double temp = tta_array_to_use[ipt][ipphi][iqt][iqx][iqy][iqz][itrig];
-			tta_chunk[iidx] = temp;
-			++iidx;
-		}*/
-
-		//tta_dataset->write(tta_chunk, PredType::NATIVE_DOUBLE, *tta_memspace, *tta_dataspace);
 		tta_dataset->write(tta_array_to_use, PredType::NATIVE_DOUBLE, *tta_memspace, *tta_dataspace);
    }
 
@@ -599,23 +548,7 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 		hsize_t count[1] = {chunk_size};				// == chunk_dims
 		tta_dataspace->selectHyperslab(H5S_SELECT_SET, count, offset);
 
-		//tta_dataset->read(tta_chunk, PredType::NATIVE_DOUBLE, *tta_memspace, *tta_dataspace);
 		tta_dataset->read(tta_to_fill, PredType::NATIVE_DOUBLE, *tta_memspace, *tta_dataspace);
-
-		// use loaded chunk to fill resonance_array_to_fill
-		/*int iidx = 0;
-		for (int ipt = 0; ipt < n_pT_pts; ++ipt)
-		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-		for (int iqt = 0; iqt < qtnpts; ++iqt)
-		for (int iqx = 0; iqx < qxnpts; ++iqx)
-		for (int iqy = 0; iqy < qynpts; ++iqy)
-		for (int iqz = 0; iqz < qznpts; ++iqz)
-		for (int itrig = 0; itrig < ntrig; ++itrig)
-		{
-			double temp = tta_chunk[iidx];
-			tta_to_fill[ipt][ipphi][iqt][iqx][iqy][iqz][itrig] = temp;
-			++iidx;
-		}*/
    }
 
     catch(FileIException error)
@@ -656,11 +589,21 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 
 	double * resonance_chunk = new double [chunk_size];
 
+	int local_icr1, local_icr2;
+	if (current_resonance_index == target_particle_id)
+		local_icr1 = 0;
+	else
+		local_icr1 = lookup_resonance_idx_from_particle_id(current_resonance_index) + 1;	//note shift
+	if (reso_idx_to_be_copied == target_particle_id)
+		local_icr2 = 0;
+	else
+		local_icr2 = lookup_resonance_idx_from_particle_id(reso_idx_to_be_copied) + 1;	//note shift
+
 	try
     {
 		Exception::dontPrint();
 	
-		hsize_t offset[RANK2D] = {reso_idx_to_be_copied, 0};
+		hsize_t offset[RANK2D] = {local_icr2, 0};
 		hsize_t count[RANK2D] = {1, chunk_size};
 		resonance_dataspace->selectHyperslab(H5S_SELECT_SET, count, offset);
 
@@ -668,7 +611,7 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 		resonance_dataset->read(resonance_chunk, PredType::NATIVE_DOUBLE, *resonance_memspace, *resonance_dataspace);
 
 		// now set this to current resonance
-		offset[0] = current_resonance_index;
+		offset[0] = local_icr1;
 		resonance_dataspace->selectHyperslab(H5S_SELECT_SET, count, offset);
 		resonance_dataset->write(resonance_chunk, PredType::NATIVE_DOUBLE, *resonance_memspace, *resonance_dataspace);
    }
@@ -677,7 +620,6 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
     {
 		error.printError();
 		cerr << "FileIException error!" << endl;
-debugger(__LINE__, __FILE__);
 		return -1;
     }
 
@@ -685,7 +627,6 @@ debugger(__LINE__, __FILE__);
     {
 		error.printError();
 		cerr << "DataSetIException error!" << endl;
-debugger(__LINE__, __FILE__);
 		return -2;
     }
 
@@ -693,7 +634,6 @@ debugger(__LINE__, __FILE__);
     {
 		error.printError();
 		cerr << "DataSpaceIException error!" << endl;
-debugger(__LINE__, __FILE__);
 		return -3;
     }
 
@@ -730,25 +670,7 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 			hsize_t count[RANK2D] = {1, chunk_size};				// == chunk_dims
 			resonance_dataspace->selectHyperslab(H5S_SELECT_SET, count, offset);
 	
-			//resonance_dataset->read(resonance_chunk, PredType::NATIVE_DOUBLE, *resonance_memspace, *resonance_dataspace);
 			resonance_dataset->read(resonance_array_to_use, PredType::NATIVE_DOUBLE, *resonance_memspace, *resonance_dataspace);
-
-			/*int iidx = 0;
-			for (int ipt = 0; ipt < n_pT_pts; ++ipt)
-			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-			for (int iqt = 0; iqt < qtnpts; ++iqt)
-			for (int iqx = 0; iqx < qxnpts; ++iqx)
-			for (int iqy = 0; iqy < qynpts; ++iqy)
-			for (int iqz = 0; iqz < qznpts; ++iqz)
-			for (int itrig = 0; itrig < ntrig; ++itrig)
-				resonance_array_to_use[ipt][ipphi][iqt][iqx][iqy][iqz][itrig] = resonance_chunk[iidx++];
-
-			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-			{
-				//for (int ipt = 0; ipt < n_pT_pts; ++ipt)
-				//	out << scientific << setprecision(8) << setw(12) << resonance_array_to_use[ipt][ipphi][iqt0][iqx0][iqy0][iqz0][0] << "   ";
-				out << endl;
-			}*/
 		}
    }
 

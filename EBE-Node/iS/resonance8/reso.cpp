@@ -14,6 +14,7 @@ for a description of the formalism utilized in this program.
 
 #include <iostream>
 #include <string.h>
+#include <fstream>
 #include <stdio.h>
 #include <math.h>
 
@@ -27,22 +28,52 @@ for a description of the formalism utilized in this program.
 int main() 
 {
 
-   FILE *datin;
+   //FILE *datin;
     
    char outdir[FILEDIM];
    char specfile[FILEDIM];
-   char dummy[200];
+   //char dummy[200];
    
    int max, maxdecay, bound;
    
    printf("START of resonance decays !\n");
    //Read in the data from "reso.inp, including the results folder and the spectra data      
-   datin = fopen("reso.inp", "r");
-   fscanf(datin, "%s%s", specfile, dummy);
+   //datin = fopen("reso.inp", "r");
+
+   // Chris's input reading process
+   std::string path="results";
+   std::ifstream pathfile("pathToWorkingDirectory.txt");
+   if (pathfile.good())
+   {
+      path = "";
+      pathfile >> path;
+   }
+   pathfile.close();
+
+   std::cout << "Using path = " << path << std::endl;
+std::string test = "";
+std::cout << "test string length = " << test.length() << std::endl;
+
+   //fscanf(datin, "%s%s", specfile, dummy);
    //std::cout << specfile << std::endl;
-   fscanf(datin, "%s%s", outdir, dummy);
-   fscanf(datin, "%i%s", &bound, dummy);
-   fclose(datin);
+   //fscanf(datin, "%s%s", outdir, dummy);
+   //fscanf(datin, "%i%s", &bound, dummy);
+   //fclose(datin);
+
+   std::string tmp = "", dummy = "";
+   std::ifstream datin("reso.inp");
+   datin >> tmp >> dummy;
+   std::string tmp2 = path + "/" + tmp;
+   strcpy(specfile, tmp2.c_str());
+   //std::getline(datin, dummy);	//skip reading in out directory; use "path" above instead
+   datin >> dummy >> dummy;
+   strcpy(outdir, path.c_str());
+   datin >> bound;
+   datin.close();
+   std::cout << specfile << "   " << outdir << "   " << dummy << "   " << bound << std::endl;
+
+//if (1) return(1);
+
    //Read in the spectra and decays using "resoweak.dat" as a database of particles
    readspec(specfile, &max, &maxdecay);
    //The main module that calculates the resonance decay feeddown

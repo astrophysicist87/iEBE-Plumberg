@@ -30,7 +30,10 @@ do
     mkdir $running_folder/job-$ijob/initial_conditions
     for ievent in $(seq 1 $number_of_events_per_job)
     do
-        cp $initial_condition_path/sd_event_$event_id\_block.dat $running_folder/job-$ijob/initial_conditions/
+        #cp $initial_condition_path/sd_event_$event_id\_block.dat $running_folder/job-$ijob/initial_conditions/
+        cp $initial_condition_path/job-$ijob/event-$ievent/sd_event_$ievent\_block.dat $running_folder/job-$ijob/initial_conditions/
+		echo '***' COPYING '***' $initial_condition_path/job-$ijob/event-$ievent/sd_event_$ievent\_block.dat '***' TO '***' $running_folder/job-$ijob/initial_conditions/
+		pwd
         ((event_id++))
     done
 done

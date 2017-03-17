@@ -152,10 +152,14 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 			log_spectra[daughter_particle_id][ipt][ipphi] = log(abs(spectra[daughter_particle_id][ipt][ipphi])+1.e-100);
 			sign_spectra[daughter_particle_id][ipt][ipphi] = sgn(spectra[daughter_particle_id][ipt][ipphi]);
 
+//cerr << "CHECK: " << daughter_lookup_idx << "   " << daughter_particle_id << "   " << parent_resonance_particle_id << "   " << decay_channel
+//		<< "   " << ipt << "   " << ipphi << "   " << ssum_vec[0] << "   " << ssum_vec[1] << "   " << ssum
+//		<< "   " << spectra[daughter_particle_id][ipt][ipphi] << "   " << current_daughters_dN_dypTdpTdphi_moments[daughter_lookup_idx][indexer(ipt,ipphi,0,0,0,0,0)] << "   " << endl;
+
 			//only do this if all qpoints array sizes are odd!
 			//now, if ignoring long-lived resonances, take them out of the correlator numerator, but keep them in the denominator (AKA, spectra)
-			if (IGNORE_LONG_LIVED_RESONANCES && qtnpts%2==1 && qxnpts%2==1 && qynpts%2==1 && qznpts%2==1 && Gamma < hbarC / max_lifetime)
-				current_daughters_dN_dypTdpTdphi_moments[daughter_lookup_idx][indexer(ipt,ipphi,iqt0,iqx0,iqy0,iqz0,0)] -= ssum_vec[tmp_qpt_cs_idx];
+			//////////////////if (IGNORE_LONG_LIVED_RESONANCES && qtnpts%2==1 && qxnpts%2==1 && qynpts%2==1 && qznpts%2==1 && Gamma < hbarC / max_lifetime)
+			//////////////////	current_daughters_dN_dypTdpTdphi_moments[daughter_lookup_idx][indexer(ipt,ipphi,iqt0,iqx0,iqy0,iqz0,0)] -= ssum_vec[tmp_qpt_cs_idx];
 	
 			if (isnan(current_daughters_dN_dypTdpTdphi_moments[daughter_lookup_idx][indexer(ipt,ipphi,0,0,0,0,0)]
 					+ current_daughters_dN_dypTdpTdphi_moments[daughter_lookup_idx][indexer(ipt,ipphi,0,0,0,0,1)]))
@@ -254,10 +258,14 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 			log_spectra[daughter_particle_id][ipt][ipphi] = log(abs(spectra[daughter_particle_id][ipt][ipphi])+1.e-100);
 			sign_spectra[daughter_particle_id][ipt][ipphi] = sgn(spectra[daughter_particle_id][ipt][ipphi]);
 
+//cerr << "CHECK: " << daughter_lookup_idx << "   " << daughter_particle_id << "   " << parent_resonance_particle_id << "   " << decay_channel
+//		<< "   " << ipt << "   " << ipphi << "   " << ssum_vec[0] << "   " << ssum_vec[1] << "   " << ssum
+//		<< "   " << spectra[daughter_particle_id][ipt][ipphi] << "   " << current_daughters_dN_dypTdpTdphi_moments[daughter_lookup_idx][indexer(ipt,ipphi,0,0,0,0,0)] << endl;
+
 			//only do this if all qpoints array sizes are odd!
 			//now, if ignoring long-lived resonances, take them out of the correlator numerator, but keep them in the denominator (AKA, spectra)
-			if (IGNORE_LONG_LIVED_RESONANCES && qtnpts%2==1 && qxnpts%2==1 && qynpts%2==1 && qznpts%2==1 && Gamma < hbarC / max_lifetime)
-				current_daughters_dN_dypTdpTdphi_moments[daughter_lookup_idx][indexer(ipt,ipphi,iqt0,iqx0,iqy0,iqz0,0)] -= ssum_vec[tmp_qpt_cs_idx];
+			/////////////////if (IGNORE_LONG_LIVED_RESONANCES && qtnpts%2==1 && qxnpts%2==1 && qynpts%2==1 && qznpts%2==1 && Gamma < hbarC / max_lifetime)
+			/////////////////	current_daughters_dN_dypTdpTdphi_moments[daughter_lookup_idx][indexer(ipt,ipphi,iqt0,iqx0,iqy0,iqz0,0)] -= ssum_vec[tmp_qpt_cs_idx];
 
 			if (isnan(current_daughters_dN_dypTdpTdphi_moments[daughter_lookup_idx][indexer(ipt,ipphi,0,0,0,0,0)]
 					+ current_daughters_dN_dypTdpTdphi_moments[daughter_lookup_idx][indexer(ipt,ipphi,0,0,0,0,1)]))
@@ -312,9 +320,6 @@ void CorrelationFunction::Flatten_dN_dypTdpTdphi_moments(int parent_resonance_pa
 	double lls[dim_loc] = { KT_min, Kphi_min };
 	double uls[dim_loc] = { KT_max, Kphi_max };
 	int modes_loc[dim_loc] = { 0, 0 };
-	//double lls[dim_loc] = { 0.0, Kphi_min };
-	//double uls[dim_loc] = { (1.-sin(M_PI/n_pT_pts))/(1.+sin(M_PI/n_pT_pts)), Kphi_max };
-	//int modes_loc[dim_loc] = { 1, 0 };
 
 	int momidx = 0;
 
@@ -332,17 +337,12 @@ void CorrelationFunction::Flatten_dN_dypTdpTdphi_moments(int parent_resonance_pa
 		{
 			for (int itrig = 0; itrig < 2; ++itrig)
 			{
-				//res_sign_info[ipt][ipphi][qpt_cs_idx] = current_sign_of_dN_dypTdpTdphi_moments[ipt][ipphi][iqt][iqx][iqy][iqz][itrig];
-				//res_log_info[ipt][ipphi][qpt_cs_idx] = current_ln_dN_dypTdpTdphi_moments[ipt][ipphi][iqt][iqx][iqy][iqz][itrig];
-				//res_moments_info[ipt][ipphi][qpt_cs_idx] = current_dN_dypTdpTdphi_moments[ipt][ipphi][iqt][iqx][iqy][iqz][itrig];
 				res_sign_info[ipt][ipphi][qpt_cs_idx] = current_sign_of_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,itrig)];
 				res_log_info[ipt][ipphi][qpt_cs_idx] = current_ln_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,itrig)];
 				res_moments_info[ipt][ipphi][qpt_cs_idx] = current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,itrig)];
 				++qpt_cs_idx;
 			}
 
-			//tmp_moments_real[iqt][iqx][iqy][iqz][momidx] = current_dN_dypTdpTdphi_moments[ipt][ipphi][iqt][iqx][iqy][iqz][0];
-			//tmp_moments_imag[iqt][iqx][iqy][iqz][momidx] = current_dN_dypTdpTdphi_moments[ipt][ipphi][iqt][iqx][iqy][iqz][1];
 			tmp_moments_real[iqt][iqx][iqy][iqz][momidx] = current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,0)];
 			tmp_moments_imag[iqt][iqx][iqy][iqz][momidx] = current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,1)];
 		}

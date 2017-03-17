@@ -54,6 +54,7 @@ class SourceVariances
 		int INCLUDE_DELTA_F;
 		int GROUPING_PARTICLES;
 		double PARTICLE_DIFF_TOLERANCE;
+		int IGNORE_LONG_LIVED_RESONANCES;
 		int n_order;
 		double tol;
 		int flagneg;

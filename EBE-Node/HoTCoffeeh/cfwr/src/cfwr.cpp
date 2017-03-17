@@ -26,6 +26,7 @@ using namespace std;
 bool recycle_previous_moments = false;
 bool recycle_similar_moments = false;
 int reso_particle_id_of_moments_to_recycle = -1;
+int reso_idx_of_moments_to_recycle = -1;
 string reso_name_of_moments_to_recycle = "NULL";
 string current_decay_channel_string = "NULL";
 
@@ -373,6 +374,7 @@ void CorrelationFunction::Set_current_particle_info(int dc_idx)
 				recycle_previous_moments = false;
 				recycle_similar_moments = true;
 				reso_particle_id_of_moments_to_recycle = chosen_resonances[similar_particle_idx];
+				reso_idx_of_moments_to_recycle = similar_particle_idx;
 				if (VERBOSE > 0) *global_out_stream_ptr << "\t * " << decay_channels[dc_idx-1].resonance_name << " (different from the last one, but close enough to "
 														<< all_particles[reso_particle_id_of_moments_to_recycle].name << ")." << endl;
 			}
@@ -381,6 +383,7 @@ void CorrelationFunction::Set_current_particle_info(int dc_idx)
 				recycle_previous_moments = false;
 				recycle_similar_moments = false;
 				reso_particle_id_of_moments_to_recycle = -1;	//guarantees it won't be used spuriously
+				reso_idx_of_moments_to_recycle = -1;
 				if (VERBOSE > 0) *global_out_stream_ptr << "\t * " << decay_channels[dc_idx-1].resonance_name << " (different from the last one --> calculating afresh)." << endl;
 			}
 		}
@@ -539,7 +542,11 @@ bool CorrelationFunction::particles_are_the_same(int reso_idx1, int reso_idx2)
 
 void CorrelationFunction::Recycle_spacetime_moments()
 {
+*global_out_stream_ptr << "PIDs: " << current_resonance_particle_id << "   " << reso_particle_id_of_moments_to_recycle << endl;
+//*global_out_stream_ptr << "PIDs: " << current_resonance_idx << "   " << reso_idx_of_moments_to_recycle << endl;
 	int HDFcopyChunkSuccess = Copy_chunk(current_resonance_particle_id, reso_particle_id_of_moments_to_recycle);
+	//int HDFcopyChunkSuccess = Copy_chunk(current_resonance_idx, reso_idx_of_moments_to_recycle);
+if (HDFcopyChunkSuccess < 0) exit(1);
 
 	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
@@ -625,9 +632,6 @@ void CorrelationFunction::Set_current_resonance_logs_and_signs()
 	for (int iqz = 0; iqz < qznpts; ++iqz)
 	for (int itrig = 0; itrig < 2; ++itrig)
 	{
-		//double temp = current_dN_dypTdpTdphi_moments[ipt][ipphi][iqt][iqx][iqy][iqz][itrig];
-		//current_ln_dN_dypTdpTdphi_moments[ipt][ipphi][iqt][iqx][iqy][iqz][itrig] = log(abs(temp)+1.e-100);
-		//current_sign_of_dN_dypTdpTdphi_moments[ipt][ipphi][iqt][iqx][iqy][iqz][itrig] = sgn(temp);
 		double temp = current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,itrig)];
 		current_ln_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,itrig)] = log(abs(temp)+1.e-100);
 		current_sign_of_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,itrig)] = sgn(temp);
@@ -647,9 +651,6 @@ void CorrelationFunction::Set_current_daughters_resonance_logs_and_signs(int n_d
 	for (int iqz = 0; iqz < qznpts; ++iqz)
 	for (int itrig = 0; itrig < 2; ++itrig)
 	{
-		//double temp = current_daughters_dN_dypTdpTdphi_moments[idaughter][ipt][ipphi][iqt][iqx][iqy][iqz][itrig];
-		//current_daughters_ln_dN_dypTdpTdphi_moments[idaughter][ipt][ipphi][iqt][iqx][iqy][iqz][itrig] = log(abs(temp)+1.e-100);
-		//current_daughters_sign_of_dN_dypTdpTdphi_moments[idaughter][ipt][ipphi][iqt][iqx][iqy][iqz][itrig] = sgn(temp);
 		double temp = current_daughters_dN_dypTdpTdphi_moments[idaughter][indexer(ipt,ipphi,iqt,iqx,iqy,iqz,itrig)];
 		current_daughters_ln_dN_dypTdpTdphi_moments[idaughter][indexer(ipt,ipphi,iqt,iqx,iqy,iqz,itrig)] = log(abs(temp)+1.e-100);
 		current_daughters_sign_of_dN_dypTdpTdphi_moments[idaughter][indexer(ipt,ipphi,iqt,iqx,iqy,iqz,itrig)] = sgn(temp);
@@ -671,13 +672,13 @@ void CorrelationFunction::Get_spacetime_moments(int dc_idx)
 //**************************************************************
 //Decide what to do with this resonance / decay channel
 //**************************************************************
-	if (recycle_previous_moments && dc_idx > 1)	// similar (but different) earlier resonance
+	if (recycle_previous_moments && dc_idx > 1)	// same as earlier resonance
 	{
 		if (VERBOSE > 0) *global_out_stream_ptr << local_name
 			<< ": new parent resonance (" << decay_channels[current_decay_channel_idx-1].resonance_name << ", dc_idx = " << current_decay_channel_idx
 			<< " of " << n_decay_channels << ") same as preceding parent resonance \n\t\t--> reusing old dN_dypTdpTdphi_moments!" << endl;
 	}
-	else if (recycle_similar_moments && dc_idx > 1)	// similar (but different) earlier resonance
+	else if (recycle_similar_moments && dc_idx > 1)	// sufficiently similar (but different) earlier resonance
 	{
 		if (VERBOSE > 0) *global_out_stream_ptr << local_name
 			<< ": new parent resonance (" << decay_channels[current_decay_channel_idx-1].resonance_name << ", dc_idx = " << current_decay_channel_idx
