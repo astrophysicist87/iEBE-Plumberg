@@ -28,7 +28,6 @@ int main(int argc, char *argv[])
 	double bin_centers[n_bin_centers];	//same in each of the three directions
 	const double delta_q = 0.01;	//bin width of 10 MeV
 	linspace(bin_centers, -0.06, 0.06, n_bin_centers);
-	//linspace(bin_centers, -0.01, 0.01, n_bin_centers);
 	//nqpts = n_bin_centers*n_bin_centers*n_bin_centers*n_qpts_per_bin*n_qpts_per_bin*n_qpts_per_bin;
 
 	Read_in_correlationfunction();
@@ -46,8 +45,7 @@ int main(int argc, char *argv[])
 	double * dummy_pts = new double [n_qpts_per_bin];
 	double * dummy_wts = new double [n_qpts_per_bin];
 
-	linspace(KTpts, 0.0, 0.8, nKT);
-	KTpts[0] += SP_pT[0]+1.e-6;	//allows for interpolation
+	linspace(KTpts, 0.1, 0.7, nKT);
 
 	for (int ibo = 0; ibo < n_bin_centers; ++ibo)
 	{

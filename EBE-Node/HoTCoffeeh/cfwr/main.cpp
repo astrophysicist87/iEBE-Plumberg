@@ -48,6 +48,7 @@ int main(int argc, char *argv[])
 
 	bool generatedcorrfuncs = false;
 	//string workingDirectory = get_selfpath();
+    //string workingDirectory = "./results";
     string workingDirectory = "./results";
 
 	//int folderindex = get_folder_index(workingDirectory);

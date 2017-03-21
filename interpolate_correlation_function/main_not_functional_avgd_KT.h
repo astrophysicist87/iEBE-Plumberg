@@ -3,7 +3,6 @@
 
 #include <string>
 #include <sstream>
-#include <cmath>
 
 #include "Arsenal.h"
 #include "gauss_quadrature.h"
@@ -12,11 +11,11 @@ using namespace std;
 
 #define USE_SCALING 	0	// quick bug fix - delete once events have been re-run
 #define DO_SLICES_ONLY	1	// do OSL slices only vs. every bin of 3D correlation function
-#define THERMAL_ONLY	1	//ignores resonances, looks just at thermal correlation function
 
 string workingDirectory = "";
 
-const int nKT = 5;
+const int nKT = 4;
+const int nKTpts = 15;
 const int n_bin_centers = 13;
 const int n_qpts_per_bin = 15;
 const int nqpts = n_qpts_per_bin*n_qpts_per_bin*n_qpts_per_bin;
@@ -28,34 +27,31 @@ const int nqz = 11;
 
 const double Kphi_min = 0.0, Kphi_max = 2.0*M_PI;
 
+double base_xpts[nKTpts], base_xwts[nKTpts];
+
 double SP_pT[n_pT_pts], SP_pT_wts[n_pT_pts];
 double SP_pphi[n_pphi_pts], SP_pphi_wts[n_pphi_pts];
 double qx_pts[nqx];
 double qy_pts[nqy];
 double qz_pts[nqz];
 
-double spectra[n_pT_pts][n_pphi_pts];
+double spectra[n_pT_pts][n_pphi_pts], sq_spectra[n_pT_pts][n_pphi_pts];
+double Kphiavgd_spectra[n_pT_pts], Kphiavgd_sq_spectra[n_pT_pts];
 double thermalCFvals[n_pT_pts][n_pphi_pts][nqx][nqy][nqz];
 double crosstermCFvals[n_pT_pts][n_pphi_pts][nqx][nqy][nqz];
 double resonancesCFvals[n_pT_pts][n_pphi_pts][nqx][nqy][nqz];
 double correlation_function[n_pT_pts][n_pphi_pts][nqx][nqy][nqz];
 
-//double current_C_slice[nqx][nqy][nqz];
-
 double *** CF_KTKphi_grid, *** CF_KTKphi_grid_T;
+double *** CFnum_KTKphi_grid, *** CFnum_KTKphi_grid_T;
+
 double CF_KT_grid[n_pT_pts][nqpts], CF_KT_grid_T[nqpts][n_pT_pts];
+double CFnum_KT_grid[n_pT_pts][nqpts], CFnum_KT_grid_T[nqpts][n_pT_pts];
 
 inline double lin_int(double x_m_x1, double one_by_x2_m_x1, double f1, double f2)
 {
 	return ( f1 + (f2 - f1) * x_m_x1 * one_by_x2_m_x1 );
 }
-
-/*inline int indexer(const int ipt, const int ipphi, const int iq)
-{
-	return (
-		( ipt * n_pphi_pts + ipphi ) * nqpts + iq
-	);
-}*/
 
 void Read_in_correlationfunction()
 {
@@ -99,28 +95,7 @@ void Read_in_correlationfunction()
 			correlation_function[ipt][ipphi][iqx][iqy][iqz] = 1.0 + scaling_factors[ipt][ipphi] *
 																		(correlation_function[ipt][ipphi][iqx][iqy][iqz] - 1.0);
 		}
-	}
-
-	if (THERMAL_ONLY)
-	{
-		//cerr << "Using thermal contributions only!" << endl;
-		for (int ipt = 0; ipt < n_pT_pts; ++ipt)
-		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-		{
-			double thermal_spectra = thermalCFvals[ipt][ipphi][(nqx-1)/2][(nqy-1)/2][(nqz-1)/2];
-			for (int iqx = 0; iqx < nqx; ++iqx)
-			for (int iqy = 0; iqy < nqy; ++iqy)
-			for (int iqz = 0; iqz < nqz; ++iqz)
-			{
-				thermalCFvals[ipt][ipphi][iqx][iqy][iqz] /= thermal_spectra;
-				crosstermCFvals[ipt][ipphi][iqx][iqy][iqz] = 0.0;
-				resonancesCFvals[ipt][ipphi][iqx][iqy][iqz] = 0.0;
-				correlation_function[ipt][ipphi][iqx][iqy][iqz] = 1.0 + thermalCFvals[ipt][ipphi][iqx][iqy][iqz];
-			}
-		}
-		//for (int ipt = 0; ipt < n_pT_pts; ++ipt)
-		//for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-		//	cerr << "CHECK: " << thermalCFvals[ipt][ipphi][0][0][0] << endl;
+		sq_spectra[ipt][ipphi] = spectra[ipt][ipphi]*spectra[ipt][ipphi];
 	}
 
 	iCorrFunc.close();
@@ -148,7 +123,6 @@ double interpolate_qi(double q0, double qi0, double qi1, double f1, double f2, b
 }
 
 double interpolate_CF(double current_C_slice[][nqy][nqz], double qx0, double qy0, double qz0, int ipt, int ipphi, int thermal_or_resonances)
-//double interpolate_CF(double qx0, double qy0, double qz0, int ipt, int ipphi, int thermal_or_resonances)
 {
 	//int thermal_or_resonances - 	0: interpolate thermal CF (assuming basically Gaussian)
 	//								1: interpolate resonance contributions (linear near origin, exponential further out)
@@ -162,32 +136,6 @@ double interpolate_CF(double current_C_slice[][nqy][nqz], double qx0, double qy0
 		cerr << "Interpolation failed: exiting!" << endl;
 		exit(1);
 	}
-
-	/////////////////
-	/*
-	if (thermal_or_resonances == 0)
-	{
-		for (int iqx = 0; iqx < nqx; ++iqx)
-		for (int iqy = 0; iqy < nqy; ++iqy)
-		for (int iqz = 0; iqz < nqz; ++iqz)
-			current_C_slice[iqx][iqy][iqz] = thermalCFvals[ipt][ipphi][iqx][iqy][iqz];
-	}
-	else if (thermal_or_resonances == 1)
-	{
-		for (int iqx = 0; iqx < nqx; ++iqx)
-		for (int iqy = 0; iqy < nqy; ++iqy)
-		for (int iqz = 0; iqz < nqz; ++iqz)
-			current_C_slice[iqx][iqy][iqz] = crosstermCFvals[ipt][ipphi][iqx][iqy][iqz];
-	}
-	else
-	{
-		for (int iqx = 0; iqx < nqx; ++iqx)
-		for (int iqy = 0; iqy < nqy; ++iqy)
-		for (int iqz = 0; iqz < nqz; ++iqz)
-			current_C_slice[iqx][iqy][iqz] = resonancesCFvals[ipt][ipphi][iqx][iqy][iqz];
-	}
-	*/
-	/////////////////
 	
 	double *** alt_current_C_slice = new double ** [nqx];
 	for (int iqx = 0; iqx < nqx; ++iqx)
@@ -209,10 +157,6 @@ double interpolate_CF(double current_C_slice[][nqy][nqz], double qx0, double qy0
 	double fx1y0z1 = current_C_slice[iqx0_loc+1][iqy0_loc][iqz0_loc+1];
 	double fx1y1z0 = current_C_slice[iqx0_loc+1][iqy0_loc+1][iqz0_loc];
 	double fx1y1z1 = current_C_slice[iqx0_loc+1][iqy0_loc+1][iqz0_loc+1];
-
-	//if (abs(qx0)<1.e-6 && abs(qy0)<1.e-6 && abs(qz0)<1.e-6)
-	//	cerr << "CHECK: " << iqx0_loc << "   " << iqy0_loc << "   " << iqz0_loc << "   "
-	//			<< fx0y0z0 << "   " << fx0y0z1 << "   " << fx0y1z0 << "   " << fx0y1z1 << "   " << fx1y0z0 << "   " << fx1y0z1 << "   " << fx1y1z0 << "   " << fx1y1z1 << endl;
 
 	double fx0 = current_C_slice[iqx0_loc][0][0];
 	double fx1 = current_C_slice[iqx0_loc+1][0][0];
@@ -293,46 +237,36 @@ void Evaluate_CF(int ipt, int ipphi, double * q1pts, double * q2pts, double * q3
 		double tmp_thermal = interpolate_CF(thermalCFvals[ipt][ipphi], qx0, qy0, qz0, ipt, ipphi, 0);
 		double tmp_crossterm = interpolate_CF(crosstermCFvals[ipt][ipphi], qx0, qy0, qz0, ipt, ipphi, 1);
 		double tmp_resonances = interpolate_CF(resonancesCFvals[ipt][ipphi], qx0, qy0, qz0, ipt, ipphi, 2);
-		//double tmp_thermal = interpolate_CF(qx0, qy0, qz0, ipt, ipphi, 0);
-		//double tmp_crossterm = interpolate_CF(qx0, qy0, qz0, ipt, ipphi, 1);
-		//double tmp_resonances = interpolate_CF(qx0, qy0, qz0, ipt, ipphi, 2);
-
 
 		CFvals[iq] = 1.0 + tmp_thermal + tmp_crossterm + tmp_resonances;
-		//if (abs(q1pts[iq])<1.e-6 && abs(q2pts[iq])<1.e-6 && abs(q3pts[iq])<1.e-6)
-		//	cerr << "CHECK: " << qx0 << "   " << qy0 << "   " << qz0 << "   "
-		//			<< thermalCFvals[ipt][ipphi][0][0][0] << "   " << crosstermCFvals[ipt][ipphi][0][0][0] << "   " << resonancesCFvals[ipt][ipphi][0][0][0] << "   " 
-		//			<< tmp_thermal << "   " << tmp_crossterm << "   " << tmp_resonances << "   " << CFvals[iq] << endl;
 	}
 
 	return;
 }
 
+//manipulating pT-pphi grids here
+
 void Allocate_CF_grids(int nqpts)
 {
 	//KT-Kphi (2D) grids
 	CF_KTKphi_grid = new double ** [n_pT_pts];
+	CFnum_KTKphi_grid = new double ** [n_pT_pts];
 	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
 	{
 		CF_KTKphi_grid[ipt] = new double * [n_pphi_pts];
+		CFnum_KTKphi_grid[ipt] = new double * [n_pphi_pts];
 		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		{
 			CF_KTKphi_grid[ipt][ipphi] = new double [nqpts];
+			CFnum_KTKphi_grid[ipt][ipphi] = new double [nqpts];
 			for (int iq = 0; iq < nqpts; ++iq)
+			{
 				CF_KTKphi_grid[ipt][ipphi][iq] = 0.0;
+				CFnum_KTKphi_grid[ipt][ipphi][iq] = 0.0;
+			}
 		}
 	}
-	CF_KTKphi_grid_T = new double ** [nqpts];
-	for (int iq = 0; iq < nqpts; ++iq)
-	{
-		CF_KTKphi_grid_T[iq] = new double * [n_pT_pts];
-		for (int ipt = 0; ipt < n_pT_pts; ++ipt)
-		{
-			CF_KTKphi_grid_T[iq][ipt] = new double [n_pphi_pts];
-			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-				CF_KTKphi_grid_T[iq][ipt][ipphi] = CF_KTKphi_grid[ipt][ipphi][iq];	//transposed grid is useful for interpolation
-		}
-	}
+
 	return;
 }
 
@@ -344,7 +278,7 @@ void Reset_CF_grids(int nqpts)
 	for (int iq = 0; iq < nqpts; ++iq)
 	{
 		CF_KTKphi_grid[ipt][ipphi][iq] = 0.0;
-		CF_KTKphi_grid_T[iq][ipt][ipphi] = 0.0;
+		CFnum_KTKphi_grid[ipt][ipphi][iq] = 0.0;
 	}
 
 	return;
@@ -355,20 +289,12 @@ void Set_CF_grids(double * q1pts, double * q2pts, double * q3pts, int nqpts, int
 	//KT-Kphi (2D) grids
 	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+	{
 		Evaluate_CF(ipt, ipphi, q1pts, q2pts, q3pts, CF_KTKphi_grid[ipt][ipphi], nqpts, coords);
-
-	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
-	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-	for (int iq = 0; iq < nqpts; ++iq)
-		CF_KTKphi_grid_T[iq][ipt][ipphi] = CF_KTKphi_grid[ipt][ipphi][iq];	//transposed grid is useful for interpolation
-
-	return;
-}
-
-void Evaluate_CF(double KT, double Kphi, double * CFvals, int nqpts)
-{
-	for (int iq = 0; iq < nqpts; ++iq)
-		CFvals[iq] = interpolate2D(SP_pT, SP_pphi, CF_KTKphi_grid_T[iq], KT, Kphi, n_pT_pts, n_pphi_pts, 0, false);
+		for (int iq = 0; iq < nqpts; ++iq)
+			CFnum_KTKphi_grid[ipt][ipphi][iq] = CF_KTKphi_grid[ipt][ipphi][iq];
+			//CFnum_KTKphi_grid[ipt][ipphi][iq] = spectra[ipt][ipphi] * spectra[ipt][ipphi] * (CF_KTKphi_grid[ipt][ipphi][iq] - 1.0);
+	}
 
 	return;
 }
@@ -378,19 +304,58 @@ void Set_Kphiavgd_CF_grids()
 	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
 	for (int iq = 0; iq < nqpts; ++iq)
 	{
-		CF_KT_grid[ipt][iq] = 0.0;
+		CFnum_KT_grid[ipt][iq] = 0.0;
 		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-			CF_KT_grid[ipt][iq] += SP_pphi_wts[ipphi] * CF_KTKphi_grid[ipt][ipphi][iq] / (2.0*M_PI);
-		CF_KT_grid_T[iq][ipt] = CF_KT_grid[ipt][iq];								//transposed grid is useful for interpolation
+			CFnum_KT_grid[ipt][iq] += SP_pphi_wts[ipphi] * CFnum_KTKphi_grid[ipt][ipphi][iq];
+			//CFnum_KT_grid[ipt][iq] += SP_pphi_wts[ipphi] * CFnum_KTKphi_grid[ipt][ipphi][iq] / (2.0*M_PI);
+		CFnum_KT_grid_T[iq][ipt] = CFnum_KT_grid[ipt][iq];								//transposed grid is useful for interpolation
+	}
+
+	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+	{
+		Kphiavgd_spectra[ipt] = 0.0;
+		Kphiavgd_sq_spectra[ipt] = 0.0;
+		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+		{
+			//Kphiavgd_spectra[ipt] += SP_pphi_wts[ipphi] * spectra[ipt][ipphi] / (2.0*M_PI);
+			//Kphiavgd_sq_spectra[ipt] += SP_pphi_wts[ipphi] * sq_spectra[ipt][ipphi] / (2.0*M_PI);
+			Kphiavgd_spectra[ipt] += SP_pphi_wts[ipphi] * spectra[ipt][ipphi];
+			Kphiavgd_sq_spectra[ipt] += SP_pphi_wts[ipphi] * sq_spectra[ipt][ipphi];
+
+		}
 	}
 
 	return;
 }
 
-void Evaluate_Kphiavgd_CF(double KT, double * CFvals, int nqpts)
+void Evaluate_KTKphiavgd_CFnum(double KTll, double KTul, double * CF_num_vals, int nqpts)
 {
-	for (int iq = 0; iq < nqpts; ++iq)
-		CFvals[iq] = interpolate1D(SP_pT, CF_KT_grid_T[iq], KT, n_pT_pts, 0, false);
+	double hw = 0.5*(KTul - KTll);
+	double cen = 0.5*(KTul + KTll);
+	for (int iKTpt = 0; iKTpt < nKTpts; ++iKTpt)
+	{
+		double local_KT = cen + hw * base_xpts[iKTpt];
+		for (int iq = 0; iq < nqpts; ++iq)
+			CF_num_vals[iq] += hw * base_xwts[iKTpt] * local_KT * interpolate1D(SP_pT, CFnum_KT_grid_T[iq], local_KT, n_pT_pts, 0, false);
+			//make sure it's an average, not an integral
+			//extra factor of local_KT comes from Jacobian
+	}
+
+	return;
+}
+
+void Evaluate_KTKphiavgd_spectra(double KTll, double KTul, double & num_term1, double & denominator)
+{
+	double hw = 0.5*(KTul - KTll);
+	double cen = 0.5*(KTul + KTll);
+	denominator = 0.0;
+	num_term1 = 0.0;
+	for (int iKTpt = 0; iKTpt < nKTpts; ++iKTpt)
+	{
+		double local_KT = cen + hw * base_xpts[iKTpt];
+		num_term1 += hw * base_xwts[iKTpt] * local_KT * interpolate1D(SP_pT, Kphiavgd_sq_spectra, local_KT, n_pT_pts, 0, false);
+		denominator += hw * base_xwts[iKTpt] * local_KT * interpolate1D(SP_pT, Kphiavgd_spectra, local_KT, n_pT_pts, 0, false);
+	}
 
 	return;
 }

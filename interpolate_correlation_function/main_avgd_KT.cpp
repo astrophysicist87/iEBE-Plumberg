@@ -28,15 +28,18 @@ int main(int argc, char *argv[])
 	double bin_centers[n_bin_centers];	//same in each of the three directions
 	const double delta_q = 0.01;	//bin width of 10 MeV
 	linspace(bin_centers, -0.06, 0.06, n_bin_centers);
-	//linspace(bin_centers, -0.01, 0.01, n_bin_centers);
 	//nqpts = n_bin_centers*n_bin_centers*n_bin_centers*n_qpts_per_bin*n_qpts_per_bin*n_qpts_per_bin;
 
 	Read_in_correlationfunction();
 
 	gauss_quadrature(n_pT_pts, 5, 0.0, 0.0, 0.0, 13.0, SP_pT, SP_pT_wts);
 	gauss_quadrature(n_pphi_pts, 1, 0.0, 0.0, Kphi_min, Kphi_max, SP_pphi, SP_pphi_wts);
+
+	gauss_quadrature(nKTpts, 1, 0.0, 0.0, -1.0, 1.0, base_xpts, base_xwts);
 	
-	double * KTpts = new double [nKT];
+	double * KTlls = new double [nKT];
+	double * KTuls = new double [nKT];
+	
 	double * qo_slice_pts = new double [n_bin_centers*n_qpts_per_bin];
 	double * qs_slice_pts = new double [n_bin_centers*n_qpts_per_bin];
 	double * ql_slice_pts = new double [n_bin_centers*n_qpts_per_bin];
@@ -46,8 +49,9 @@ int main(int argc, char *argv[])
 	double * dummy_pts = new double [n_qpts_per_bin];
 	double * dummy_wts = new double [n_qpts_per_bin];
 
-	linspace(KTpts, 0.0, 0.8, nKT);
-	KTpts[0] += SP_pT[0]+1.e-6;	//allows for interpolation
+	//linspace(KTpts, 0.1, 0.7, nKT);
+	linspace(KTlls, 0.0, 0.6, nKT);
+	linspace(KTuls, 0.2, 0.8, nKT);
 
 	for (int ibo = 0; ibo < n_bin_centers; ++ibo)
 	{
@@ -140,7 +144,8 @@ int main(int argc, char *argv[])
 
 			//cout << "  --> Evaluating at K_T = " << KTpts[iKT] << endl;
 			//evaluate at appropriate points
-			Evaluate_Kphiavgd_CF(KTpts[iKT], CFresults, nqpts);
+			//Evaluate_Kphiavgd_CF(KTpts[iKT], CFresults, nqpts);
+			Evaluate_KTKphiavgd_CF(KTlls[iKT], KTuls[iKT], CFresults, nqpts);
 
 			//compute average by taking weighted sum over 
 			double CF_averaged_over_qbin = 0.0;
@@ -149,7 +154,7 @@ int main(int argc, char *argv[])
 
 			CF_averaged_over_qbin /= delta_q*delta_q*delta_q;
 
-			cout << KTpts[iKT] << "   " << bin_centers[ibo] << "   " << bin_centers[ibs] << "   " << bin_centers[ibl] << "   " << CF_averaged_over_qbin << endl;
+			cout << 0.5*(KTlls[iKT] + KTuls[iKT]) << "   " << bin_centers[ibo] << "   " << bin_centers[ibs] << "   " << bin_centers[ibl] << "   " << CF_averaged_over_qbin << endl;
 		}
 
 		delete [] qopts;
@@ -208,7 +213,8 @@ int main(int argc, char *argv[])
 
 			//cout << "  --> Evaluating at K_T = " << KTpts[iKT] << endl;
 			//evaluate at appropriate points
-			Evaluate_Kphiavgd_CF(KTpts[iKT], CFresults, nqpts);
+			//Evaluate_Kphiavgd_CF(KTpts[iKT], CFresults, nqpts);
+			Evaluate_KTKphiavgd_CF(KTlls[iKT], KTuls[iKT], CFresults, nqpts);
 
 			//compute average by taking weighted sum over 
 			double CF_averaged_over_qbin = 0.0;
@@ -217,7 +223,7 @@ int main(int argc, char *argv[])
 
 			CF_averaged_over_qbin /= delta_q*delta_q*delta_q;
 
-			cout << KTpts[iKT] << "   " << bin_centers[ibo] << "   " << bin_centers[ibs] << "   " << bin_centers[ibl] << "   " << CF_averaged_over_qbin << endl;
+			cout << 0.5*(KTlls[iKT] + KTuls[iKT]) << "   " << bin_centers[ibo] << "   " << bin_centers[ibs] << "   " << bin_centers[ibl] << "   " << CF_averaged_over_qbin << endl;
 		}
 
 		delete [] qopts;
@@ -276,7 +282,8 @@ int main(int argc, char *argv[])
 
 			//cout << "  --> Evaluating at K_T = " << KTpts[iKT] << endl;
 			//evaluate at appropriate points
-			Evaluate_Kphiavgd_CF(KTpts[iKT], CFresults, nqpts);
+			//Evaluate_Kphiavgd_CF(KTpts[iKT], CFresults, nqpts);
+			Evaluate_KTKphiavgd_CF(KTlls[iKT], KTuls[iKT], CFresults, nqpts);
 
 			//compute average by taking weighted sum over 
 			double CF_averaged_over_qbin = 0.0;
@@ -285,7 +292,7 @@ int main(int argc, char *argv[])
 
 			CF_averaged_over_qbin /= delta_q*delta_q*delta_q;
 
-			cout << KTpts[iKT] << "   " << bin_centers[ibo] << "   " << bin_centers[ibs] << "   " << bin_centers[ibl] << "   " << CF_averaged_over_qbin << endl;
+			cout << 0.5*(KTlls[iKT] + KTuls[iKT]) << "   " << bin_centers[ibo] << "   " << bin_centers[ibs] << "   " << bin_centers[ibl] << "   " << CF_averaged_over_qbin << endl;
 		}
 
 		delete [] qopts;
@@ -295,58 +302,6 @@ int main(int argc, char *argv[])
 		delete [] qlpts;
 		delete [] qlwts;
 	}
-
-	//done with this for now...
-	/*
-	//qo-slice
-	for (int iKT = 0; iKT < nKT; ++iKT)
-	{
-		for (int iq = 0; iq < nqpts; ++iq)
-			CFresults[iq] = 0.0;
-		Evaluate_Kphiavgd_CF(KTpts[iKT], CFresults, nqpts);
-		for (int iq = 0; iq < nqpts; ++iq)
-			cout << setprecision(15) << KTpts[iKT] << "   " << qopts[iq] << "   " << qspts[iq] << "   " << qlpts[iq] << "   " << CFresults[iq] << endl;
-	}
-
-	//qs-slice
-	linspace(qopts, 0.0, 0.0, nqpts);
-	linspace(qspts, -0.0375, 0.0375, nqpts);
-	linspace(qlpts, 0.0, 0.0, nqpts);
-	Set_CF_grids(qopts, qspts, qlpts, nqpts, coordinates);
-	Set_Kphiavgd_CF_grids();
-
-	for (int iKT = 0; iKT < nKT; ++iKT)
-	{
-		for (int iq = 0; iq < nqpts; ++iq)
-			CFresults[iq] = 0.0;
-		Evaluate_Kphiavgd_CF(KTpts[iKT], CFresults, nqpts);
-		for (int iq = 0; iq < nqpts; ++iq)
-			cout << setprecision(15) << KTpts[iKT] << "   " << qopts[iq] << "   " << qspts[iq] << "   " << qlpts[iq] << "   " << CFresults[iq] << endl;
-	}
-
-
-	//ql-slice
-	linspace(qopts, 0.0, 0.0, nqpts);
-	linspace(qspts, 0.0, 0.0, nqpts);
-	linspace(qlpts, -0.045*0.9999, 0.045*0.9999, nqpts);
-	Set_CF_grids(qopts, qspts, qlpts, nqpts, coordinates);
-	Set_Kphiavgd_CF_grids();
-
-	for (int iKT = 0; iKT < nKT; ++iKT)
-	{
-		for (int iq = 0; iq < nqpts; ++iq)
-			CFresults[iq] = 0.0;
-		Evaluate_Kphiavgd_CF(KTpts[iKT], CFresults, nqpts);
-		for (int iq = 0; iq < nqpts; ++iq)
-			cout << setprecision(15) << KTpts[iKT] << "   " << qopts[iq] << "   " << qspts[iq] << "   " << qlpts[iq] << "   " << CFresults[iq] << endl;
-	}
-	*/
-
-	/*int age = 0;
-	cout << "Enter your age: " << endl;
-	cin >> age;
-	cout << "At your next birthday, you'll be " << age + 1 << "years old!" << endl;*/
-
 	return 0;
 }
 

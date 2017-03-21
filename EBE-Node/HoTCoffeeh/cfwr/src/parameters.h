@@ -34,7 +34,7 @@ const int ntrig = 2;			// for cos or sin
 const double hbarC = 0.197327053;		//GeV*fm
 const double hbarC3 = 0.00768351405;
 const double hbarCm1 = 5.067728853;
-const double twopi = 2.*M_PI;
+const double twopi = 2.0*M_PI;
 const double MeVToGeV = 0.001;
 
 // Particle information
@@ -66,11 +66,11 @@ const int new_nqpts = 51;	//for fleshing out
 const double SP_pT_min = 0.0;
 const double SP_pphi_min = 0.0;
 const double SP_pT_max = 4.0;
-const double SP_pphi_max = 2.*M_PI;
+const double SP_pphi_max = 2.0*M_PI;
 
 // Pair momentum info
 const double Kphi_min = 0.0;
-const double Kphi_max = 2*M_PI;
+const double Kphi_max = 2.0*M_PI;
 
 // Phase-space integral information
 const int n_zeta_pts = 12;
