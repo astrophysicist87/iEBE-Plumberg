@@ -28,15 +28,18 @@ int main(int argc, char *argv[])
 	double bin_centers[n_bin_centers];	//same in each of the three directions
 	const double delta_q = 0.01;	//bin width of 10 MeV
 	linspace(bin_centers, -0.06, 0.06, n_bin_centers);
-	//linspace(bin_centers, -0.01, 0.01, n_bin_centers);
-	//nqpts = n_bin_centers*n_bin_centers*n_bin_centers*n_qpts_per_bin*n_qpts_per_bin*n_qpts_per_bin;
 
 	Read_in_correlationfunction();
 
 	gauss_quadrature(n_pT_pts, 5, 0.0, 0.0, 0.0, 13.0, SP_pT, SP_pT_wts);
 	gauss_quadrature(n_pphi_pts, 1, 0.0, 0.0, Kphi_min, Kphi_max, SP_pphi, SP_pphi_wts);
+
+	gauss_quadrature(n_KTpts_per_bin, 1, 0.0, 0.0, -1.0, 1.0, base_xpts, base_xwts);
+	double KTlls[nKTbins], KTuls[nKTbins];
+	linspace(KTlls, 0.0, 0.6, nKTbins);
+	linspace(KTuls, 0.2, 0.8, nKTbins);
+	KTlls[0] += SP_pT[0]+1.e-6;
 	
-	double * KTpts = new double [nKT];
 	double * qo_slice_pts = new double [n_bin_centers*n_qpts_per_bin];
 	double * qs_slice_pts = new double [n_bin_centers*n_qpts_per_bin];
 	double * ql_slice_pts = new double [n_bin_centers*n_qpts_per_bin];
@@ -45,9 +48,6 @@ int main(int argc, char *argv[])
 	double * ql_slice_wts = new double [n_bin_centers*n_qpts_per_bin];
 	double * dummy_pts = new double [n_qpts_per_bin];
 	double * dummy_wts = new double [n_qpts_per_bin];
-
-	linspace(KTpts, 0.0, 0.8, nKT);
-	KTpts[0] += SP_pT[0]+1.e-6;	//allows for interpolation
 
 	for (int ibo = 0; ibo < n_bin_centers; ++ibo)
 	{
@@ -79,16 +79,8 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	/*cout << "Made it here!" << endl;
-	for (int ib = 0; ib < n_bin_centers; ++ib)
-	for (int iq = 0; iq < n_qpts_per_bin; ++iq)
-		cout << qo_slice_pts[ib*n_qpts_per_bin + iq] << "   " << qo_slice_wts[ib*n_qpts_per_bin + iq] << "   "
-				<< qs_slice_pts[ib*n_qpts_per_bin + iq] << "   " << qs_slice_wts[ib*n_qpts_per_bin + iq] << "   "
-				<< ql_slice_pts[ib*n_qpts_per_bin + iq] << "   " << ql_slice_wts[ib*n_qpts_per_bin + iq] << endl;
-
-	if (1) return(8);*/
-
 	Allocate_CF_grids(nqpts);
+	Set_Kphiavgd_spectra();
 
 	double * CFresults = new double [nqpts];
 
@@ -132,7 +124,7 @@ int main(int argc, char *argv[])
 		//set up Kphi-averaged grids as well
 		Set_Kphiavgd_CF_grids();
 
-		for (int iKT = 0; iKT < nKT; ++iKT)
+		for (int iKT = 0; iKT < nKTbins; ++iKT)
 		{
 			//reset array to hold interpolated results
 			for (int iq = 0; iq < nqpts; ++iq)
@@ -140,16 +132,16 @@ int main(int argc, char *argv[])
 
 			//cout << "  --> Evaluating at K_T = " << KTpts[iKT] << endl;
 			//evaluate at appropriate points
-			Evaluate_Kphiavgd_CF(KTpts[iKT], CFresults, nqpts);
+			Get_KTbinaveraged_Kphiavgd_CF(KTlls[iKT], KTuls[iKT], CFresults, nqpts);
 
 			//compute average by taking weighted sum over 
 			double CF_averaged_over_qbin = 0.0;
 			for (int iq = 0; iq < nqpts; ++iq)
-				CF_averaged_over_qbin += qowts[iq]*qswts[iq]*qlwts[iq]*CFresults[iq];
+				CF_averaged_over_qbin += qowts[iq]*qswts[iq]*qlwts[iq]*(CFresults[iq] + 1.0);
 
 			CF_averaged_over_qbin /= delta_q*delta_q*delta_q;
 
-			cout << KTpts[iKT] << "   " << bin_centers[ibo] << "   " << bin_centers[ibs] << "   " << bin_centers[ibl] << "   " << CF_averaged_over_qbin << endl;
+			cout << KTlls[iKT] << "   " << KTuls[iKT] << "   " << bin_centers[ibo] << "   " << bin_centers[ibs] << "   " << bin_centers[ibl] << "   " << CF_averaged_over_qbin << endl;
 		}
 
 		delete [] qopts;
@@ -200,7 +192,7 @@ int main(int argc, char *argv[])
 		//set up Kphi-averaged grids as well
 		Set_Kphiavgd_CF_grids();
 
-		for (int iKT = 0; iKT < nKT; ++iKT)
+		for (int iKT = 0; iKT < nKTbins; ++iKT)
 		{
 			//reset array to hold interpolated results
 			for (int iq = 0; iq < nqpts; ++iq)
@@ -208,16 +200,16 @@ int main(int argc, char *argv[])
 
 			//cout << "  --> Evaluating at K_T = " << KTpts[iKT] << endl;
 			//evaluate at appropriate points
-			Evaluate_Kphiavgd_CF(KTpts[iKT], CFresults, nqpts);
+			Get_KTbinaveraged_Kphiavgd_CF(KTlls[iKT], KTuls[iKT], CFresults, nqpts);
 
 			//compute average by taking weighted sum over 
 			double CF_averaged_over_qbin = 0.0;
 			for (int iq = 0; iq < nqpts; ++iq)
-				CF_averaged_over_qbin += qowts[iq]*qswts[iq]*qlwts[iq]*CFresults[iq];
+				CF_averaged_over_qbin += qowts[iq]*qswts[iq]*qlwts[iq]*(CFresults[iq] + 1.0);
 
 			CF_averaged_over_qbin /= delta_q*delta_q*delta_q;
 
-			cout << KTpts[iKT] << "   " << bin_centers[ibo] << "   " << bin_centers[ibs] << "   " << bin_centers[ibl] << "   " << CF_averaged_over_qbin << endl;
+			cout << KTlls[iKT] << "   " << KTuls[iKT] << "   " << bin_centers[ibo] << "   " << bin_centers[ibs] << "   " << bin_centers[ibl] << "   " << CF_averaged_over_qbin << endl;
 		}
 
 		delete [] qopts;
@@ -268,7 +260,7 @@ int main(int argc, char *argv[])
 		//set up Kphi-averaged grids as well
 		Set_Kphiavgd_CF_grids();
 
-		for (int iKT = 0; iKT < nKT; ++iKT)
+		for (int iKT = 0; iKT < nKTbins; ++iKT)
 		{
 			//reset array to hold interpolated results
 			for (int iq = 0; iq < nqpts; ++iq)
@@ -276,16 +268,16 @@ int main(int argc, char *argv[])
 
 			//cout << "  --> Evaluating at K_T = " << KTpts[iKT] << endl;
 			//evaluate at appropriate points
-			Evaluate_Kphiavgd_CF(KTpts[iKT], CFresults, nqpts);
+			Get_KTbinaveraged_Kphiavgd_CF(KTlls[iKT], KTuls[iKT], CFresults, nqpts);
 
 			//compute average by taking weighted sum over 
 			double CF_averaged_over_qbin = 0.0;
 			for (int iq = 0; iq < nqpts; ++iq)
-				CF_averaged_over_qbin += qowts[iq]*qswts[iq]*qlwts[iq]*CFresults[iq];
+				CF_averaged_over_qbin += qowts[iq]*qswts[iq]*qlwts[iq]*(CFresults[iq] + 1.0);
 
 			CF_averaged_over_qbin /= delta_q*delta_q*delta_q;
 
-			cout << KTpts[iKT] << "   " << bin_centers[ibo] << "   " << bin_centers[ibs] << "   " << bin_centers[ibl] << "   " << CF_averaged_over_qbin << endl;
+			cout << KTlls[iKT] << "   " << KTuls[iKT] << "   " << bin_centers[ibo] << "   " << bin_centers[ibs] << "   " << bin_centers[ibl] << "   " << CF_averaged_over_qbin << endl;
 		}
 
 		delete [] qopts;
@@ -295,57 +287,6 @@ int main(int argc, char *argv[])
 		delete [] qlpts;
 		delete [] qlwts;
 	}
-
-	//done with this for now...
-	/*
-	//qo-slice
-	for (int iKT = 0; iKT < nKT; ++iKT)
-	{
-		for (int iq = 0; iq < nqpts; ++iq)
-			CFresults[iq] = 0.0;
-		Evaluate_Kphiavgd_CF(KTpts[iKT], CFresults, nqpts);
-		for (int iq = 0; iq < nqpts; ++iq)
-			cout << setprecision(15) << KTpts[iKT] << "   " << qopts[iq] << "   " << qspts[iq] << "   " << qlpts[iq] << "   " << CFresults[iq] << endl;
-	}
-
-	//qs-slice
-	linspace(qopts, 0.0, 0.0, nqpts);
-	linspace(qspts, -0.0375, 0.0375, nqpts);
-	linspace(qlpts, 0.0, 0.0, nqpts);
-	Set_CF_grids(qopts, qspts, qlpts, nqpts, coordinates);
-	Set_Kphiavgd_CF_grids();
-
-	for (int iKT = 0; iKT < nKT; ++iKT)
-	{
-		for (int iq = 0; iq < nqpts; ++iq)
-			CFresults[iq] = 0.0;
-		Evaluate_Kphiavgd_CF(KTpts[iKT], CFresults, nqpts);
-		for (int iq = 0; iq < nqpts; ++iq)
-			cout << setprecision(15) << KTpts[iKT] << "   " << qopts[iq] << "   " << qspts[iq] << "   " << qlpts[iq] << "   " << CFresults[iq] << endl;
-	}
-
-
-	//ql-slice
-	linspace(qopts, 0.0, 0.0, nqpts);
-	linspace(qspts, 0.0, 0.0, nqpts);
-	linspace(qlpts, -0.045*0.9999, 0.045*0.9999, nqpts);
-	Set_CF_grids(qopts, qspts, qlpts, nqpts, coordinates);
-	Set_Kphiavgd_CF_grids();
-
-	for (int iKT = 0; iKT < nKT; ++iKT)
-	{
-		for (int iq = 0; iq < nqpts; ++iq)
-			CFresults[iq] = 0.0;
-		Evaluate_Kphiavgd_CF(KTpts[iKT], CFresults, nqpts);
-		for (int iq = 0; iq < nqpts; ++iq)
-			cout << setprecision(15) << KTpts[iKT] << "   " << qopts[iq] << "   " << qspts[iq] << "   " << qlpts[iq] << "   " << CFresults[iq] << endl;
-	}
-	*/
-
-	/*int age = 0;
-	cout << "Enter your age: " << endl;
-	cin >> age;
-	cout << "At your next birthday, you'll be " << age + 1 << "years old!" << endl;*/
 
 	return 0;
 }

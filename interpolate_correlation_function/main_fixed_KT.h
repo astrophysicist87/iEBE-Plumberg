@@ -3,6 +3,7 @@
 
 #include <string>
 #include <sstream>
+#include <cmath>
 
 #include "Arsenal.h"
 #include "gauss_quadrature.h"
@@ -11,10 +12,11 @@ using namespace std;
 
 #define USE_SCALING 	0	// quick bug fix - delete once events have been re-run
 #define DO_SLICES_ONLY	1	// do OSL slices only vs. every bin of 3D correlation function
+#define THERMAL_ONLY	1	//ignores resonances, looks just at thermal correlation function
 
 string workingDirectory = "";
 
-const int nKT = 4;
+const int nKT = 5;
 const int n_bin_centers = 13;
 const int n_qpts_per_bin = 15;
 const int nqpts = n_qpts_per_bin*n_qpts_per_bin*n_qpts_per_bin;
@@ -37,6 +39,8 @@ double thermalCFvals[n_pT_pts][n_pphi_pts][nqx][nqy][nqz];
 double crosstermCFvals[n_pT_pts][n_pphi_pts][nqx][nqy][nqz];
 double resonancesCFvals[n_pT_pts][n_pphi_pts][nqx][nqy][nqz];
 double correlation_function[n_pT_pts][n_pphi_pts][nqx][nqy][nqz];
+
+//double current_C_slice[nqx][nqy][nqz];
 
 double *** CF_KTKphi_grid, *** CF_KTKphi_grid_T;
 double CF_KT_grid[n_pT_pts][nqpts], CF_KT_grid_T[nqpts][n_pT_pts];
@@ -97,6 +101,28 @@ void Read_in_correlationfunction()
 		}
 	}
 
+	if (THERMAL_ONLY)
+	{
+		//cerr << "Using thermal contributions only!" << endl;
+		for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+		{
+			double thermal_spectra = thermalCFvals[ipt][ipphi][(nqx-1)/2][(nqy-1)/2][(nqz-1)/2];
+			for (int iqx = 0; iqx < nqx; ++iqx)
+			for (int iqy = 0; iqy < nqy; ++iqy)
+			for (int iqz = 0; iqz < nqz; ++iqz)
+			{
+				thermalCFvals[ipt][ipphi][iqx][iqy][iqz] /= thermal_spectra;
+				crosstermCFvals[ipt][ipphi][iqx][iqy][iqz] = 0.0;
+				resonancesCFvals[ipt][ipphi][iqx][iqy][iqz] = 0.0;
+				correlation_function[ipt][ipphi][iqx][iqy][iqz] = 1.0 + thermalCFvals[ipt][ipphi][iqx][iqy][iqz];
+			}
+		}
+		//for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+		//for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+		//	cerr << "CHECK: " << thermalCFvals[ipt][ipphi][0][0][0] << endl;
+	}
+
 	iCorrFunc.close();
 	if (USE_SCALING)
 		iCorrFunc2.close();
@@ -122,6 +148,7 @@ double interpolate_qi(double q0, double qi0, double qi1, double f1, double f2, b
 }
 
 double interpolate_CF(double current_C_slice[][nqy][nqz], double qx0, double qy0, double qz0, int ipt, int ipphi, int thermal_or_resonances)
+//double interpolate_CF(double qx0, double qy0, double qz0, int ipt, int ipphi, int thermal_or_resonances)
 {
 	//int thermal_or_resonances - 	0: interpolate thermal CF (assuming basically Gaussian)
 	//								1: interpolate resonance contributions (linear near origin, exponential further out)
@@ -135,6 +162,32 @@ double interpolate_CF(double current_C_slice[][nqy][nqz], double qx0, double qy0
 		cerr << "Interpolation failed: exiting!" << endl;
 		exit(1);
 	}
+
+	/////////////////
+	/*
+	if (thermal_or_resonances == 0)
+	{
+		for (int iqx = 0; iqx < nqx; ++iqx)
+		for (int iqy = 0; iqy < nqy; ++iqy)
+		for (int iqz = 0; iqz < nqz; ++iqz)
+			current_C_slice[iqx][iqy][iqz] = thermalCFvals[ipt][ipphi][iqx][iqy][iqz];
+	}
+	else if (thermal_or_resonances == 1)
+	{
+		for (int iqx = 0; iqx < nqx; ++iqx)
+		for (int iqy = 0; iqy < nqy; ++iqy)
+		for (int iqz = 0; iqz < nqz; ++iqz)
+			current_C_slice[iqx][iqy][iqz] = crosstermCFvals[ipt][ipphi][iqx][iqy][iqz];
+	}
+	else
+	{
+		for (int iqx = 0; iqx < nqx; ++iqx)
+		for (int iqy = 0; iqy < nqy; ++iqy)
+		for (int iqz = 0; iqz < nqz; ++iqz)
+			current_C_slice[iqx][iqy][iqz] = resonancesCFvals[ipt][ipphi][iqx][iqy][iqz];
+	}
+	*/
+	/////////////////
 	
 	double *** alt_current_C_slice = new double ** [nqx];
 	for (int iqx = 0; iqx < nqx; ++iqx)
@@ -156,6 +209,10 @@ double interpolate_CF(double current_C_slice[][nqy][nqz], double qx0, double qy0
 	double fx1y0z1 = current_C_slice[iqx0_loc+1][iqy0_loc][iqz0_loc+1];
 	double fx1y1z0 = current_C_slice[iqx0_loc+1][iqy0_loc+1][iqz0_loc];
 	double fx1y1z1 = current_C_slice[iqx0_loc+1][iqy0_loc+1][iqz0_loc+1];
+
+	//if (abs(qx0)<1.e-6 && abs(qy0)<1.e-6 && abs(qz0)<1.e-6)
+	//	cerr << "CHECK: " << iqx0_loc << "   " << iqy0_loc << "   " << iqz0_loc << "   "
+	//			<< fx0y0z0 << "   " << fx0y0z1 << "   " << fx0y1z0 << "   " << fx0y1z1 << "   " << fx1y0z0 << "   " << fx1y0z1 << "   " << fx1y1z0 << "   " << fx1y1z1 << endl;
 
 	double fx0 = current_C_slice[iqx0_loc][0][0];
 	double fx1 = current_C_slice[iqx0_loc+1][0][0];
@@ -236,8 +293,16 @@ void Evaluate_CF(int ipt, int ipphi, double * q1pts, double * q2pts, double * q3
 		double tmp_thermal = interpolate_CF(thermalCFvals[ipt][ipphi], qx0, qy0, qz0, ipt, ipphi, 0);
 		double tmp_crossterm = interpolate_CF(crosstermCFvals[ipt][ipphi], qx0, qy0, qz0, ipt, ipphi, 1);
 		double tmp_resonances = interpolate_CF(resonancesCFvals[ipt][ipphi], qx0, qy0, qz0, ipt, ipphi, 2);
+		//double tmp_thermal = interpolate_CF(qx0, qy0, qz0, ipt, ipphi, 0);
+		//double tmp_crossterm = interpolate_CF(qx0, qy0, qz0, ipt, ipphi, 1);
+		//double tmp_resonances = interpolate_CF(qx0, qy0, qz0, ipt, ipphi, 2);
+
 
 		CFvals[iq] = 1.0 + tmp_thermal + tmp_crossterm + tmp_resonances;
+		//if (abs(q1pts[iq])<1.e-6 && abs(q2pts[iq])<1.e-6 && abs(q3pts[iq])<1.e-6)
+		//	cerr << "CHECK: " << qx0 << "   " << qy0 << "   " << qz0 << "   "
+		//			<< thermalCFvals[ipt][ipphi][0][0][0] << "   " << crosstermCFvals[ipt][ipphi][0][0][0] << "   " << resonancesCFvals[ipt][ipphi][0][0][0] << "   " 
+		//			<< tmp_thermal << "   " << tmp_crossterm << "   " << tmp_resonances << "   " << CFvals[iq] << endl;
 	}
 
 	return;
