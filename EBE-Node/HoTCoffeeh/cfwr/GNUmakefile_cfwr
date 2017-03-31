@@ -32,6 +32,11 @@ endif
 
 SRC		=	main.cpp \
 			$(SRCDIR)/lib.cpp \
+			$(SRCDIR)/cbessik.cpp \
+			$(SRCDIR)/cbessjy.cpp \
+			$(SRCDIR)/bessik.cpp \
+			$(SRCDIR)/bessjy.cpp \
+			$(SRCDIR)/gamma.cpp \
 			$(SRCDIR)/readindata.cpp \
 			$(SRCDIR)/cfwr.cpp \
 			$(SRCDIR)/cfwr_HDF_short.cpp \
@@ -55,6 +60,7 @@ INC		= 	main.h \
 			$(SRCDIR)/gauss_quadrature.h \
 			$(SRCDIR)/generate_processing_record.h \
 			$(SRCDIR)/lib.h \
+			$(SRCDIR)/bessel.h \
 			$(SRCDIR)/ParameterReader.h \
 			$(SRCDIR)/chebyshev.h \
 			$(SRCDIR)/chebyshev_library.h

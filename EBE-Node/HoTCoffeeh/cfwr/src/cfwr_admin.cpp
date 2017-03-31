@@ -403,6 +403,18 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 		sh_eta_s[ieta] = sinh(eta_s[ieta]);
 	}
 
+	//alternate spatial rapidity grid
+	Delta_eta_s = new double [eta_s_npts];
+	Delta_eta_s_weight = new double [eta_s_npts];
+	gauss_quadrature(eta_s_npts, 1, 0.0, 0.0, -eta_s_f, eta_s_f, Delta_eta_s, Delta_eta_s_weight);
+	ch_Delta_eta_s = new double [eta_s_npts];
+	sh_Delta_eta_s = new double [eta_s_npts];
+	for (int ieta = 0; ieta < eta_s_npts; ieta++)
+	{
+		ch_Delta_eta_s[ieta] = cosh(Delta_eta_s[ieta]);
+		sh_Delta_eta_s[ieta] = sinh(Delta_eta_s[ieta]);
+	}
+
 	//set HBT radii
 	R2_side_GF = new double * [n_pT_pts];
 	R2_out_GF = new double * [n_pT_pts];

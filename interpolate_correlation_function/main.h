@@ -40,6 +40,7 @@ double crosstermCFvals[n_pT_pts][n_pphi_pts][nqx][nqy][nqz];
 double resonancesCFvals[n_pT_pts][n_pphi_pts][nqx][nqy][nqz];
 double correlation_function[n_pT_pts][n_pphi_pts][nqx][nqy][nqz];
 
+double *** alt_current_C_slice;
 double *** CF_KTKphi_grid, *** CF_KTKphi_grid_T;
 double CF_KT_grid[n_pT_pts][nqpts], CF_KT_grid_T[nqpts][n_pT_pts];
 
@@ -112,18 +113,6 @@ double interpolate_CF(double current_C_slice[][nqy][nqz], double qx0, double qy0
 		exit(1);
 	}
 	
-	double *** alt_current_C_slice = new double ** [nqx];
-	for (int iqx = 0; iqx < nqx; ++iqx)
-	{
-		alt_current_C_slice[iqx] = new double * [nqy];
-		for (int iqy = 0; iqy < nqy; ++iqy)
-		{
-			alt_current_C_slice[iqx][iqy] = new double [nqz];
-			for (int iqz = 0; iqz < nqz; ++iqz)
-				alt_current_C_slice[iqx][iqy][iqz] = current_C_slice[iqx][iqy][iqz];
-		}
-	}
-
 	double fx0y0z0 = current_C_slice[iqx0_loc][iqy0_loc][iqz0_loc];
 	double fx0y0z1 = current_C_slice[iqx0_loc][iqy0_loc][iqz0_loc+1];
 	double fx0y1z0 = current_C_slice[iqx0_loc][iqy0_loc+1][iqz0_loc];
@@ -175,16 +164,12 @@ double interpolate_CF(double current_C_slice[][nqy][nqz], double qx0, double qy0
 	}
 	else
 	{
+		for (int iqx = 0; iqx < nqx; ++iqx)
+		for (int iqy = 0; iqy < nqy; ++iqy)
+		for (int iqz = 0; iqz < nqz; ++iqz)
+			alt_current_C_slice[iqx][iqy][iqz] = current_C_slice[iqx][iqy][iqz];
 		fxiyizi = interpolate3D(qx_pts, qy_pts, qz_pts, alt_current_C_slice, qx0, qy0, qz0, nqx, nqy, nqz, 1, true);
 	}
-
-	for (int iqx = 0; iqx < nqx; ++iqx)
-	{
-		for (int iqy = 0; iqy < nqy; ++iqy)
-			delete [] alt_current_C_slice[iqx][iqy];
-		delete [] alt_current_C_slice[iqx];
-	}
-	delete [] alt_current_C_slice;
 
 	return (fxiyizi);
 }
@@ -222,6 +207,18 @@ void Evaluate_CF(int ipt, int ipphi, double * q1pts, double * q2pts, double * q3
 
 void Allocate_CF_grids(int nqpts)
 {
+	alt_current_C_slice = new double ** [nqx];
+	for (int iqx = 0; iqx < nqx; ++iqx)
+	{
+		alt_current_C_slice[iqx] = new double * [nqy];
+		for (int iqy = 0; iqy < nqy; ++iqy)
+		{
+			alt_current_C_slice[iqx][iqy] = new double [nqz];
+			for (int iqz = 0; iqz < nqz; ++iqz)
+				alt_current_C_slice[iqx][iqy][iqz] = 0.0;
+		}
+	}
+
 	//KT-Kphi (2D) grids
 	CF_KTKphi_grid = new double ** [n_pT_pts];
 	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
