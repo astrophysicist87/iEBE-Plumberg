@@ -306,17 +306,17 @@ double CorrelationFunction::interpolate_qi(double q0, double qi0, double qi1, do
 
 
 double CorrelationFunction::get_CF(int ipt, int ipphi, int iqt, int iqx, int iqy, int iqz, bool return_projected_value)
-{
+{	//pY==0
 	double nonFTd_spectra = spectra[target_particle_id][ipt][ipphi];
-	double cos_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,0)];
-	double sin_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,1)];
+	double cos_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,(n_pY_pts - 1)/2,iqt,iqx,iqy,iqz,0)];
+	double sin_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,(n_pY_pts - 1)/2,iqt,iqx,iqy,iqz,1)];
 
 	if (return_projected_value)
 	{
 		//with no resonances
 		double nonFTd_tspectra = thermal_spectra[target_particle_id][ipt][ipphi];
-		double cos_transf_tspectra = thermal_target_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,0)];
-		double sin_transf_tspectra = thermal_target_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,1)];
+		double cos_transf_tspectra = thermal_target_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,(n_pY_pts - 1)/2,iqt,iqx,iqy,iqz,0)];
+		double sin_transf_tspectra = thermal_target_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,(n_pY_pts - 1)/2,iqt,iqx,iqy,iqz,1)];
 
 		double projected_nonFTd_spectra = nonFTd_tspectra + (nonFTd_spectra - nonFTd_tspectra) / fraction_of_resonances;
 		double projected_cos_transf_spectra = cos_transf_tspectra + (cos_transf_spectra - cos_transf_tspectra) / fraction_of_resonances;
@@ -340,12 +340,12 @@ void CorrelationFunction::get_CF(double * totalresult, double * thermalresult, d
 {
 	//thermal
 	double nonFTd_tspectra = thermal_spectra[target_particle_id][ipt][ipphi];
-	double cos_transf_tspectra = thermal_target_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,0)];
-	double sin_transf_tspectra = thermal_target_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,1)];
+	double cos_transf_tspectra = thermal_target_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,(n_pY_pts - 1)/2,iqt,iqx,iqy,iqz,0)];
+	double sin_transf_tspectra = thermal_target_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,(n_pY_pts - 1)/2,iqt,iqx,iqy,iqz,1)];
 	//total
 	double nonFTd_spectra = spectra[target_particle_id][ipt][ipphi];
-	double cos_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,0)];
-	double sin_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,1)];
+	double cos_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,(n_pY_pts - 1)/2,iqt,iqx,iqy,iqz,0)];
+	double sin_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,(n_pY_pts - 1)/2,iqt,iqx,iqy,iqz,1)];
 
 	if (return_projected_value)
 	{

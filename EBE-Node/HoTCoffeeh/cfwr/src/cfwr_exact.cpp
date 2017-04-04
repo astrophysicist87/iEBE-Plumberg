@@ -22,32 +22,9 @@ using namespace std;
 
 const std::complex<double> i(0, 1);
 
-inline void I(double alpha, double beta, double gamma, complex<double> & I0, complex<double> & I1, complex<double> & I2, complex<double> & I3)
-{
-	complex<double> ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p;
-	complex<double> z0 = alpha - i*beta;
-	complex<double> z0sq = pow(z0, 2.0);
-	double gsq = gamma*gamma;
-	complex<double> z = sqrt(z0sq + gsq);
-	int errorCode = cbessik01(z, ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p);
-	
-	I0 = 2.0*ck0;
-	I1 = 2.0*z0*ck1 / z;
-	I2 = 2.0*z0sq*ck0 / (z*z)
-			+ 2.0*(z0sq - gsq)*ck1 / pow(z, 3.0);
-	I3 = 2.0*z0*( ( pow(z0, 4.0) - 2.0* z0sq*gsq - 3.0 * pow(gamma, 4.0) ) * ck0 / z
-						+ (-6.0*gsq + z0sq*(2.0 + z0sq + gsq)) * ck1
-				) / pow(z,5.0);
-
-	return;
-}
-
 void CorrelationFunction::Cal_dN_dypTdpTdphi_with_rapdep_thermal(int local_pid)
 {
 	n_pY_pts = 101;
-	mean_tau_vs_pY = new double [n_pY_pts];
-	rms_vx_vs_pY = new double [n_pY_pts];
-	rms_vy_vs_pY = new double [n_pY_pts];
 	SP_pY = new double [n_pY_pts];
 	SP_pY_wts = new double [n_pY_pts];
 	gauss_quadrature(n_pY_pts, 1, 0.0, 0.0, -4.0, 4.0, SP_pY, SP_pY_wts);

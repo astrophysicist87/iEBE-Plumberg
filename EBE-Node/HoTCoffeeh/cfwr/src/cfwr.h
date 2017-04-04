@@ -81,7 +81,7 @@ class CorrelationFunction
 		double max_lifetime;
 
 		//header info
-		int n_pT_pts, n_pphi_pts, nKT, nKphi;
+		int n_pT_pts, n_pphi_pts, n_pY_pts, nKT, nKphi;
 		int qtnpts, qxnpts, qynpts, qznpts;
 		double KT_min, KT_max;
 		double init_qt, init_qx, init_qy, init_qz;
@@ -134,7 +134,7 @@ class CorrelationFunction
 		double * full_target_dN_dypTdpTdphi_moments;
 
 		// needed these to avoid too many trigonometric evaluations
-		double **** osc0, *** osc1, *** osc2, **** osc3;
+		double * oscx, * oscy;
 		double ** eiqtt, ** eiqxx, ** eiqyy, ** eiqzz;
 	
 		//needed for resonance calculations
@@ -160,8 +160,6 @@ class CorrelationFunction
 		//single particle spectra for plane angle determination
 		double SP_p_y, mean_pT;
 		size_t *** most_important_FOcells;
-		//double * giant_array_C, * giant_array_S, ** giant_array_slice;
-		double * transverse_Fourier_array_C, * transverse_Fourier_array_S;
 		int ** number_of_FOcells_above_cutoff_array;
 
 		//pair momentum
@@ -172,6 +170,7 @@ class CorrelationFunction
 		    
 		//spatial rapidity grid
 		double * eta_s, * ch_eta_s, * sh_eta_s, * eta_s_weight;
+		double * SP_pY, * ch_SP_pY, * sh_SP_pY, * SP_pY_wts;
 
 		//NEW grid for doing Chebyshev interpolation of resonance integrals!
 		vector<Chebyshev*> spectra_resonance_grid_approximator;
@@ -254,7 +253,7 @@ class CorrelationFunction
 		double global_plane_psi;
 		set<int> daughter_resonance_indices;
 
-		int current_ipt, current_ipphi;
+		int current_ipT, current_ipphi, current_ipY;
 
 		//some private methods		
 		bool particles_are_the_same(int idx1, int idx2);
@@ -263,10 +262,12 @@ class CorrelationFunction
 	public:
 		//library of inline functions
 		inline int indexer(const int ipt, const int ipphi, const int ipY, const int iqt, const int iqx, const int iqy, const int iqz, const int itrig);
+		inline int FM_indexer(const int ipY, const int iqt, const int iqx, const int iqy, const int iqz);
 		inline double lin_int(double x_m_x1, double one_by_x2_m_x1, double f1, double f2);
 		inline void addElementToQueue(priority_queue<pair<double, size_t> >& p, pair<double, size_t> elem, size_t max_size);
 		inline void set_to_zero(double * array, size_t arraylength);
 		inline double dot_four_vectors(double * a, double * b);
+		//inline void I(double alpha, double beta, double gamma, complex<double> & I0, complex<double> & I1, complex<double> & I2, complex<double> & I3);
 
 		void Determine_plane_angle();
 		void Fourier_transform_emission_function();
@@ -289,7 +290,11 @@ class CorrelationFunction
 		int Get_target_thermal_from_HDF_array(double * target_thermal_array_to_fill);
 		int Set_target_thermal_in_HDF_array(double * tta_array_to_use);
 
-		void Set_dN_dypTdpTdphi_moments(int dc_idx);
+		void Set_dN_dypTdpTdphi_moments(int local_pid);
+		void Set_most_important_FOcells(vector<size_t> * most_impt_FOcells_vec, vector<double> * most_impt_FOcells_vals_vec, priority_queue<pair<double, size_t> > FOcells_PQ);
+		int Set_percentage_cutoffs(vector<int> * cutoff_FOcells_at_pTpphi, vector<double> * most_impt_FOcells_vals_vec, double absolute_running_total, double cutoff);
+		inline void Update_Fourier_moments_at_cutoffs(vector<double> * cutoff_Fourier_moments_cos, vector<double> * cutoff_Fourier_moments_sin,
+																	double * flattened_Fourier_moments_C, double * flattened_Fourier_moments_S);
 		void Set_thermal_target_moments();
 		void Set_full_target_moments();
 		void form_trig_sign_z(int isurf, int ieta, int iqt, int iqx, int iqy, int iqz, int ii, double * results);
@@ -315,7 +320,7 @@ class CorrelationFunction
 		void Set_current_resonance_logs_and_signs();
 		void Set_current_daughters_resonance_logs_and_signs(int n_daughters);
 		void Allocate_decay_channel_info();
-		void Load_decay_channel_info(int dc_idx, double K_T_local, double K_phi_local);
+		void Load_decay_channel_info(int dc_idx, double K_T_local, double K_phi_local, double K_y_local);
 		void Delete_decay_channel_info();
 		int Set_daughter_list(int parent_resonance_index);
 
@@ -376,7 +381,7 @@ class CorrelationFunction
 		int print_fit_state_3D_withlambda (size_t iteration, gsl_multifit_fdfsolver * solver_ptr);
 		inline double get_fit_results(int i, gsl_multifit_fdfsolver * solver_ptr);
 		inline double get_fit_err (int i, gsl_matrix * covariance_ptr);
-		double gsl_polynomial_fit(const vector<double> &data_x, const vector<double> &data_y, const int order, double & chisq, bool verbose = false);
+		void gsl_polynomial_fit(const vector<double> &data_x, const vector<double> &data_y, double * results, const int order, double * chisq, const int n);
 
 		// input and output function prototypes
 		void Output_dN_dypTdpTdphi();

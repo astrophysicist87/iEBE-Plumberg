@@ -47,7 +47,7 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	//set header info
 	n_pT_pts = paraRdr->getVal("CF_npT");
 	n_pphi_pts = paraRdr->getVal("CF_npphi");
-	n_pY_pts = paraRdr->getVal("CF_npY);
+	n_pY_pts = paraRdr->getVal("CF_npY");
 	nKT = paraRdr->getVal("nKT");
 	nKphi = paraRdr->getVal("nKphi");
 	KT_min = paraRdr->getVal("KTmin");
@@ -300,6 +300,10 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 		}
 	}
 
+	FOcell_density_array = new double ** [n_pT_pts];
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+		FOcell_density_array[ipT] = new double * [n_pphi_pts];
+
 	// used for keeping track of how many FO cells are important for given pT, pphi
 	number_of_FOcells_above_cutoff_array = new int * [n_pT_pts];
 	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
@@ -409,12 +413,12 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	SP_pY = new double [n_pY_pts];
 	SP_pY_wts = new double [n_pY_pts];
 	gauss_quadrature(n_pY_pts, 1, 0.0, 0.0, -6.0, 6.0, SP_pY, SP_pY_wts);
-	ch_pY = new double [n_pY_pts];
-	sh_pY = new double [n_pY_pts];
+	ch_SP_pY = new double [n_pY_pts];
+	sh_SP_pY = new double [n_pY_pts];
 	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 	{
-		ch_pY[ipY] = cosh(SP_pY[ipY]);
-		sh_pY[ipY] = sinh(SP_pY[ipY]);
+		ch_SP_pY[ipY] = cosh(SP_pY[ipY]);
+		sh_SP_pY[ipY] = sinh(SP_pY[ipY]);
 	}
 
 
@@ -622,8 +626,6 @@ void CorrelationFunction::Set_eiqx_matrices()
 	for(int ipt = 0; ipt < n_pT_pts; ipt++)
 		most_important_FOcells[ipt] = new size_t * [n_pphi_pts];
 
-	transverse_Fourier_factor = new double [FO_length];
-
 	return;
 }
 
@@ -702,8 +704,6 @@ CorrelationFunction::~CorrelationFunction()
 		delete [] spectra[ir];
 	}
 	delete [] spectra;
-
-	Delete_osc_arrays();
 
    return;
 }

@@ -101,29 +101,29 @@ void CorrelationFunction::Output_results(int mode)
 	int iptipphi = 0;
 	if (mode == 0)
 	{
-		for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		{
-			flat_R2s[iptipphi] = R2_side_GF[ipt][ipphi];
-			flat_R2o[iptipphi] = R2_out_GF[ipt][ipphi];
-			flat_R2l[iptipphi] = R2_long_GF[ipt][ipphi];
-			flat_R2os[iptipphi] = R2_outside_GF[ipt][ipphi];
-			flat_R2sl[iptipphi] = R2_sidelong_GF[ipt][ipphi];
-			flat_R2ol[iptipphi] = R2_outlong_GF[ipt][ipphi];
+			flat_R2s[iptipphi] = R2_side_GF[ipT][ipphi];
+			flat_R2o[iptipphi] = R2_out_GF[ipT][ipphi];
+			flat_R2l[iptipphi] = R2_long_GF[ipT][ipphi];
+			flat_R2os[iptipphi] = R2_outside_GF[ipT][ipphi];
+			flat_R2sl[iptipphi] = R2_sidelong_GF[ipT][ipphi];
+			flat_R2ol[iptipphi] = R2_outlong_GF[ipT][ipphi];
 			iptipphi++;
 		}
 	}
 	else if (mode == 1)
 	{
-		for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		{
-			flat_R2s[iptipphi] = R2_side_QM[ipt][ipphi];
-			flat_R2o[iptipphi] = R2_out_QM[ipt][ipphi];
-			flat_R2l[iptipphi] = R2_long_QM[ipt][ipphi];
-			flat_R2os[iptipphi] = R2_outside_QM[ipt][ipphi];
-			flat_R2sl[iptipphi] = R2_sidelong_QM[ipt][ipphi];
-			flat_R2ol[iptipphi] = R2_outlong_QM[ipt][ipphi];
+			flat_R2s[iptipphi] = R2_side_QM[ipT][ipphi];
+			flat_R2o[iptipphi] = R2_out_QM[ipT][ipphi];
+			flat_R2l[iptipphi] = R2_long_QM[ipT][ipphi];
+			flat_R2os[iptipphi] = R2_outside_QM[ipT][ipphi];
+			flat_R2sl[iptipphi] = R2_sidelong_QM[ipT][ipphi];
+			flat_R2ol[iptipphi] = R2_outlong_QM[ipT][ipphi];
 			iptipphi++;
 		}
 	}
@@ -131,24 +131,24 @@ void CorrelationFunction::Output_results(int mode)
 	//output R2ij on original pT-pphi grid
 	if (mode == 0)
 	{
-		for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		{
-			outputHBT_g0 << SP_pT[ipt] << "   " << SP_pphi[ipphi]
-				<< "   " << R2_side_GF[ipt][ipphi] << "   " << R2_out_GF[ipt][ipphi]
-				<< "   " << R2_outside_GF[ipt][ipphi] << "   " << R2_long_GF[ipt][ipphi]
-				<< "   " << R2_sidelong_GF[ipt][ipphi] << "   " << R2_outlong_GF[ipt][ipphi] << endl;
+			outputHBT_g0 << SP_pT[ipT] << "   " << SP_pphi[ipphi]
+				<< "   " << R2_side_GF[ipT][ipphi] << "   " << R2_out_GF[ipT][ipphi]
+				<< "   " << R2_outside_GF[ipT][ipphi] << "   " << R2_long_GF[ipT][ipphi]
+				<< "   " << R2_sidelong_GF[ipT][ipphi] << "   " << R2_outlong_GF[ipT][ipphi] << endl;
 		}
 	}
 	else if (mode == 1)
 	{
-		for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		{
-			outputHBT_g0 << SP_pT[ipt] << "   " << SP_pphi[ipphi]
-				<< "   " << R2_side_QM[ipt][ipphi] << "   " << R2_out_QM[ipt][ipphi]
-				<< "   " << R2_outside_QM[ipt][ipphi] << "   " << R2_long_QM[ipt][ipphi]
-				<< "   " << R2_sidelong_QM[ipt][ipphi] << "   " << R2_outlong_QM[ipt][ipphi] << endl;
+			outputHBT_g0 << SP_pT[ipT] << "   " << SP_pphi[ipphi]
+				<< "   " << R2_side_QM[ipT][ipphi] << "   " << R2_out_QM[ipT][ipphi]
+				<< "   " << R2_outside_QM[ipT][ipphi] << "   " << R2_long_QM[ipT][ipphi]
+				<< "   " << R2_sidelong_QM[ipT][ipphi] << "   " << R2_outlong_QM[ipT][ipphi] << endl;
 		}
 	}
 
@@ -210,9 +210,9 @@ void CorrelationFunction::Output_lambdas()
 	ofstream outputlambdas;
 	outputlambdas.open(filename_stream_lambdas.str().c_str());
 	
-	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-		outputlambdas << SP_pT[ipt] << "   " << SP_pphi[ipphi] << "   " << lambda_Correl[ipt][ipphi] << endl;
+		outputlambdas << SP_pT[ipT] << "   " << SP_pphi[ipphi] << "   " << lambda_Correl[ipT][ipphi] << endl;
 
 	outputlambdas.close();
 	return;
@@ -232,7 +232,7 @@ void CorrelationFunction::Output_correlationfunction()
 	ofstream oCorrFunc;
 	oCorrFunc.open(oCorrFunc_stream.str().c_str());
 
-	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 	for (int iqx = 0; iqx < qxnpts; ++iqx)
 	for (int iqy = 0; iqy < qynpts; ++iqy)
@@ -240,16 +240,16 @@ void CorrelationFunction::Output_correlationfunction()
 	{
 		double ckp = cos_SP_pphi[ipphi], skp = sin_SP_pphi[ipphi];
 		oCorrFunc << scientific << setprecision(8) << setw(12)
-			<< SP_pT[ipt] << "   " << SP_pphi[ipphi] << "   " << qx_pts[iqx] << "   "
+			<< SP_pT[ipT] << "   " << SP_pphi[ipphi] << "   " << qx_pts[iqx] << "   "
 			<< qy_pts[iqy] << "   " << qz_pts[iqz] << "   "
 			//<< qx_pts[iqx] * ckp + qy_pts[iqy] * skp << "   "
 			//<< -qx_pts[iqx] * skp + qy_pts[iqy] * ckp << "   "
 			//<< qz_pts[iqz] << "   "
-			<< spectra[target_particle_id][ipt][ipphi] << "   "
-			<< thermalCFvals[ipt][ipphi][iqx][iqy][iqz] << "   "
-			<< crosstermCFvals[ipt][ipphi][iqx][iqy][iqz] << "   "
-			<< resonancesCFvals[ipt][ipphi][iqx][iqy][iqz] << "   "
-			<< CFvals[ipt][ipphi][iqx][iqy][iqz] << endl;
+			<< spectra[target_particle_id][ipT][ipphi] << "   "
+			<< thermalCFvals[ipT][ipphi][iqx][iqy][iqz] << "   "
+			<< crosstermCFvals[ipT][ipphi][iqx][iqy][iqz] << "   "
+			<< resonancesCFvals[ipT][ipphi][iqx][iqy][iqz] << "   "
+			<< CFvals[ipT][ipphi][iqx][iqy][iqz] << endl;
 	}
 
 	oCorrFunc.close();
@@ -257,14 +257,14 @@ void CorrelationFunction::Output_correlationfunction()
 	return;
 }
 
-void CorrelationFunction::Output_fleshed_out_correlationfunction(int ipt, int ipphi)
+void CorrelationFunction::Output_fleshed_out_correlationfunction(int ipT, int ipphi)
 {
 	ostringstream oCorrFunc_stream;
 	string temp_particle_name = particle_name;
 	replace_parentheses(temp_particle_name);
 	oCorrFunc_stream << path << "/correlfunct3D" << "_" << temp_particle_name << "_fleshed_out.dat";
 	ofstream oCorrFunc;
-	if (ipt==0 && ipphi==0)
+	if (ipT==0 && ipphi==0)
 		oCorrFunc.open(oCorrFunc_stream.str().c_str());
 	else
 		oCorrFunc.open(oCorrFunc_stream.str().c_str(), ios::app);
@@ -275,7 +275,7 @@ void CorrelationFunction::Output_fleshed_out_correlationfunction(int ipt, int ip
 	{
 		double ckp = cos_SP_pphi[ipphi], skp = sin_SP_pphi[ipphi];
 		oCorrFunc << scientific << setprecision(7) << setw(15)
-			<< SP_pT[ipt] << "   " << SP_pphi[ipphi] << "   " << qx_fleshed_out_pts[iqx] << "   "
+			<< SP_pT[ipT] << "   " << SP_pphi[ipphi] << "   " << qx_fleshed_out_pts[iqx] << "   "
 			<< qy_fleshed_out_pts[iqy] << "   " << qz_fleshed_out_pts[iqz] << "   "
 			<< qx_fleshed_out_pts[iqx] * ckp + qy_fleshed_out_pts[iqy] * skp << "   "
 			<< -qx_fleshed_out_pts[iqx] * skp + qy_fleshed_out_pts[iqy] * ckp << "   "
@@ -303,32 +303,32 @@ void CorrelationFunction::Readin_results(int mode)
 
 	if (mode == 0)
 	{
-		for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		{
 			inputHBT >> dummy;	//pt value
 			inputHBT >> dummy;	//pphi value
-			inputHBT >> R2_side_GF[ipt][ipphi];
-			inputHBT >> R2_out_GF[ipt][ipphi];
-			inputHBT >> R2_outside_GF[ipt][ipphi];
-			inputHBT >> R2_long_GF[ipt][ipphi];
-			inputHBT >> R2_sidelong_GF[ipt][ipphi];
-			inputHBT >> R2_outlong_GF[ipt][ipphi];
+			inputHBT >> R2_side_GF[ipT][ipphi];
+			inputHBT >> R2_out_GF[ipT][ipphi];
+			inputHBT >> R2_outside_GF[ipT][ipphi];
+			inputHBT >> R2_long_GF[ipT][ipphi];
+			inputHBT >> R2_sidelong_GF[ipT][ipphi];
+			inputHBT >> R2_outlong_GF[ipT][ipphi];
 		}
 	}
 	else if (mode == 1)
 	{
-		for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		{
 			inputHBT >> dummy;	//pt value
 			inputHBT >> dummy;	//pphi value
-			inputHBT >> R2_side_QM[ipt][ipphi];
-			inputHBT >> R2_out_QM[ipt][ipphi];
-			inputHBT >> R2_outside_QM[ipt][ipphi];
-			inputHBT >> R2_long_QM[ipt][ipphi];
-			inputHBT >> R2_sidelong_QM[ipt][ipphi];
-			inputHBT >> R2_outlong_QM[ipt][ipphi];
+			inputHBT >> R2_side_QM[ipT][ipphi];
+			inputHBT >> R2_out_QM[ipT][ipphi];
+			inputHBT >> R2_outside_QM[ipT][ipphi];
+			inputHBT >> R2_long_QM[ipT][ipphi];
+			inputHBT >> R2_sidelong_QM[ipT][ipphi];
+			inputHBT >> R2_outlong_QM[ipT][ipphi];
 		}
 	}
 
@@ -347,12 +347,12 @@ void CorrelationFunction::Output_total_target_dN_dypTdpTdphi()
 
 	for(int ipphi = 0; ipphi < n_pphi_pts; ipphi++)
 	{
-		for(int ipt = 0; ipt < n_pT_pts; ipt++)
+		for(int ipT = 0; ipT < n_pT_pts; ipT++)
 		{
-			double fs = spectra[target_particle_id][ipt][ipphi];
-			double ts = thermal_spectra[target_particle_id][ipt][ipphi];
+			double fs = spectra[target_particle_id][ipT][ipphi];
+			double ts = thermal_spectra[target_particle_id][ipT][ipphi];
 			double result = (fs - ts) / fraction_of_resonances + ts;
-			output_target_dN_dypTdpTdphi << scientific << setprecision(8) << setw(12) << spectra[target_particle_id][ipt][ipphi] << "   ";
+			output_target_dN_dypTdpTdphi << scientific << setprecision(8) << setw(12) << spectra[target_particle_id][ipT][ipphi] << "   ";
 		}
 		output_target_dN_dypTdpTdphi << endl;
 	}
@@ -381,11 +381,12 @@ void CorrelationFunction::Output_total_target_eiqx_dN_dypTdpTdphi(double current
 		int iqx0 = (qxnpts-1)/2;
 		int iqy0 = (qynpts-1)/2;
 		int iqz0 = (qznpts-1)/2;
-		for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 		{
-			current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt0,iqx0,iqy0,iqz0,1)] = 0.0;
-			thermal_target_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt0,iqx0,iqy0,iqz0,1)] = 0.0;
+			current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt0,iqx0,iqy0,iqz0,1)] = 0.0;
+			thermal_target_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt0,iqx0,iqy0,iqz0,1)] = 0.0;
 		}
 	}
 
@@ -393,31 +394,32 @@ void CorrelationFunction::Output_total_target_eiqx_dN_dypTdpTdphi(double current
 	for (int iqx = 0; iqx < qxnpts; ++iqx)
 	for (int iqy = 0; iqy < qynpts; ++iqy)
 	for (int iqz = 0; iqz < qznpts; ++iqz)
-	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 	{
 		//first, get CF and projected CF
-		double CF = get_CF(ipt, ipphi, iqt, iqx, iqy, iqz, false);				//false means don't return projected value
+		double CF = get_CF(ipT, ipphi, iqt, iqx, iqy, iqz, false);				//false means don't return projected value
 
 		//!!!!!!!!!!!!should get projected_CF AFTER regulating CF...!!!!!!!!!!!!
-		double projected_CF = get_CF(ipt, ipphi, iqt, iqx, iqy, iqz, true && !thermal_pions_only);	//true means do return projected value
+		double projected_CF = get_CF(ipT, ipphi, iqt, iqx, iqy, iqz, true && !thermal_pions_only);	//true means do return projected value
 
-		double nonFTd_spectra = spectra[target_particle_id][ipt][ipphi];
-		double cos_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,0)];
-		double sin_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,1)];
+		double nonFTd_spectra = spectra[target_particle_id][ipT][ipphi];
+		double cos_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,0)];
+		double sin_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,1)];
 
 		output_target_dN_dypTdpTdphi << scientific << setprecision(8) << setw(12)
 			<< qt_pts[iqt] << "   " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[iqz] << "   "
-			<< SP_pT[ipt] << "   " << SP_pphi[ipphi] << "   "
+			<< SP_pT[ipT] << "   " << SP_pphi[ipphi] << "   "
 			<< nonFTd_spectra << "   "																								//non-thermal + thermal
 			<< cos_transf_spectra << "   "																							//non-thermal + thermal (cos)
 			<< sin_transf_spectra << "   "																							//non-thermal + thermal (sin)
-			<< thermal_spectra[target_particle_id][ipt][ipphi] << "   "																//thermal only
-			<< thermal_target_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,0)] << "   "									//thermal only (cos)
-			<< thermal_target_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,1)] << "   "									//thermal only (sin)
-			<< nonFTd_spectra - thermal_spectra[target_particle_id][ipt][ipphi] << "   "											//non-thermal only
-			<< cos_transf_spectra - thermal_target_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,0)] << "   "				//non-thermal only (cos)
-			<< sin_transf_spectra - thermal_target_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,1)] << "   "				//non-thermal only (sin)
+			<< thermal_spectra[target_particle_id][ipT][ipphi] << "   "																//thermal only
+			<< thermal_target_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,0)] << "   "									//thermal only (cos)
+			<< thermal_target_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,1)] << "   "									//thermal only (sin)
+			<< nonFTd_spectra - thermal_spectra[target_particle_id][ipT][ipphi] << "   "											//non-thermal only
+			<< cos_transf_spectra - thermal_target_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,0)] << "   "				//non-thermal only (cos)
+			<< sin_transf_spectra - thermal_target_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,1)] << "   "				//non-thermal only (sin)
 			<< CF << "   " << projected_CF << endl;
 	}
 
@@ -445,25 +447,27 @@ void CorrelationFunction::Output_total_eiqx_dN_dypTdpTdphi(int local_pid)
 		int iqx0 = (qxnpts-1)/2;
 		int iqy0 = (qynpts-1)/2;
 		int iqz0 = (qznpts-1)/2;
-		for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-			current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt0,iqx0,iqy0,iqz0,1)] = 0.0;
+		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
+			current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt0,iqx0,iqy0,iqz0,1)] = 0.0;
 	}
 
 	for (int iqt = 0; iqt < qtnpts; ++iqt)
 	for (int iqx = 0; iqx < qxnpts; ++iqx)
 	for (int iqy = 0; iqy < qynpts; ++iqy)
 	for (int iqz = 0; iqz < qznpts; ++iqz)
-	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 	{
-		double nonFTd_spectra = spectra[local_pid][ipt][ipphi];
-		double cos_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,0)];
-		double sin_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,1)];
+		double nonFTd_spectra = spectra[local_pid][ipT][ipphi];
+		double cos_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,0)];
+		double sin_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,1)];
 
 		output_dN_dypTdpTdphi << scientific << setprecision(8) << setw(12)
 			<< qt_pts[iqt] << "   " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[iqz] << "   "
-			<< SP_pT[ipt] << "   " << SP_pphi[ipphi] << "   "
+			<< SP_pT[ipT] << "   " << SP_pphi[ipphi] << "   "
 			<< nonFTd_spectra << "   "																								//non-thermal + thermal
 			<< cos_transf_spectra << "   "																							//non-thermal + thermal (cos)
 			<< sin_transf_spectra << endl;
@@ -488,8 +492,9 @@ void CorrelationFunction::Readin_total_target_eiqx_dN_dypTdpTdphi()
 	for (int iqx = 0; iqx < qxnpts; ++iqx)
 	for (int iqy = 0; iqy < qynpts; ++iqy)
 	for (int iqz = 0; iqz < qznpts; ++iqz)
-	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 	{
 		input_target_dN_dypTdpTdphi >> dummy;
 		input_target_dN_dypTdpTdphi >> dummy;
@@ -497,12 +502,12 @@ void CorrelationFunction::Readin_total_target_eiqx_dN_dypTdpTdphi()
 		input_target_dN_dypTdpTdphi >> dummy;
 		input_target_dN_dypTdpTdphi >> dummy;
 		input_target_dN_dypTdpTdphi >> dummy;
-		input_target_dN_dypTdpTdphi >> spectra[target_particle_id][ipt][ipphi];
-		input_target_dN_dypTdpTdphi >> current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,0)];
-		input_target_dN_dypTdpTdphi >> current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,1)];
-		input_target_dN_dypTdpTdphi >> thermal_spectra[target_particle_id][ipt][ipphi];
-		input_target_dN_dypTdpTdphi >> thermal_target_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,0)];
-		input_target_dN_dypTdpTdphi >> thermal_target_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,1)];
+		input_target_dN_dypTdpTdphi >> spectra[target_particle_id][ipT][ipphi];
+		input_target_dN_dypTdpTdphi >> current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,0)];
+		input_target_dN_dypTdpTdphi >> current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,1)];
+		input_target_dN_dypTdpTdphi >> thermal_spectra[target_particle_id][ipT][ipphi];
+		input_target_dN_dypTdpTdphi >> thermal_target_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,0)];
+		input_target_dN_dypTdpTdphi >> thermal_target_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,1)];
 		input_target_dN_dypTdpTdphi >> dummy;
 		input_target_dN_dypTdpTdphi >> dummy;
 		input_target_dN_dypTdpTdphi >> dummy;
@@ -530,15 +535,15 @@ void CorrelationFunction::Read_in_correlationfunction()
 	iCorrFunc.open(iCorrFunc_stream.str().c_str());
 
 	double dummy;
-	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 	for (int iqx = 0; iqx < qxnpts; ++iqx)
 	for (int iqy = 0; iqy < qynpts; ++iqy)
 	for (int iqz = 0; iqz < qznpts; ++iqz)
 	{
 		iCorrFunc >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy
-					>> thermalCFvals[ipt][ipphi][iqx][iqy][iqz] >> crosstermCFvals[ipt][ipphi][iqx][iqy][iqz] >> resonancesCFvals[ipt][ipphi][iqx][iqy][iqz] >> CFvals[ipt][ipphi][iqx][iqy][iqz];
-		//*global_out_stream_ptr << "Read in CFvals[" << ipt << "][" << ipphi << "][" << iqx << "][" << iqy << "][" << iqz << "] = " << CFvals[ipt][ipphi][iqx][iqy][iqz] << endl;
+					>> thermalCFvals[ipT][ipphi][iqx][iqy][iqz] >> crosstermCFvals[ipT][ipphi][iqx][iqy][iqz] >> resonancesCFvals[ipT][ipphi][iqx][iqy][iqz] >> CFvals[ipT][ipphi][iqx][iqy][iqz];
+		//*global_out_stream_ptr << "Read in CFvals[" << ipT << "][" << ipphi << "][" << iqx << "][" << iqy << "][" << iqz << "] = " << CFvals[ipT][ipphi][iqx][iqy][iqz] << endl;
 	}
 
 	iCorrFunc.close();
