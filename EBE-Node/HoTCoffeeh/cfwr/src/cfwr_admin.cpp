@@ -47,6 +47,7 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	//set header info
 	n_pT_pts = paraRdr->getVal("CF_npT");
 	n_pphi_pts = paraRdr->getVal("CF_npphi");
+	n_pY_pts = paraRdr->getVal("CF_npY);
 	nKT = paraRdr->getVal("nKT");
 	nKphi = paraRdr->getVal("nKphi");
 	KT_min = paraRdr->getVal("KTmin");
@@ -404,16 +405,18 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	}
 
 	//alternate spatial rapidity grid
-	Delta_eta_s = new double [eta_s_npts];
-	Delta_eta_s_weight = new double [eta_s_npts];
-	gauss_quadrature(eta_s_npts, 1, 0.0, 0.0, -eta_s_f, eta_s_f, Delta_eta_s, Delta_eta_s_weight);
-	ch_Delta_eta_s = new double [eta_s_npts];
-	sh_Delta_eta_s = new double [eta_s_npts];
-	for (int ieta = 0; ieta < eta_s_npts; ieta++)
+	n_pY_pts = 21;
+	SP_pY = new double [n_pY_pts];
+	SP_pY_wts = new double [n_pY_pts];
+	gauss_quadrature(n_pY_pts, 1, 0.0, 0.0, -6.0, 6.0, SP_pY, SP_pY_wts);
+	ch_pY = new double [n_pY_pts];
+	sh_pY = new double [n_pY_pts];
+	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 	{
-		ch_Delta_eta_s[ieta] = cosh(Delta_eta_s[ieta]);
-		sh_Delta_eta_s[ieta] = sinh(Delta_eta_s[ieta]);
+		ch_pY[ipY] = cosh(SP_pY[ipY]);
+		sh_pY[ipY] = sinh(SP_pY[ipY]);
 	}
+
 
 	//set HBT radii
 	R2_side_GF = new double * [n_pT_pts];
@@ -584,94 +587,10 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
    return;
 }
 
-void CorrelationFunction::Allocate_osc_arrays(int FOarray_length)
-{
-	osc0 = new double *** [qtnpts];
-	osc1 = new double ** [qxnpts];
-	osc2 = new double ** [qynpts];
-	osc3 = new double *** [qznpts];
-
-	//allocate qtpts
-	for (int iqt = 0; iqt < qtnpts; ++iqt)
-	{
-		osc0[iqt] = new double ** [FOarray_length];
-		for (int isurf = 0; isurf < FOarray_length; ++isurf)
-		{
-			osc0[iqt][isurf] = new double * [eta_s_npts];
-			for (int ieta = 0; ieta < eta_s_npts; ++ieta)
-				osc0[iqt][isurf][ieta] = new double [2];
-		}
-	}
-	//allocate qxpts
-	for (int iqx = 0; iqx < qxnpts; ++iqx)
-	{
-		osc1[iqx] = new double * [FOarray_length];
-		for (int isurf = 0; isurf < FOarray_length; ++isurf)
-			osc1[iqx][isurf] = new double [2];
-	}
-	//allocate qypts
-	for (int iqy = 0; iqy < qynpts; ++iqy)
-	{
-		osc2[iqy] = new double * [FOarray_length];
-		for (int isurf = 0; isurf < FOarray_length; ++isurf)
-			osc2[iqy][isurf] = new double [2];
-	}
-	//allocate qzpts
-	for (int iqz = 0; iqz < qznpts; ++iqz)
-	{
-		osc3[iqz] = new double ** [FOarray_length];
-		for (int isurf = 0; isurf < FOarray_length; ++isurf)
-		{
-			osc3[iqz][isurf] = new double * [eta_s_npts];
-			for (int ieta = 0; ieta < eta_s_npts; ++ieta)
-				osc3[iqz][isurf][ieta] = new double [2];
-		}
-	}
-
-	return;
-}
-
-void CorrelationFunction::Delete_osc_arrays()
-{
-	for (int iqt = 0; iqt < qtnpts; ++iqt)
-	{
-		for (int isurf = 0; isurf < FO_length; ++isurf)
-		{
-			for (int ieta = 0; ieta < eta_s_npts; ++ieta)
-				delete [] osc0[iqt][isurf][ieta];
-			delete [] osc0[iqt][isurf];
-		}
-		delete [] osc0[iqt];
-	}
-	for (int iqx = 0; iqx < qxnpts; ++iqx)
-	{
-		for (int isurf = 0; isurf < FO_length; ++isurf)
-			delete [] osc1[iqx][isurf];
-		delete [] osc1[iqx];
-	}
-	for (int iqy = 0; iqy < qynpts; ++iqy)
-	{
-		for (int isurf = 0; isurf < FO_length; ++isurf)
-			delete [] osc2[iqy][isurf];
-		delete [] osc2[iqy];
-	}
-	for (int iqz = 0; iqz < qznpts; ++iqz)
-	{
-		for (int isurf = 0; isurf < FO_length; ++isurf)
-		{
-			for (int ieta = 0; ieta < eta_s_npts; ++ieta)
-				delete [] osc3[iqz][isurf][ieta];
-			delete [] osc3[iqz][isurf];
-		}
-		delete [] osc3[iqz];
-	}
-}
-
 void CorrelationFunction::Set_eiqx_matrices()
 {
-	full_FO_length = FO_length * eta_s_npts;
-
-	Allocate_osc_arrays(FO_length);
+	oscx = new double [FO_length * qxnpts * 2];
+	oscy = new double [FO_length * qynpts * 2];
 
 	for (int isurf = 0; isurf < FO_length; ++isurf)
 	{
@@ -683,45 +602,27 @@ void CorrelationFunction::Set_eiqx_matrices()
 
 		for (int iqx = 0; iqx < qxnpts; ++iqx)
 		{
-			osc1[iqx][isurf][0] = cos(hbarCm1*qx_pts[iqx]*xpt);
-			osc1[iqx][isurf][1] = sin(hbarCm1*qx_pts[iqx]*xpt);
+			oscx[(isurf * qxnpts + iqx) * 2 + 0] = cos(hbarCm1*qx_pts[iqx]*xpt);
+			oscx[(isurf * qxnpts + iqx) * 2 + 1] = sin(hbarCm1*qx_pts[iqx]*xpt);
 		}
 
 		for (int iqy = 0; iqy < qynpts; ++iqy)
 		{
-			osc2[iqy][isurf][0] = cos(hbarCm1*qy_pts[iqy]*ypt);
-			osc2[iqy][isurf][1] = sin(hbarCm1*qy_pts[iqy]*ypt);
-		}
-
-		for (int ieta = 0; ieta < eta_s_npts; ++ieta)
-		{
-			double tpt = tau*ch_eta_s[ieta];
-			double zpt = tau*sh_eta_s[ieta];
-
-			for (int iqt = 0; iqt < qtnpts; ++iqt)
-			{
-				osc0[iqt][isurf][ieta][0] = cos(hbarCm1*qt_pts[iqt]*tpt);
-				osc0[iqt][isurf][ieta][1] = sin(hbarCm1*qt_pts[iqt]*tpt);
-			}
-
-			for (int iqz = 0; iqz < qznpts; ++iqz)
-			{
-				osc3[iqz][isurf][ieta][0] = cos(hbarCm1*qz_pts[iqz]*zpt);
-				osc3[iqz][isurf][ieta][1] = sin(hbarCm1*qz_pts[iqz]*zpt);
-			}
+			oscy[(isurf * qynpts + iqy) * 2 + 0] = cos(hbarCm1*qy_pts[iqy]*ypt);
+			oscy[(isurf * qynpts + iqy) * 2 + 1] = sin(hbarCm1*qy_pts[iqy]*ypt);
 		}
 	}
 
-	S_p_withweight_array = new double ** [n_pT_pts];
+	FOcell_density_array = new double ** [n_pT_pts];
 	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
-		S_p_withweight_array[ipt] = new double * [n_pphi_pts];
+		FOcell_density_array[ipt] = new double * [n_pphi_pts];
 
 	// set the rest later
 	most_important_FOcells = new size_t ** [n_pT_pts];
 	for(int ipt = 0; ipt < n_pT_pts; ipt++)
 		most_important_FOcells[ipt] = new size_t * [n_pphi_pts];
 
-	//*global_out_stream_ptr << "Using fraction_of_resonances = " << fraction_of_resonances << endl;
+	transverse_Fourier_factor = new double [FO_length];
 
 	return;
 }
@@ -891,11 +792,11 @@ void CorrelationFunction::Delete_CFvals()
 }
 
 
-void CorrelationFunction::Delete_S_p_withweight_array()
+void CorrelationFunction::Delete_FOcell_density_array()
 {
 	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
-		delete [] S_p_withweight_array[ipt];
-	delete [] S_p_withweight_array;
+		delete [] FOcell_density_array[ipt];
+	delete [] FOcell_density_array;
 
 	return;
 }

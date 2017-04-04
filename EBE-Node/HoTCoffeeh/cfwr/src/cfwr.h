@@ -160,7 +160,8 @@ class CorrelationFunction
 		//single particle spectra for plane angle determination
 		double SP_p_y, mean_pT;
 		size_t *** most_important_FOcells;
-		double * giant_array_C, * giant_array_S, ** giant_array_slice;
+		//double * giant_array_C, * giant_array_S, ** giant_array_slice;
+		double * transverse_Fourier_array_C, * transverse_Fourier_array_S;
 		int ** number_of_FOcells_above_cutoff_array;
 
 		//pair momentum
@@ -238,7 +239,7 @@ class CorrelationFunction
 		double *** res_sign_info, *** res_log_info, *** res_moments_info;
 		double ** spec_sign_info, ** spec_log_info, ** spec_vals_info;
 
-		double *** S_p_withweight_array;
+		double *** FOcell_density_array;
 
 		vector<vector<int> > cutoff_FOcells;
 		//vector<vector<double> > cutoff_FOcell_vals_C, cutoff_FOcell_vals_S;
@@ -261,7 +262,7 @@ class CorrelationFunction
 
 	public:
 		//library of inline functions
-		inline int indexer(const int ipt, const int ipphi, const int iqt, const int iqx, const int iqy, const int iqz, const int itrig);
+		inline int indexer(const int ipt, const int ipphi, const int ipY, const int iqt, const int iqx, const int iqy, const int iqz, const int itrig);
 		inline double lin_int(double x_m_x1, double one_by_x2_m_x1, double f1, double f2);
 		inline void addElementToQueue(priority_queue<pair<double, size_t> >& p, pair<double, size_t> elem, size_t max_size);
 		inline void set_to_zero(double * array, size_t arraylength);
@@ -345,7 +346,7 @@ class CorrelationFunction
 		void Teardown_temp_arrays(double ***** local_temp_moments, double ******* temp_moments_array);
 		void Setup_current_daughters_dN_dypTdpTdphi_moments(int n_daughter);
 		void Cleanup_current_daughters_dN_dypTdpTdphi_moments(int n_daughter);
-		void Delete_S_p_withweight_array();
+		void Delete_FOcell_density_array();
 		void Allocate_osc_arrays(int FOarray_length);
 		void Delete_osc_arrays();
 		//void test_interpolator();

@@ -11,12 +11,28 @@
 
 using namespace std;
 
-inline int CorrelationFunction::indexer(const int ipt, const int ipphi, const int iqt, const int iqx, const int iqy, const int iqz, const int itrig)
+inline int CorrelationFunction::indexer(const int ipt, const int ipphi, const int ipY, const int iqt, const int iqx, const int iqy, const int iqz, const int itrig)
 {
 	return (
-		( ( ( ( ( ipt * n_pphi_pts + ipphi ) * qtnpts + iqt ) * qxnpts + iqx ) * qynpts + iqy ) * qznpts + iqz ) * 2 + itrig
+		( ( ( ( ( ( ipt * n_pphi_pts + ipphi ) * n_pY_pts + ipY ) * qtnpts + iqt ) * qxnpts + iqx ) * qynpts + iqy ) * qznpts + iqz ) * 2 + itrig
 	);
 }
+
+inline int CorrelationFunction::FM_indexer(const int ipY, const int iqt, const int iqx, const int iqy, const int iqz)
+{
+	return (
+		( ( ( ipY * qtnpts + iqt ) * qxnpts + iqx ) * qynpts + iqy ) * qznpts + iqz
+	);
+}
+
+/*inline int CorrelationFunction::arb_indexer(const vector<int> indices, const vector<int> sizes)
+{
+	int n = sizes.size();
+	int flat = indices[0];
+	for (int i = 0; i < n; ++i)
+		flat = sizes[i] * flat + indices[i+1];
+	return (flat);
+}*/
 
 inline void CorrelationFunction::set_to_zero(double * array, size_t arraylength)
 {
