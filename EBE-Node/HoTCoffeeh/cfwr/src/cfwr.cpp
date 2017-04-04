@@ -23,7 +23,10 @@
 
 using namespace std;
 
+const int n_alpha_points = 21;
 const std::complex<double> i(0, 1);
+double ** K0_Bessel_re, ** K1_Bessel_re, ** K0_Bessel_im, ** K1_Bessel_im;
+double * alpha_pts;
 
 // only need to calculated interpolation grid of spacetime moments for each resonance, NOT each decay channel!
 bool recycle_previous_moments = false;
@@ -41,6 +44,29 @@ inline void I(double alpha, double beta, double gamma, complex<double> & I0, com
 	double gsq = gamma*gamma;
 	complex<double> z = sqrt(z0sq + gsq);
 	int errorCode = cbessik01(z, ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p);
+	
+	I0 = 2.0*ck0;
+	I1 = 2.0*z0*ck1 / z;
+	I2 = 2.0*z0sq*ck0 / (z*z)
+			+ 2.0*(z0sq - gsq)*ck1 / pow(z, 3.0);
+	I3 = 2.0*z0*( ( pow(z0, 4.0) - 2.0* z0sq*gsq - 3.0 * pow(gamma, 4.0) ) * ck0 / z
+						+ (-6.0*gsq + z0sq*(2.0 + z0sq + gsq)) * ck1
+				) / pow(z,5.0);
+
+	return;
+}
+
+inline void I(double alpha, double beta, double gamma, int index, complex<double> & I0, complex<double> & I1, complex<double> & I2, complex<double> & I3)
+{
+	complex<double> z0 = alpha - i*beta;
+	complex<double> z0sq = pow(z0, 2.0);
+	double gsq = gamma*gamma;
+	complex<double> z = sqrt(z0sq + gsq);
+
+	complex<double> ck0(	interpolate1D(alpha_pts, K0_Bessel_re[index], alpha, n_alpha_points, 1, false),
+							interpolate1D(alpha_pts, K0_Bessel_im[index], alpha, n_alpha_points, 1, false)) ;
+	complex<double> ck1(	interpolate1D(alpha_pts, K1_Bessel_re[index], alpha, n_alpha_points, 1, false),
+							interpolate1D(alpha_pts, K1_Bessel_im[index], alpha, n_alpha_points, 1, false)) ;
 	
 	I0 = 2.0*ck0;
 	I1 = 2.0*z0*ck1 / z;
@@ -756,7 +782,9 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid)
 
 	// get weighted spectra with only most important fluid cells, up to given threshhold
 	*global_out_stream_ptr << "Computing weighted thermal spectra..." << endl;
+debugger(__LINE__, __FILE__);
 	sw.Reset();
+debugger(__LINE__, __FILE__);
 	Cal_dN_dypTdpTdphi_with_weights(local_pid);
 	sw.Stop();
 	*global_out_stream_ptr << "CP#2: Took " << sw.printTime() << " seconds." << endl;
@@ -1067,17 +1095,79 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_heap(int local_pid, double cutoff)
 	return;
 }
 
+void CorrelationFunction::Set_Bessel_function_grids(double alpha_min, double alpha_max, int n_alpha_points)
+{
+	double * dummy = new double [n_alpha_points];
+	double * alpha_pts = new double [n_alpha_points];
+	gauss_quadrature(n_alpha_points, 1, 0.0, 0.0, alpha_min, alpha_max, alpha_pts, dummy);
+
+	K0_Bessel_re = new double * [qtnpts * qznpts * n_pY_pts * FO_length];
+	K0_Bessel_im = new double * [qtnpts * qznpts * n_pY_pts * FO_length];
+	K1_Bessel_re = new double * [qtnpts * qznpts * n_pY_pts * FO_length];
+	K1_Bessel_im = new double * [qtnpts * qznpts * n_pY_pts * FO_length];
+//debugger(__LINE__, __FILE__);
+	int i = 0;
+	for (int isurf = 0; isurf < FO_length; ++isurf)
+	for (int iqt = 0; iqt < qtnpts; ++iqt)
+	for (int iqz = 0; iqz < qznpts; ++iqz)
+	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
+	{
+		FO_surf * surf = &FOsurf_ptr[isurf];
+		double tau = surf->tau;
+		double qt = qt_pts[iqt];
+		double qz = qz_pts[iqz];
+		double ch_pY = ch_SP_pY[ipY];
+		double sh_pY = sh_SP_pY[ipY];
+		double beta = tau * hbarCm1 * ( qt*ch_pY - qz*sh_pY );
+		double gamma = tau * hbarCm1 * ( qz*ch_pY - qt*sh_pY );
+		double gsq = gamma*gamma;
+
+//debugger(__LINE__, __FILE__);
+		K0_Bessel_re[i] = new double [n_alpha_points];
+//debugger(__LINE__, __FILE__);
+		K0_Bessel_im[i] = new double [n_alpha_points];
+//debugger(__LINE__, __FILE__);
+		K1_Bessel_re[i] = new double [n_alpha_points];
+//debugger(__LINE__, __FILE__);
+		K1_Bessel_im[i] = new double [n_alpha_points];
+//debugger(__LINE__, __FILE__);
+
+		for (int ia = 0; ia < n_alpha_points; ++ia)
+		{
+//debugger(__LINE__, __FILE__);
+			complex<double> ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p;
+			complex<double> z0 = alpha_pts[ia] - i*beta;
+			complex<double> z0sq = pow(z0, 2.0);
+			complex<double> z = sqrt(z0sq + gsq);
+			int errorCode = cbessik01(z, ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p);
+//debugger(__LINE__, __FILE__);
+			K0_Bessel_re[i][ia] = ck0.real();
+//debugger(__LINE__, __FILE__);
+			K0_Bessel_im[i][ia] = ck0.imag();
+//debugger(__LINE__, __FILE__);
+			K1_Bessel_re[i][ia] = ck1.real();
+//debugger(__LINE__, __FILE__);
+			K1_Bessel_im[i][ia] = ck1.imag();
+//debugger(__LINE__, __FILE__);
+		}
+		++i;
+	}
+//debugger(__LINE__, __FILE__);
+	return;
+}
+
 void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid)
 {
-	Stopwatch sw, sw_pTpphi;
+//debugger(__LINE__, __FILE__);
+	Stopwatch sw, sw_pTpphi, sw_BesselGrids;
 	sw.Start();
-
+//debugger(__LINE__, __FILE__);
 	// set particle information
 	double sign = all_particles[local_pid].sign;
 	double degen = all_particles[local_pid].gspin;
 	double localmass = all_particles[local_pid].mass;
 	double mu = all_particles[local_pid].mu;
-
+//debugger(__LINE__, __FILE__);
 	// set some freeze-out surface information that's constant the whole time
 	double prefactor = 1.0*degen/(8.0*M_PI*M_PI*M_PI)/(hbarC*hbarC*hbarC);
 	double Tdec = (&FOsurf_ptr[0])->Tdec;
@@ -1089,6 +1179,17 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid)
 		deltaf_prefactor = 1./(2.0*Tdec*Tdec*(Edec+Pdec));
 
 	double eta_s_symmetry_factor = 2.0;
+//debugger(__LINE__, __FILE__);
+	// Need this to avoid extremely expensive Bessel function calculations
+	*global_out_stream_ptr << "How long does it take to set Bessel function grids? ...";
+	sw_BesselGrids.Start();
+	const double alpha_min = localmass * one_by_Tdec;
+	const double alpha_max = 2.0 * sqrt(localmass*localmass + SP_pT[n_pT_pts-1]*SP_pT[n_pT_pts-1]) * one_by_Tdec;	//using 2 instead of max(gammaT) --> fix later
+debugger(__LINE__, __FILE__);
+	Set_Bessel_function_grids(alpha_min, alpha_max, n_alpha_points);
+debugger(__LINE__, __FILE__);
+	sw_BesselGrids.Stop();
+	*global_out_stream_ptr << sw_BesselGrids.printTime() << " seconds." << endl;
 
 	////////////////////////////////
 	// Loop over pT and pphi points
@@ -1180,6 +1281,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid)
 				for (int iqz = 0; iqz < qznpts; ++iqz)
 				for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 				{
+					int FOqtqzpY_index = ( ( isurf * qtnpts + iqt ) * qznpts + iqz ) * n_pY_pts + ipY;
 					double qt = qt_pts[iqt];
 					double qz = qz_pts[iqz];
 					double ch_pY = ch_SP_pY[ipY];
@@ -1188,7 +1290,8 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid)
 					double gamma = tau * hbarCm1 * ( qz*ch_pY - qt*sh_pY );
 
 					complex<double> I0_a_b_g, I1_a_b_g, I2_a_b_g, I3_a_b_g;
-					I(alpha, beta, gamma, I0_a_b_g, I1_a_b_g, I2_a_b_g, I3_a_b_g);
+					//I(alpha, beta, gamma, I0_a_b_g, I1_a_b_g, I2_a_b_g, I3_a_b_g);
+					I(alpha, beta, gamma, FOqtqzpY_index, I0_a_b_g, I1_a_b_g, I2_a_b_g, I3_a_b_g);
 
 					complex<double> term1 = transverse_f0 * (A*I1_a_b_g + B*I0_a_b_g);
 					complex<double> term2(1e-100,0), term3(1e-100,0);
@@ -1196,7 +1299,8 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid)
 					if (use_delta_f)
 					{
 						complex<double> I0_2a_b_g, I1_2a_b_g, I2_2a_b_g, I3_2a_b_g;
-						I(2.0*alpha, beta, gamma, I0_2a_b_g, I1_2a_b_g, I2_2a_b_g, I3_2a_b_g);
+						//I(2.0*alpha, beta, gamma, I0_2a_b_g, I1_2a_b_g, I2_2a_b_g, I3_2a_b_g);
+						I(2.0*alpha, beta, gamma, FOqtqzpY_index, I0_2a_b_g, I1_2a_b_g, I2_2a_b_g, I3_2a_b_g);
 
 						double c1 = A*a, c2 = B*a+b*A, c3 = B*b+c*A, c4 = B*c;
 						term2 = C * transverse_f0 * ( c1*I3_a_b_g + c2*I2_a_b_g + c3*I1_a_b_g + c4*I0_a_b_g );
@@ -1262,6 +1366,8 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid)
 		}
 		sw_pTpphi.Stop();
 		*global_out_stream_ptr << "Completed ipT, ipphi = " << ipT << ", " << ipphi << " in " << sw_pTpphi.printTime() << " seconds." << endl;
+
+		if (1) exit(0);
 	}
 
 	//////////////////////////////////////////////////

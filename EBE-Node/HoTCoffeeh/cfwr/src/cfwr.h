@@ -291,6 +291,7 @@ class CorrelationFunction
 		int Set_target_thermal_in_HDF_array(double * tta_array_to_use);
 
 		void Set_dN_dypTdpTdphi_moments(int local_pid);
+		void Set_Bessel_function_grids(double alpha_min, double alpha_max, int n_alpha_points);
 		void Set_most_important_FOcells(vector<size_t> * most_impt_FOcells_vec, vector<double> * most_impt_FOcells_vals_vec, priority_queue<pair<double, size_t> > FOcells_PQ);
 		int Set_percentage_cutoffs(vector<int> * cutoff_FOcells_at_pTpphi, vector<double> * most_impt_FOcells_vals_vec, double absolute_running_total, double cutoff);
 		inline void Update_Fourier_moments_at_cutoffs(vector<double> * cutoff_Fourier_moments_cos, vector<double> * cutoff_Fourier_moments_sin,
