@@ -833,11 +833,16 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid)
 
 	// get weighted spectra with only most important fluid cells, up to given threshhold
 	*global_out_stream_ptr << "Computing weighted thermal spectra..." << endl;
+
 debugger(__LINE__, __FILE__);
 	sw.Reset();
 debugger(__LINE__, __FILE__);
 	Stopwatch sw_qtqzpY;
 	//Cal_dN_dypTdpTdphi_with_weights(local_pid);
+
+	///////////////////////////////////
+	// Loop over qt, qz, and pY points
+	///////////////////////////////////
 	for (int iqt = 0; iqt < (qtnpts / 2) + 1; ++iqt)	//assumes central qt point is zero
 	for (int iqz = 0; iqz < qznpts; ++iqz)
 	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
@@ -847,7 +852,6 @@ debugger(__LINE__, __FILE__);
 		Cal_dN_dypTdpTdphi_with_weights(local_pid, ipY, iqt, iqz);
 		sw_qtqzpY.Stop();
 		*global_out_stream_ptr << "Finished loop with ( iqt, iqz, ipY ) = ( " << iqt << ", " << iqz << ", " << ipY << " ) in " << sw_qtqzpY.printTime() << " seconds." << endl;
-		if (iqz > 0) exit(0);
 	}
 	if (1) exit(0);
 
@@ -1245,72 +1249,63 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 		double pi22 = surf->pi22;
 		double pi33 = surf->pi33;
 
-		///////////////////////////////////
-		// Loop over qt, qz, and pY points
-		///////////////////////////////////
-		//for (int iqt = (qtnpts / 2) + 1; iqt < qtnpts; ++iqt)	//assumes central qt point is zero
-		//for (int iqz = 0; iqz < qznpts; ++iqz)
-		//for (int ipY = 0; ipY < n_pY_pts; ++ipY)
-		//{
-			double qt = qt_pts[iqt];
-			double qz = qz_pts[iqz];
-			double ch_pY = ch_SP_pY[ipY];
-			double sh_pY = sh_SP_pY[ipY];
-			double beta = tau * hbarCm1 * ( qt*ch_pY - qz*sh_pY );
-			double gamma = tau * hbarCm1 * ( qz*ch_pY - qt*sh_pY );
+		double qt = qt_pts[iqt];
+		double qz = qz_pts[iqz];
+		double ch_pY = ch_SP_pY[ipY];
+		double sh_pY = sh_SP_pY[ipY];
+		double beta = tau * hbarCm1 * ( qt*ch_pY - qz*sh_pY );
+		double gamma = tau * hbarCm1 * ( qz*ch_pY - qt*sh_pY );
 
-			Set_Bessel_function_grids(beta, gamma);
+		Set_Bessel_function_grids(beta, gamma);
 
-			////////////////////////////////
-			// Loop over pT and pphi points
-			////////////////////////////////
-			for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+		////////////////////////////////
+		// Loop over pT and pphi points
+		////////////////////////////////
+		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+		{
+			double pT = SP_pT[ipT];
+			double mT = sqrt(pT*pT+localmass*localmass);
+			double alpha = one_by_Tdec*gammaT*mT;
+
+			Iint(alpha, beta, gamma, I0_a_b_g_re, I1_a_b_g_re, I2_a_b_g_re, I3_a_b_g_re, I0_a_b_g_im, I1_a_b_g_im, I2_a_b_g_im, I3_a_b_g_im);
+			if (use_delta_f)
+				Iint(2.0*alpha, beta, gamma, I0_2a_b_g_re, I1_2a_b_g_re, I2_2a_b_g_re, I3_2a_b_g_re, I0_2a_b_g_im, I1_2a_b_g_im, I2_2a_b_g_im, I3_2a_b_g_im);
+
+			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 			{
-				double pT = SP_pT[ipT];
-				double mT = sqrt(pT*pT+localmass*localmass);
-				double alpha = one_by_Tdec*gammaT*mT;
+				// initialize transverse momentum information
+				double sin_pphi = sin_SP_pphi[ipphi];
+				double cos_pphi = cos_SP_pphi[ipphi];
+				double px = pT*cos_pphi;
+				double py = pT*sin_pphi;
 
-				Iint(alpha, beta, gamma, I0_a_b_g_re, I1_a_b_g_re, I2_a_b_g_re, I3_a_b_g_re, I0_a_b_g_im, I1_a_b_g_im, I2_a_b_g_im, I3_a_b_g_im);
+				double A = tau*prefactor*mT*da0;
+				double B = tau*prefactor*(px*da1 + py*da2);
+				double C = deltaf_prefactor;
+
+				double a = mT*mT*(pi00 + pi33);
+				double b = -2.0*mT*(px*pi01 + py*pi02);
+				double c = px*px*pi11 + 2.0*px*py*pi12 + py*py*pi22 - mT*mT*pi33;
+
+				double transverse_f0 = exp( one_by_Tdec*(gammaT*(px*vx + py*vy) + mu) );
+
+				double term1_re = transverse_f0 * (A*I1_a_b_g_re + B*I0_a_b_g_re);
+				double term1_im = transverse_f0 * (A*I1_a_b_g_im + B*I0_a_b_g_im);
+
+				double term2_re, term3_re, term2_im, term3_im;
 				if (use_delta_f)
-					Iint(2.0*alpha, beta, gamma, I0_2a_b_g_re, I1_2a_b_g_re, I2_2a_b_g_re, I3_2a_b_g_re, I0_2a_b_g_im, I1_2a_b_g_im, I2_2a_b_g_im, I3_2a_b_g_im);
-
-				for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 				{
-					// initialize transverse momentum information
-					int pTpphi_index = ipT * n_pphi_pts + ipphi;
-					double sin_pphi = sin_SP_pphi[ipphi];
-					double cos_pphi = cos_SP_pphi[ipphi];
-					double px = pT*cos_pphi;
-					double py = pT*sin_pphi;
-
-					double A = tau*prefactor*mT*da0;
-					double B = tau*prefactor*(px*da1 + py*da2);
-					double C = deltaf_prefactor;
-
-					double a = mT*mT*(pi00 + pi33);
-					double b = -2.0*mT*(px*pi01 + py*pi02);
-					double c = px*px*pi11 + 2.0*px*py*pi12 + py*py*pi22 - mT*mT*pi33;
-
-					double transverse_f0 = exp( one_by_Tdec*(gammaT*(px*vx + py*vy) + mu) );
-
-					double term1_re = transverse_f0 * (A*I1_a_b_g_re + B*I0_a_b_g_re);
-					double term1_im = transverse_f0 * (A*I1_a_b_g_im + B*I0_a_b_g_im);
-
-					double term2_re, term3_re, term2_im, term3_im;
-					if (use_delta_f)
-					{
-						double c1 = A*a, c2 = B*a+b*A, c3 = B*b+c*A, c4 = B*c;
-						term2_re = C * transverse_f0 * ( c1*I3_a_b_g_re + c2*I2_a_b_g_re + c3*I1_a_b_g_re + c4*I0_a_b_g_re );
-						term3_re = -sign * C * transverse_f0 * transverse_f0 * ( c1*I3_2a_b_g_re + c2*I2_2a_b_g_re + c3*I1_2a_b_g_re + c4*I0_2a_b_g_re );
-						term2_im = C * transverse_f0 * ( c1*I3_a_b_g_im + c2*I2_a_b_g_im + c3*I1_a_b_g_im + c4*I0_a_b_g_im );
-						term3_im = -sign * C * transverse_f0 * transverse_f0 * ( c1*I3_2a_b_g_im + c2*I2_2a_b_g_im + c3*I1_2a_b_g_im + c4*I0_2a_b_g_im );
-					}
-
-					flattened_Fourier_moments_C[indexer3(ipT,ipphi,isurf)] = term1_re + term2_re + term3_re;
-					flattened_Fourier_moments_S[indexer3(ipT,ipphi,isurf)] = term1_im + term2_im + term3_im;
+					double c1 = A*a, c2 = B*a+b*A, c3 = B*b+c*A, c4 = B*c;
+					term2_re = C * transverse_f0 * ( c1*I3_a_b_g_re + c2*I2_a_b_g_re + c3*I1_a_b_g_re + c4*I0_a_b_g_re );
+					term3_re = -sign * C * transverse_f0 * transverse_f0 * ( c1*I3_2a_b_g_re + c2*I2_2a_b_g_re + c3*I1_2a_b_g_re + c4*I0_2a_b_g_re );
+					term2_im = C * transverse_f0 * ( c1*I3_a_b_g_im + c2*I2_a_b_g_im + c3*I1_a_b_g_im + c4*I0_a_b_g_im );
+					term3_im = -sign * C * transverse_f0 * transverse_f0 * ( c1*I3_2a_b_g_im + c2*I2_2a_b_g_im + c3*I1_2a_b_g_im + c4*I0_2a_b_g_im );
 				}
+
+				flattened_Fourier_moments_C[indexer3(ipT,ipphi,isurf)] = term1_re + term2_re + term3_re;
+				flattened_Fourier_moments_S[indexer3(ipT,ipphi,isurf)] = term1_im + term2_im + term3_im;
 			}
-		//}
+		}
 	}
 
 	double * summed_Fourier_moments_C = new double [n_pT_pts * n_pphi_pts * qxnpts * qynpts];
@@ -1336,10 +1331,37 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 		}
 	}
 
-	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+	/*for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+	{
+		size_t * most_important_FOcells_for_current_pt_and_pphi = most_important_FOcells[ipT][ipphi];
+		vector<int> cutoffs = cutoff_FOcells[ipT * n_pphi_pts + ipphi];
+		int nCutoffs = cutoffs.size();
+		for (int ipc = 0; ipc < nCutoffs - 1; ++ipc)
+		for (int iFO = cutoffs[ipc]; iFO < cutoffs[ipc+1]; ++iFO)
+		{
+			int isurf = (int)most_important_FOcells_for_current_pt_and_pphi[iFO];
+			double cos_qx_S_x_K = flattened_Fourier_moments_C[( ipT * n_pphi_pts + ipphi ) * FO_length + isurf];
+			double sin_qx_S_x_K = flattened_Fourier_moments_S[( ipT * n_pphi_pts + ipphi ) * FO_length + isurf];
+			for (int iqx = 0; iqx < qxnpts; ++iqx)
+			{
+				double cosAx = oscx[(isurf * qxnpts + iqx) * 2 + 0], sinAx = oscx[(isurf * qxnpts + iqx) * 2 + 1];
+				for (int iqy = 0; iqy < qynpts; ++iqy)
+				{
+					double cosAy = oscy[(isurf * qynpts + iqy) * 2 + 0], sinAy = oscy[(isurf * qynpts + iqy) * 2 + 1];
+					double cos_trans_Fourier = cosAx*cosAy - sinAx*sinAy;
+					double sin_trans_Fourier = -sinAx*cosAy - cosAx*sinAy;
+					summed_Fourier_moments_C[( ( ipT * n_pphi_pts + ipphi ) * qxnpts + iqx ) * qynpts + iqy] += cos_trans_Fourier * cos_qx_S_x_K + sin_trans_Fourier * sin_qx_S_x_K;
+					summed_Fourier_moments_S[( ( ipT * n_pphi_pts + ipphi ) * qxnpts + iqx ) * qynpts + iqy] += cos_trans_Fourier * sin_qx_S_x_K - sin_trans_Fourier * cos_qx_S_x_K;
+				}
+			}
+		}
+	}*/
+
 	for (int iqx = 0; iqx < qxnpts; ++iqx)
 	for (int iqy = 0; iqy < qynpts; ++iqy)
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 	{
 		current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,0)] = summed_Fourier_moments_C[indexer4(ipT,ipphi,iqx,iqy)];
 		current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,1)] = summed_Fourier_moments_S[indexer4(ipT,ipphi,iqx,iqy)];
@@ -1375,204 +1397,6 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 	
 	return;
 }
-
-/*void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY, int iqt, int iqz)
-{
-	Stopwatch sw, sw_FOsurf;
-	sw.Start();
-
-	// set particle information
-	double sign = all_particles[local_pid].sign;
-	double degen = all_particles[local_pid].gspin;
-	double localmass = all_particles[local_pid].mass;
-	double mu = all_particles[local_pid].mu;
-
-	// set some freeze-out surface information that's constant the whole time
-	double prefactor = 1.0*degen/(8.0*M_PI*M_PI*M_PI)/(hbarC*hbarC*hbarC);
-	double eta_s_symmetry_factor = 2.0;
-	double Tdec = (&FOsurf_ptr[0])->Tdec;
-	double Pdec = (&FOsurf_ptr[0])->Pdec;
-	double Edec = (&FOsurf_ptr[0])->Edec;
-	double one_by_Tdec = 1./Tdec;
-	double deltaf_prefactor = 0.;
-	if (use_delta_f)
-		deltaf_prefactor = 1./(2.0*Tdec*Tdec*(Edec+Pdec));
-
-	double * dummy = new double [n_alpha_points];
-	alpha_pts = new double [n_alpha_points];
-	gauss_quadrature(n_alpha_points, 1, 0.0, 0.0, 4.0, 75.0, alpha_pts, dummy);
-	K0_Bessel_re = new double [n_alpha_points];
-	K0_Bessel_im = new double [n_alpha_points];
-	K1_Bessel_re = new double [n_alpha_points];
-	K1_Bessel_im = new double [n_alpha_points];
-
-	// initialize arrays to hold results of Fourier integrals
-	double * flattened_Fourier_moments_C = new double [n_pT_pts * n_pphi_pts * qxnpts * qynpts];
-	double * flattened_Fourier_moments_S = new double [n_pT_pts * n_pphi_pts * qxnpts * qynpts];
-
-	//complex<double> I0_a_b_g, I1_a_b_g, I2_a_b_g, I3_a_b_g;
-	//complex<double> I0_2a_b_g, I1_2a_b_g, I2_2a_b_g, I3_2a_b_g;
-	double I0_a_b_g_re, I1_a_b_g_re, I2_a_b_g_re, I3_a_b_g_re;
-	double I0_2a_b_g_re, I1_2a_b_g_re, I2_2a_b_g_re, I3_2a_b_g_re;
-	double I0_a_b_g_im, I1_a_b_g_im, I2_a_b_g_im, I3_a_b_g_im;
-	double I0_2a_b_g_im, I1_2a_b_g_im, I2_2a_b_g_im, I3_2a_b_g_im;
-
-	/////////////////////////////////////////////////////////////
-	// Loop over all freeze-out surface fluid cells (for now)
-	/////////////////////////////////////////////////////////////
-	for (int isurf = 0; isurf < FO_length; ++isurf)
-	{
-		sw_FOsurf.Reset();
-		sw_FOsurf.Start();
-		FO_surf * surf = &FOsurf_ptr[isurf];
-
-		double tau = surf->tau;
-
-		double vx = surf->vx;
-		double vy = surf->vy;
-		double gammaT = surf->gammaT;
-
-		double da0 = surf->da0;
-		double da1 = surf->da1;
-		double da2 = surf->da2;
-
-		double pi00 = surf->pi00;
-		double pi01 = surf->pi01;
-		double pi02 = surf->pi02;
-		double pi11 = surf->pi11;
-		double pi12 = surf->pi12;
-		double pi22 = surf->pi22;
-		double pi33 = surf->pi33;
-
-		///////////////////////////////////
-		// Loop over qt, qz, and pY points
-		///////////////////////////////////
-		//for (int iqt = 0; iqt < qtnpts; ++iqt)
-		//for (int iqz = 0; iqz < qznpts; ++iqz)
-		//for (int ipY = 0; ipY < n_pY_pts; ++ipY)
-		//{
-			double qt = qt_pts[iqt];
-			double qz = qz_pts[iqz];
-			double ch_pY = ch_SP_pY[ipY];
-			double sh_pY = sh_SP_pY[ipY];
-			double beta = tau * hbarCm1 * ( qt*ch_pY - qz*sh_pY );
-			double gamma = tau * hbarCm1 * ( qz*ch_pY - qt*sh_pY );
-
-			Set_Bessel_function_grids(beta, gamma);
-			//Set_weight_grids(beta, gamma);
-
-			////////////////////////////////
-			// Loop over pT and pphi points
-			////////////////////////////////
-			for (int ipT = 0; ipT < n_pT_pts; ++ipT)
-			{
-				double pT = SP_pT[ipT];
-				double mT = sqrt(pT*pT+localmass*localmass);
-				double alpha = one_by_Tdec*gammaT*mT;
-
-				Iint(alpha, beta, gamma, I0_a_b_g_re, I1_a_b_g_re, I2_a_b_g_re, I3_a_b_g_re, I0_a_b_g_im, I1_a_b_g_im, I2_a_b_g_im, I3_a_b_g_im);
-				if (use_delta_f)
-					Iint(2.0*alpha, beta, gamma, I0_2a_b_g_re, I1_2a_b_g_re, I2_2a_b_g_re, I3_2a_b_g_re, I0_2a_b_g_im, I1_2a_b_g_im, I2_2a_b_g_im, I3_2a_b_g_im);
-
-				for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-				{
-					// initialize transverse momentum information
-					int pTpphi_index = ipT * n_pphi_pts + ipphi;
-					double sin_pphi = sin_SP_pphi[ipphi];
-					double cos_pphi = cos_SP_pphi[ipphi];
-					double px = pT*cos_pphi;
-					double py = pT*sin_pphi;
-
-					double A = tau*prefactor*mT*da0;
-					double B = tau*prefactor*(px*da1 + py*da2);
-					double C = deltaf_prefactor;
-
-					double a = mT*mT*(pi00 + pi33);
-					double b = -2.0*mT*(px*pi01 + py*pi02);
-					double c = px*px*pi11 + 2.0*px*py*pi12 + py*py*pi22 - mT*mT*pi33;
-
-					double transverse_f0 = exp( one_by_Tdec*(gammaT*(px*vx + py*vy) + mu) );
-
-					double term1_re = transverse_f0 * (A*I1_a_b_g_re + B*I0_a_b_g_re);
-					double term1_im = transverse_f0 * (A*I1_a_b_g_im + B*I0_a_b_g_im);
-
-					double term2_re, term3_re, term2_im, term3_im;
-					if (use_delta_f)
-					{
-						double c1 = A*a, c2 = B*a+b*A, c3 = B*b+c*A, c4 = B*c;
-						term2_re = C * transverse_f0 * ( c1*I3_a_b_g_re + c2*I2_a_b_g_re + c3*I1_a_b_g_re + c4*I0_a_b_g_re );
-						term3_re = -sign * C * transverse_f0 * transverse_f0 * ( c1*I3_2a_b_g_re + c2*I2_2a_b_g_re + c3*I1_2a_b_g_re + c4*I0_2a_b_g_re );
-						term2_im = C * transverse_f0 * ( c1*I3_a_b_g_im + c2*I2_a_b_g_im + c3*I1_a_b_g_im + c4*I0_a_b_g_im );
-						term3_im = -sign * C * transverse_f0 * transverse_f0 * ( c1*I3_2a_b_g_im + c2*I2_2a_b_g_im + c3*I1_2a_b_g_im + c4*I0_2a_b_g_im );
-					}
-
-					double cos_qx_S_x_K = term1_re + term2_re + term3_re;
-					double sin_qx_S_x_K = term1_im + term2_im + term3_im;
-
-					///////////////////////////////////
-					// Loop over qx and qy points
-					///////////////////////////////////
-					for (int iqx = 0; iqx < qxnpts; ++iqx)
-					{
-						double cosAx = oscx[(isurf * qxnpts + iqx) * 2 + 0], sinAx = oscx[(isurf * qxnpts + iqx) * 2 + 1];
-						for (int iqy = 0; iqy < qynpts; ++iqy)
-						{
-							double cosAy = oscy[(isurf * qynpts + iqy) * 2 + 0], sinAy = oscy[(isurf * qynpts + iqy) * 2 + 1];
-							double cos_trans_Fourier = cosAx*cosAy - sinAx*sinAy;
-							double sin_trans_Fourier = -sinAx*cosAy - cosAx*sinAy;
-							flattened_Fourier_moments_C[indexer4(ipT,ipphi,iqx,iqy)] += cos_trans_Fourier * cos_qx_S_x_K + sin_trans_Fourier * sin_qx_S_x_K;
-							flattened_Fourier_moments_S[indexer4(ipT,ipphi,iqx,iqy)] += cos_trans_Fourier * sin_qx_S_x_K - sin_trans_Fourier * cos_qx_S_x_K;
-						}
-					}
-				}
-			}
-		//}
-	}
-		
-	// Finally, updated the thermal Fourier-weighted moments
-	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
-	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-	for (int iqx = 0; iqx < qxnpts; ++iqx)
-	for (int iqy = 0; iqy < qynpts; ++iqy)
-	{
-		// whatever the end results, use them to update the appropriate cell in this resonance's thermal spectra
-		current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,0)] = flattened_Fourier_moments_C[indexer4(ipT,ipphi,iqx,iqy)];
-		current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,1)] = flattened_Fourier_moments_S[indexer4(ipT,ipphi,iqx,iqy)];
-	}
-
-	//////////////////////////////////////////////////
-	// Use symmetry in q-space to get spectra for all
-	// positive qt points from negative qt points
-	//////////////////////////////////////////////////
-	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
-	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-	//for (int ipY = 0; ipY < n_pY_pts; ++ipY)
-	//for (int iqt = (qtnpts / 2) + 1; iqt < qtnpts; ++iqt)	//assumes central qt point is zero
-	for (int iqx = 0; iqx < qxnpts; ++iqx)
-	for (int iqy = 0; iqy < qynpts; ++iqy)
-	//for (int iqz = 0; iqz < qznpts; ++iqz)
-	for (int itrig = 0; itrig < ntrig; ++itrig)
-		current_dN_dypTdpTdphi_moments[indexer(ipT, ipphi, ipY, qtnpts - iqt - 1, qxnpts - iqx - 1, qynpts - iqy - 1, qznpts - iqz - 1, itrig)]
-			= (1.0 - 2.0 * itrig)
-				* current_dN_dypTdpTdphi_moments[indexer(ipT, ipphi, ipY, iqt, iqx, iqy, iqz, itrig)];
-		//current_dN_dypTdpTdphi_moments[indexer(ipT, ipphi, ipY, iqt, iqx, iqy, iqz, itrig)]
-		//	= (1.0 - 2.0 * itrig)
-		//		* current_dN_dypTdpTdphi_moments[indexer(ipT, ipphi, ipY, qtnpts - iqt - 1, qxnpts - iqx - 1, qynpts - iqy - 1, qznpts - iqz - 1, itrig)];
-
-	delete [] dummy;
-	delete [] alpha_pts;
-	delete [] K0_Bessel_re;
-	delete [] K0_Bessel_im;
-	delete [] K1_Bessel_re;
-	delete [] K1_Bessel_im;
-	delete [] flattened_Fourier_moments_C;
-	delete [] flattened_Fourier_moments_S;
-
-	sw.Stop();
-	*global_out_stream_ptr << "Total function call took " << sw.printTime() << " seconds." << endl;
-	
-	return;
-}*/
 
 inline void CorrelationFunction::Update_Fourier_moments_at_cutoffs(vector<double> * cutoff_Fourier_moments_cos, vector<double> * cutoff_Fourier_moments_sin,
 																	double * flattened_Fourier_moments_C, double * flattened_Fourier_moments_S)

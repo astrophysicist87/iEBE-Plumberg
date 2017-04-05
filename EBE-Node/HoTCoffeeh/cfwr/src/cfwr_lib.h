@@ -35,14 +35,15 @@ inline int CorrelationFunction::indexer2(const int ipT, const int ipphi, const i
 inline int CorrelationFunction::indexer3(const int ipT, const int ipphi, const int isurf)
 {
 	return (
-		( ipT * n_pphi_pts + ipphi ) * FO_length + isurf
+		( isurf * n_pT_pts + ipT ) * n_pphi_pts + ipphi
 	);
 }
 
 inline int CorrelationFunction::indexer4(const int ipT, const int ipphi, const int iqx, const int iqy)
 {
 	return (
-		( ( ipT * n_pphi_pts + ipphi ) * qxnpts + iqx ) * qynpts + iqy
+		//( ( ipT * n_pphi_pts + ipphi ) * qxnpts + iqx ) * qynpts + iqy
+		( (  iqx * qynpts + iqy ) * n_pT_pts + ipT ) * n_pphi_pts + ipphi
 	);
 }
 
