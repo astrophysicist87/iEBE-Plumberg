@@ -32,6 +32,19 @@ inline int CorrelationFunction::indexer2(const int ipT, const int ipphi, const i
 	);
 }
 
+inline int CorrelationFunction::indexer3(const int ipT, const int ipphi, const int isurf)
+{
+	return (
+		( ipT * n_pphi_pts + ipphi ) * FO_length + isurf
+	);
+}
+
+inline int CorrelationFunction::indexer4(const int ipT, const int ipphi, const int iqx, const int iqy)
+{
+	return (
+		( ( ipT * n_pphi_pts + ipphi ) * qxnpts + iqx ) * qynpts + iqy
+	);
+}
 
 /*inline int CorrelationFunction::arb_indexer(const vector<int> indices, const vector<int> sizes)
 {

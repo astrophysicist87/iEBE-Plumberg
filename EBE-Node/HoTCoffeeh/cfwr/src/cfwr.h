@@ -263,6 +263,8 @@ class CorrelationFunction
 		//library of inline functions
 		inline int indexer(const int ipt, const int ipphi, const int ipY, const int iqt, const int iqx, const int iqy, const int iqz, const int itrig);
 		inline int indexer2(const int ipt, const int ipphi, const int ipY, const int iqt, const int iqx, const int iqy, const int iqz);
+		inline int indexer3(const int ipt, const int ipphi, const int isurf);
+		inline int indexer4(const int ipt, const int ipphi, const int iqx, const int iqy);
 		inline int FM_indexer(const int ipY, const int iqt, const int iqx, const int iqy, const int iqz);
 		//inline double lin_int(double x_m_x1, double one_by_x2_m_x1, double f1, double f2);
 		inline void addElementToQueue(priority_queue<pair<double, size_t> >& p, pair<double, size_t> elem, size_t max_size);
@@ -303,7 +305,8 @@ class CorrelationFunction
 		void Set_giant_arrays(int iqt, int iqx, int iqy, int iqz);
 		void Cal_dN_dypTdpTdphi(double** SP_p0, double** SP_px, double** SP_py, double** SP_pz);
 		void Cal_dN_dypTdpTdphi_heap(int local_pid, double cutoff);
-		void Cal_dN_dypTdpTdphi_with_weights(int local_pid);
+		//void Cal_dN_dypTdpTdphi_with_weights(int local_pid);
+		void Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY, int iqt, int iqz);
 		double Cal_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi);
 		void Cal_dN_dypTdpTdphi_with_weights_function(int local_pid, double pT, double pphi,
 												double qt, double qx, double qy, double qz, double * cosqx_dN_dypTdpTdphi, double * sinqx_dN_dypTdpTdphi);
