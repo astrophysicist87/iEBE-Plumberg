@@ -23,10 +23,14 @@
 
 using namespace std;
 
-const int n_alpha_points = 21;
+const int n_alpha_points = 15;
 const std::complex<double> i(0, 1);
-double ** K0_Bessel_re, ** K1_Bessel_re, ** K0_Bessel_im, ** K1_Bessel_im;
+double * K0_Bessel_re, * K1_Bessel_re, * K0_Bessel_im, * K1_Bessel_im;
+//double K0_Bessel_re[n_alpha_points], K1_Bessel_re[n_alpha_points], K0_Bessel_im[n_alpha_points], K1_Bessel_im[n_alpha_points];
 double * alpha_pts;
+//double * flattened_Fourier_moments_C;
+//double * flattened_Fourier_moments_S;
+
 
 // only need to calculated interpolation grid of spacetime moments for each resonance, NOT each decay channel!
 bool recycle_previous_moments = false;
@@ -56,17 +60,17 @@ inline void I(double alpha, double beta, double gamma, complex<double> & I0, com
 	return;
 }
 
-inline void I(double alpha, double beta, double gamma, int index, complex<double> & I0, complex<double> & I1, complex<double> & I2, complex<double> & I3)
+inline void Iint(double alpha, double beta, double gamma, complex<double> & I0, complex<double> & I1, complex<double> & I2, complex<double> & I3)
 {
 	complex<double> z0 = alpha - i*beta;
 	complex<double> z0sq = pow(z0, 2.0);
 	double gsq = gamma*gamma;
 	complex<double> z = sqrt(z0sq + gsq);
 
-	complex<double> ck0(	interpolate1D(alpha_pts, K0_Bessel_re[index], alpha, n_alpha_points, 1, false),
-							interpolate1D(alpha_pts, K0_Bessel_im[index], alpha, n_alpha_points, 1, false)) ;
-	complex<double> ck1(	interpolate1D(alpha_pts, K1_Bessel_re[index], alpha, n_alpha_points, 1, false),
-							interpolate1D(alpha_pts, K1_Bessel_im[index], alpha, n_alpha_points, 1, false)) ;
+	complex<double> ck0(	interpolate1D(alpha_pts, K0_Bessel_re, alpha, n_alpha_points, 1, false, true),
+							interpolate1D(alpha_pts, K0_Bessel_im, alpha, n_alpha_points, 1, false, true)) ;
+	complex<double> ck1(	interpolate1D(alpha_pts, K1_Bessel_re, alpha, n_alpha_points, 1, false, true),
+							interpolate1D(alpha_pts, K1_Bessel_im, alpha, n_alpha_points, 1, false, true)) ;
 	
 	I0 = 2.0*ck0;
 	I1 = 2.0*z0*ck1 / z;
@@ -75,6 +79,53 @@ inline void I(double alpha, double beta, double gamma, int index, complex<double
 	I3 = 2.0*z0*( ( pow(z0, 4.0) - 2.0* z0sq*gsq - 3.0 * pow(gamma, 4.0) ) * ck0 / z
 						+ (-6.0*gsq + z0sq*(2.0 + z0sq + gsq)) * ck1
 				) / pow(z,5.0);
+
+	return;
+}
+
+inline void Iint(double alpha, double beta, double gamma, double & I0r, double & I1r, double & I2r, double & I3r, double & I0i, double & I1i, double & I2i, double & I3i)
+{
+	complex<double> z0 = alpha - i*beta;
+	complex<double> z0sq = z0*z0;
+	double gsq = gamma*gamma;
+	complex<double> zsq = z0sq + gsq;
+	complex<double> z = sqrt(zsq);
+	complex<double> zcu = zsq*z;
+	complex<double> zqi = zsq*zcu;
+
+	//complex<double> ck0(	interpolate1D(alpha_pts, K0_Bessel_re, alpha, n_alpha_points, 1, false, true),
+	//						interpolate1D(alpha_pts, K0_Bessel_im, alpha, n_alpha_points, 1, false, true)) ;
+	//complex<double> ck1(	interpolate1D(alpha_pts, K1_Bessel_re, alpha, n_alpha_points, 1, false, true),
+	//						interpolate1D(alpha_pts, K1_Bessel_im, alpha, n_alpha_points, 1, false, true)) ;
+	long idx = binarySearch(alpha_pts, n_alpha_points, alpha, true);
+	if (idx<0 || idx>=n_alpha_points-1)
+		idx = (idx<0) ? 0 : n_alpha_points-2;	//uses extrapolation
+
+	double one_by_x2_m_x1 = alpha_pts[idx+1]-alpha_pts[idx];
+	double x_m_x1 = alpha-alpha_pts[idx];
+	double f1 = K0_Bessel_re[idx];
+
+	complex<double> ck0(	lin_int(x_m_x1, one_by_x2_m_x1, K0_Bessel_re[idx], K0_Bessel_re[idx+1]),
+							lin_int(x_m_x1, one_by_x2_m_x1, K0_Bessel_im[idx], K0_Bessel_im[idx+1]) );
+	complex<double> ck1(	lin_int(x_m_x1, one_by_x2_m_x1, K1_Bessel_re[idx], K1_Bessel_re[idx+1]),
+							lin_int(x_m_x1, one_by_x2_m_x1, K1_Bessel_im[idx], K1_Bessel_im[idx+1]) );
+
+	complex<double> I0 = 2.0*ck0;
+	complex<double> I1 = 2.0*z0*ck1 / z;
+	complex<double> I2 = 2.0*z0sq*ck0 / zsq
+			+ 2.0*(z0sq - gsq)*ck1 / zcu;
+	complex<double> I3 = 2.0*z0*( ( z0sq*z0sq - 2.0* z0sq*gsq - 3.0 * gsq*gsq ) * ck0 / z
+						+ (-6.0*gsq + z0sq*(2.0 + z0sq + gsq)) * ck1
+				) / zqi;
+
+	I0r = I0.real();
+	I1r = I1.real();
+	I2r = I2.real();
+	I3r = I3.real();
+	I0i = I0.imag();
+	I1i = I1.imag();
+	I2i = I2.imag();
+	I3i = I3.imag();
 
 	return;
 }
@@ -1095,81 +1146,60 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_heap(int local_pid, double cutoff)
 	return;
 }
 
-void CorrelationFunction::Set_Bessel_function_grids(double alpha_min, double alpha_max, int n_alpha_points)
+void CorrelationFunction::Set_Bessel_function_grids(double beta, double gamma)
 {
-	double * dummy = new double [n_alpha_points];
-	double * alpha_pts = new double [n_alpha_points];
-	gauss_quadrature(n_alpha_points, 1, 0.0, 0.0, alpha_min, alpha_max, alpha_pts, dummy);
-
-	K0_Bessel_re = new double * [qtnpts * qznpts * n_pY_pts * FO_length];
-	K0_Bessel_im = new double * [qtnpts * qznpts * n_pY_pts * FO_length];
-	K1_Bessel_re = new double * [qtnpts * qznpts * n_pY_pts * FO_length];
-	K1_Bessel_im = new double * [qtnpts * qznpts * n_pY_pts * FO_length];
-//debugger(__LINE__, __FILE__);
-	int i = 0;
-	for (int isurf = 0; isurf < FO_length; ++isurf)
-	for (int iqt = 0; iqt < qtnpts; ++iqt)
-	for (int iqz = 0; iqz < qznpts; ++iqz)
-	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
+	double gsq = gamma*gamma;
+	for (int ia = 0; ia < n_alpha_points; ++ia)
 	{
-		FO_surf * surf = &FOsurf_ptr[isurf];
-		double tau = surf->tau;
-		double qt = qt_pts[iqt];
-		double qz = qz_pts[iqz];
-		double ch_pY = ch_SP_pY[ipY];
-		double sh_pY = sh_SP_pY[ipY];
-		double beta = tau * hbarCm1 * ( qt*ch_pY - qz*sh_pY );
-		double gamma = tau * hbarCm1 * ( qz*ch_pY - qt*sh_pY );
-		double gsq = gamma*gamma;
+		complex<double> ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p;
+		complex<double> z0 = alpha_pts[ia] - i*beta;
+		complex<double> z0sq = pow(z0, 2.0);
+		complex<double> z = sqrt(z0sq + gsq);
+		int errorCode = cbessik01(z, ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p);
 
-//debugger(__LINE__, __FILE__);
-		K0_Bessel_re[i] = new double [n_alpha_points];
-//debugger(__LINE__, __FILE__);
-		K0_Bessel_im[i] = new double [n_alpha_points];
-//debugger(__LINE__, __FILE__);
-		K1_Bessel_re[i] = new double [n_alpha_points];
-//debugger(__LINE__, __FILE__);
-		K1_Bessel_im[i] = new double [n_alpha_points];
-//debugger(__LINE__, __FILE__);
-
-		for (int ia = 0; ia < n_alpha_points; ++ia)
-		{
-//debugger(__LINE__, __FILE__);
-			complex<double> ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p;
-			complex<double> z0 = alpha_pts[ia] - i*beta;
-			complex<double> z0sq = pow(z0, 2.0);
-			complex<double> z = sqrt(z0sq + gsq);
-			int errorCode = cbessik01(z, ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p);
-//debugger(__LINE__, __FILE__);
-			K0_Bessel_re[i][ia] = ck0.real();
-//debugger(__LINE__, __FILE__);
-			K0_Bessel_im[i][ia] = ck0.imag();
-//debugger(__LINE__, __FILE__);
-			K1_Bessel_re[i][ia] = ck1.real();
-//debugger(__LINE__, __FILE__);
-			K1_Bessel_im[i][ia] = ck1.imag();
-//debugger(__LINE__, __FILE__);
-		}
-		++i;
+		K0_Bessel_re[ia] = ck0.real();
+		K0_Bessel_im[ia] = ck0.imag();
+		K1_Bessel_re[ia] = ck1.real();
+		K1_Bessel_im[ia] = ck1.imag();
 	}
-//debugger(__LINE__, __FILE__);
+
 	return;
 }
 
+/*void CorrelationFunction::Set_weight_grids(double beta, double gamma)
+{
+	double gsq = gamma*gamma;
+	for (int ia = 0; ia < n_alpha_points; ++ia)
+	{
+		complex<double> ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p;
+		complex<double> z0 = alpha_pts[ia] - i*beta;
+		complex<double> z0sq = pow(z0, 2.0);
+		complex<double> z = sqrt(z0sq + gsq);
+		int errorCode = cbessik01(z, ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p);
+
+		K0_Bessel_re[ia] = ck0.real();
+		K0_Bessel_im[ia] = ck0.imag();
+		K1_Bessel_re[ia] = ck1.real();
+		K1_Bessel_im[ia] = ck1.imag();
+	}
+
+	return;
+}*/
+
 void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid)
 {
-//debugger(__LINE__, __FILE__);
-	Stopwatch sw, sw_pTpphi, sw_BesselGrids;
+	Stopwatch sw, sw_FOsurf;
 	sw.Start();
-//debugger(__LINE__, __FILE__);
+
 	// set particle information
 	double sign = all_particles[local_pid].sign;
 	double degen = all_particles[local_pid].gspin;
 	double localmass = all_particles[local_pid].mass;
 	double mu = all_particles[local_pid].mu;
-//debugger(__LINE__, __FILE__);
+
 	// set some freeze-out surface information that's constant the whole time
 	double prefactor = 1.0*degen/(8.0*M_PI*M_PI*M_PI)/(hbarC*hbarC*hbarC);
+	double eta_s_symmetry_factor = 2.0;
 	double Tdec = (&FOsurf_ptr[0])->Tdec;
 	double Pdec = (&FOsurf_ptr[0])->Pdec;
 	double Edec = (&FOsurf_ptr[0])->Edec;
@@ -1178,182 +1208,161 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid)
 	if (use_delta_f)
 		deltaf_prefactor = 1./(2.0*Tdec*Tdec*(Edec+Pdec));
 
-	double eta_s_symmetry_factor = 2.0;
-//debugger(__LINE__, __FILE__);
-	// Need this to avoid extremely expensive Bessel function calculations
-	*global_out_stream_ptr << "How long does it take to set Bessel function grids? ...";
-	sw_BesselGrids.Start();
-	const double alpha_min = localmass * one_by_Tdec;
-	const double alpha_max = 2.0 * sqrt(localmass*localmass + SP_pT[n_pT_pts-1]*SP_pT[n_pT_pts-1]) * one_by_Tdec;	//using 2 instead of max(gammaT) --> fix later
-debugger(__LINE__, __FILE__);
-	Set_Bessel_function_grids(alpha_min, alpha_max, n_alpha_points);
-debugger(__LINE__, __FILE__);
-	sw_BesselGrids.Stop();
-	*global_out_stream_ptr << sw_BesselGrids.printTime() << " seconds." << endl;
+	double * dummy = new double [n_alpha_points];
+	alpha_pts = new double [n_alpha_points];
+	gauss_quadrature(n_alpha_points, 1, 0.0, 0.0, 4.0, 75.0, alpha_pts, dummy);
+	K0_Bessel_re = new double [n_alpha_points];
+	K0_Bessel_im = new double [n_alpha_points];
+	K1_Bessel_re = new double [n_alpha_points];
+	K1_Bessel_im = new double [n_alpha_points];
 
-	////////////////////////////////
-	// Loop over pT and pphi points
-	////////////////////////////////
+	// initialize arrays to hold results of Fourier integrals
+	double * flattened_Fourier_moments_C = new double [n_pT_pts * n_pphi_pts * n_pY_pts * qtnpts * qxnpts * qynpts * qznpts];
+	double * flattened_Fourier_moments_S = new double [n_pT_pts * n_pphi_pts * n_pY_pts * qtnpts * qxnpts * qynpts * qznpts];
+
 	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
+	for (int iqt = 0; iqt < qtnpts; ++iqt)
+	for (int iqx = 0; iqx < qxnpts; ++iqx)
+	for (int iqy = 0; iqy < qynpts; ++iqy)
+	for (int iqz = 0; iqz < qznpts; ++iqz)
 	{
-		sw_pTpphi.Start();
-		// initialize transverse momentum information
-		double pT = SP_pT[ipT];
-		int pTpphi_index = ipT * n_pphi_pts + ipphi;
-		double sin_pphi = sin_SP_pphi[ipphi];
-		double cos_pphi = cos_SP_pphi[ipphi];
-		double px = pT*cos_pphi;
-		double py = pT*sin_pphi;
+		flattened_Fourier_moments_C[indexer2(ipT,ipphi,ipY,iqt,iqx,iqy,iqz)] = 0.0;
+		flattened_Fourier_moments_S[indexer2(ipT,ipphi,ipY,iqt,iqx,iqy,iqz)] = 0.0;
+	}
 
-		// initialize arrays to hold results of Fourier integrals
-		double flattened_Fourier_moments_C[n_pY_pts * qtnpts * qxnpts * qynpts * qznpts], flattened_Fourier_moments_S[n_pY_pts * qtnpts * qxnpts * qynpts * qznpts];
-		double projected_Fourier_moments_C[n_pY_pts * qtnpts * qxnpts * qynpts * qznpts], projected_Fourier_moments_S[n_pY_pts * qtnpts * qxnpts * qynpts * qznpts];
+	//complex<double> I0_a_b_g, I1_a_b_g, I2_a_b_g, I3_a_b_g;
+	//complex<double> I0_2a_b_g, I1_2a_b_g, I2_2a_b_g, I3_2a_b_g;
+	double I0_a_b_g_re, I1_a_b_g_re, I2_a_b_g_re, I3_a_b_g_re;
+	double I0_2a_b_g_re, I1_2a_b_g_re, I2_2a_b_g_re, I3_2a_b_g_re;
+	double I0_a_b_g_im, I1_a_b_g_im, I2_a_b_g_im, I3_a_b_g_im;
+	double I0_2a_b_g_im, I1_2a_b_g_im, I2_2a_b_g_im, I3_2a_b_g_im;
+
+	/////////////////////////////////////////////////////////////
+	// Loop over all freeze-out surface fluid cells (for now)
+	/////////////////////////////////////////////////////////////
+	for (int isurf = 0; isurf < FO_length; ++isurf)
+	{
+		sw_FOsurf.Reset();
+		sw_FOsurf.Start();
+		FO_surf * surf = &FOsurf_ptr[isurf];
+
+		double tau = surf->tau;
+
+		double vx = surf->vx;
+		double vy = surf->vy;
+		double gammaT = surf->gammaT;
+
+		double da0 = surf->da0;
+		double da1 = surf->da1;
+		double da2 = surf->da2;
+
+		double pi00 = surf->pi00;
+		double pi01 = surf->pi01;
+		double pi02 = surf->pi02;
+		double pi11 = surf->pi11;
+		double pi12 = surf->pi12;
+		double pi22 = surf->pi22;
+		double pi33 = surf->pi33;
+
+		///////////////////////////////////
+		// Loop over qt, qz, and pY points
+		///////////////////////////////////
 		for (int iqt = 0; iqt < qtnpts; ++iqt)
 		for (int iqz = 0; iqz < qznpts; ++iqz)
 		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
-		for (int iqx = 0; iqx < qxnpts; ++iqx)
-		for (int iqy = 0; iqy < qynpts; ++iqy)
 		{
-			flattened_Fourier_moments_C[FM_indexer(ipY,iqt,iqx,iqy,iqz)] = 0.0;
-			flattened_Fourier_moments_S[FM_indexer(ipY,iqt,iqx,iqy,iqz)] = 0.0;
-			projected_Fourier_moments_C[FM_indexer(ipY,iqt,iqx,iqy,iqz)] = 0.0;
-			projected_Fourier_moments_S[FM_indexer(ipY,iqt,iqx,iqy,iqz)] = 0.0;
-		}
+			double qt = qt_pts[iqt];
+			double qz = qz_pts[iqz];
+			double ch_pY = ch_SP_pY[ipY];
+			double sh_pY = sh_SP_pY[ipY];
+			double beta = tau * hbarCm1 * ( qt*ch_pY - qz*sh_pY );
+			double gamma = tau * hbarCm1 * ( qz*ch_pY - qt*sh_pY );
 
-		// set vectors to loop through most important FO cells
-		size_t * most_important_FOcells_for_current_pt_and_pphi = most_important_FOcells[ipT][ipphi];
-		int maxFOnum = number_of_FOcells_above_cutoff_array[ipT][ipphi];
-		vector<int> cutoffs = cutoff_FOcells[pTpphi_index];
-		int nCutoffs = cutoffs.size();
-		vector<double> cutoff_Fourier_moments_cos, cutoff_Fourier_moments_sin;
-		cutoff_Fourier_moments_cos.reserve( nCutoffs * n_pY_pts * qtnpts * qxnpts * qynpts * qznpts );
-		cutoff_Fourier_moments_sin.reserve( nCutoffs * n_pY_pts * qtnpts * qxnpts * qynpts * qznpts );
+			Set_Bessel_function_grids(beta, gamma);
+			//Set_weight_grids(beta, gamma);
 
-		/////////////////////////////////////////////////////////////
-		// Loop over most important freeze-out surface fluid cells
-		/////////////////////////////////////////////////////////////
-		for (int ipc = 0; ipc < nCutoffs - 1; ++ipc)
-		{
-			// update the Fourier moments that will be extrapolated over
-			Update_Fourier_moments_at_cutoffs(&cutoff_Fourier_moments_cos, &cutoff_Fourier_moments_sin,
-												flattened_Fourier_moments_C, flattened_Fourier_moments_S);
-
-			// loop over FOcells to get to next cutoff
-			for (int iFO = cutoffs[ipc]; iFO < cutoffs[ipc+1]; ++iFO)
+			////////////////////////////////
+			// Loop over pT and pphi points
+			////////////////////////////////
+			for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 			{
-				int isurf = (int)most_important_FOcells_for_current_pt_and_pphi[iFO];
-				FO_surf * surf = &FOsurf_ptr[isurf];
-
-				double tau = surf->tau;
-
-				double vx = surf->vx;
-				double vy = surf->vy;
-				double gammaT = surf->gammaT;
-
-				double da0 = surf->da0;
-				double da1 = surf->da1;
-				double da2 = surf->da2;
-
-				double pi00 = surf->pi00;
-				double pi01 = surf->pi01;
-				double pi02 = surf->pi02;
-				double pi11 = surf->pi11;
-				double pi12 = surf->pi12;
-				double pi22 = surf->pi22;
-				double pi33 = surf->pi33;
-
-				double A = tau*prefactor*mT*da0;
-				double B = tau*prefactor*(px*da1 + py*da2);
-				double C = deltaf_prefactor;
-
-				double a = mT*mT*(pi00 + pi33);
-				double b = -2.0*mT*(px*pi01 + py*pi02);
-				double c = px*px*pi11 + 2.0*px*py*pi12 + py*py*pi22 - mT*mT*pi33;
-
+				double pT = SP_pT[ipT];
+				double mT = sqrt(pT*pT+localmass*localmass);
 				double alpha = one_by_Tdec*gammaT*mT;
-				double transverse_f0 = exp( one_by_Tdec*(gammaT*(px*vx + py*vy) + mu) );
 
-				///////////////////////////////////
-				// Loop over qt, qz, and pY points
-				///////////////////////////////////
-				for (int iqt = 0; iqt < qtnpts; ++iqt)
-				for (int iqz = 0; iqz < qznpts; ++iqz)
-				for (int ipY = 0; ipY < n_pY_pts; ++ipY)
+				Iint(alpha, beta, gamma, I0_a_b_g_re, I1_a_b_g_re, I2_a_b_g_re, I3_a_b_g_re, I0_a_b_g_im, I1_a_b_g_im, I2_a_b_g_im, I3_a_b_g_im);
+				if (use_delta_f)
+					Iint(2.0*alpha, beta, gamma, I0_2a_b_g_re, I1_2a_b_g_re, I2_2a_b_g_re, I3_2a_b_g_re, I0_2a_b_g_im, I1_2a_b_g_im, I2_2a_b_g_im, I3_2a_b_g_im);
+
+				for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 				{
-					int FOqtqzpY_index = ( ( isurf * qtnpts + iqt ) * qznpts + iqz ) * n_pY_pts + ipY;
-					double qt = qt_pts[iqt];
-					double qz = qz_pts[iqz];
-					double ch_pY = ch_SP_pY[ipY];
-					double sh_pY = sh_SP_pY[ipY];
-					double beta = tau * hbarCm1 * ( qt*ch_pY - qz*sh_pY );
-					double gamma = tau * hbarCm1 * ( qz*ch_pY - qt*sh_pY );
+					// initialize transverse momentum information
+					int pTpphi_index = ipT * n_pphi_pts + ipphi;
+					double sin_pphi = sin_SP_pphi[ipphi];
+					double cos_pphi = cos_SP_pphi[ipphi];
+					double px = pT*cos_pphi;
+					double py = pT*sin_pphi;
 
-					complex<double> I0_a_b_g, I1_a_b_g, I2_a_b_g, I3_a_b_g;
-					//I(alpha, beta, gamma, I0_a_b_g, I1_a_b_g, I2_a_b_g, I3_a_b_g);
-					I(alpha, beta, gamma, FOqtqzpY_index, I0_a_b_g, I1_a_b_g, I2_a_b_g, I3_a_b_g);
+					double A = tau*prefactor*mT*da0;
+					double B = tau*prefactor*(px*da1 + py*da2);
+					double C = deltaf_prefactor;
 
-					complex<double> term1 = transverse_f0 * (A*I1_a_b_g + B*I0_a_b_g);
-					complex<double> term2(1e-100,0), term3(1e-100,0);
+					double a = mT*mT*(pi00 + pi33);
+					double b = -2.0*mT*(px*pi01 + py*pi02);
+					double c = px*px*pi11 + 2.0*px*py*pi12 + py*py*pi22 - mT*mT*pi33;
 
+					double transverse_f0 = exp( one_by_Tdec*(gammaT*(px*vx + py*vy) + mu) );
+
+					//complex<double> term1 = transverse_f0 * (A*I1_a_b_g + B*I0_a_b_g);
+					double term1_re = transverse_f0 * (A*I1_a_b_g_re + B*I0_a_b_g_re);
+					double term1_im = transverse_f0 * (A*I1_a_b_g_im + B*I0_a_b_g_im);
+
+					//complex<double> term2(1e-100,0), term3(1e-100,0);
+					double term2_re, term3_re, term2_im, term3_im;
 					if (use_delta_f)
 					{
-						complex<double> I0_2a_b_g, I1_2a_b_g, I2_2a_b_g, I3_2a_b_g;
-						//I(2.0*alpha, beta, gamma, I0_2a_b_g, I1_2a_b_g, I2_2a_b_g, I3_2a_b_g);
-						I(2.0*alpha, beta, gamma, FOqtqzpY_index, I0_2a_b_g, I1_2a_b_g, I2_2a_b_g, I3_2a_b_g);
-
 						double c1 = A*a, c2 = B*a+b*A, c3 = B*b+c*A, c4 = B*c;
-						term2 = C * transverse_f0 * ( c1*I3_a_b_g + c2*I2_a_b_g + c3*I1_a_b_g + c4*I0_a_b_g );
-						term3 = -sign * C * transverse_f0 * transverse_f0 * ( c1*I3_2a_b_g + c2*I2_2a_b_g + c3*I1_2a_b_g + c4*I0_2a_b_g );
+						//term2 = C * transverse_f0 * ( c1*I3_a_b_g + c2*I2_a_b_g + c3*I1_a_b_g + c4*I0_a_b_g );
+						//term3 = -sign * C * transverse_f0 * transverse_f0 * ( c1*I3_2a_b_g + c2*I2_2a_b_g + c3*I1_2a_b_g + c4*I0_2a_b_g );
+						term2_re = C * transverse_f0 * ( c1*I3_a_b_g_re + c2*I2_a_b_g_re + c3*I1_a_b_g_re + c4*I0_a_b_g_re );
+						term3_re = -sign * C * transverse_f0 * transverse_f0 * ( c1*I3_2a_b_g_re + c2*I2_2a_b_g_re + c3*I1_2a_b_g_re + c4*I0_2a_b_g_re );
+						term2_im = C * transverse_f0 * ( c1*I3_a_b_g_im + c2*I2_a_b_g_im + c3*I1_a_b_g_im + c4*I0_a_b_g_im );
+						term3_im = -sign * C * transverse_f0 * transverse_f0 * ( c1*I3_2a_b_g_im + c2*I2_2a_b_g_im + c3*I1_2a_b_g_im + c4*I0_2a_b_g_im );
 					}
 
-					complex<double> eiqx_S_x_K = term1 + term2 + term3;
+					//complex<double> eiqx_S_x_K = term1 + term2 + term3;
 
-					double cos_qx_S_x_K = eiqx_S_x_K.real();
-					double sin_qx_S_x_K = eiqx_S_x_K.imag();
+					//double cos_qx_S_x_K = eiqx_S_x_K.real();
+					//double sin_qx_S_x_K = eiqx_S_x_K.imag();
+
+					double cos_qx_S_x_K = term1_re + term2_re + term3_re;
+					double sin_qx_S_x_K = term1_im + term2_im + term3_im;
 
 					///////////////////////////////////
 					// Loop over qx and qy points
 					///////////////////////////////////
-					for (int iqx = 0; iqx < qxnpts; ++iqx)
-					for (int iqy = 0; iqy < qynpts; ++iqy)
+					/*for (int iqx = 0; iqx < qxnpts; ++iqx)
 					{
-						double cosAx = oscx[(isurf * qxnpts + iqx) * 2 + 0], cosAy = oscy[(isurf * qynpts + iqy) * 2 + 0];
-						double sinAx = oscx[(isurf * qxnpts + iqx) * 2 + 1], sinAy = oscy[(isurf * qynpts + iqy) * 2 + 1];
-						double cos_trans_Fourier = cosAx*cosAy - sinAx*sinAy;
-						double sin_trans_Fourier = -sinAx*cosAy - cosAx*sinAy;
-						flattened_Fourier_moments_C[FM_indexer(ipY,iqt,iqx,iqy,iqz)] += cos_trans_Fourier * cos_qx_S_x_K + sin_trans_Fourier * sin_qx_S_x_K;
-						flattened_Fourier_moments_S[FM_indexer(ipY,iqt,iqx,iqy,iqz)] += cos_trans_Fourier * sin_qx_S_x_K - sin_trans_Fourier * cos_qx_S_x_K;
-					}
+						double cosAx = oscx[(isurf * qxnpts + iqx) * 2 + 0], sinAx = oscx[(isurf * qxnpts + iqx) * 2 + 1];
+						for (int iqy = 0; iqy < qynpts; ++iqy)
+						{
+							double cosAy = oscy[(isurf * qynpts + iqy) * 2 + 0], sinAy = oscy[(isurf * qynpts + iqy) * 2 + 1];
+							double cos_trans_Fourier = cosAx*cosAy - sinAx*sinAy;
+							double sin_trans_Fourier = -sinAx*cosAy - cosAx*sinAy;
+							flattened_Fourier_moments_C[indexer2(ipT,ipphi,ipY,iqt,iqx,iqy,iqz)] += cos_trans_Fourier * cos_qx_S_x_K + sin_trans_Fourier * sin_qx_S_x_K;
+							flattened_Fourier_moments_S[indexer2(ipT,ipphi,ipY,iqt,iqx,iqy,iqz)] += cos_trans_Fourier * sin_qx_S_x_K - sin_trans_Fourier * cos_qx_S_x_K;
+						}
+					}*/
 				}
 			}
 		}
 
-		// update the Fourier moments that will be extrapolated over one last time
-		Update_Fourier_moments_at_cutoffs(&cutoff_Fourier_moments_cos, &cutoff_Fourier_moments_sin,
-											flattened_Fourier_moments_C, flattened_Fourier_moments_S);
-
-		// if using extrapolation speed-up, compute projected results
-		if (USE_EXTRAPOLATION)
-		{
-			double chisqC[n_pY_pts * qtnpts * qxnpts * qynpts * qznpts], chisqS[n_pY_pts * qtnpts * qxnpts * qynpts * qznpts];
-			double polynomial_fit_order = 1;
-			gsl_polynomial_fit(pc_cutoff_vals, cutoff_Fourier_moments_cos, projected_Fourier_moments_C, polynomial_fit_order, chisqC, nCutoffs);
-			gsl_polynomial_fit(pc_cutoff_vals, cutoff_Fourier_moments_sin, projected_Fourier_moments_S, polynomial_fit_order, chisqS, nCutoffs);
-		}
-		else	// otherwise, just copy them over from most recent Fourier moments
-		{
-			for (int ipY = 0; ipY < n_pY_pts; ++ipY)
-			for (int iqt = 0; iqt < qtnpts; ++iqt)
-			for (int iqz = 0; iqz < qznpts; ++iqz)
-			for (int iqx = 0; iqx < qxnpts; ++iqx)
-			for (int iqy = 0; iqy < qynpts; ++iqy)
-			{
-				projected_Fourier_moments_C[FM_indexer(ipY,iqt,iqx,iqy,iqz)] = flattened_Fourier_moments_C[FM_indexer(ipY,iqt,iqx,iqy,iqz)];
-				projected_Fourier_moments_S[FM_indexer(ipY,iqt,iqx,iqy,iqz)] = flattened_Fourier_moments_S[FM_indexer(ipY,iqt,iqx,iqy,iqz)];
-			}
-		}
-
+		/*
+		// Finally, updated the thermal Fourier-weighted moments
+		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 		for (int iqt = 0; iqt < qtnpts; ++iqt)
 		for (int iqz = 0; iqz < qznpts; ++iqz)
@@ -1361,14 +1370,17 @@ debugger(__LINE__, __FILE__);
 		for (int iqy = 0; iqy < qynpts; ++iqy)
 		{
 			// whatever the end results, use them to update the appropriate cell in this resonance's thermal spectra
-			current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,0)] = projected_Fourier_moments_C[FM_indexer(ipY,iqt,iqx,iqy,iqz)];
-			current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,1)] = projected_Fourier_moments_S[FM_indexer(ipY,iqt,iqx,iqy,iqz)];
+			current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,0)] = flattened_Fourier_moments_C[indexer2(ipT,ipphi,ipY,iqt,iqx,iqy,iqz)];
+			current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,1)] = flattened_Fourier_moments_S[indexer2(ipT,ipphi,ipY,iqt,iqx,iqy,iqz)];
 		}
-		sw_pTpphi.Stop();
-		*global_out_stream_ptr << "Completed ipT, ipphi = " << ipT << ", " << ipphi << " in " << sw_pTpphi.printTime() << " seconds." << endl;
-
-		if (1) exit(0);
+		*/
+		
+		sw_FOsurf.Stop();
+		*global_out_stream_ptr << "Finished FOsurf loop #" << isurf << " in " << sw_FOsurf.printTime() << " seconds." << endl;
+		if (isurf > 50) exit(0);
 	}
+
+	if (1) exit(0);
 
 	//////////////////////////////////////////////////
 	// Use symmetry in q-space to get spectra for all

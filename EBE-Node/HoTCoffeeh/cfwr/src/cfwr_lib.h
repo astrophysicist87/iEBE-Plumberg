@@ -11,10 +11,10 @@
 
 using namespace std;
 
-inline int CorrelationFunction::indexer(const int ipt, const int ipphi, const int ipY, const int iqt, const int iqx, const int iqy, const int iqz, const int itrig)
+inline int CorrelationFunction::indexer(const int ipT, const int ipphi, const int ipY, const int iqt, const int iqx, const int iqy, const int iqz, const int itrig)
 {
 	return (
-		( ( ( ( ( ( ipt * n_pphi_pts + ipphi ) * n_pY_pts + ipY ) * qtnpts + iqt ) * qxnpts + iqx ) * qynpts + iqy ) * qznpts + iqz ) * 2 + itrig
+		( ( ( ( ( ( ipT * n_pphi_pts + ipphi ) * n_pY_pts + ipY ) * qtnpts + iqt ) * qxnpts + iqx ) * qynpts + iqy ) * qznpts + iqz ) * 2 + itrig
 	);
 }
 
@@ -24,6 +24,14 @@ inline int CorrelationFunction::FM_indexer(const int ipY, const int iqt, const i
 		( ( ( ipY * qtnpts + iqt ) * qxnpts + iqx ) * qynpts + iqy ) * qznpts + iqz
 	);
 }
+
+inline int CorrelationFunction::indexer2(const int ipT, const int ipphi, const int ipY, const int iqt, const int iqx, const int iqy, const int iqz)
+{
+	return (
+		( ( ( ( ( ipT * n_pphi_pts + ipphi ) * n_pY_pts + ipY ) * qtnpts + iqt ) * qxnpts + iqx ) * qynpts + iqy ) * qznpts + iqz
+	);
+}
+
 
 /*inline int CorrelationFunction::arb_indexer(const vector<int> indices, const vector<int> sizes)
 {
@@ -39,7 +47,8 @@ inline void CorrelationFunction::set_to_zero(double * array, size_t arraylength)
 	for (size_t arrayidx=0; arrayidx<arraylength; ++arrayidx) array[arrayidx] = 0.0;
 }
 
-inline double CorrelationFunction::lin_int(double x_m_x1, double one_by_x2_m_x1, double f1, double f2)
+//inline double CorrelationFunction::lin_int(double x_m_x1, double one_by_x2_m_x1, double f1, double f2)
+inline double lin_int(double x_m_x1, double one_by_x2_m_x1, double f1, double f2)
 {
 	return ( f1 + (f2 - f1) * x_m_x1 * one_by_x2_m_x1 );
 }

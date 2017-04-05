@@ -13,5 +13,6 @@ fi
 
 if [ "$RunCFWR" = true ]
 then
+	#valgrind --tool=massif ./cfwr.e $AllArgs
 	./cfwr.e $AllArgs
 fi

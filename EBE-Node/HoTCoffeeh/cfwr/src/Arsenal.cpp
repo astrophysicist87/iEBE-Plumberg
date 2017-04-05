@@ -448,7 +448,7 @@ double interpLinearNondirect(double * x, double * y, double x0, long size, bool 
 	long idx = binarySearch(x, size, x0, true);
 	if (idx<0 || idx>=size-1)
 	{
-cout << "returnflag = " << returnflag << endl;
+//cout << "returnflag = " << returnflag << endl;
 //debugger(__LINE__, __FILE__);
 		if (!returnflag)	//i.e., if returnflag is false, exit
 		{

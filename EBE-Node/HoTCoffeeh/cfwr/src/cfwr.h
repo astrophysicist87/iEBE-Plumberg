@@ -262,8 +262,9 @@ class CorrelationFunction
 	public:
 		//library of inline functions
 		inline int indexer(const int ipt, const int ipphi, const int ipY, const int iqt, const int iqx, const int iqy, const int iqz, const int itrig);
+		inline int indexer2(const int ipt, const int ipphi, const int ipY, const int iqt, const int iqx, const int iqy, const int iqz);
 		inline int FM_indexer(const int ipY, const int iqt, const int iqx, const int iqy, const int iqz);
-		inline double lin_int(double x_m_x1, double one_by_x2_m_x1, double f1, double f2);
+		//inline double lin_int(double x_m_x1, double one_by_x2_m_x1, double f1, double f2);
 		inline void addElementToQueue(priority_queue<pair<double, size_t> >& p, pair<double, size_t> elem, size_t max_size);
 		inline void set_to_zero(double * array, size_t arraylength);
 		inline double dot_four_vectors(double * a, double * b);
@@ -291,7 +292,7 @@ class CorrelationFunction
 		int Set_target_thermal_in_HDF_array(double * tta_array_to_use);
 
 		void Set_dN_dypTdpTdphi_moments(int local_pid);
-		void Set_Bessel_function_grids(double alpha_min, double alpha_max, int n_alpha_points);
+		void Set_Bessel_function_grids(double beta, double gamma);
 		void Set_most_important_FOcells(vector<size_t> * most_impt_FOcells_vec, vector<double> * most_impt_FOcells_vals_vec, priority_queue<pair<double, size_t> > FOcells_PQ);
 		int Set_percentage_cutoffs(vector<int> * cutoff_FOcells_at_pTpphi, vector<double> * most_impt_FOcells_vals_vec, double absolute_running_total, double cutoff);
 		inline void Update_Fourier_moments_at_cutoffs(vector<double> * cutoff_Fourier_moments_cos, vector<double> * cutoff_Fourier_moments_sin,
