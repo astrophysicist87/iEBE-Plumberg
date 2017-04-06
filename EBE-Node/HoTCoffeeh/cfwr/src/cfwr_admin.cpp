@@ -593,12 +593,14 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 
 void CorrelationFunction::Set_eiqx_matrices()
 {
-	oscx = new double [FO_length * qxnpts * 2];
-	oscy = new double [FO_length * qynpts * 2];
+	oscx = new double * [FO_length];
+	oscy = new double * [FO_length];
 
 	for (int isurf = 0; isurf < FO_length; ++isurf)
 	{
 		FO_surf * surf = &FOsurf_ptr[isurf];
+		oscx[isurf] = new double [qxnpts * 2];
+		oscy[isurf] = new double [qynpts * 2];
 
 		double tau = surf->tau;
 		double xpt = surf->xpt;
@@ -606,14 +608,18 @@ void CorrelationFunction::Set_eiqx_matrices()
 
 		for (int iqx = 0; iqx < qxnpts; ++iqx)
 		{
-			oscx[(isurf * qxnpts + iqx) * 2 + 0] = cos(hbarCm1*qx_pts[iqx]*xpt);
-			oscx[(isurf * qxnpts + iqx) * 2 + 1] = sin(hbarCm1*qx_pts[iqx]*xpt);
+			//oscx[(isurf * qxnpts + iqx) * 2 + 0] = cos(hbarCm1*qx_pts[iqx]*xpt);
+			//oscx[(isurf * qxnpts + iqx) * 2 + 1] = sin(hbarCm1*qx_pts[iqx]*xpt);
+			oscx[isurf][iqx * 2 + 0] = cos(hbarCm1*qx_pts[iqx]*xpt);
+			oscx[isurf][iqx * 2 + 1] = sin(hbarCm1*qx_pts[iqx]*xpt);
 		}
 
 		for (int iqy = 0; iqy < qynpts; ++iqy)
 		{
-			oscy[(isurf * qynpts + iqy) * 2 + 0] = cos(hbarCm1*qy_pts[iqy]*ypt);
-			oscy[(isurf * qynpts + iqy) * 2 + 1] = sin(hbarCm1*qy_pts[iqy]*ypt);
+			//oscy[(isurf * qynpts + iqy) * 2 + 0] = cos(hbarCm1*qy_pts[iqy]*ypt);
+			//oscy[(isurf * qynpts + iqy) * 2 + 1] = sin(hbarCm1*qy_pts[iqy]*ypt);
+			oscy[isurf][iqy * 2 + 0] = cos(hbarCm1*qy_pts[iqy]*ypt);
+			oscy[isurf][iqy * 2 + 0] = sin(hbarCm1*qy_pts[iqy]*ypt);
 		}
 	}
 

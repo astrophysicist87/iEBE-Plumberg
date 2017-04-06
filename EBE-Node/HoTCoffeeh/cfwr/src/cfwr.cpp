@@ -852,6 +852,7 @@ debugger(__LINE__, __FILE__);
 		Cal_dN_dypTdpTdphi_with_weights(local_pid, ipY, iqt, iqz);
 		sw_qtqzpY.Stop();
 		*global_out_stream_ptr << "Finished loop with ( iqt, iqz, ipY ) = ( " << iqt << ", " << iqz << ", " << ipY << " ) in " << sw_qtqzpY.printTime() << " seconds." << endl;
+		if (iqz > 0) exit(0);
 	}
 	if (1) exit(0);
 
@@ -1171,7 +1172,7 @@ void CorrelationFunction::Set_Bessel_function_grids(double beta, double gamma)
 	{
 		complex<double> ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p;
 		complex<double> z0 = alpha_pts[ia] - i*beta;
-		complex<double> z0sq = pow(z0, 2.0);
+		complex<double> z0sq = z0 * z0;
 		complex<double> z = sqrt(z0sq + gsq);
 		int errorCode = cbessik01(z, ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p);
 
@@ -1224,6 +1225,8 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 	double I0_a_b_g_im, I1_a_b_g_im, I2_a_b_g_im, I3_a_b_g_im;
 	double I0_2a_b_g_im, I1_2a_b_g_im, I2_2a_b_g_im, I3_2a_b_g_im;
 
+	double C = deltaf_prefactor;
+
 	/////////////////////////////////////////////////////////////
 	// Loop over all freeze-out surface fluid cells (for now)
 	/////////////////////////////////////////////////////////////
@@ -1271,6 +1274,9 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 			if (use_delta_f)
 				Iint(2.0*alpha, beta, gamma, I0_2a_b_g_re, I1_2a_b_g_re, I2_2a_b_g_re, I3_2a_b_g_re, I0_2a_b_g_im, I1_2a_b_g_im, I2_2a_b_g_im, I3_2a_b_g_im);
 
+			double A = tau*prefactor*mT*da0;
+			double a = mT*mT*(pi00 + pi33);
+
 			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 			{
 				// initialize transverse momentum information
@@ -1279,11 +1285,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 				double px = pT*cos_pphi;
 				double py = pT*sin_pphi;
 
-				double A = tau*prefactor*mT*da0;
 				double B = tau*prefactor*(px*da1 + py*da2);
-				double C = deltaf_prefactor;
-
-				double a = mT*mT*(pi00 + pi33);
 				double b = -2.0*mT*(px*pi01 + py*pi02);
 				double c = px*px*pi11 + 2.0*px*py*pi12 + py*py*pi22 - mT*mT*pi33;
 
@@ -1292,15 +1294,13 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 				double term1_re = transverse_f0 * (A*I1_a_b_g_re + B*I0_a_b_g_re);
 				double term1_im = transverse_f0 * (A*I1_a_b_g_im + B*I0_a_b_g_im);
 
-				double term2_re, term3_re, term2_im, term3_im;
-				if (use_delta_f)
-				{
-					double c1 = A*a, c2 = B*a+b*A, c3 = B*b+c*A, c4 = B*c;
-					term2_re = C * transverse_f0 * ( c1*I3_a_b_g_re + c2*I2_a_b_g_re + c3*I1_a_b_g_re + c4*I0_a_b_g_re );
-					term3_re = -sign * C * transverse_f0 * transverse_f0 * ( c1*I3_2a_b_g_re + c2*I2_2a_b_g_re + c3*I1_2a_b_g_re + c4*I0_2a_b_g_re );
-					term2_im = C * transverse_f0 * ( c1*I3_a_b_g_im + c2*I2_a_b_g_im + c3*I1_a_b_g_im + c4*I0_a_b_g_im );
-					term3_im = -sign * C * transverse_f0 * transverse_f0 * ( c1*I3_2a_b_g_im + c2*I2_2a_b_g_im + c3*I1_2a_b_g_im + c4*I0_2a_b_g_im );
-				}
+				double c1 = A*a, c2 = B*a+b*A, c3 = B*b+c*A, c4 = B*c;
+				double C1 = C * transverse_f0;
+				double C2 = -sign * transverse_f0 * C1;
+				double term2_re = C1 * ( c1*I3_a_b_g_re + c2*I2_a_b_g_re + c3*I1_a_b_g_re + c4*I0_a_b_g_re );
+				double term3_re = C2 * ( c1*I3_2a_b_g_re + c2*I2_2a_b_g_re + c3*I1_2a_b_g_re + c4*I0_2a_b_g_re );
+				double term2_im = C1 * ( c1*I3_a_b_g_im + c2*I2_a_b_g_im + c3*I1_a_b_g_im + c4*I0_a_b_g_im );
+				double term3_im = C2 * ( c1*I3_2a_b_g_im + c2*I2_2a_b_g_im + c3*I1_2a_b_g_im + c4*I0_2a_b_g_im );
 
 				flattened_Fourier_moments_C[indexer3(ipT,ipphi,isurf)] = term1_re + term2_re + term3_re;
 				flattened_Fourier_moments_S[indexer3(ipT,ipphi,isurf)] = term1_im + term2_im + term3_im;
@@ -1308,25 +1308,41 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 		}
 	}
 
-	double * summed_Fourier_moments_C = new double [n_pT_pts * n_pphi_pts * qxnpts * qynpts];
-	double * summed_Fourier_moments_S = new double [n_pT_pts * n_pphi_pts * qxnpts * qynpts];
+	double ** summed_Fourier_moments_C = new double * [qxnpts * qynpts];
+	double ** summed_Fourier_moments_S = new double * [qxnpts * qynpts];
+	for (int i = 0; i < qxnpts * qynpts; ++i)
+	{
+		summed_Fourier_moments_C[i] = new double [n_pT_pts * n_pphi_pts];
+		summed_Fourier_moments_S[i] = new double [n_pT_pts * n_pphi_pts];
+		for (int j = 0; j < n_pT_pts * n_pphi_pts; ++j)
+		{
+			summed_Fourier_moments_C[i][j] = 0.0;
+			summed_Fourier_moments_S[i][j] = 0.0;
+		}
+	}
 
 	for (int isurf = 0; isurf < FO_length; ++isurf)
-	for (int iqx = 0; iqx < qxnpts; ++iqx)
 	{
-		double cosAx = oscx[(isurf * qxnpts + iqx) * 2 + 0], sinAx = oscx[(isurf * qxnpts + iqx) * 2 + 1];
-		for (int iqy = 0; iqy < qynpts; ++iqy)
+		double * tmpX = oscx[isurf];
+		double * tmpY = oscy[isurf];
+		for (int iqx = 0; iqx < qxnpts; ++iqx)
 		{
-			double cosAy = oscy[(isurf * qynpts + iqy) * 2 + 0], sinAy = oscy[(isurf * qynpts + iqy) * 2 + 1];
-			double cos_trans_Fourier = cosAx*cosAy - sinAx*sinAy;
-			double sin_trans_Fourier = -sinAx*cosAy - cosAx*sinAy;
-			for (int ipT = 0; ipT < n_pT_pts; ++ipT)
-			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+			double cosAx = tmpX[iqx * 2 + 0], sinAx = tmpX[iqx * 2 + 1];
+			for (int iqy = 0; iqy < qynpts; ++iqy)
 			{
-				double cos_qx_S_x_K = flattened_Fourier_moments_C[indexer3(ipT,ipphi,isurf)];
-				double sin_qx_S_x_K = flattened_Fourier_moments_S[indexer3(ipT,ipphi,isurf)];
-				summed_Fourier_moments_C[indexer4(ipT,ipphi,iqx,iqy)] += cos_trans_Fourier * cos_qx_S_x_K + sin_trans_Fourier * sin_qx_S_x_K;
-				summed_Fourier_moments_S[indexer4(ipT,ipphi,iqx,iqy)] += cos_trans_Fourier * sin_qx_S_x_K - sin_trans_Fourier * cos_qx_S_x_K;
+				double cosAy = tmpY[iqy * 2 + 0], sinAy = tmpY[iqy * 2 + 1];
+				double cos_trans_Fourier = cosAx*cosAy - sinAx*sinAy;
+				double sin_trans_Fourier = -sinAx*cosAy - cosAx*sinAy;
+				double * tmp_C = summed_Fourier_moments_C[iqx * qynpts + iqy];
+				double * tmp_S = summed_Fourier_moments_S[iqx * qynpts + iqy];
+				for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+				for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+				{
+					double cos_qx_S_x_K = flattened_Fourier_moments_C[indexer3(ipT,ipphi,isurf)];
+					double sin_qx_S_x_K = flattened_Fourier_moments_S[indexer3(ipT,ipphi,isurf)];
+					tmp_C[ipT * n_pphi_pts + ipphi] += cos_trans_Fourier * cos_qx_S_x_K + sin_trans_Fourier * sin_qx_S_x_K;
+					tmp_S[ipT * n_pphi_pts + ipphi] += cos_trans_Fourier * sin_qx_S_x_K - sin_trans_Fourier * cos_qx_S_x_K;
+	 			}
 			}
 		}
 	}
@@ -1360,11 +1376,15 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 
 	for (int iqx = 0; iqx < qxnpts; ++iqx)
 	for (int iqy = 0; iqy < qynpts; ++iqy)
-	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
-	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 	{
-		current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,0)] = summed_Fourier_moments_C[indexer4(ipT,ipphi,iqx,iqy)];
-		current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,1)] = summed_Fourier_moments_S[indexer4(ipT,ipphi,iqx,iqy)];
+		double * tmp_C = summed_Fourier_moments_C[iqx * qynpts + iqy];
+		double * tmp_S = summed_Fourier_moments_S[iqx * qynpts + iqy];
+		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+		{
+			current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,0)] = tmp_C[ipT * n_pphi_pts + ipphi];
+			current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,1)] = tmp_S[ipT * n_pphi_pts + ipphi];
+		}
 	}
 
 	//////////////////////////////////////////////////
@@ -1389,6 +1409,19 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 	delete [] K0_Bessel_im;
 	delete [] K1_Bessel_re;
 	delete [] K1_Bessel_im;
+
+	for (int i = 0; i < qxnpts * qynpts - 1; ++i)
+	{
+		delete [] summed_Fourier_moments_C[i];
+		delete [] summed_Fourier_moments_S[i];
+	}
+	/*for (int isurf = 0; isurf < FO_length; ++isurf)
+	{
+		delete [] flattened_Fourier_moments_C[isurf];
+		delete [] flattened_Fourier_moments_S[isurf];
+	}*/
+	delete [] summed_Fourier_moments_C;
+	delete [] summed_Fourier_moments_S;
 	delete [] flattened_Fourier_moments_C;
 	delete [] flattened_Fourier_moments_S;
 

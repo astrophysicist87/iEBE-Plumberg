@@ -16,8 +16,8 @@ export HDF5_CLINKER=$(shell ../../crank/configure_compiler_C++.sh)
 
 CC := h5c++
 CFLAGS= $(shell ../../crank/configure_compiler_C++_Flags.sh)
-CFLAGS += -lgsl -lgslcblas
-###CFLAGS += -lgsl -lgslcblas -profile-functions -profile-loops=all -profile-loops-report=2
+###CFLAGS += -lgsl -lgslcblas
+CFLAGS += -lgsl -lgslcblas -profile-functions -profile-loops=all -profile-loops-report=2
 
 RM		=	rm -f
 O               =       .o
