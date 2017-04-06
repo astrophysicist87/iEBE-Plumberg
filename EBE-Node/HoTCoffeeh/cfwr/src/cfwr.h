@@ -242,7 +242,6 @@ class CorrelationFunction
 		double *** FOcell_density_array;
 
 		vector<vector<int> > cutoff_FOcells;
-		//vector<vector<double> > cutoff_FOcell_vals_C, cutoff_FOcell_vals_S;
 		vector<double> pc_cutoff_vals, pc_fit_vals;
 		
 		//miscellaneous
@@ -268,13 +267,10 @@ class CorrelationFunction
 		inline int indexer3(const int ipt, const int ipphi, const int isurf);
 		inline int indexer4(const int ipt, const int ipphi, const int iqx, const int iqy);
 		inline int FM_indexer(const int ipY, const int iqt, const int iqx, const int iqy, const int iqz);
-		//inline double lin_int(double x_m_x1, double one_by_x2_m_x1, double f1, double f2);
 		inline void addElementToQueue(priority_queue<pair<double, size_t> >& p, pair<double, size_t> elem, size_t max_size);
 		inline void set_to_zero(double * array, size_t arraylength);
 		inline double dot_four_vectors(double * a, double * b);
-		//inline void I(double alpha, double beta, double gamma, complex<double> & I0, complex<double> & I1, complex<double> & I2, complex<double> & I3);
 
-		void Determine_plane_angle();
 		void Fourier_transform_emission_function();
 		void Compute_phase_space_integrals();
 		void Update_sourcefunction(particle_info* particle, int FOarray_length, int particle_idx);
@@ -307,7 +303,6 @@ class CorrelationFunction
 		void Set_giant_arrays(int iqt, int iqx, int iqy, int iqz);
 		void Cal_dN_dypTdpTdphi(double** SP_p0, double** SP_px, double** SP_py, double** SP_pz);
 		void Cal_dN_dypTdpTdphi_heap(int local_pid, double cutoff);
-		//void Cal_dN_dypTdpTdphi_with_weights(int local_pid);
 		void Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY, int iqt, int iqz);
 		double Cal_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi);
 		void Cal_dN_dypTdpTdphi_with_weights_function(int local_pid, double pT, double pphi,
@@ -373,8 +368,6 @@ class CorrelationFunction
 		double interpolate_CF(double *** current_C_slice, double qx0, double qy0, double qz0, int ipt, int thermal_or_resonances);
 		double interpolate_qi(double q0, double qi0, double qi1, double f1, double f2, bool use_linear);
 		void Get_GF_HBTradii();
-		void Get_QM_HBTradii();
-		void Get_q_moments(double *** current_C_slice, int ipt, int ipphi);
 		double get_CF(int ipt, int ipphi, int iqt, int iqx, int iqy, int iqz, bool return_projected_value);
 		void get_CF(double * totalresult, double * thermalresult, double * crosstermresult, double * resonanceresult,
 									int ipt, int ipphi, int iqt, int iqx, int iqy, int iqz, bool return_projected_value);

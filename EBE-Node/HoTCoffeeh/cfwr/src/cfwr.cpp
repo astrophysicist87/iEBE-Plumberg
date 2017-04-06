@@ -26,11 +26,7 @@ using namespace std;
 const int n_alpha_points = 15;
 const std::complex<double> i(0, 1);
 double * K0_Bessel_re, * K1_Bessel_re, * K0_Bessel_im, * K1_Bessel_im;
-//double K0_Bessel_re[n_alpha_points], K1_Bessel_re[n_alpha_points], K0_Bessel_im[n_alpha_points], K1_Bessel_im[n_alpha_points];
 double * alpha_pts;
-//double * flattened_Fourier_moments_C;
-//double * flattened_Fourier_moments_S;
-
 
 // only need to calculated interpolation grid of spacetime moments for each resonance, NOT each decay channel!
 bool recycle_previous_moments = false;
@@ -60,29 +56,6 @@ inline void I(double alpha, double beta, double gamma, complex<double> & I0, com
 	return;
 }
 
-inline void Iint(double alpha, double beta, double gamma, complex<double> & I0, complex<double> & I1, complex<double> & I2, complex<double> & I3)
-{
-	complex<double> z0 = alpha - i*beta;
-	complex<double> z0sq = pow(z0, 2.0);
-	double gsq = gamma*gamma;
-	complex<double> z = sqrt(z0sq + gsq);
-
-	complex<double> ck0(	interpolate1D(alpha_pts, K0_Bessel_re, alpha, n_alpha_points, 1, false, true),
-							interpolate1D(alpha_pts, K0_Bessel_im, alpha, n_alpha_points, 1, false, true)) ;
-	complex<double> ck1(	interpolate1D(alpha_pts, K1_Bessel_re, alpha, n_alpha_points, 1, false, true),
-							interpolate1D(alpha_pts, K1_Bessel_im, alpha, n_alpha_points, 1, false, true)) ;
-	
-	I0 = 2.0*ck0;
-	I1 = 2.0*z0*ck1 / z;
-	I2 = 2.0*z0sq*ck0 / (z*z)
-			+ 2.0*(z0sq - gsq)*ck1 / pow(z, 3.0);
-	I3 = 2.0*z0*( ( pow(z0, 4.0) - 2.0* z0sq*gsq - 3.0 * pow(gamma, 4.0) ) * ck0 / z
-						+ (-6.0*gsq + z0sq*(2.0 + z0sq + gsq)) * ck1
-				) / pow(z,5.0);
-
-	return;
-}
-
 inline void Iint(double alpha, double beta, double gamma, double & I0r, double & I1r, double & I2r, double & I3r, double & I0i, double & I1i, double & I2i, double & I3i)
 {
 	complex<double> z0 = alpha - i*beta;
@@ -93,10 +66,6 @@ inline void Iint(double alpha, double beta, double gamma, double & I0r, double &
 	complex<double> zcu = zsq*z;
 	complex<double> zqi = zsq*zcu;
 
-	//complex<double> ck0(	interpolate1D(alpha_pts, K0_Bessel_re, alpha, n_alpha_points, 1, false, true),
-	//						interpolate1D(alpha_pts, K0_Bessel_im, alpha, n_alpha_points, 1, false, true)) ;
-	//complex<double> ck1(	interpolate1D(alpha_pts, K1_Bessel_re, alpha, n_alpha_points, 1, false, true),
-	//						interpolate1D(alpha_pts, K1_Bessel_im, alpha, n_alpha_points, 1, false, true)) ;
 	long idx = binarySearch(alpha_pts, n_alpha_points, alpha, true);
 	if (idx<0 || idx>=n_alpha_points-1)
 		idx = (idx<0) ? 0 : n_alpha_points-2;	//uses extrapolation
