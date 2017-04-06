@@ -593,6 +593,8 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 
 void CorrelationFunction::Set_eiqx_matrices()
 {
+	//oscx = new double [FO_length * qxnpts * 2];
+	//oscy = new double [FO_length * qynpts * 2];
 	oscx = new double * [FO_length];
 	oscy = new double * [FO_length];
 

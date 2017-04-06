@@ -134,6 +134,7 @@ class CorrelationFunction
 		double * full_target_dN_dypTdpTdphi_moments;
 
 		// needed these to avoid too many trigonometric evaluations
+		//double * oscx, * oscy;
 		double ** oscx, ** oscy;
 		double ** eiqtt, ** eiqxx, ** eiqyy, ** eiqzz;
 	

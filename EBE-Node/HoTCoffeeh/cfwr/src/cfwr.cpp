@@ -852,9 +852,10 @@ debugger(__LINE__, __FILE__);
 		Cal_dN_dypTdpTdphi_with_weights(local_pid, ipY, iqt, iqz);
 		sw_qtqzpY.Stop();
 		*global_out_stream_ptr << "Finished loop with ( iqt, iqz, ipY ) = ( " << iqt << ", " << iqz << ", " << ipY << " ) in " << sw_qtqzpY.printTime() << " seconds." << endl;
-		if (iqz > 0) exit(0);
+		//if (iqz > 0) exit(0);
+		if (iqz > 0) break;
 	}
-	if (1) exit(0);
+	//if (1) exit(0);
 
 	sw.Stop();
 	*global_out_stream_ptr << "CP#2: Took " << sw.printTime() << " seconds." << endl;
@@ -1347,33 +1348,6 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 		}
 	}
 
-	/*for (int ipT = 0; ipT < n_pT_pts; ++ipT)
-	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-	{
-		size_t * most_important_FOcells_for_current_pt_and_pphi = most_important_FOcells[ipT][ipphi];
-		vector<int> cutoffs = cutoff_FOcells[ipT * n_pphi_pts + ipphi];
-		int nCutoffs = cutoffs.size();
-		for (int ipc = 0; ipc < nCutoffs - 1; ++ipc)
-		for (int iFO = cutoffs[ipc]; iFO < cutoffs[ipc+1]; ++iFO)
-		{
-			int isurf = (int)most_important_FOcells_for_current_pt_and_pphi[iFO];
-			double cos_qx_S_x_K = flattened_Fourier_moments_C[( ipT * n_pphi_pts + ipphi ) * FO_length + isurf];
-			double sin_qx_S_x_K = flattened_Fourier_moments_S[( ipT * n_pphi_pts + ipphi ) * FO_length + isurf];
-			for (int iqx = 0; iqx < qxnpts; ++iqx)
-			{
-				double cosAx = oscx[(isurf * qxnpts + iqx) * 2 + 0], sinAx = oscx[(isurf * qxnpts + iqx) * 2 + 1];
-				for (int iqy = 0; iqy < qynpts; ++iqy)
-				{
-					double cosAy = oscy[(isurf * qynpts + iqy) * 2 + 0], sinAy = oscy[(isurf * qynpts + iqy) * 2 + 1];
-					double cos_trans_Fourier = cosAx*cosAy - sinAx*sinAy;
-					double sin_trans_Fourier = -sinAx*cosAy - cosAx*sinAy;
-					summed_Fourier_moments_C[( ( ipT * n_pphi_pts + ipphi ) * qxnpts + iqx ) * qynpts + iqy] += cos_trans_Fourier * cos_qx_S_x_K + sin_trans_Fourier * sin_qx_S_x_K;
-					summed_Fourier_moments_S[( ( ipT * n_pphi_pts + ipphi ) * qxnpts + iqx ) * qynpts + iqy] += cos_trans_Fourier * sin_qx_S_x_K - sin_trans_Fourier * cos_qx_S_x_K;
-				}
-			}
-		}
-	}*/
-
 	for (int iqx = 0; iqx < qxnpts; ++iqx)
 	for (int iqy = 0; iqy < qynpts; ++iqy)
 	{
@@ -1386,6 +1360,68 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 			current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,1)] = tmp_S[ipT * n_pphi_pts + ipphi];
 		}
 	}
+
+	/*double ** summed_Fourier_moments_C = new double * [n_pT_pts * n_pphi_pts];
+	double ** summed_Fourier_moments_S = new double * [n_pT_pts * n_pphi_pts];
+	for (int i = 0; i < n_pT_pts * n_pphi_pts; ++i)
+	{
+		summed_Fourier_moments_C[i] = new double [qxnpts * qynpts];
+		summed_Fourier_moments_S[i] = new double [qxnpts * qynpts];
+		for (int j = 0; j < qxnpts * qynpts; ++j)
+		{
+			summed_Fourier_moments_C[i][j] = 0.0;
+			summed_Fourier_moments_S[i][j] = 0.0;
+		}
+	}
+
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+	{
+		size_t ** tmp_importantFOcells = most_important_FOcells[ipT];
+		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+		{
+			size_t * most_important_FOcells_for_current_pt_and_pphi = tmp_importantFOcells[ipphi];
+*global_out_stream_ptr << "Check: nFO = " << number_of_FOcells_above_cutoff_array[ipT][ipphi] << endl;
+			vector<int> cutoffs = cutoff_FOcells[ipT * n_pphi_pts + ipphi];
+			int nCutoffs = cutoffs.size();
+			double * tmp_C = summed_Fourier_moments_C[ipT * n_pphi_pts + ipphi];
+			double * tmp_S = summed_Fourier_moments_S[ipT * n_pphi_pts + ipphi];
+
+			for (int ipc = 0; ipc < nCutoffs - 1; ++ipc)
+			for (int iFO = cutoffs[ipc]; iFO < cutoffs[ipc+1]; ++iFO)
+			{
+				int isurf = (int)most_important_FOcells_for_current_pt_and_pphi[iFO];
+				double cos_qx_S_x_K = flattened_Fourier_moments_C[( ipT * n_pphi_pts + ipphi ) * FO_length + isurf];
+				double sin_qx_S_x_K = flattened_Fourier_moments_S[( ipT * n_pphi_pts + ipphi ) * FO_length + isurf];
+				for (int iqx = 0; iqx < qxnpts; ++iqx)
+				{
+					double cosAx = oscx[(isurf * qxnpts + iqx) * 2 + 0], sinAx = oscx[(isurf * qxnpts + iqx) * 2 + 1];
+					//double cosAx = tmpX[iqx * 2 + 0], sinAx = tmpX[iqx * 2 + 1];
+					for (int iqy = 0; iqy < qynpts; ++iqy)
+					{
+						double cosAy = oscy[(isurf * qynpts + iqy) * 2 + 0], sinAy = oscy[(isurf * qynpts + iqy) * 2 + 1];
+						//double cosAy = tmpY[iqy * 2 + 0], sinAy = tmpY[iqy * 2 + 1];
+						double cos_trans_Fourier = cosAx*cosAy - sinAx*sinAy;
+						double sin_trans_Fourier = -sinAx*cosAy - cosAx*sinAy;
+						tmp_C[iqx * qynpts + iqy] += cos_trans_Fourier * cos_qx_S_x_K + sin_trans_Fourier * sin_qx_S_x_K;
+						tmp_S[iqx * qynpts + iqy] += cos_trans_Fourier * sin_qx_S_x_K - sin_trans_Fourier * cos_qx_S_x_K;
+					}
+				}
+			}
+		}
+	}
+
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+	{
+		double * tmp_C = summed_Fourier_moments_C[ipT * n_pphi_pts + ipphi];
+		double * tmp_S = summed_Fourier_moments_S[ipT * n_pphi_pts + ipphi];
+		for (int iqx = 0; iqx < qxnpts; ++iqx)
+		for (int iqy = 0; iqy < qynpts; ++iqy)
+		{
+			current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,0)] = tmp_C[iqx * qynpts + iqy];
+			current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,1)] = tmp_S[iqx * qynpts + iqy];
+		}
+	}*/
 
 	//////////////////////////////////////////////////
 	// Use symmetry in q-space to get spectra for all
