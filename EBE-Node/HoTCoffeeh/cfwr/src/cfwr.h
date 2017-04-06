@@ -262,6 +262,7 @@ class CorrelationFunction
 
 	public:
 		//library of inline functions
+		inline int indexer(const int ipt, const int ipphi, const int iqt, const int iqx, const int iqy, const int iqz, const int itrig);
 		inline int indexer(const int ipt, const int ipphi, const int ipY, const int iqt, const int iqx, const int iqy, const int iqz, const int itrig);
 		inline int indexer2(const int ipt, const int ipphi, const int ipY, const int iqt, const int iqx, const int iqy, const int iqz);
 		inline int indexer3(const int ipt, const int ipphi, const int isurf);
@@ -280,8 +281,8 @@ class CorrelationFunction
 		bool fexists(const char *filename);
 
 		// HDF routines
-		int Get_resonance_from_HDF_array(int local_pid, double * resonance_array_to_fill);
-		int Set_resonance_in_HDF_array(int local_pid, double * resonance_array_to_use);
+		int Get_resonance_from_HDF_array(int local_pid, int ipY, double * resonance_array_to_fill);
+		int Set_resonance_in_HDF_array(int local_pid, int ipY, double * resonance_array_to_use);
 		int Initialize_resonance_HDF_array();
 		int Open_resonance_HDF_array(string resonance_local_file_name);
 		int Close_resonance_HDF_array();
@@ -291,8 +292,8 @@ class CorrelationFunction
 		int Initialize_target_thermal_HDF_array();
 		int Open_target_thermal_HDF_array();
 		int Close_target_thermal_HDF_array();
-		int Get_target_thermal_from_HDF_array(double * target_thermal_array_to_fill);
-		int Set_target_thermal_in_HDF_array(double * tta_array_to_use);
+		int Get_target_thermal_from_HDF_array(int ipY, double * target_thermal_array_to_fill);
+		int Set_target_thermal_in_HDF_array(int ipY, double * tta_array_to_use);
 
 		void Set_dN_dypTdpTdphi_moments(int local_pid);
 		void Set_Bessel_function_grids(double beta, double gamma);
@@ -320,8 +321,8 @@ class CorrelationFunction
 		bool Do_this_daughter_particle(int dc_idx, int daughter_idx, int * daughter_resonance_pid);
 		void Get_spacetime_moments(int dc_idx);
 		void Recycle_spacetime_moments();
-		void Load_resonance_and_daughter_spectra(int local_pid);
-		void Update_daughter_spectra(int local_pid);
+		void Load_resonance_and_daughter_spectra(int local_pid, int ipY);
+		void Update_daughter_spectra(int local_pid, int ipY);
 		void Set_spectra_logs_and_signs(int local_pid);
 		void Set_current_resonance_logs_and_signs();
 		void Set_current_daughters_resonance_logs_and_signs(int n_daughters);

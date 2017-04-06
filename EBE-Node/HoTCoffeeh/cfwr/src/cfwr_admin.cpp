@@ -224,7 +224,7 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	}
 
 	//try flattening
-	const int giant_flat_array_size = n_pT_pts * n_pphi_pts * n_pY_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
+	const int giant_flat_array_size = n_pT_pts * n_pphi_pts * /*n_pY_pts **/ qtnpts * qxnpts * qynpts * qznpts * ntrig;
 	thermal_target_dN_dypTdpTdphi_moments = new double [giant_flat_array_size];
 	current_dN_dypTdpTdphi_moments = new double [giant_flat_array_size];
 	current_ln_dN_dypTdpTdphi_moments = new double [giant_flat_array_size];

@@ -11,10 +11,17 @@
 
 using namespace std;
 
+inline int CorrelationFunction::indexer(const int ipT, const int ipphi, const int iqt, const int iqx, const int iqy, const int iqz, const int itrig)
+{
+	return (
+		( ( ( ( ( ipT * n_pphi_pts + ipphi ) * qtnpts + iqt ) * qxnpts + iqx ) * qynpts + iqy ) * qznpts + iqz ) * 2 + itrig
+	);
+}
+
 inline int CorrelationFunction::indexer(const int ipT, const int ipphi, const int ipY, const int iqt, const int iqx, const int iqy, const int iqz, const int itrig)
 {
 	return (
-		( ( ( ( ( ( ipT * n_pphi_pts + ipphi ) * n_pY_pts + ipY ) * qtnpts + iqt ) * qxnpts + iqx ) * qynpts + iqy ) * qznpts + iqz ) * 2 + itrig
+		( ( ( ( ( ( ipT * n_pphi_pts + ipphi ) * n_pY_pts + ipY )  * qtnpts + iqt ) * qxnpts + iqx ) * qynpts + iqy ) * qznpts + iqz ) * 2 + itrig
 	);
 }
 

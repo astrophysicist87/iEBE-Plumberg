@@ -383,10 +383,9 @@ void CorrelationFunction::Output_total_target_eiqx_dN_dypTdpTdphi(double current
 		int iqz0 = (qznpts-1)/2;
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 		{
-			current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt0,iqx0,iqy0,iqz0,1)] = 0.0;
-			thermal_target_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt0,iqx0,iqy0,iqz0,1)] = 0.0;
+			current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,iqt0,iqx0,iqy0,iqz0,1)] = 0.0;
+			thermal_target_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,iqt0,iqx0,iqy0,iqz0,1)] = 0.0;
 		}
 	}
 
@@ -396,7 +395,6 @@ void CorrelationFunction::Output_total_target_eiqx_dN_dypTdpTdphi(double current
 	for (int iqz = 0; iqz < qznpts; ++iqz)
 	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 	{
 		//first, get CF and projected CF
 		double CF = get_CF(ipT, ipphi, iqt, iqx, iqy, iqz, false);				//false means don't return projected value
@@ -405,8 +403,8 @@ void CorrelationFunction::Output_total_target_eiqx_dN_dypTdpTdphi(double current
 		double projected_CF = get_CF(ipT, ipphi, iqt, iqx, iqy, iqz, true && !thermal_pions_only);	//true means do return projected value
 
 		double nonFTd_spectra = spectra[target_particle_id][ipT][ipphi];
-		double cos_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,0)];
-		double sin_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,1)];
+		double cos_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,0)];
+		double sin_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,1)];
 
 		output_target_dN_dypTdpTdphi << scientific << setprecision(8) << setw(12)
 			<< qt_pts[iqt] << "   " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[iqz] << "   "
@@ -415,11 +413,11 @@ void CorrelationFunction::Output_total_target_eiqx_dN_dypTdpTdphi(double current
 			<< cos_transf_spectra << "   "																							//non-thermal + thermal (cos)
 			<< sin_transf_spectra << "   "																							//non-thermal + thermal (sin)
 			<< thermal_spectra[target_particle_id][ipT][ipphi] << "   "																//thermal only
-			<< thermal_target_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,0)] << "   "									//thermal only (cos)
-			<< thermal_target_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,1)] << "   "									//thermal only (sin)
+			<< thermal_target_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,0)] << "   "									//thermal only (cos)
+			<< thermal_target_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,1)] << "   "									//thermal only (sin)
 			<< nonFTd_spectra - thermal_spectra[target_particle_id][ipT][ipphi] << "   "											//non-thermal only
-			<< cos_transf_spectra - thermal_target_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,0)] << "   "				//non-thermal only (cos)
-			<< sin_transf_spectra - thermal_target_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,1)] << "   "				//non-thermal only (sin)
+			<< cos_transf_spectra - thermal_target_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,0)] << "   "				//non-thermal only (cos)
+			<< sin_transf_spectra - thermal_target_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,1)] << "   "				//non-thermal only (sin)
 			<< CF << "   " << projected_CF << endl;
 	}
 
@@ -437,7 +435,7 @@ void CorrelationFunction::Output_total_eiqx_dN_dypTdpTdphi(int local_pid)
 	ofstream output_dN_dypTdpTdphi(filename_stream_dN_dypTdpTdphi.str().c_str());
 
 	int HDFOpenSuccess = Open_resonance_HDF_array("resonance_spectra.h5");
-	int HDFloadTargetSuccess = Get_resonance_from_HDF_array(local_pid, current_dN_dypTdpTdphi_moments);
+	int HDFloadTargetSuccess = Get_resonance_from_HDF_array(local_pid, (n_pY_pts - 1)/2, current_dN_dypTdpTdphi_moments);	//again, just pions at Y=0 for now
 	int HDFCloseSuccess = Close_resonance_HDF_array();
 
 	// addresses NaN issue in sin component when all q^{\mu} == 0
@@ -459,11 +457,10 @@ void CorrelationFunction::Output_total_eiqx_dN_dypTdpTdphi(int local_pid)
 	for (int iqz = 0; iqz < qznpts; ++iqz)
 	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 	{
 		double nonFTd_spectra = spectra[local_pid][ipT][ipphi];
-		double cos_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,0)];
-		double sin_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,1)];
+		double cos_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,0)];
+		double sin_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,1)];
 
 		output_dN_dypTdpTdphi << scientific << setprecision(8) << setw(12)
 			<< qt_pts[iqt] << "   " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[iqz] << "   "
@@ -494,7 +491,6 @@ void CorrelationFunction::Readin_total_target_eiqx_dN_dypTdpTdphi()
 	for (int iqz = 0; iqz < qznpts; ++iqz)
 	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 	{
 		input_target_dN_dypTdpTdphi >> dummy;
 		input_target_dN_dypTdpTdphi >> dummy;
@@ -503,11 +499,11 @@ void CorrelationFunction::Readin_total_target_eiqx_dN_dypTdpTdphi()
 		input_target_dN_dypTdpTdphi >> dummy;
 		input_target_dN_dypTdpTdphi >> dummy;
 		input_target_dN_dypTdpTdphi >> spectra[target_particle_id][ipT][ipphi];
-		input_target_dN_dypTdpTdphi >> current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,0)];
-		input_target_dN_dypTdpTdphi >> current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,1)];
+		input_target_dN_dypTdpTdphi >> current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,0)];
+		input_target_dN_dypTdpTdphi >> current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,1)];
 		input_target_dN_dypTdpTdphi >> thermal_spectra[target_particle_id][ipT][ipphi];
-		input_target_dN_dypTdpTdphi >> thermal_target_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,0)];
-		input_target_dN_dypTdpTdphi >> thermal_target_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt,iqx,iqy,iqz,1)];
+		input_target_dN_dypTdpTdphi >> thermal_target_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,0)];
+		input_target_dN_dypTdpTdphi >> thermal_target_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,1)];
 		input_target_dN_dypTdpTdphi >> dummy;
 		input_target_dN_dypTdpTdphi >> dummy;
 		input_target_dN_dypTdpTdphi >> dummy;
