@@ -24,9 +24,7 @@ const int RANK2D = 2;
 /////////////////////////////////////////////
 int CorrelationFunction::Initialize_resonance_HDF_array()
 {
-const int chunk_size = n_pT_pts * n_pphi_pts * /*n_pY_pts **/ qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int small_array_size = qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
+	const int chunk_size = n_pT_pts * n_pphi_pts * n_pY_pts * qxnpts * qynpts * ntrig;
 
 	double * resonance_chunk = new double [chunk_size];
 
@@ -63,10 +61,11 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 			*global_out_stream_ptr << "HDF resonance file doesn't exist!  Initializing to zero..." << endl;
 
 			for (int ir = 0; ir < NchosenParticle + 1; ++ir)
-			for (int ipY = 0; ipY < n_pY_pts; ++ipY)
+			for (int iqt = 0; iqt < qtnpts; ++iqt)
+			for (int iqz = 0; iqz < qznpts; ++iqz)
 			{
 				//offset[0] = ir;
-				offset[0] = ir * n_pY_pts + ipY;
+				offset[0] = HDF_indexer(ir, iqt, iqz);
 				resonance_dataspace->selectHyperslab(H5S_SELECT_SET, count, offset);
 	
 				for (int iidx = 0; iidx < chunk_size; ++iidx)
@@ -106,9 +105,7 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 
 int CorrelationFunction::Initialize_target_thermal_HDF_array()
 {
-const int chunk_size = n_pT_pts * n_pphi_pts * /*n_pY_pts **/ qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int small_array_size = qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
+	const int chunk_size = n_pT_pts * n_pphi_pts * n_pY_pts * qxnpts * qynpts * ntrig;
 
 	double * tta_chunk = new double [chunk_size];
 
@@ -144,10 +141,10 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 		{
 			*global_out_stream_ptr << "HDF thermal target moments file doesn't exist!  Initializing to zero..." << endl;
 
-			for (int ipY = 0; ipY < n_pY_pts; ++ipY)
+			for (int iqt = 0; iqt < qtnpts; ++iqt)
+			for (int iqz = 0; iqz < qznpts; ++iqz)
 			{
-
-				offset[0] = ipY;
+				offset[0] = HDF_indexer(0, iqt, iqz);
 				tta_dataspace->selectHyperslab(H5S_SELECT_SET, count, offset);
 	
 				for (int iidx = 0; iidx < chunk_size; ++iidx)
@@ -189,9 +186,7 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 
 int CorrelationFunction::Open_resonance_HDF_array(string resonance_local_file_name)
 {
-const int chunk_size = n_pT_pts * n_pphi_pts * /*n_pY_pts **/ qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int small_array_size = qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
+	const int chunk_size = n_pT_pts * n_pphi_pts * n_pY_pts * qxnpts * qynpts * ntrig;
 
 	ostringstream filename_stream_ra;
 	filename_stream_ra << path << "/" << resonance_local_file_name;
@@ -203,7 +198,7 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 		Exception::dontPrint();
 	
 		hsize_t dimsm[RANK2D] = {1, chunk_size};
-		hsize_t dims[RANK2D] = { (NchosenParticle + 1) * n_pY_pts, chunk_size};
+		hsize_t dims[RANK2D] = { (NchosenParticle + 1) * qtnpts * qznpts, chunk_size};
 
 		resonance_dataspace = new H5::DataSpace (RANK2D, dims);
 		resonance_file = new H5::H5File(RESONANCE_FILE_NAME, H5F_ACC_RDWR);
@@ -240,9 +235,7 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 
 int CorrelationFunction::Open_target_thermal_HDF_array()
 {
-const int chunk_size = n_pT_pts * n_pphi_pts * /*n_pY_pts **/ qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int small_array_size = qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
+	const int chunk_size = n_pT_pts * n_pphi_pts * n_pY_pts * qxnpts * qynpts * ntrig;
 
 	ostringstream filename_stream_ra;
 	filename_stream_ra << path << "/target_thermal_moments.h5";
@@ -254,7 +247,7 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 		Exception::dontPrint();
 	
 		hsize_t dimsm[1] = {chunk_size};
-		hsize_t dims[1] = {chunk_size * n_pY_pts};
+		hsize_t dims[1] = {chunk_size};
 
 		tta_dataspace = new H5::DataSpace (1, dims);
 		tta_file = new H5::H5File(TARGET_THERMAL_FILE_NAME, H5F_ACC_RDWR);
@@ -368,11 +361,9 @@ int CorrelationFunction::Close_target_thermal_HDF_array()
 
 /////////////////////////////////////////////
 
-int CorrelationFunction::Set_resonance_in_HDF_array(int local_pid, int ipY, double * resonance_array_to_use)
+int CorrelationFunction::Set_resonance_in_HDF_array(int local_pid, int iqt, int iqz, double * resonance_array_to_use)
 {
-const int chunk_size = n_pT_pts * n_pphi_pts * /*n_pY_pts **/ qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int small_array_size = qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
+	const int chunk_size = n_pT_pts * n_pphi_pts * n_pY_pts * qxnpts * qynpts * ntrig;
 
 	double * resonance_chunk = new double [chunk_size];
 
@@ -385,7 +376,7 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 	try
     {
 		Exception::dontPrint();
-		hsize_t offset[RANK2D] = {local_icr * n_pY_pts + ipY, 0};
+		hsize_t offset[RANK2D] = {HDF_indexer(local_icr, iqt, iqz), 0};
 		hsize_t count[RANK2D] = {1, chunk_size};				// == chunk_dims
 		resonance_dataspace->selectHyperslab(H5S_SELECT_SET, count, offset);
 
@@ -420,11 +411,10 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 
 /////////////////////////////////////////////
 
-int CorrelationFunction::Get_resonance_from_HDF_array(int local_pid, int ipY, double * resonance_array_to_fill)
+int CorrelationFunction::Get_resonance_from_HDF_array(int local_pid, int iqt, int iqz, double * resonance_array_to_fill)
 {
-const int chunk_size = n_pT_pts * n_pphi_pts * /*n_pY_pts **/ qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int small_array_size = qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
+	const int chunk_size = n_pT_pts * n_pphi_pts * n_pY_pts * qxnpts * qynpts * ntrig;
+	const int index_size = qtnpts * qznpts;
 
 	double * resonance_chunk = new double [chunk_size];
 
@@ -438,7 +428,7 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 	try
     {
 		Exception::dontPrint();
-		hsize_t offset[RANK2D] = {local_icr * n_pY_pts + ipY, 0};
+		hsize_t offset[RANK2D] = {HDF_indexer(local_icr, iqt, iqz), 0};
 		hsize_t count[RANK2D] = {1, chunk_size};				// == chunk_dims
 		resonance_dataspace->selectHyperslab(H5S_SELECT_SET, count, offset);
 
@@ -473,11 +463,9 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 
 /////////////////////////////////////////////
 
-int CorrelationFunction::Set_target_thermal_in_HDF_array(int ipY, double * tta_array_to_use)
+int CorrelationFunction::Set_target_thermal_in_HDF_array(int iqt, int iqz, double * tta_array_to_use)
 {
-const int chunk_size = n_pT_pts * n_pphi_pts * /*n_pY_pts **/ qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int small_array_size = qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
+	const int chunk_size = n_pT_pts * n_pphi_pts * n_pY_pts * qxnpts * qynpts * ntrig;
 
 	double * tta_chunk = new double [chunk_size];
 
@@ -485,7 +473,7 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
     {
 		Exception::dontPrint();
 	
-		hsize_t offset[1] = {ipY};
+		hsize_t offset[1] = {HDF_indexer(0, iqt, iqz)};
 		hsize_t count[1] = {chunk_size};				// == chunk_dims
 		tta_dataspace->selectHyperslab(H5S_SELECT_SET, count, offset);
 
@@ -522,18 +510,16 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 /////////////////////////////////////////////
 
 //int CorrelationFunction::Get_target_thermal_from_HDF_array(double ******* tta_to_fill)
-int CorrelationFunction::Get_target_thermal_from_HDF_array(int ipY, double * tta_to_fill)
+int CorrelationFunction::Get_target_thermal_from_HDF_array(int iqt, int iqz, double * tta_to_fill)
 {
-const int chunk_size = n_pT_pts * n_pphi_pts * /*n_pY_pts **/ qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int small_array_size = qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
+	const int chunk_size = n_pT_pts * n_pphi_pts * n_pY_pts * qxnpts * qynpts * ntrig;
 
 	double * tta_chunk = new double [chunk_size];
 
 	try
     {
 		Exception::dontPrint();
-		hsize_t offset[1] = {ipY};
+		hsize_t offset[1] = {HDF_indexer(0, iqt, iqz)};
 		hsize_t count[1] = {chunk_size};				// == chunk_dims
 		tta_dataspace->selectHyperslab(H5S_SELECT_SET, count, offset);
 
@@ -571,9 +557,7 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 
 int CorrelationFunction::Copy_chunk(int current_resonance_index, int reso_idx_to_be_copied)
 {
-const int chunk_size = n_pT_pts * n_pphi_pts * /*n_pY_pts **/ qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int small_array_size = qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
+	const int chunk_size = n_pT_pts * n_pphi_pts * n_pY_pts * qxnpts * qynpts * ntrig;
 
 	double * resonance_chunk = new double [chunk_size];
 
@@ -591,9 +575,10 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
     {
 		Exception::dontPrint();
 	
-		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
+		for (int iqt = 0; iqt < qtnpts; ++iqt)
+		for (int iqz = 0; iqz < qznpts; ++iqz)
 		{
-			hsize_t offset[RANK2D] = {local_icr2 * n_pY_pts + ipY, 0};
+			hsize_t offset[RANK2D] = {HDF_indexer(local_icr2, iqt, iqz), 0};
 			hsize_t count[RANK2D] = {1, chunk_size};
 			resonance_dataspace->selectHyperslab(H5S_SELECT_SET, count, offset);
 
@@ -601,7 +586,7 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 			resonance_dataset->read(resonance_chunk, PredType::NATIVE_DOUBLE, *resonance_memspace, *resonance_dataspace);
 
 			// now set this to current resonance
-			offset[0] = local_icr1 * n_pY_pts + ipY;
+			offset[0] = HDF_indexer(local_icr1, iqt, iqz);
 			resonance_dataspace->selectHyperslab(H5S_SELECT_SET, count, offset);
 			resonance_dataset->write(resonance_chunk, PredType::NATIVE_DOUBLE, *resonance_memspace, *resonance_dataspace);
 		}
@@ -638,9 +623,8 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 //int CorrelationFunction::Dump_resonance_HDF_array_spectra(string output_filename, double ******* resonance_array_to_use)
 int CorrelationFunction::Dump_resonance_HDF_array_spectra(string output_filename, double * resonance_array_to_use)
 {
-const int chunk_size = n_pT_pts * n_pphi_pts * /*n_pY_pts **/ qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int small_array_size = qtnpts * qxnpts * qynpts * qznpts * ntrig;
-const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
+	const int chunk_size = n_pT_pts * n_pphi_pts * n_pY_pts * qxnpts * qynpts * ntrig;
+	const int index_size = qtnpts * qznpts;
 
 	double * resonance_chunk = new double [chunk_size];
 
@@ -655,9 +639,10 @@ const int q_space_size = qtnpts * qxnpts * qynpts * qznpts;
 	
 		// use loaded chunk to fill resonance_array_to_fill
 		for(int ir = 0; ir < NchosenParticle + 1; ir++)
-		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
+		for (int iqt = 0; iqt < qtnpts; ++iqt)
+		for (int iqz = 0; iqz < qznpts; ++iqz)
 		{
-			hsize_t offset[RANK2D] = {ir * n_pY_pts + ipY, 0};
+			hsize_t offset[RANK2D] = {HDF_indexer(ir, iqt, iqz), 0};
 			hsize_t count[RANK2D] = {1, chunk_size};				// == chunk_dims
 			resonance_dataspace->selectHyperslab(H5S_SELECT_SET, count, offset);
 	

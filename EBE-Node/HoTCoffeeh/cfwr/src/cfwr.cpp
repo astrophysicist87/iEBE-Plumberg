@@ -132,7 +132,6 @@ void CorrelationFunction::Fourier_transform_emission_function()
 	// loop over decay_channels (idc == 0 corresponds to thermal pions)
 	for (int idc = 0; idc <= decay_channel_loop_cutoff; ++idc)
 	{
-
 		// check whether to do this decay channel
 		if (idc > 0 && thermal_pions_only)
 			break;
@@ -144,11 +143,7 @@ void CorrelationFunction::Fourier_transform_emission_function()
 
 		// decide whether to recycle old moments or calculate new moments
 		Get_spacetime_moments(idc);
-
 	}
-
-	// once all spacetime moments have been computed, get rid of weighted S_p array to save space
-	//Delete_S_p_withweight_array();
 
 	BIGsw.Stop();
 	*global_out_stream_ptr << "\t ...finished all (thermal) space-time moments in " << BIGsw.printTime() << " seconds." << endl;
@@ -158,12 +153,13 @@ void CorrelationFunction::Fourier_transform_emission_function()
 	Dump_spectra_array("full_spectra.dat", spectra);
 
 	//everything currently in resonance*h5 file
-	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
+	for (int iqt = 0; iqt < qtnpts; ++iqt)
+	for (int iqz = 0; iqz < qznpts; ++iqz)
 	{
 		//make sure thermal target moments are saved here
-		Get_resonance_from_HDF_array(target_particle_id, ipY, thermal_target_dN_dypTdpTdphi_moments);
+		Get_resonance_from_HDF_array(target_particle_id, iqt, iqz, thermal_target_dN_dypTdpTdphi_moments);
 		//make sure they are written to separate file here
-		Set_target_thermal_in_HDF_array(ipY, thermal_target_dN_dypTdpTdphi_moments);
+		Set_target_thermal_in_HDF_array(iqt, iqz, thermal_target_dN_dypTdpTdphi_moments);
 	}
 
 	//set logs and signs!
@@ -213,9 +209,10 @@ void CorrelationFunction::Compute_phase_space_integrals()
 		// begin resonance decay calculations here...
 		// ************************************************************
 
-		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
+		for (int iqt = 0; iqt < (qtnpts / 2) + 1; ++iqt) //assumes central qt-point is zero
+		for (int iqz = 0; iqz < qznpts; ++iqz)
 		{
-			Load_resonance_and_daughter_spectra(decay_channels[idc-1].resonance_particle_id, ipY);
+			Load_resonance_and_daughter_spectra(decay_channels[idc-1].resonance_particle_id, iqt, iqz);
 
 			for (int idc_DI = 0; idc_DI < current_reso_nbody; ++idc_DI)
 			{
@@ -226,7 +223,7 @@ void CorrelationFunction::Compute_phase_space_integrals()
 				Do_resonance_integrals(current_resonance_particle_id, daughter_resonance_particle_id, idc);
 			}
 	
-			Update_daughter_spectra(decay_channels[idc-1].resonance_particle_id, ipY);
+			Update_daughter_spectra(decay_channels[idc-1].resonance_particle_id, iqt, iqz);
 		}
 
 		Delete_decay_channel_info();				// free up memory
@@ -615,10 +612,10 @@ if (HDFcopyChunkSuccess < 0) exit(1);
 
 //**************************************************************
 //**************************************************************
-void CorrelationFunction::Load_resonance_and_daughter_spectra(int local_pid, int ipY)
+void CorrelationFunction::Load_resonance_and_daughter_spectra(int local_pid, int iqt, int iqz)
 {
 	// get parent resonance spectra, set logs and signs arrays that are needed for interpolation
-	int getHDFresonanceSpectra = Get_resonance_from_HDF_array(local_pid, ipY, current_dN_dypTdpTdphi_moments);
+	int getHDFresonanceSpectra = Get_resonance_from_HDF_array(local_pid, iqt, iqz, current_dN_dypTdpTdphi_moments);
 	Set_current_resonance_logs_and_signs();
 
 	// get spectra for all daughters, set all of the logs and signs arrays that are needed for interpolation
@@ -633,7 +630,7 @@ void CorrelationFunction::Load_resonance_and_daughter_spectra(int local_pid, int
 		for (set<int>::iterator it = daughter_resonance_indices.begin(); it != daughter_resonance_indices.end(); ++it)
 		{
 			int daughter_pid = *it;		//daughter pid is pointed to by iterator
-			getHDFresonanceSpectra = Get_resonance_from_HDF_array(daughter_pid, ipY, current_daughters_dN_dypTdpTdphi_moments[d_idx]);
+			getHDFresonanceSpectra = Get_resonance_from_HDF_array(daughter_pid, iqt, iqz, current_daughters_dN_dypTdpTdphi_moments[d_idx]);
 			++d_idx;
 		}
 	
@@ -648,13 +645,13 @@ void CorrelationFunction::Load_resonance_and_daughter_spectra(int local_pid, int
 	return;
 }
 
-void CorrelationFunction::Update_daughter_spectra(int local_pid, int ipY)
+void CorrelationFunction::Update_daughter_spectra(int local_pid, int iqt, int iqz)
 {
 	int d_idx = 0;
 	for (set<int>::iterator it = daughter_resonance_indices.begin(); it != daughter_resonance_indices.end(); ++it)
 	{
 		int daughter_pid = *it;		//daughter pid is pointed to by iterator
-		int setHDFresonanceSpectra = Set_resonance_in_HDF_array(daughter_pid, ipY, current_daughters_dN_dypTdpTdphi_moments[d_idx]);
+		int setHDFresonanceSpectra = Set_resonance_in_HDF_array(daughter_pid, iqt, iqz, current_daughters_dN_dypTdpTdphi_moments[d_idx]);
 
 		++d_idx;
 	}
@@ -806,10 +803,10 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid)
 	///////////////////////////////////
 	// Loop over qt, qz, and pY points
 	///////////////////////////////////
-	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
+	for (int iqt = 0; iqt < (qtnpts / 2) + 1; ++iqt)	//assumes central qt point is zero
+	for (int iqz = 0; iqz < qznpts; ++iqz)
 	{
-		for (int iqt = 0; iqt < (qtnpts / 2) + 1; ++iqt)	//assumes central qt point is zero
-		for (int iqz = 0; iqz < qznpts; ++iqz)
+		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 		{
 			sw_qtqzpY.Reset();
 			sw_qtqzpY.Start();
@@ -825,7 +822,7 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid)
 		*global_out_stream_ptr << "CP#2: Took " << sw.printTime() << " seconds." << endl;
 
 		// store in HDF5 file
-		int setHDFresonanceSpectra = Set_resonance_in_HDF_array(local_pid, ipY, current_dN_dypTdpTdphi_moments);
+		int setHDFresonanceSpectra = Set_resonance_in_HDF_array(local_pid, iqt, iqz, current_dN_dypTdpTdphi_moments);
 		if (setHDFresonanceSpectra < 0)
 		{
 			cerr << "Failed to set this resonance in HDF array!  Exiting..." << endl;
@@ -1413,11 +1410,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 		delete [] summed_Fourier_moments_C[i];
 		delete [] summed_Fourier_moments_S[i];
 	}
-	/*for (int isurf = 0; isurf < FO_length; ++isurf)
-	{
-		delete [] flattened_Fourier_moments_C[isurf];
-		delete [] flattened_Fourier_moments_S[isurf];
-	}*/
+
 	delete [] summed_Fourier_moments_C;
 	delete [] summed_Fourier_moments_S;
 	delete [] flattened_Fourier_moments_C;
@@ -1426,22 +1419,6 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 	sw.Stop();
 	*global_out_stream_ptr << "Total function call took " << sw.printTime() << " seconds." << endl;
 	
-	return;
-}
-
-inline void CorrelationFunction::Update_Fourier_moments_at_cutoffs(vector<double> * cutoff_Fourier_moments_cos, vector<double> * cutoff_Fourier_moments_sin,
-																	double * flattened_Fourier_moments_C, double * flattened_Fourier_moments_S)
-{
-	for (int iqt = 0; iqt < qtnpts; ++iqt)
-	for (int iqz = 0; iqz < qznpts; ++iqz)
-	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
-	for (int iqx = 0; iqx < qxnpts; ++iqx)
-	for (int iqy = 0; iqy < qynpts; ++iqy)
-	{
-		cutoff_Fourier_moments_cos->push_back( flattened_Fourier_moments_C[FM_indexer(ipY,iqt,iqx,iqy,iqz)] );
-		cutoff_Fourier_moments_sin->push_back( flattened_Fourier_moments_S[FM_indexer(ipY,iqt,iqx,iqy,iqz)] );
-	}
-
 	return;
 }
 

@@ -295,8 +295,6 @@ class CorrelationFunction
 		void Set_Bessel_function_grids(double beta, double gamma);
 		void Set_most_important_FOcells(vector<size_t> * most_impt_FOcells_vec, vector<double> * most_impt_FOcells_vals_vec, priority_queue<pair<double, size_t> > FOcells_PQ);
 		int Set_percentage_cutoffs(vector<int> * cutoff_FOcells_at_pTpphi, vector<double> * most_impt_FOcells_vals_vec, double absolute_running_total, double cutoff);
-		inline void Update_Fourier_moments_at_cutoffs(vector<double> * cutoff_Fourier_moments_cos, vector<double> * cutoff_Fourier_moments_sin,
-																	double * flattened_Fourier_moments_C, double * flattened_Fourier_moments_S);
 		void Set_thermal_target_moments();
 		void Set_full_target_moments();
 		void form_trig_sign_z(int isurf, int ieta, int iqt, int iqx, int iqy, int iqz, int ii, double * results);

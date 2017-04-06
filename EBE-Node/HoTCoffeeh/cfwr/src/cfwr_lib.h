@@ -32,6 +32,14 @@ inline int CorrelationFunction::FM_indexer(const int ipY, const int iqt, const i
 	);
 }
 
+inline int CorrelationFunction::HDF_indexer(const int iR, const int iqt, const int iqz)
+{
+	return (
+		( ( ( ir * qtnpts + iqt ) * qznpts + iqz
+	);
+}
+
+
 inline int CorrelationFunction::indexer2(const int ipT, const int ipphi, const int ipY, const int iqt, const int iqx, const int iqy, const int iqz)
 {
 	return (
