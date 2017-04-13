@@ -64,11 +64,17 @@ void CorrelationFunction::Cal_correlationfunction()
 	if (qtnpts == 1)
 		return;
 
-	//load thermal information
-	Set_thermal_target_moments();	//thermal pion moments
+	if (1)
+	{
+		cerr << "Need to fix things at this point!" << endl;
+		debugger(__LINE__, __FILE__);
+		exit (1);
+		//load thermal information
+		//Set_thermal_target_moments();	//thermal pion moments at Y=0
 
-	//load full resonance calculation information
-	Set_full_target_moments();		//full pion moments
+		//load full resonance calculation information
+		//Set_full_target_moments();		//full pion moments at Y=0
+	}
 
 	// chooses the qo, qs, ql (or qx, qy, ql) points at which to evaluate correlation function,
 	// and allocates the array to hold correlation function values

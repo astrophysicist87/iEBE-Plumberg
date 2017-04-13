@@ -132,6 +132,8 @@ class CorrelationFunction
 		double ** current_daughters_sign_of_dN_dypTdpTdphi_moments;
 		double * thermal_target_dN_dypTdpTdphi_moments;
 		double * full_target_dN_dypTdpTdphi_moments;
+		double * thermal_target_Yeq0_moments;
+		double * full_target_Yeq0_moments;
 
 		// needed these to avoid too many trigonometric evaluations
 		//double * oscx, * oscy;
@@ -173,14 +175,8 @@ class CorrelationFunction
 		double * eta_s, * ch_eta_s, * sh_eta_s, * eta_s_weight;
 		double * SP_pY, * ch_SP_pY, * sh_SP_pY, * SP_pY_wts;
 
-		//NEW grid for doing Chebyshev interpolation of resonance integrals!
-		vector<Chebyshev*> spectra_resonance_grid_approximator;
-		vector<Chebyshev*> real_resonance_grid_approximator;
-		vector<Chebyshev*> imag_resonance_grid_approximator;
-		Chebyshev * approx_R2s, * approx_R2o, * approx_R2l, * approx_R2os, * approx_R2sl, * approx_R2ol;
+		//Chebyshev * approx_R2s, * approx_R2o, * approx_R2l, * approx_R2os, * approx_R2sl, * approx_R2ol;
 		double * flat_spectra;
-		double ***** tmp_moments_real;
-		double ***** tmp_moments_imag;
 
 		//points and weights for resonance integrals
 		double v_min, v_max, zeta_min, zeta_max, s_min, s_max;
@@ -236,7 +232,7 @@ class CorrelationFunction
 		double ** R2_side_QM_C, ** R2_out_QM_C, ** R2_long_QM_C, ** R2_outside_QM_C, ** R2_sidelong_QM_C, ** R2_outlong_QM_C;
 		double ** R2_side_QM_S, ** R2_out_QM_S, ** R2_long_QM_S, ** R2_outside_QM_S, ** R2_sidelong_QM_S, ** R2_outlong_QM_S;
 
-		double *** res_sign_info, *** res_log_info, *** res_moments_info;
+		double ** res_sign_info, ** res_log_info, ** res_moments_info;
 		double ** spec_sign_info, ** spec_log_info, ** spec_vals_info;
 
 		double *** FOcell_density_array;
@@ -265,8 +261,11 @@ class CorrelationFunction
 		inline int indexer(const int ipt, const int ipphi, const int ipY, const int iqt, const int iqx, const int iqy, const int iqz, const int itrig);
 		inline int indexer2(const int ipt, const int ipphi, const int ipY, const int iqt, const int iqx, const int iqy, const int iqz);
 		inline int indexer3(const int ipt, const int ipphi, const int isurf);
+		inline int mom_indexer(const int ipt, const int ipphi, const int ipY);
+		inline int fixQTQZ_indexer(const int ipT, const int ipphi, const int ipY, const int iqx, const int iqy, const int itrig);
 		inline int indexer4(const int ipt, const int ipphi, const int iqx, const int iqy);
 		inline int FM_indexer(const int ipY, const int iqt, const int iqx, const int iqy, const int iqz);
+		inline int HDF_indexer(const int ir, const int iqt, const int iqz);
 		inline void addElementToQueue(priority_queue<pair<double, size_t> >& p, pair<double, size_t> elem, size_t max_size);
 		inline void set_to_zero(double * array, size_t arraylength);
 		inline double dot_four_vectors(double * a, double * b);
@@ -277,8 +276,8 @@ class CorrelationFunction
 		bool fexists(const char *filename);
 
 		// HDF routines
-		int Get_resonance_from_HDF_array(int local_pid, int ipY, double * resonance_array_to_fill);
-		int Set_resonance_in_HDF_array(int local_pid, int ipY, double * resonance_array_to_use);
+		int Get_resonance_from_HDF_array(int local_pid, int iqt, int iqz, double * resonance_array_to_fill);
+		int Set_resonance_in_HDF_array(int local_pid, int iqt, int iqz, double * resonance_array_to_use);
 		int Initialize_resonance_HDF_array();
 		int Open_resonance_HDF_array(string resonance_local_file_name);
 		int Close_resonance_HDF_array();
@@ -288,8 +287,8 @@ class CorrelationFunction
 		int Initialize_target_thermal_HDF_array();
 		int Open_target_thermal_HDF_array();
 		int Close_target_thermal_HDF_array();
-		int Get_target_thermal_from_HDF_array(int ipY, double * target_thermal_array_to_fill);
-		int Set_target_thermal_in_HDF_array(int ipY, double * tta_array_to_use);
+		int Get_target_thermal_from_HDF_array(int iqt, int iqz, double * target_thermal_array_to_fill);
+		int Set_target_thermal_in_HDF_array(int iqt, int iqz, double * tta_array_to_use);
 
 		void Set_dN_dypTdpTdphi_moments(int local_pid);
 		void Set_Bessel_function_grids(double beta, double gamma);
@@ -314,8 +313,8 @@ class CorrelationFunction
 		bool Do_this_daughter_particle(int dc_idx, int daughter_idx, int * daughter_resonance_pid);
 		void Get_spacetime_moments(int dc_idx);
 		void Recycle_spacetime_moments();
-		void Load_resonance_and_daughter_spectra(int local_pid, int ipY);
-		void Update_daughter_spectra(int local_pid, int ipY);
+		void Load_resonance_and_daughter_spectra(int local_pid, int iqt, int iqz);
+		void Update_daughter_spectra(int local_pid, int iqt, int iqz);
 		void Set_spectra_logs_and_signs(int local_pid);
 		void Set_current_resonance_logs_and_signs();
 		void Set_current_daughters_resonance_logs_and_signs(int n_daughters);
@@ -338,10 +337,15 @@ class CorrelationFunction
 		void Get_current_decay_string(int dc_idx, string * decay_string);
 		int lookup_resonance_idx_from_particle_id(int particle_id);
 		int list_daughters(int parent_resonance_index, set<int> * daughter_resonance_indices_ptr, particle_info * particle, int Nparticle);
-		void eiqxEdndp3(double ptr, double phir, double * results, int loc_verb = 0);
+		void eiqxEdndp3(double ptr, double phir, double pyr, double * results, int loc_verb = 0);
+		void eiqxEdndp3_at_pY(double ptr, double pphir, double pyr, double pT0, double pT1, double phi0, double phi1,
+								double * sign_of_f11_arr, double * sign_of_f12_arr, double * sign_of_f21_arr, double * sign_of_f22_arr,
+								double * log_f11_arr, double * log_f12_arr, double * log_f21_arr, double * log_f22_arr,
+								double * f11_arr, double * f12_arr, double * f21_arr, double * f22_arr, double * results);
 		void Edndp3(double ptr, double phir, double * result, int loc_verb = 0);
 		void Set_correlation_function_q_pts();
 		void Set_q_points();
+		void Set_qlist(int iqt, int iqz);
 		void Set_sorted_q_pts_list();
 		void Get_q_points(double qo, double qs, double ql, double KT, double Kphi, double * qgridpts);
 		void Allocate_resonance_running_sum_vectors();

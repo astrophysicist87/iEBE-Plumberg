@@ -45,7 +45,7 @@ SV_resonanceThreshold = 1.00		# (approximate) fraction of all resonance contribu
 ########
 CF_npT = 15				# size of pT grid for interpolation of (Fourier-transformed) single-particle spectra
 CF_npphi = 48				# size of pphi grid for interpolation of (Fourier-transformed) single-particle spectra
-CF_npY = 21				# size of pphi grid for interpolation of (Fourier-transformed) single-particle spectra
+CF_npY = 3				# size of pphi grid for interpolation of (Fourier-transformed) single-particle spectra
 CF_resonanceThreshold = 0.60		# (approximate) fraction of all resonance contributions to do
 					# code sums over all resonances in (approximately) decreasing order until this threshhold
 					# is reached, only skipping resonances with lifetimes > max_lifetime

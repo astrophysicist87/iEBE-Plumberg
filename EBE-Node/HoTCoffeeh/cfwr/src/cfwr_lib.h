@@ -25,6 +25,13 @@ inline int CorrelationFunction::indexer(const int ipT, const int ipphi, const in
 	);
 }
 
+inline int CorrelationFunction::fixQTQZ_indexer(const int ipT, const int ipphi, const int ipY, const int iqx, const int iqy, const int itrig)
+{
+	return (
+		( ( ( ( ipT * n_pphi_pts + ipphi ) * n_pY_pts + ipY )  * qxnpts + iqx ) * qynpts + iqy ) * 2 + itrig
+	);
+}
+
 inline int CorrelationFunction::FM_indexer(const int ipY, const int iqt, const int iqx, const int iqy, const int iqz)
 {
 	return (
@@ -32,13 +39,19 @@ inline int CorrelationFunction::FM_indexer(const int ipY, const int iqt, const i
 	);
 }
 
-inline int CorrelationFunction::HDF_indexer(const int iR, const int iqt, const int iqz)
+inline int CorrelationFunction::HDF_indexer(const int ir, const int iqt, const int iqz)
 {
 	return (
-		( ( ( ir * qtnpts + iqt ) * qznpts + iqz
+		( ir * qtnpts + iqt ) * qznpts + iqz
 	);
 }
 
+inline int CorrelationFunction::mom_indexer(const int ipT, const int ipphi, const int ipY)
+{
+	return (
+		( ipT * n_pphi_pts + ipphi ) * n_pY_pts + ipY
+	);
+}
 
 inline int CorrelationFunction::indexer2(const int ipT, const int ipphi, const int ipY, const int iqt, const int iqx, const int iqy, const int iqz)
 {
@@ -94,9 +107,13 @@ inline void CorrelationFunction::addElementToQueue(priority_queue<pair<double, s
 {
 	if ( ( max_size <= p.size() ) && ( elem >= p.top() ) )
 		return; // nothing to do.
+
 	p.push(elem);
+
+	//while( max_size < p.size() )
 	if( max_size < p.size() )
 		p.pop();
+
 	return;
 }
 

@@ -63,6 +63,25 @@ void read_decdat(int length, FO_surf* surf_ptr, string localpath, bool include_b
   ifstream decdat(decdat_stream.str().c_str());
   for(int i=0; i<length; i++)
   {
+     surf_ptr[i].tau = 0.0;
+     surf_ptr[i].da0 = 0.0;
+     surf_ptr[i].da1 = 0.0;
+     surf_ptr[i].da2 = 0.0;
+     surf_ptr[i].vx = 0.0;
+     surf_ptr[i].vy = 0.0;
+     surf_ptr[i].Edec = 0.0;
+     surf_ptr[i].Bn = 0.0;
+     surf_ptr[i].Tdec = 0.0;
+     surf_ptr[i].muB = 0.0;
+     surf_ptr[i].muS = 0.0;
+     surf_ptr[i].Pdec = 0.0;
+     surf_ptr[i].pi33 = 0.0;
+     surf_ptr[i].pi00 = 0.0;
+     surf_ptr[i].pi01 = 0.0;
+     surf_ptr[i].pi02 = 0.0;
+     surf_ptr[i].pi11 = 0.0;
+     surf_ptr[i].pi12 = 0.0;
+     surf_ptr[i].pi22 = 0.0;
      decdat >> surf_ptr[i].tau;
      decdat >> surf_ptr[i].da0;
      decdat >> surf_ptr[i].da1;
@@ -82,7 +101,11 @@ void read_decdat(int length, FO_surf* surf_ptr, string localpath, bool include_b
      decdat >> surf_ptr[i].pi11;
      decdat >> surf_ptr[i].pi12;
      decdat >> surf_ptr[i].pi22;
-     if (include_bulk_pi) decdat >> surf_ptr[i].bulkPi;
+     if (include_bulk_pi)
+	 {
+		surf_ptr[i].bulkPi = 0.0;
+		decdat >> surf_ptr[i].bulkPi;
+	 }
      surf_ptr[i].gammaT = 1./sqrt(1.- surf_ptr[i].vx*surf_ptr[i].vx - surf_ptr[i].vy*surf_ptr[i].vy);
   }
   decdat.close();
@@ -101,6 +124,8 @@ void read_surfdat(int length, FO_surf* surf_ptr, string localpath)
   for(int i=0; i<length; i++)
   {
      surfdat >> dummy >> dummy;
+     surf_ptr[i].xpt = 0.0;
+     surf_ptr[i].ypt = 0.0;
      surfdat >> surf_ptr[i].xpt;
      surfdat >> surf_ptr[i].ypt;
      surf_ptr[i].r = sqrt(surf_ptr[i].xpt*surf_ptr[i].xpt + surf_ptr[i].ypt*surf_ptr[i].ypt);
@@ -108,6 +133,8 @@ void read_surfdat(int length, FO_surf* surf_ptr, string localpath)
      surf_ptr[i].sin_phi = sin(surf_ptr[i].phi);
      surf_ptr[i].cos_phi = cos(surf_ptr[i].phi);
      surfdat.getline(rest_dummy, 512);
+	for (int j = 0; j < Maxparticle; j++)
+		surf_ptr[i].particle_mu[j] = 0.0;
   }
   surfdat.close();
   //cout<<"done"<<endl;

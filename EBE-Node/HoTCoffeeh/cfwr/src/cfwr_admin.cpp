@@ -89,7 +89,7 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	//currentfolderindex = -1;
 	current_level_of_output = 0;
 	//qspace_cs_slice_length = qnpts*qnpts*qnpts*qnpts*ntrig;		//factor of 2 for sin or cos
-	qspace_cs_slice_length = qtnpts*qxnpts*qynpts*qznpts*ntrig;		//factor of 2 for sin or cos
+	qspace_cs_slice_length = qxnpts*qynpts*ntrig;		//factor of 2 for sin or cos
 
 	gsl_set_error_handler_off();
 
@@ -236,36 +236,37 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 		current_ln_dN_dypTdpTdphi_moments[i] = 0.0;
 		current_sign_of_dN_dypTdpTdphi_moments[i] = 0.0;
 	}
-
-
-	int qidx = 0;
-	qlist = new double * [qtnpts*qxnpts*qynpts*qznpts];
-	for (int iqt = 0; iqt < qtnpts; ++iqt)
-	for (int iqx = 0; iqx < qxnpts; ++iqx)
-	for (int iqy = 0; iqy < qynpts; ++iqy)
-	for (int iqz = 0; iqz < qznpts; ++iqz)
+	const int full_size = n_pT_pts * n_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
+	thermal_target_Yeq0_moments = new double [full_size];
+	full_target_Yeq0_moments = new double [full_size];
+	for (int i = 0; i < full_size; ++i)
 	{
-		qlist[qidx] = new double [4];
-		qlist[qidx][0] = qt_pts[iqt];
-		qlist[qidx][1] = qx_pts[iqx];
-		qlist[qidx][2] = qy_pts[iqy];
-		qlist[qidx][3] = qz_pts[iqz];
-		qidx++;
+		thermal_target_Yeq0_moments[i] = 0.0;
+		full_target_Yeq0_moments[i] = 0.0;
 	}
 
-	res_log_info = new double ** [n_pT_pts];
-	res_sign_info = new double ** [n_pT_pts];
-	res_moments_info = new double ** [n_pT_pts];
-	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+	int qidx = 0;
+	qlist = new double * [qxnpts*qynpts];
+	for (int iqx = 0; iqx < qxnpts; ++iqx)
+	for (int iqy = 0; iqy < qynpts; ++iqy)
 	{
-		res_log_info[ipt] = new double * [n_pphi_pts];
-		res_sign_info[ipt] = new double * [n_pphi_pts];
-		res_moments_info[ipt] = new double * [n_pphi_pts];
-		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+		qlist[qidx] = new double [4];
+		++qidx;
+	}
+
+	res_log_info = new double * [n_pT_pts * n_pphi_pts * n_pY_pts];
+	res_sign_info = new double * [n_pT_pts * n_pphi_pts * n_pY_pts];
+	res_moments_info = new double * [n_pT_pts * n_pphi_pts * n_pY_pts];
+	for (int i = 0; i < n_pT_pts * n_pphi_pts * n_pY_pts; ++i)
+	{
+		res_log_info[i] = new double [qspace_cs_slice_length];
+		res_sign_info[i] = new double [qspace_cs_slice_length];
+		res_moments_info[i] = new double [qspace_cs_slice_length];
+		for (int ii = 0; ii < qspace_cs_slice_length; ++ii)
 		{
-			res_log_info[ipt][ipphi] = new double [qspace_cs_slice_length];
-			res_sign_info[ipt][ipphi] = new double [qspace_cs_slice_length];
-			res_moments_info[ipt][ipphi] = new double [qspace_cs_slice_length];
+			res_log_info[i][ii] = 0.0;
+			res_sign_info[i][ii] = 0.0;
+			res_moments_info[i][ii] = 0.0;
 		}
 	}
 
@@ -294,6 +295,7 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 				spectra[ir][ipT][ipphi] = 0.0;
 				abs_spectra[ir][ipT][ipphi] = 0.0;
 				thermal_spectra[ir][ipT][ipphi] = 0.0;
+				//cout << "thermal_spectra at " << ir << "   " << ipT << "   " << ipphi << " = " << thermal_spectra[ir][ipT][ipphi] << endl;
 				log_spectra[ir][ipT][ipphi] = 0.0;
 				sign_spectra[ir][ipT][ipphi] = 0.0;
 			}
@@ -317,34 +319,6 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	for (int iii = 0; iii < n_pT_pts*n_pphi_pts; ++iii)
 		flat_spectra[iii] = 0.0;
 
-	tmp_moments_real = new double **** [qtnpts];
-	tmp_moments_imag = new double **** [qtnpts];
-	for (int iqt = 0; iqt < qtnpts; ++iqt)
-	{
-		tmp_moments_real[iqt] = new double *** [qxnpts];
-		tmp_moments_imag[iqt] = new double *** [qxnpts];
-		for (int iqx = 0; iqx < qxnpts; ++iqx)
-		{
-			tmp_moments_real[iqt][iqx] = new double ** [qynpts];
-			tmp_moments_imag[iqt][iqx] = new double ** [qynpts];
-			for (int iqy = 0; iqy < qynpts; ++iqy)
-			{
-				tmp_moments_real[iqt][iqx][iqy] = new double * [qznpts];
-				tmp_moments_imag[iqt][iqx][iqy] = new double * [qznpts];
-				for (int iqz = 0; iqz < qznpts; ++iqz)
-				{
-					tmp_moments_real[iqt][iqx][iqy][iqz] = new double [n_pT_pts*n_pphi_pts];
-					tmp_moments_imag[iqt][iqx][iqy][iqz] = new double [n_pT_pts*n_pphi_pts];
-					for (int iii = 0; iii < n_pT_pts*n_pphi_pts; ++iii)
-					{
-						tmp_moments_real[iqt][iqx][iqy][iqz][iii] = 0.0;
-						tmp_moments_imag[iqt][iqx][iqy][iqz][iii] = 0.0;	
-					}
-				}
-			}
-		}
-	}
-
 	// set-up integration points for resonance integrals
 	v_pts = new double [n_v_pts];
 	v_wts = new double [n_v_pts];
@@ -356,7 +330,7 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	gauss_quadrature(n_zeta_pts, 1, 0.0, 0.0, zeta_min, zeta_max, zeta_pts, zeta_wts);
 	gauss_quadrature(n_v_pts, 1, 0.0, 0.0, v_min, v_max, v_pts, v_wts);
 
-	//set pT and pphi points
+	//set pT, pphi, and pY points
 	SP_pT = new double [n_pT_pts];
 	SP_pT_wts = new double [n_pT_pts];
 	SP_pphi = new double [n_pphi_pts];
@@ -369,6 +343,16 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	{
 		sin_SP_pphi[ipphi] = sin(SP_pphi[ipphi]);
 		cos_SP_pphi[ipphi] = cos(SP_pphi[ipphi]);
+	}
+	SP_pY = new double [n_pY_pts];
+	SP_pY_wts = new double [n_pY_pts];
+	gauss_quadrature(n_pY_pts, 1, 0.0, 0.0, SP_pY_min, SP_pY_max, SP_pY, SP_pY_wts);
+	ch_SP_pY = new double [n_pY_pts];
+	sh_SP_pY = new double [n_pY_pts];
+	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
+	{
+		ch_SP_pY[ipY] = cosh(SP_pY[ipY]);
+		sh_SP_pY[ipY] = sinh(SP_pY[ipY]);
 	}
 
 	//set p0 and pz points
@@ -407,20 +391,6 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 		ch_eta_s[ieta] = cosh(eta_s[ieta]);
 		sh_eta_s[ieta] = sinh(eta_s[ieta]);
 	}
-
-	//alternate spatial rapidity grid
-	n_pY_pts = 21;
-	SP_pY = new double [n_pY_pts];
-	SP_pY_wts = new double [n_pY_pts];
-	gauss_quadrature(n_pY_pts, 1, 0.0, 0.0, -6.0, 6.0, SP_pY, SP_pY_wts);
-	ch_SP_pY = new double [n_pY_pts];
-	sh_SP_pY = new double [n_pY_pts];
-	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
-	{
-		ch_SP_pY[ipY] = cosh(SP_pY[ipY]);
-		sh_SP_pY[ipY] = sinh(SP_pY[ipY]);
-	}
-
 
 	//set HBT radii
 	R2_side_GF = new double * [n_pT_pts];
@@ -591,6 +561,21 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
    return;
 }
 
+
+void CorrelationFunction::Set_qlist(int iqt, int iqz)
+{
+	int qidx = 0;
+	for (int iqx = 0; iqx < qxnpts; ++iqx)
+	for (int iqy = 0; iqy < qynpts; ++iqy)
+	{
+		qlist[qidx][0] = qt_pts[iqt];
+		qlist[qidx][1] = qx_pts[iqx];
+		qlist[qidx][2] = qy_pts[iqy];
+		qlist[qidx][3] = qz_pts[iqz];
+		qidx++;
+	}
+}
+
 void CorrelationFunction::Set_eiqx_matrices()
 {
 	//oscx = new double [FO_length * qxnpts * 2];
@@ -621,7 +606,7 @@ void CorrelationFunction::Set_eiqx_matrices()
 			//oscy[(isurf * qynpts + iqy) * 2 + 0] = cos(hbarCm1*qy_pts[iqy]*ypt);
 			//oscy[(isurf * qynpts + iqy) * 2 + 1] = sin(hbarCm1*qy_pts[iqy]*ypt);
 			oscy[isurf][iqy * 2 + 0] = cos(hbarCm1*qy_pts[iqy]*ypt);
-			oscy[isurf][iqy * 2 + 0] = sin(hbarCm1*qy_pts[iqy]*ypt);
+			oscy[isurf][iqy * 2 + 1] = sin(hbarCm1*qy_pts[iqy]*ypt);
 		}
 	}
 
@@ -1137,7 +1122,7 @@ void CorrelationFunction::Get_current_decay_string(int dc_idx, string * decay_st
 	for (int decay_part_idx = 0; decay_part_idx < decay_channels[dc_idx - 1].nbody; decay_part_idx++)
 	{
 		temp_monval = decay_channels[dc_idx - 1].resonance_decay_monvals[decay_part_idx];
-		//if (VERBOSE > 0) *global_out_stream_ptr << "Get_current_decay_string(): temp_monval = " << temp_monval << endl;
+		/*if (VERBOSE > 0)*/ *global_out_stream_ptr << "Get_current_decay_string(): temp_monval = " << temp_monval << endl;
 		if (temp_monval == 0)
 			continue;
 		else
@@ -1155,8 +1140,8 @@ int CorrelationFunction::Set_daughter_list(int parent_pid)
 	// reset list
 	daughter_resonance_indices.clear();
 	
-//for (int i = 0; i < (int)chosen_resonances.size(); ++i)
-//	cout << chosen_resonances[i] << "   " << all_particles[chosen_resonances[i]].name << endl;
+for (int i = 0; i < (int)chosen_resonances.size(); ++i)
+	cout << chosen_resonances[i] << "   " << all_particles[chosen_resonances[i]].name << endl;
 
 	// then re-populate it
 	particle_info parent = all_particles[parent_pid];
@@ -1169,16 +1154,16 @@ int CorrelationFunction::Set_daughter_list(int parent_pid)
 		for (int l = 0; l < nb; l++)				// loop through each daughter particle
 		{
 			int pid = lookup_particle_id_from_monval(all_particles, Nparticle, parent.decays_part[k][l]);
-//cout << "Searching for " << pid << "   (" << all_particles[pid].name << ", " << all_particles[pid].effective_branchratio << ")"<< endl;
+cout << "Searching for " << pid << "   (" << all_particles[pid].name << ", " << all_particles[pid].effective_branchratio << ")"<< endl;
 			if ( all_particles[pid].effective_branchratio >= 1.e-12 || pid == target_particle_id )
 				daughter_resonance_indices.insert(pid);		// using a <set> object will automatically remove duplicates and keep pid's in a fixed order
 		}
 	}
 
-//cout << endl << "Ended up with n_daughter = " << daughter_resonance_indices.size() << " for " << all_particles[parent_pid].name << " (" << parent_pid << ")" << endl;
-//int i = 0;
-//for (set<int>::iterator it = daughter_resonance_indices.begin(); it != daughter_resonance_indices.end(); ++it)
-//	cout << i++ << "   " << *it << "   " << all_particles[*it].name << "   " << all_particles[*it].effective_branchratio << endl;
+cout << endl << "Ended up with n_daughter = " << daughter_resonance_indices.size() << " for " << all_particles[parent_pid].name << " (" << parent_pid << ")" << endl;
+int i = 0;
+for (set<int>::iterator it = daughter_resonance_indices.begin(); it != daughter_resonance_indices.end(); ++it)
+	cout << i++ << "   " << *it << "   " << all_particles[*it].name << "   " << all_particles[*it].effective_branchratio << endl;
 
 	// return value is total number of daughters found
 	return (daughter_resonance_indices.size());
@@ -1204,7 +1189,11 @@ int CorrelationFunction::lookup_resonance_idx_from_particle_id(int pid)
 	{
 		*global_out_stream_ptr << " *** lookup_resonance_idx_from_particle_id(): Particle_id = " << pid
 					<< " (" << all_particles[pid].name <<") not found in chosen_resonances!" << endl
-					<< " *** br = " << all_particles[pid].effective_branchratio << endl;
+					<< " *** br = " << all_particles[pid].effective_branchratio << endl
+					<< " *** Can only choose from: " << endl;
+		for (int ii = 0; ii < (int)chosen_resonances.size(); ii++)
+			*global_out_stream_ptr << all_particles[chosen_resonances[ii]].name << ": pid = " << chosen_resonances[ii] << endl;
+
 	}
 	return (result);
 }
@@ -1233,7 +1222,7 @@ void CorrelationFunction::Zero_resonance_running_sum_vector(double * vec)
 
 void CorrelationFunction::Setup_current_daughters_dN_dypTdpTdphi_moments(int n_daughter)
 {
-	const int giant_flat_array_size = n_pT_pts * n_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
+	const int giant_flat_array_size = n_pT_pts * n_pphi_pts * n_pY_pts * qxnpts * qynpts * ntrig;
 	current_daughters_dN_dypTdpTdphi_moments = new double * [n_daughter];
 	current_daughters_ln_dN_dypTdpTdphi_moments = new double * [n_daughter];
 	current_daughters_sign_of_dN_dypTdpTdphi_moments = new double * [n_daughter];

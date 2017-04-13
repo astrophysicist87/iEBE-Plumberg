@@ -41,7 +41,10 @@ void CorrelationFunction::Dump_spectra_array(string output_filename, double *** 
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 	{
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+		{
+			//cout << output_filename << ": " << ir << "   " << ipT << "   " << ipphi << endl;
 			out << scientific << setprecision(8) << setw(12) << array_to_dump[ir][ipT][ipphi] << "   ";
+		}
 		out << endl;
 	}
 
@@ -365,14 +368,21 @@ void CorrelationFunction::Output_total_target_dN_dypTdpTdphi()
 void CorrelationFunction::Output_total_target_eiqx_dN_dypTdpTdphi(double current_fraction /*==-1.0*/)
 {
 	string local_name = all_particles[target_particle_id].name;
-	string current_fraction_string = (current_fraction >= 0.0) ? "_" + patch::to_string(current_fraction) : "";
+	//string current_fraction_string = (current_fraction >= 0.0) ? "_" + patch::to_string(current_fraction) : "";
+	string current_fraction_string = "";
 	replace_parentheses(local_name);
 	ostringstream filename_stream_target_dN_dypTdpTdphi;
 	filename_stream_target_dN_dypTdpTdphi << path << "/total_" << local_name << current_fraction_string << "_eiqx_dN_dypTdpTdphi" << no_df_stem << ".dat";
 	ofstream output_target_dN_dypTdpTdphi(filename_stream_target_dN_dypTdpTdphi.str().c_str());
 
-	//int HDFloadTargetSuccess = Get_resonance_from_HDF_array(target_particle_id, current_dN_dypTdpTdphi_moments);
-	Set_full_target_moments();
+	if (1)
+	{
+		cerr << "Need to fix things at this point!" << endl;
+		debugger(__LINE__, __FILE__);
+		exit (1);
+		//int HDFloadTargetSuccess = Get_resonance_from_HDF_array(target_particle_id, current_dN_dypTdpTdphi_moments);
+		//Set_full_target_moments();
+	}
 
 	// addresses NaN issue in sin component when all q^{\mu} == 0
 	if (qtnpts%2==1 && qxnpts%2==1 && qynpts%2==1 && qznpts%2==1)
@@ -435,7 +445,13 @@ void CorrelationFunction::Output_total_eiqx_dN_dypTdpTdphi(int local_pid)
 	ofstream output_dN_dypTdpTdphi(filename_stream_dN_dypTdpTdphi.str().c_str());
 
 	int HDFOpenSuccess = Open_resonance_HDF_array("resonance_spectra.h5");
-	int HDFloadTargetSuccess = Get_resonance_from_HDF_array(local_pid, (n_pY_pts - 1)/2, current_dN_dypTdpTdphi_moments);	//again, just pions at Y=0 for now
+	if (1)
+	{
+		cerr << "Need to fix things at this point!" << endl;
+		debugger(__LINE__, __FILE__);
+		exit (1);
+		//int HDFloadTargetSuccess = Get_resonance_from_HDF_array(local_pid, (n_pY_pts - 1)/2, current_dN_dypTdpTdphi_moments);	//again, just pions at Y=0 for now
+	}
 	int HDFCloseSuccess = Close_resonance_HDF_array();
 
 	// addresses NaN issue in sin component when all q^{\mu} == 0

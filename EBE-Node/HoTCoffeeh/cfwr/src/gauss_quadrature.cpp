@@ -60,7 +60,6 @@ int gauss_quadrature(int order, int kind, double alpha, double beta, double a, d
         cout << " there is no rule of type: " << kind << endl;
         exit(1);
   }
-
   //calculate the gauss-quadrature points and weights
   cgqf ( order, kind, alpha, beta, a, b, x, w );
 
@@ -109,6 +108,7 @@ int gauss_quadrature_standard(int order, int kind, double alpha, double beta, do
 
 //  Compute the Gauss quadrature formula for default values of A and B.
 //
+
   cdgqf (order, kind, alpha, beta, x, w);
 
   return 0;
@@ -368,7 +368,9 @@ void cgqf ( int nt, int kind, double alpha, double beta, double a, double b,
 //
 //  Compute the Gauss quadrature formula for default values of A and B.
 //
+
   cdgqf ( nt, kind, alpha, beta, t, wts );
+
 //
 //  Prepare to scale the quadrature formula to other weight function with 
 //  valid A and B.
@@ -383,6 +385,7 @@ void cgqf ( int nt, int kind, double alpha, double beta, double a, double b,
   {
     ndx[i] = i + 1;
   }
+
   scqf ( nt, t, mlt, wts, nt, ndx, wts, t, kind, alpha, beta, a, b );
 
   delete [] mlt;

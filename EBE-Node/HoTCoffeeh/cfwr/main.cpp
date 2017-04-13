@@ -167,8 +167,8 @@ int main(int argc, char *argv[])
 
 		// sort chosen particles by mass
 		sort_by_mass(&chosen_resonance_indices, particle, Nparticle, output);
-		// erase the last element of sorted list, which will generally include the target particle
-		chosen_resonance_indices.pop_back();
+		// erase the last element of sorted list, which will generally be the target particle
+		//chosen_resonance_indices.pop_back();
 
 		for (int ii = 0; ii < (int)chosen_resonance_indices.size(); ii++)
 			output << ii << "   " << chosen_resonance_indices[ii] << "   " << particle[chosen_resonance_indices[ii]].name
@@ -196,15 +196,17 @@ int main(int argc, char *argv[])
 	correlation_function.fraction_of_resonances = net_fraction_resonance_contribution;
 	output << "Using fraction_of_resonances = " << net_fraction_resonance_contribution << endl;
 
-	bool omit_specific_resonances = false;
+	//allows me to omit thermal pions easily, e.g.
+	bool omit_specific_resonances = true;
 	if (omit_specific_resonances)
 	{
-		vector<int> thermal_resonances_to_omit;
-		double tmp = 0.0;
-		double threshhold_of_thermal_resonances_to_omit = 0.6;	//60%
-		get_important_resonances(particle_idx, &thermal_resonances_to_omit, particle, Nparticle, threshhold_of_thermal_resonances_to_omit, tmp, output);
-		get_all_descendants(&thermal_resonances_to_omit, particle, Nparticle, output);
-		correlation_function.osr = thermal_resonances_to_omit;
+		vector<int> thermal_particles_to_omit;
+		thermal_particles_to_omit.push_back(particle_idx);	//push back pion(+) to ignore thermal pions
+		//double tmp = 0.0;
+		//double threshhold_of_thermal_resonances_to_omit = 0.6;	//60%
+		//get_important_resonances(particle_idx, &thermal_resonances_to_omit, particle, Nparticle, threshhold_of_thermal_resonances_to_omit, tmp, output);
+		//get_all_descendants(&thermal_resonances_to_omit, particle, Nparticle, output);
+		correlation_function.osr = thermal_particles_to_omit;
 	}
 
 	////////////////////////////////////////////
@@ -219,6 +221,7 @@ int main(int argc, char *argv[])
 		correlation_function.Fourier_transform_emission_function();
 if (1) exit(8);
 		correlation_function.Compute_phase_space_integrals();
+if (1) exit(8);
 	}
 
 	//decide whether to compute correlation function or read it in

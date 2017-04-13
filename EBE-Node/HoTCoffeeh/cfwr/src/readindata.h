@@ -20,42 +20,42 @@ using namespace std;
 
 typedef struct
 {
-   double tau, xpt, ypt, r, phi, sin_phi, cos_phi;
-   double da0, da1, da2;
-   double vx, vy, gammaT;
-   double Edec, Tdec, Pdec;
-   double Bn, muB, muS;
-   double pi00, pi01, pi02, pi11, pi12, pi22, pi33, bulkPi;
-   double particle_mu[Maxparticle];
-}FO_surf;
+	double tau, xpt, ypt, r, phi, sin_phi, cos_phi;
+	double da0, da1, da2;
+	double vx, vy, gammaT;
+	double Edec, Tdec, Pdec;
+	double Bn, muB, muS;
+	double pi00, pi01, pi02, pi11, pi12, pi22, pi33, bulkPi;
+	double particle_mu[Maxparticle];
+} FO_surf;
 
 typedef struct
 {
-  int monval;			// Montecarlo number according PDG
-  string name;
-  double mass;
-  double width;
-  int gspin;			// spin degeneracy
-  int baryon;
-  int strange;
-  int charm;
-  int bottom;
-  int gisospin;			// isospin degeneracy
-  int charge;
-  int decays;			// amount of decays listed for this resonance
-  int stable;			// defines whether this particle is considered as stable
-  int decays_Npart[Maxdecaychannel];
-  double decays_branchratio[Maxdecaychannel];
-  int decays_part[Maxdecaychannel][Maxdecaypart];
-  double mu;
-  double thermal_yield;
-  double percent_contribution;	//used to compute approximate percentage contribution of particle to net yield of some daughter particle
-  double effective_branchratio;	//the effective branching ratio of generic resonance to some specified daughter particle
+	int monval;			// Montecarlo number according PDG
+	string name;
+	double mass;
+	double width;
+	int gspin;			// spin degeneracy
+	int baryon;
+	int strange;
+	int charm;
+	int bottom;
+	int gisospin;			// isospin degeneracy
+	int charge;
+	int decays;			// amount of decays listed for this resonance
+	int stable;			// defines whether this particle is considered as stable
+	int decays_Npart[Maxdecaychannel];
+	double decays_branchratio[Maxdecaychannel];
+	int decays_part[Maxdecaychannel][Maxdecaypart];
+	double mu;
+	double thermal_yield;
+	double percent_contribution;	//used to compute approximate percentage contribution of particle to net yield of some daughter particle
+	double effective_branchratio;	//the effective branching ratio of generic resonance to some specified daughter particle
 				//N.B. - effective branching ratio may be larger than 1
-  double decays_effective_branchratio[Maxdecaychannel];
+	double decays_effective_branchratio[Maxdecaychannel];
 				//similar to effective_branchratio, but specific to each decay channel
-  int sign;       //Bose-Einstein or Dirac-Fermi statistics
-}particle_info;
+	int sign;       //Bose-Einstein or Dirac-Fermi statistics
+} particle_info;
 
 int get_filelength(string filepath);
 int get_filewidth(string filepath);
