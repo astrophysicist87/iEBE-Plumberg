@@ -13,6 +13,8 @@
 #include <gsl/gsl_multifit_nlin.h>  // gsl multidimensional fitting
 #include <gsl/gsl_multifit.h>
 #include <gsl/gsl_linalg.h>
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_chebyshev.h>
 
 #include "H5Cpp.h"
 

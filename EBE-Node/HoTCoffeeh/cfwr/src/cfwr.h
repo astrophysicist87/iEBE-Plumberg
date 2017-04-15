@@ -105,6 +105,7 @@ class CorrelationFunction
 		int qspace_cs_slice_length;
 		int full_FO_length;
 		int FO_length;
+		int n_alpha_points;
 		int nFO_cutoff;
 		int number_of_percentage_markers;
 		double q_space_CF_cutoff;		// when correlator falls below this value,
@@ -266,6 +267,7 @@ class CorrelationFunction
 		inline int indexer4(const int ipt, const int ipphi, const int iqx, const int iqy);
 		inline int FM_indexer(const int ipY, const int iqt, const int iqx, const int iqy, const int iqz);
 		inline int HDF_indexer(const int ir, const int iqt, const int iqz);
+		inline int BC_indexer(const int ipY, const int iqt, const int iqz);
 		inline void addElementToQueue(priority_queue<pair<double, size_t> >& p, pair<double, size_t> elem, size_t max_size);
 		inline void set_to_zero(double * array, size_t arraylength);
 		inline double dot_four_vectors(double * a, double * b);
@@ -276,11 +278,19 @@ class CorrelationFunction
 		bool fexists(const char *filename);
 
 		// HDF routines
+		// resonances
 		int Get_resonance_from_HDF_array(int local_pid, int iqt, int iqz, double * resonance_array_to_fill);
 		int Set_resonance_in_HDF_array(int local_pid, int iqt, int iqz, double * resonance_array_to_use);
 		int Initialize_resonance_HDF_array();
 		int Open_resonance_HDF_array(string resonance_local_file_name);
 		int Close_resonance_HDF_array();
+		// Bessel coefficients
+		int Get_besselcoeffs_from_HDF_array(int iqt, int iqz, int ipY, double * besselcoeffs_array_to_fill);
+		int Set_besselcoeffs_in_HDF_array( int iqt, int iqz, int ipY, double * besselcoeffs_array_to_use);
+		int Initialize_besselcoeffs_HDF_array();
+		int Open_besselcoeffs_HDF_array();
+		int Close_besselcoeffs_HDF_array();
+		// target thermal moments...
 		int Copy_chunk(int current_resonance_index, int reso_idx_to_be_copied);
 		int Dump_resonance_HDF_array_spectra(string output_filename, double * resonance_array_to_use);
 		void Unzip_HDF5_arrays();
@@ -291,7 +301,8 @@ class CorrelationFunction
 		int Set_target_thermal_in_HDF_array(int iqt, int iqz, double * tta_array_to_use);
 
 		void Set_dN_dypTdpTdphi_moments(int local_pid);
-		void Set_Bessel_function_grids(double beta, double gamma);
+		//void Set_Bessel_function_grids(double beta, double gamma);
+		void Set_all_Bessel_grids();
 		void Set_most_important_FOcells(vector<size_t> * most_impt_FOcells_vec, vector<double> * most_impt_FOcells_vals_vec, priority_queue<pair<double, size_t> > FOcells_PQ);
 		int Set_percentage_cutoffs(vector<int> * cutoff_FOcells_at_pTpphi, vector<double> * most_impt_FOcells_vals_vec, double absolute_running_total, double cutoff);
 		void Set_thermal_target_moments();
@@ -300,7 +311,7 @@ class CorrelationFunction
 		void Set_giant_arrays(int iqt, int iqx, int iqy, int iqz);
 		void Cal_dN_dypTdpTdphi(double** SP_p0, double** SP_px, double** SP_py, double** SP_pz);
 		void Cal_dN_dypTdpTdphi_heap(int local_pid, double cutoff);
-		void Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY, int iqt, int iqz);
+		void Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY, int iqt, int iqz, double * BC_chunk);
 		double Cal_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi);
 		void Cal_dN_dypTdpTdphi_with_weights_function(int local_pid, double pT, double pphi,
 												double qt, double qx, double qy, double qz, double * cosqx_dN_dypTdpTdphi, double * sinqx_dN_dypTdpTdphi);
@@ -416,12 +427,18 @@ class CorrelationFunction
 		double fraction_of_resonances;
 
 		// need to hold giant array stuff
+		//thermal target array
 		H5::DataSpace * tta_dataspace, * tta_memspace;
 		H5::H5File * tta_file;
 		H5::DataSet * tta_dataset;
+		//all resonance array
 		H5::DataSpace * resonance_dataspace, * resonance_memspace;
 		H5::H5File * resonance_file;
 		H5::DataSet * resonance_dataset;
+		//bessel coefficients array
+		H5::DataSpace * besselcoeffs_dataspace, * besselcoeffs_memspace;
+		H5::H5File * besselcoeffs_file;
+		H5::DataSet * besselcoeffs_dataset;
 
 		CorrelationFunction(ParameterReader * paraRdr_in, particle_info* particle, particle_info* all_particles_in, int Nparticle,
 				vector<int> chosen_resonances, int particle_idx, ofstream& myout);

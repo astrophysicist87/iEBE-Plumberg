@@ -14,7 +14,9 @@
 #include "cfwr_lib.h"
 #include "Arsenal.h"
 #include "chebyshev.h"
+#include "Stopwatch.h"
 #include "gauss_quadrature.h"
+#include "bessel.h"
 
 using namespace std;
 
@@ -22,6 +24,8 @@ template <typename T> int sgn(T val)
 {
     return (T(0) < val) - (val < T(0));
 }
+
+struct bessel_params { double beta; double gamma; };
 
 CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_info* particle, particle_info* all_particles_in, int Nparticle_in,
 					vector<int> chosen_resonances_in, int particle_idx, ofstream& myout)
@@ -64,6 +68,8 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	init_qx = -0.5*double(qxnpts-1)*delta_qx;
 	init_qy = -0.5*double(qynpts-1)*delta_qy;
 	init_qz = -0.5*double(qznpts-1)*delta_qz;
+
+	n_alpha_points = 15;
 
 	//set ofstream for output file
 	global_out_stream_ptr = &myout;
@@ -1315,6 +1321,243 @@ void CorrelationFunction::Delete_fleshed_out_CF()
 	delete [] qx_fleshed_out_pts;
 	delete [] qy_fleshed_out_pts;
 	delete [] qz_fleshed_out_pts;
+
+	return;
+}
+//!!!!!!
+//note the exp(alpha) factor in these definitions!!!
+/*double expBesselK0re(double alpha, void * p)
+{
+	struct bessel_params * params = (struct bessel_params *)p;
+	double beta = (params->beta);
+	double gamma = (params->gamma);
+
+	double gsq = gamma*gamma;
+	const std::complex<double> i(0, 1);
+	complex<double> ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p;
+	complex<double> z0 = alpha - i*beta;
+	complex<double> z0sq = z0 * z0;
+	complex<double> z = sqrt(z0sq + gsq);
+	int errorCode = bessf::cbessik01(z, ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p);
+
+	return (exp(alpha)*ck0.real());
+}
+
+double expBesselK0im(double alpha, void * p)
+{
+	struct bessel_params * params = (struct bessel_params *)p;
+	double beta = (params->beta);
+	double gamma = (params->gamma);
+
+	double gsq = gamma*gamma;
+	const std::complex<double> i(0, 1);
+	complex<double> ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p;
+	complex<double> z0 = alpha - i*beta;
+	complex<double> z0sq = z0 * z0;
+	complex<double> z = sqrt(z0sq + gsq);
+	int errorCode = bessf::cbessik01(z, ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p);
+
+	return (exp(alpha)*ck0.imag());
+}
+
+double expBesselK1re(double alpha, void * p)
+{
+	struct bessel_params * params = (struct bessel_params *)p;
+	double beta = (params->beta);
+	double gamma = (params->gamma);
+
+	double gsq = gamma*gamma;
+	const std::complex<double> i(0, 1);
+	complex<double> ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p;
+	complex<double> z0 = alpha - i*beta;
+	complex<double> z0sq = z0 * z0;
+	complex<double> z = sqrt(z0sq + gsq);
+	int errorCode = bessf::cbessik01(z, ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p);
+
+	return (exp(alpha)*ck1.real());
+}
+
+double expBesselK1im(double alpha, void * p)
+{
+	struct bessel_params * params = (struct bessel_params *)p;
+	double beta = (params->beta);
+	double gamma = (params->gamma);
+
+	double gsq = gamma*gamma;
+	const std::complex<double> i(0, 1);
+	complex<double> ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p;
+	complex<double> z0 = alpha - i*beta;
+	complex<double> z0sq = z0 * z0;
+	complex<double> z = sqrt(z0sq + gsq);
+	int errorCode = bessf::cbessik01(z, ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p);
+
+	return (exp(alpha)*ck1.imag());
+}*/
+
+
+void CorrelationFunction::Set_all_Bessel_grids()
+{
+	const std::complex<double> i(0, 1);
+	int n_coeffs = n_alpha_points;
+	double alpha_min = 4.0;
+	double alpha_max = 75.0;
+	double coeffs_array[n_alpha_points];
+	double * dummy = new double [n_alpha_points];
+	double * alpha_pts = new double [n_alpha_points];
+	double * x_pts = new double [n_alpha_points];
+	//gauss_quadrature(n_alpha_points, 1, 0.0, 0.0, alpha_min, alpha_max, alpha_pts, dummy);
+	//gauss_quadrature(n_alpha_points, 1, 0.0, 0.0, -1.0, 1.0, x_pts, dummy);
+	for (int k = 0; k < n_alpha_points; ++k)
+	{
+		x_pts[k] = - cos( M_PI*(2.*(k+1.) - 1.) / (2.*n_alpha_points) );
+		alpha_pts[k] = 0.5*(x_pts[k] + 1.0)*(alpha_max - alpha_min) + alpha_min;
+	}
+	double nums[n_alpha_points][n_alpha_points];
+	double dens[n_alpha_points];
+	for (int j = 0; j < n_alpha_points; ++j)
+	{
+		dens[j] = 0.0;
+		for (int k = 0; k < n_alpha_points; ++k)
+		{
+			double Tjk = csf::Tfun(j, x_pts[k]);
+			dens[j] += Tjk*Tjk;
+			nums[j][k] = Tjk;
+		}
+	}
+
+	double BesselK0re[n_alpha_points];
+	double BesselK0im[n_alpha_points];
+	double BesselK1re[n_alpha_points];
+	double BesselK1im[n_alpha_points];
+
+	//gsl_cheb_series *cs = gsl_cheb_alloc (n_alpha_points);
+	//gsl_function F;
+
+	int HDFcode = Initialize_besselcoeffs_HDF_array();
+
+	///////////////////////////////////
+	// Loop over qt, qz, and pY points
+	///////////////////////////////////
+	Stopwatch sw_loop;
+	double * BC_chunk = new double [4 * FO_length * (n_alpha_points + 1)];
+	for (int iqt = 0; iqt < (qtnpts / 2) + 1; ++iqt)	//assumes central qt point is zero
+	for (int iqz = 0; iqz < qznpts; ++iqz)
+	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
+	{
+		sw_loop.Reset();
+		sw_loop.Start();
+		cout << "Starting loop = " << iqt << "   " << iqz << "   " << ipY << endl;
+		int iBC = 0;
+		for (int isurf = 0; isurf < FO_length; ++isurf)
+		{
+			double tau = (&FOsurf_ptr[isurf])->tau;
+
+			double qt = qt_pts[iqt];
+			double qz = qz_pts[iqz];
+			double ch_pY = ch_SP_pY[ipY];
+			double sh_pY = sh_SP_pY[ipY];
+			double beta = tau * hbarCm1 * ( qt*ch_pY - qz*sh_pY );
+			double gamma = tau * hbarCm1 * ( qz*ch_pY - qt*sh_pY );
+			double gsq = gamma*gamma;
+
+			//struct bessel_params current_params = { beta, gamma };
+			//F.params = &current_params;
+
+
+//alternate
+			for (int ia = 0; ia < n_alpha_points; ++ia)
+			{
+				complex<double> ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p;
+				complex<double> z0 = alpha_pts[ia] - i*beta;
+				complex<double> z0sq = z0 * z0;
+				complex<double> z = sqrt(z0sq + gsq);
+				int errorCode = bessf::cbessik01(z, ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p);
+
+				BesselK0re[ia] = ck0.real();
+				BesselK0im[ia] = ck0.imag();
+				BesselK1re[ia] = ck1.real();
+				BesselK1im[ia] = ck1.imag();
+			}
+
+
+
+
+			//////////////////////////////////
+			//exp(x) * K_0(x), real part
+			//F.function = &expBesselK0re;
+			//gsl_cheb_init (cs, &F, alpha_min, alpha_max);
+			for (int j = 0; j < n_alpha_points; ++j)
+			{
+				coeffs_array[j] = 0.0;
+				for (int k = 0; k < n_alpha_points; ++k)
+					coeffs_array[j] += BesselK0re[k] * nums[j][k];
+			}
+
+			//coeffs_array = gsl_cheb_coeffs (cs);
+			for (int icf = 0; icf < n_coeffs; ++icf)
+				BC_chunk[iBC++] = coeffs_array[icf];
+
+			//////////////////////////////////
+			//exp(x) * K_0(x), imaginary part
+			//F.function = &expBesselK0im;
+			//gsl_cheb_init (cs, &F, alpha_min, alpha_max);
+			for (int j = 0; j < n_alpha_points; ++j)
+			{
+				coeffs_array[j] = 0.0;
+				for (int k = 0; k < n_alpha_points; ++k)
+					coeffs_array[j] += BesselK0im[k] * nums[j][k];
+			}
+
+			//coeffs_array = gsl_cheb_coeffs (cs);
+			for (int icf = 0; icf < n_coeffs; ++icf)
+				BC_chunk[iBC++] = coeffs_array[icf];
+
+			//////////////////////////////////
+			//exp(x) * K_1(x), real part
+			//F.function = &expBesselK1re;
+			//gsl_cheb_init (cs, &F, alpha_min, alpha_max);
+			for (int j = 0; j < n_alpha_points; ++j)
+			{
+				coeffs_array[j] = 0.0;
+				for (int k = 0; k < n_alpha_points; ++k)
+					coeffs_array[j] += BesselK1re[k] * nums[j][k];
+			}
+
+			//coeffs_array = gsl_cheb_coeffs (cs);
+			for (int icf = 0; icf < n_coeffs; ++icf)
+				BC_chunk[iBC++] = coeffs_array[icf];
+
+			//////////////////////////////////
+			//exp(x) * K_1(x), imaginary part
+			//F.function = &expBesselK1im;
+			//gsl_cheb_init (cs, &F, alpha_min, alpha_max);
+			for (int j = 0; j < n_alpha_points; ++j)
+			{
+				coeffs_array[j] = 0.0;
+				for (int k = 0; k < n_alpha_points; ++k)
+					coeffs_array[j] += BesselK1im[k] * nums[j][k];
+			}
+
+			//coeffs_array = gsl_cheb_coeffs (cs);
+			for (int icf = 0; icf < n_coeffs; ++icf)
+				BC_chunk[iBC++] = coeffs_array[icf];
+
+			//finally, store the results
+			HDFcode = Set_besselcoeffs_in_HDF_array(iqt, iqz, ipY, BC_chunk);
+
+			//if (isurf > 1000) exit(8);
+		}
+		sw_loop.Stop();
+		cout << "Finished in " << sw_loop.printTime() << " seconds." << endl;
+	}
+
+	HDFcode = Close_besselcoeffs_HDF_array();
+
+	delete [] BC_chunk;
+	delete [] alpha_pts;
+	delete [] x_pts;
+	delete [] dummy;
+	//gsl_cheb_free (cs);
 
 	return;
 }

@@ -23,10 +23,10 @@
 
 using namespace std;
 
-const int n_alpha_points = 15;
 const std::complex<double> i(0, 1);
-double * K0_Bessel_re, * K1_Bessel_re, * K0_Bessel_im, * K1_Bessel_im;
-double * alpha_pts;
+//double * K0_Bessel_re, * K1_Bessel_re, * K0_Bessel_im, * K1_Bessel_im;
+//double * alpha_pts;
+gsl_cheb_series *cs_accel_K0re, *cs_accel_K0im, *cs_accel_K1re, *cs_accel_K1im;
 
 // only need to calculated interpolation grid of spacetime moments for each resonance, NOT each decay channel!
 bool recycle_previous_moments = false;
@@ -43,7 +43,7 @@ inline void I(double alpha, double beta, double gamma, complex<double> & I0, com
 	complex<double> z0sq = pow(z0, 2.0);
 	double gsq = gamma*gamma;
 	complex<double> z = sqrt(z0sq + gsq);
-	int errorCode = cbessik01(z, ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p);
+	int errorCode = bessf::cbessik01(z, ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p);
 	
 	I0 = 2.0*ck0;
 	I1 = 2.0*z0*ck1 / z;
@@ -56,7 +56,7 @@ inline void I(double alpha, double beta, double gamma, complex<double> & I0, com
 	return;
 }
 
-inline void Iint(double alpha, double beta, double gamma, double & I0r, double & I1r, double & I2r, double & I3r, double & I0i, double & I1i, double & I2i, double & I3i)
+/*inline void Iint(double alpha, double beta, double gamma, double & I0r, double & I1r, double & I2r, double & I3r, double & I0i, double & I1i, double & I2i, double & I3i)
 {
 	complex<double> z0 = alpha - i*beta;
 	complex<double> z0sq = z0*z0;
@@ -77,6 +77,42 @@ inline void Iint(double alpha, double beta, double gamma, double & I0r, double &
 							lin_int(x_m_x1, one_by_x2_m_x1, K0_Bessel_im[idx], K0_Bessel_im[idx+1]) );
 	complex<double> ck1(	lin_int(x_m_x1, one_by_x2_m_x1, K1_Bessel_re[idx], K1_Bessel_re[idx+1]),
 							lin_int(x_m_x1, one_by_x2_m_x1, K1_Bessel_im[idx], K1_Bessel_im[idx+1]) );
+
+	complex<double> I0 = 2.0*ck0;
+	complex<double> I1 = 2.0*z0*ck1 / z;
+	complex<double> I2 = 2.0*z0sq*ck0 / zsq
+			+ 2.0*(z0sq - gsq)*ck1 / zcu;
+	complex<double> I3 = 2.0*z0*( ( z0sq*z0sq - 2.0* z0sq*gsq - 3.0 * gsq*gsq ) * ck0 / z
+						+ (-6.0*gsq + z0sq*(2.0 + z0sq + gsq)) * ck1
+				) / zqi;
+
+	I0r = I0.real();
+	I1r = I1.real();
+	I2r = I2.real();
+	I3r = I3.real();
+	I0i = I0.imag();
+	I1i = I1.imag();
+	I2i = I2.imag();
+	I3i = I3.imag();
+
+	return;
+}*/
+
+inline void Iint2(double alpha, double beta, double gamma, double & I0r, double & I1r, double & I2r, double & I3r, double & I0i, double & I1i, double & I2i, double & I3i)
+{
+	complex<double> z0 = alpha - i*beta;
+	complex<double> z0sq = z0*z0;
+	double gsq = gamma*gamma;
+	complex<double> zsq = z0sq + gsq;
+	complex<double> z = sqrt(zsq);
+	complex<double> zcu = zsq*z;
+	complex<double> zqi = zsq*zcu;
+	double ea = exp(-alpha);
+
+	complex<double> ck0(	ea * gsl_cheb_eval (cs_accel_K0re, alpha),
+							ea * gsl_cheb_eval (cs_accel_K0im, alpha) );
+	complex<double> ck1(	ea * gsl_cheb_eval (cs_accel_K1re, alpha),
+							ea * gsl_cheb_eval (cs_accel_K1im, alpha) );
 
 	complex<double> I0 = 2.0*ck0;
 	complex<double> I1 = 2.0*z0*ck1 / z;
@@ -119,11 +155,16 @@ void CorrelationFunction::Fourier_transform_emission_function()
 
 	int decay_channel_loop_cutoff = n_decay_channels;			//loop over direct pions and decay_channels
 
+	///////
 	*global_out_stream_ptr << "Initializing HDF file of resonance spectra..." << endl;
 	int HDFInitializationSuccess = Initialize_resonance_HDF_array();
 	
+	///////
 	*global_out_stream_ptr << "Initializing HDF file of target thermal moments..." << endl;
 	HDFInitializationSuccess = Initialize_target_thermal_HDF_array();
+
+	///////
+	Set_all_Bessel_grids();
 	
 	*global_out_stream_ptr << "Setting spacetime moments grid..." << endl;
 	BIGsw.Start();
@@ -812,6 +853,10 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid)
 	sw.Reset();
 	Stopwatch sw_qtqzpY;
 
+	//prepare for reading...
+	int HDFcode = Open_besselcoeffs_HDF_array();
+	double BC_chunk[4 * FO_length * (n_alpha_points + 1)];
+
 	///////////////////////////////////
 	// Loop over qt, qz, and pY points
 	///////////////////////////////////
@@ -823,7 +868,10 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid)
 		{
 			sw_qtqzpY.Reset();
 			sw_qtqzpY.Start();
-			Cal_dN_dypTdpTdphi_with_weights(local_pid, ipY, iqt, iqz);
+			//load appropriate Bessel coefficients
+			HDFcode = Get_besselcoeffs_from_HDF_array(iqt, iqz, ipY, BC_chunk);
+			//do the calculations
+			Cal_dN_dypTdpTdphi_with_weights(local_pid, ipY, iqt, iqz, BC_chunk);
 			sw_qtqzpY.Stop();
 			*global_out_stream_ptr << "Finished loop with ( iqt, iqz, ipY ) = ( " << iqt << ", " << iqz << ", " << ipY << " ) in " << sw_qtqzpY.printTime() << " seconds." << endl;
 		}
@@ -836,6 +884,8 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid)
 			exit(1);
 		}
 	}
+
+	HDFcode = Close_besselcoeffs_HDF_array();
 
 	sw.Stop();
 	*global_out_stream_ptr << "CP#2: Took " << sw.printTime() << " seconds." << endl;
@@ -984,7 +1034,6 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_heap(int local_pid, double cutoff)
 		////////////////////////////////////////////////
 		for (int isurf = 0; isurf < FO_length; ++isurf)
 		{
-//cout << "CHECK" << __LINE__ << ": " << ipT << "   " << ipphi << "   " << isurf << "   " << iFOcell << "   " << number_of_FOcells_above_cutoff << "   " << FOcells_PQ.size() << endl;
 			//////////////////////////////////
 			//////////////////////////////////
 			FO_surf * surf = &FOsurf_ptr[isurf];
@@ -1018,31 +1067,6 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_heap(int local_pid, double cutoff)
 			double alpha = one_by_Tdec*gammaT*loc_mT;
 			double transverse_f0 = exp( one_by_Tdec*(gammaT*(px*vx + py*vy) + mu) );
 
-			/*int max_order = 3;
-			double dummy0[max_order+1], dummy1[max_order+1], dummy2[max_order+1], dummy3[max_order+1], dummy4[max_order+1], dummy5[max_order+1];
-			double k_a[max_order+1], k_2a[max_order+1];
-for (int iii = 0; iii < 4; ++iii)
-{
-	k_a[iii] = 0.0;
-	k_2a[iii] = 0.0;
-	dummy0[iii] = 0.0;
-	dummy1[iii] = 0.0;
-	dummy2[iii] = 0.0;
-	dummy3[iii] = 0.0;
-	dummy4[iii] = 0.0;
-	dummy5[iii] = 0.0;
-}
-cout << "CHECK" << __LINE__ << ": " << ipT << "   " << ipphi << "   " << isurf << "   " << iFOcell << "   " << number_of_FOcells_above_cutoff << "   " << FOcells_PQ.size() << endl;
-			int errorCode = bessikna(3, alpha, max_order, dummy0, k_a, dummy1, dummy2);
-cout << "CHECK" << __LINE__ << ": " << alpha << "   " << max_order << "   " << k_a[0] << "   " << k_a[1] << "   " << k_a[2] << "   " << k_a[3] << "   " << FOcells_PQ.size() << endl;
-			double k0_a = k_a[0], k1_a = k_a[1], k2_a = k_a[2], k3_a = k_a[3];
-			double I0_a_b_g = 2.0*k0_a, I1_a_b_g = 2.0*k1_a, I2_a_b_g = k0_a + k2_a, I3_a_b_g = 0.5 * (3.0*k1_a + k3_a);
-//for (int iii = 0; iii < 4; ++iii) k_2a[iii] = 0.0;
-			errorCode = bessikna(3, 2.0*alpha, max_order, dummy3, k_2a, dummy4, dummy5);
-cout << "CHECK" << __LINE__ << ": " << 2.0*alpha << "   " << max_order << "   " << k_2a[0] << "   " << k_2a[1] << "   " << k_2a[2] << "   " << k_2a[3] << "   " << FOcells_PQ.size() << endl;
-			double k0_2a = k_2a[0], k1_2a = k_2a[1], k2_2a = k_2a[2], k3_2a = k_2a[3];
-			double I0_2a_b_g = 2.0*k0_2a, I1_2a_b_g = 2.0*k1_2a, I2_2a_b_g = k0_2a + k2_2a, I3_2a_b_g = 0.5 * (3.0*k1_2a + k3_2a);*/
-
 			complex<double> I0_a_b_g, I1_a_b_g, I2_a_b_g, I3_a_b_g;
 			complex<double> I0_2a_b_g, I1_2a_b_g, I2_2a_b_g, I3_2a_b_g;
 			I(alpha, 0.0, 0.0, I0_a_b_g, I1_a_b_g, I2_a_b_g, I3_a_b_g);
@@ -1055,7 +1079,6 @@ cout << "CHECK" << __LINE__ << ": " << 2.0*alpha << "   " << max_order << "   " 
 							* ( A*a*I3_2a_b_g.real() + (B*a+b*A)*I2_2a_b_g.real() + (B*b+c*A)*I1_2a_b_g.real() + B*c*I0_2a_b_g.real() );
 
 			double FOcell_density = term1 + term2 + term3;
-//cout << "CHECK" << __LINE__ << ": " << term2 + term3 << "   " << flagneg << "   " << FOcell_density << "   " << tol << "   " << iFOcell << "   " << number_of_FOcells_above_cutoff << endl;
 			//////////////////////////////////
 			//////////////////////////////////
 
@@ -1166,7 +1189,7 @@ cout << "CHECK" << __LINE__ << ": " << 2.0*alpha << "   " << max_order << "   " 
 	return;
 }
 
-void CorrelationFunction::Set_Bessel_function_grids(double beta, double gamma)
+/*void CorrelationFunction::Set_Bessel_function_grids(double beta, double gamma)
 {
 	double gsq = gamma*gamma;
 	for (int ia = 0; ia < n_alpha_points; ++ia)
@@ -1175,7 +1198,7 @@ void CorrelationFunction::Set_Bessel_function_grids(double beta, double gamma)
 		complex<double> z0 = alpha_pts[ia] - i*beta;
 		complex<double> z0sq = z0 * z0;
 		complex<double> z = sqrt(z0sq + gsq);
-		int errorCode = cbessik01(z, ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p);
+		int errorCode = bessf::cbessik01(z, ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p);
 
 		K0_Bessel_re[ia] = ck0.real();
 		K0_Bessel_im[ia] = ck0.imag();
@@ -1184,10 +1207,10 @@ void CorrelationFunction::Set_Bessel_function_grids(double beta, double gamma)
 	}
 
 	return;
-}
+}*/
 
 //void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid)
-void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY, int iqt, int iqz)
+void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY, int iqt, int iqz, double * BC_chunk)
 {
 	Stopwatch sw, sw_FOsurf;
 	sw.Start();
@@ -1209,26 +1232,39 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 	if (use_delta_f)
 		deltaf_prefactor = 1./(2.0*Tdec*Tdec*(Edec+Pdec));
 
-	double * dummy = new double [n_alpha_points];
-	alpha_pts = new double [n_alpha_points];
-	gauss_quadrature(n_alpha_points, 1, 0.0, 0.0, 4.0, 75.0, alpha_pts, dummy);
+	double alpha_min = 4.0, alpha_max = 75.0;
+	//double * dummy = new double [n_alpha_points];
+	//alpha_pts = new double [n_alpha_points];
+	//gauss_quadrature(n_alpha_points, 1, 0.0, 0.0, alpha_min, alpha_max, alpha_pts, dummy);
 	//gauss_quadrature(n_alpha_points, 5, 0.0, 0.0, 3.85, 0.6, alpha_pts, dummy);		//n_alpha_points = 15
 
-	K0_Bessel_re = new double [n_alpha_points];
+	/*K0_Bessel_re = new double [n_alpha_points];
 	K0_Bessel_im = new double [n_alpha_points];
 	K1_Bessel_re = new double [n_alpha_points];
-	K1_Bessel_im = new double [n_alpha_points];
-	/*double K0_Bessel_re[n_alpha_points];
-	double K0_Bessel_im[n_alpha_points];
-	double K1_Bessel_re[n_alpha_points];
-	double K1_Bessel_im[n_alpha_points];
-	for (int ia = 0; ia < n_alpha_points; ++ia)
+	K1_Bessel_im = new double [n_alpha_points];*/
+	cs_accel_K0re = gsl_cheb_alloc (n_alpha_points);
+	cs_accel_K0re->a = alpha_min;
+	cs_accel_K0re->b = alpha_max;
+	cs_accel_K0im = gsl_cheb_alloc (n_alpha_points);
+	cs_accel_K0im->a = alpha_min;
+	cs_accel_K0im->b = alpha_max;
+	cs_accel_K1re = gsl_cheb_alloc (n_alpha_points);
+	cs_accel_K1re->a = alpha_min;
+	cs_accel_K1re->b = alpha_max;
+	cs_accel_K1im = gsl_cheb_alloc (n_alpha_points);
+	cs_accel_K1im->a = alpha_min;
+	cs_accel_K1im->b = alpha_max;
+	double K0_Bessel_re[n_alpha_points+1];
+	double K0_Bessel_im[n_alpha_points+1];
+	double K1_Bessel_re[n_alpha_points+1];
+	double K1_Bessel_im[n_alpha_points+1];
+	for (int ia = 0; ia < n_alpha_points+1; ++ia)
 	{
 		K0_Bessel_re[ia] = 0.0;
 		K0_Bessel_im[ia] = 0.0;
 		K1_Bessel_re[ia] = 0.0;
 		K1_Bessel_im[ia] = 0.0;
-	}*/
+	}
 
 	double I0_a_b_g_re, I1_a_b_g_re, I2_a_b_g_re, I3_a_b_g_re;
 	double I0_2a_b_g_re, I1_2a_b_g_re, I2_2a_b_g_re, I3_2a_b_g_re;
@@ -1252,6 +1288,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 	/////////////////////////////////////////////////////////////
 	// Loop over all freeze-out surface fluid cells (for now)
 	/////////////////////////////////////////////////////////////
+	int iBC = 0;
 	for (int isurf = 0; isurf < FO_length; ++isurf)
 	{
 		FO_surf * surf = &FOsurf_ptr[isurf];
@@ -1281,8 +1318,20 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 		double beta = tau * hbarCm1 * ( qt*ch_pY - qz*sh_pY );
 		double gamma = tau * hbarCm1 * ( qz*ch_pY - qt*sh_pY );
 
-		Set_Bessel_function_grids(beta, gamma);
-		//Set_Bessel_function_grids(beta, gamma, K0_Bessel_re, K0_Bessel_im, K1_Bessel_re, K1_Bessel_im);
+		//Set_Bessel_function_grids(beta, gamma);
+		for (int ia = 0; ia < n_alpha_points+1; ++ia)
+			K0_Bessel_re[ia] = BC_chunk[iBC++];
+		for (int ia = 0; ia < n_alpha_points+1; ++ia)
+			K0_Bessel_im[ia] = BC_chunk[iBC++];
+		for (int ia = 0; ia < n_alpha_points+1; ++ia)
+			K1_Bessel_re[ia] = BC_chunk[iBC++];
+		for (int ia = 0; ia < n_alpha_points+1; ++ia)
+			K1_Bessel_im[ia] = BC_chunk[iBC++];
+
+		cs_accel_K0re->c = K0_Bessel_re;
+		cs_accel_K0im->c = K0_Bessel_im;
+		cs_accel_K1re->c = K1_Bessel_re;
+		cs_accel_K1im->c = K1_Bessel_im;
 
 		//////////
 		//TESTING
@@ -1308,9 +1357,12 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 			double mT = sqrt(pT*pT+localmass*localmass);
 			double alpha = one_by_Tdec*gammaT*mT;
 
-			Iint(alpha, beta, gamma, I0_a_b_g_re, I1_a_b_g_re, I2_a_b_g_re, I3_a_b_g_re, I0_a_b_g_im, I1_a_b_g_im, I2_a_b_g_im, I3_a_b_g_im);
+			//Iint(alpha, beta, gamma, I0_a_b_g_re, I1_a_b_g_re, I2_a_b_g_re, I3_a_b_g_re, I0_a_b_g_im, I1_a_b_g_im, I2_a_b_g_im, I3_a_b_g_im);
+			//if (use_delta_f)
+			//	Iint(2.0*alpha, beta, gamma, I0_2a_b_g_re, I1_2a_b_g_re, I2_2a_b_g_re, I3_2a_b_g_re, I0_2a_b_g_im, I1_2a_b_g_im, I2_2a_b_g_im, I3_2a_b_g_im);
+			Iint2(alpha, beta, gamma, I0_a_b_g_re, I1_a_b_g_re, I2_a_b_g_re, I3_a_b_g_re, I0_a_b_g_im, I1_a_b_g_im, I2_a_b_g_im, I3_a_b_g_im);
 			if (use_delta_f)
-				Iint(2.0*alpha, beta, gamma, I0_2a_b_g_re, I1_2a_b_g_re, I2_2a_b_g_re, I3_2a_b_g_re, I0_2a_b_g_im, I1_2a_b_g_im, I2_2a_b_g_im, I3_2a_b_g_im);
+				Iint2(2.0*alpha, beta, gamma, I0_2a_b_g_re, I1_2a_b_g_re, I2_2a_b_g_re, I3_2a_b_g_re, I0_2a_b_g_im, I1_2a_b_g_im, I2_2a_b_g_im, I3_2a_b_g_im);
 
 			double A = tau*prefactor*mT*da0;
 			double a = mT*mT*(pi00 + pi33);
@@ -1393,12 +1445,17 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 			= (1.0 - 2.0 * itrig)
 				* current_dN_dypTdpTdphi_moments[indexer(ipT, ipphi, ipY, iqx, iqy, itrig)];*/
 
-	delete [] dummy;
+	/*delete [] dummy;
 	delete [] alpha_pts;
 	delete [] K0_Bessel_re;
 	delete [] K0_Bessel_im;
 	delete [] K1_Bessel_re;
-	delete [] K1_Bessel_im;
+	delete [] K1_Bessel_im;*/
+
+	gsl_cheb_free (cs_accel_K0re);
+	gsl_cheb_free (cs_accel_K0im);
+	gsl_cheb_free (cs_accel_K1re);
+	gsl_cheb_free (cs_accel_K1im);
 	
 	sw.Stop();
 	*global_out_stream_ptr << "Total function call took " << sw.printTime() << " seconds." << endl;

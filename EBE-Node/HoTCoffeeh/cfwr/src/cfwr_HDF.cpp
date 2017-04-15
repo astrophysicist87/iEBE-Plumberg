@@ -676,7 +676,268 @@ int CorrelationFunction::Dump_resonance_HDF_array_spectra(string output_filename
 	out.close();
 
 	return (0);
+}
 
+//////////////////////////////////////////////////////////
+// Functions to read and write Bessel coefficient arrays
+
+int CorrelationFunction::Initialize_besselcoeffs_HDF_array()
+{
+	const int n_chunks = n_pY_pts * qtnpts * qznpts;
+	const int chunk_size = 4 * FO_length * (n_alpha_points);
+
+	double * besselcoeffs_chunk = new double [chunk_size];
+
+	ostringstream filename_stream_ra;
+	filename_stream_ra << path << "/Bessel_coefficients.h5";
+	H5std_string BC_FILE_NAME(filename_stream_ra.str().c_str());
+	H5std_string BC_DATASET_NAME("bc");
+
+	bool file_does_not_already_exist = true;	//force full initialization for timebeing...
+
+	try
+    {
+		Exception::dontPrint();
+	
+		besselcoeffs_file = new H5::H5File(BC_FILE_NAME, H5F_ACC_TRUNC);
+
+		DSetCreatPropList cparms;
+		hsize_t chunk_dims[RANK2D] = {1, chunk_size};
+		cparms.setChunk( RANK2D, chunk_dims );
+
+		hsize_t dims[RANK2D] = {n_chunks, chunk_size};
+		besselcoeffs_dataspace = new H5::DataSpace (RANK2D, dims);
+
+		besselcoeffs_dataset = new H5::DataSet( besselcoeffs_file->createDataSet(BC_DATASET_NAME, PredType::NATIVE_DOUBLE, *besselcoeffs_dataspace, cparms) );
+
+		hsize_t count[RANK2D] = {1, chunk_size};
+		hsize_t dimsm[RANK2D] = {1, chunk_size};
+		hsize_t offset[RANK2D] = {0, 0};
+
+		besselcoeffs_memspace = new H5::DataSpace (RANK2D, dimsm, NULL);
+		if (file_does_not_already_exist)
+		{
+			*global_out_stream_ptr << "HDF besselcoeffs file doesn't exist!  Initializing to zero..." << endl;
+
+			for (int iqt = 0; iqt < qtnpts; ++iqt)
+			for (int iqz = 0; iqz < qznpts; ++iqz)
+			for (int ipY = 0; ipY < n_pY_pts; ++ipY)
+			{
+				offset[0] = BC_indexer(iqt, iqz, ipY);
+				besselcoeffs_dataspace->selectHyperslab(H5S_SELECT_SET, count, offset);
+	
+				for (int iidx = 0; iidx < chunk_size; ++iidx)
+					besselcoeffs_chunk[iidx] = 0.0;
+	
+				//initialize everything with zeros
+				besselcoeffs_dataset->write(besselcoeffs_chunk, PredType::NATIVE_DOUBLE, *besselcoeffs_memspace, *besselcoeffs_dataspace);
+			}
+		}
+    }
+
+    catch(FileIException error)
+    {
+		error.printError();
+		cerr << "FileIException error!" << endl;
+		return -1;
+    }
+
+    catch(H5::DataSetIException error)
+    {
+		error.printError();
+		cerr << "DataSetIException error!" << endl;
+		return -2;
+    }
+
+    catch(H5::DataSpaceIException error)
+    {
+		error.printError();
+		cerr << "DataSpaceIException error!" << endl;
+		return -3;
+    }
+
+	delete [] besselcoeffs_chunk;
+
+	return (0);
+}
+
+/////////////////////////////////////////////
+
+int CorrelationFunction::Open_besselcoeffs_HDF_array()
+{
+	const int n_chunks = n_pY_pts * qtnpts * qznpts;
+	const int chunk_size = 4 * FO_length * (n_alpha_points);
+
+	ostringstream filename_stream_ra;
+	filename_stream_ra << path << "/Bessel_coefficients.h5";
+	H5std_string BC_FILE_NAME(filename_stream_ra.str().c_str());
+	H5std_string BC_DATASET_NAME("bc");
+
+	try
+    {
+		Exception::dontPrint();
+	
+		hsize_t dimsm[RANK2D] = {1, chunk_size};
+		hsize_t dims[RANK2D] = { n_chunks, chunk_size};
+
+		besselcoeffs_dataspace = new H5::DataSpace (RANK2D, dims);
+		besselcoeffs_file = new H5::H5File(BC_FILE_NAME, H5F_ACC_RDWR);
+		besselcoeffs_dataset = new H5::DataSet( besselcoeffs_file->openDataSet( BC_DATASET_NAME ) );
+		besselcoeffs_memspace = new H5::DataSpace (RANK2D, dimsm, NULL);
+    }
+
+    catch(FileIException error)
+    {
+		error.printError();
+		cerr << "FileIException error!" << endl;
+		return -1;
+    }
+
+    catch(H5::DataSetIException error)
+    {
+		error.printError();
+		cerr << "DataSetIException error!" << endl;
+		return -2;
+    }
+
+    catch(H5::DataSpaceIException error)
+    {
+		error.printError();
+		cerr << "DataSpaceIException error!" << endl;
+		return -3;
+    }
+
+	return (0);
+}
+
+/////////////////////////////////////////////
+
+int CorrelationFunction::Close_besselcoeffs_HDF_array()
+{
+	try
+    {
+		Exception::dontPrint();
+	
+		besselcoeffs_memspace->close();
+		besselcoeffs_dataset->close();
+		besselcoeffs_file->close();
+		delete besselcoeffs_memspace;
+		delete besselcoeffs_file;
+		delete besselcoeffs_dataset;
+    }
+
+    catch(FileIException error)
+    {
+		error.printError();
+		cerr << "FileIException error!" << endl;
+		return -1;
+    }
+
+    catch(H5::DataSetIException error)
+    {
+		error.printError();
+		cerr << "DataSetIException error!" << endl;
+		return -2;
+    }
+
+    catch(H5::DataSpaceIException error)
+    {
+		error.printError();
+		cerr << "DataSpaceIException error!" << endl;
+		return -3;
+    }
+
+	return (0);
+}
+
+/////////////////////////////////////////////
+
+int CorrelationFunction::Set_besselcoeffs_in_HDF_array(int iqt, int iqz, int ipY, double * besselcoeffs_array_to_use)
+{
+	const int n_chunks = n_pY_pts * qtnpts * qznpts;
+	const int chunk_size = 4 * FO_length * (n_alpha_points);
+
+	double * besselcoeffs_chunk = new double [chunk_size];
+
+	try
+    {
+		Exception::dontPrint();
+		hsize_t offset[RANK2D] = {BC_indexer(iqt, iqz, ipY), 0};
+		hsize_t count[RANK2D] = {1, chunk_size};				// == chunk_dims
+		besselcoeffs_dataspace->selectHyperslab(H5S_SELECT_SET, count, offset);
+
+		besselcoeffs_dataset->write(besselcoeffs_array_to_use, PredType::NATIVE_DOUBLE, *besselcoeffs_memspace, *besselcoeffs_dataspace);
+   }
+
+    catch(FileIException error)
+    {
+		error.printError();
+		cerr << "FileIException error!" << endl;
+		return -1;
+    }
+
+    catch(H5::DataSetIException error)
+    {
+		error.printError();
+		cerr << "DataSetIException error!" << endl;
+		return -2;
+    }
+
+    catch(H5::DataSpaceIException error)
+    {
+		error.printError();
+		cerr << "DataSpaceIException error!" << endl;
+		return -3;
+    }
+
+	delete [] besselcoeffs_chunk;
+
+	return (0);
+}
+
+/////////////////////////////////////////////
+
+int CorrelationFunction::Get_besselcoeffs_from_HDF_array(int iqt, int iqz, int ipY, double * besselcoeffs_array_to_fill)
+{
+	const int n_chunks = n_pY_pts * qtnpts * qznpts;
+	const int chunk_size = 4 * FO_length * (n_alpha_points);
+
+	double * besselcoeffs_chunk = new double [chunk_size];
+
+	try
+    {
+		Exception::dontPrint();
+		hsize_t offset[RANK2D] = {BC_indexer(iqt, iqz, ipY), 0};
+		hsize_t count[RANK2D] = {1, chunk_size};				// == chunk_dims
+		besselcoeffs_dataspace->selectHyperslab(H5S_SELECT_SET, count, offset);
+
+		besselcoeffs_dataset->read(besselcoeffs_array_to_fill, PredType::NATIVE_DOUBLE, *besselcoeffs_memspace, *besselcoeffs_dataspace);
+   }
+
+    catch(FileIException error)
+    {
+		error.printError();
+		cerr << "FileIException error!" << endl;
+		return -1;
+    }
+
+    catch(H5::DataSetIException error)
+    {
+		error.printError();
+		cerr << "DataSetIException error!" << endl;
+		return -2;
+    }
+
+    catch(H5::DataSpaceIException error)
+    {
+		error.printError();
+		cerr << "DataSpaceIException error!" << endl;
+		return -3;
+    }
+
+	delete [] besselcoeffs_chunk;
+
+	return (0);
 }
 
 //End of file
