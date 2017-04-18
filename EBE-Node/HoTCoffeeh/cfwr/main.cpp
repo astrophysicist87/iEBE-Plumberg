@@ -219,6 +219,7 @@ int main(int argc, char *argv[])
 	{
 		output << "Calculating correlation function with all resonance decays..." << endl;
 		correlation_function.Fourier_transform_emission_function();
+		output << "Made it to the end!" << endl;
 if (1) exit(8);
 		correlation_function.Compute_phase_space_integrals();
 if (1) exit(8);

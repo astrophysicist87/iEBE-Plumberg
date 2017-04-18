@@ -684,7 +684,7 @@ int CorrelationFunction::Dump_resonance_HDF_array_spectra(string output_filename
 int CorrelationFunction::Initialize_besselcoeffs_HDF_array()
 {
 	const int n_chunks = n_pY_pts * qtnpts * qznpts;
-	const int chunk_size = 4 * FO_length * (n_alpha_points);
+	const int chunk_size = 4 * FO_length * (n_alpha_points + 1);
 
 	double * besselcoeffs_chunk = new double [chunk_size];
 
@@ -766,7 +766,7 @@ int CorrelationFunction::Initialize_besselcoeffs_HDF_array()
 int CorrelationFunction::Open_besselcoeffs_HDF_array()
 {
 	const int n_chunks = n_pY_pts * qtnpts * qznpts;
-	const int chunk_size = 4 * FO_length * (n_alpha_points);
+	const int chunk_size = 4 * FO_length * (n_alpha_points + 1);
 
 	ostringstream filename_stream_ra;
 	filename_stream_ra << path << "/Bessel_coefficients.h5";
@@ -855,7 +855,7 @@ int CorrelationFunction::Close_besselcoeffs_HDF_array()
 int CorrelationFunction::Set_besselcoeffs_in_HDF_array(int iqt, int iqz, int ipY, double * besselcoeffs_array_to_use)
 {
 	const int n_chunks = n_pY_pts * qtnpts * qznpts;
-	const int chunk_size = 4 * FO_length * (n_alpha_points);
+	const int chunk_size = 4 * FO_length * (n_alpha_points + 1);
 
 	double * besselcoeffs_chunk = new double [chunk_size];
 
@@ -900,7 +900,7 @@ int CorrelationFunction::Set_besselcoeffs_in_HDF_array(int iqt, int iqz, int ipY
 int CorrelationFunction::Get_besselcoeffs_from_HDF_array(int iqt, int iqz, int ipY, double * besselcoeffs_array_to_fill)
 {
 	const int n_chunks = n_pY_pts * qtnpts * qznpts;
-	const int chunk_size = 4 * FO_length * (n_alpha_points);
+	const int chunk_size = 4 * FO_length * (n_alpha_points + 1);
 
 	double * besselcoeffs_chunk = new double [chunk_size];
 

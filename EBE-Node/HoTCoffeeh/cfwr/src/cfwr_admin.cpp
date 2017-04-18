@@ -97,7 +97,7 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	//qspace_cs_slice_length = qnpts*qnpts*qnpts*qnpts*ntrig;		//factor of 2 for sin or cos
 	qspace_cs_slice_length = qxnpts*qynpts*ntrig;		//factor of 2 for sin or cos
 
-	gsl_set_error_handler_off();
+	//gsl_set_error_handler_off();
 
 	number_of_percentage_markers = UDPMsize;
 
@@ -1405,23 +1405,23 @@ void CorrelationFunction::Set_all_Bessel_grids()
 	double * dummy = new double [n_alpha_points];
 	double * alpha_pts = new double [n_alpha_points];
 	double * x_pts = new double [n_alpha_points];
-	//gauss_quadrature(n_alpha_points, 1, 0.0, 0.0, alpha_min, alpha_max, alpha_pts, dummy);
-	//gauss_quadrature(n_alpha_points, 1, 0.0, 0.0, -1.0, 1.0, x_pts, dummy);
+
 	for (int k = 0; k < n_alpha_points; ++k)
 	{
 		x_pts[k] = - cos( M_PI*(2.*(k+1.) - 1.) / (2.*n_alpha_points) );
 		alpha_pts[k] = 0.5*(x_pts[k] + 1.0)*(alpha_max - alpha_min) + alpha_min;
 	}
-	double nums[n_alpha_points][n_alpha_points];
+	double nums[n_alpha_points*n_alpha_points];
 	double dens[n_alpha_points];
-	for (int j = 0; j < n_alpha_points; ++j)
+	int na = n_alpha_points;
+	for (int j = 0; j < na; ++j)
 	{
 		dens[j] = 0.0;
-		for (int k = 0; k < n_alpha_points; ++k)
+		for (int k = 0; k < na; ++k)
 		{
 			double Tjk = csf::Tfun(j, x_pts[k]);
 			dens[j] += Tjk*Tjk;
-			nums[j][k] = Tjk;
+			nums[j*na+k] = Tjk;
 		}
 	}
 
@@ -1429,9 +1429,6 @@ void CorrelationFunction::Set_all_Bessel_grids()
 	double BesselK0im[n_alpha_points];
 	double BesselK1re[n_alpha_points];
 	double BesselK1im[n_alpha_points];
-
-	//gsl_cheb_series *cs = gsl_cheb_alloc (n_alpha_points);
-	//gsl_function F;
 
 	int HDFcode = Initialize_besselcoeffs_HDF_array();
 
@@ -1460,12 +1457,7 @@ void CorrelationFunction::Set_all_Bessel_grids()
 			double gamma = tau * hbarCm1 * ( qz*ch_pY - qt*sh_pY );
 			double gsq = gamma*gamma;
 
-			//struct bessel_params current_params = { beta, gamma };
-			//F.params = &current_params;
-
-
-//alternate
-			for (int ia = 0; ia < n_alpha_points; ++ia)
+			for (int ia = 0; ia < na; ++ia)
 			{
 				complex<double> ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p;
 				complex<double> z0 = alpha_pts[ia] - i*beta;
@@ -1479,74 +1471,50 @@ void CorrelationFunction::Set_all_Bessel_grids()
 				BesselK1im[ia] = ck1.imag();
 			}
 
-
-
-
 			//////////////////////////////////
 			//exp(x) * K_0(x), real part
-			//F.function = &expBesselK0re;
-			//gsl_cheb_init (cs, &F, alpha_min, alpha_max);
-			for (int j = 0; j < n_alpha_points; ++j)
+			for (int j = 0; j < na; ++j)
 			{
 				coeffs_array[j] = 0.0;
-				for (int k = 0; k < n_alpha_points; ++k)
-					coeffs_array[j] += BesselK0re[k] * nums[j][k];
+				for (int k = 0; k < na; ++k)
+					coeffs_array[j] += BesselK0re[k] * nums[j*na+k];
+				BC_chunk[iBC++] = coeffs_array[j];
 			}
-
-			//coeffs_array = gsl_cheb_coeffs (cs);
-			for (int icf = 0; icf < n_coeffs; ++icf)
-				BC_chunk[iBC++] = coeffs_array[icf];
 
 			//////////////////////////////////
 			//exp(x) * K_0(x), imaginary part
-			//F.function = &expBesselK0im;
-			//gsl_cheb_init (cs, &F, alpha_min, alpha_max);
 			for (int j = 0; j < n_alpha_points; ++j)
 			{
 				coeffs_array[j] = 0.0;
 				for (int k = 0; k < n_alpha_points; ++k)
-					coeffs_array[j] += BesselK0im[k] * nums[j][k];
+					coeffs_array[j] += BesselK0im[k] * nums[j*na+k];
+				BC_chunk[iBC++] = coeffs_array[j];
 			}
-
-			//coeffs_array = gsl_cheb_coeffs (cs);
-			for (int icf = 0; icf < n_coeffs; ++icf)
-				BC_chunk[iBC++] = coeffs_array[icf];
 
 			//////////////////////////////////
 			//exp(x) * K_1(x), real part
-			//F.function = &expBesselK1re;
-			//gsl_cheb_init (cs, &F, alpha_min, alpha_max);
-			for (int j = 0; j < n_alpha_points; ++j)
+			for (int j = 0; j < na; ++j)
 			{
 				coeffs_array[j] = 0.0;
-				for (int k = 0; k < n_alpha_points; ++k)
-					coeffs_array[j] += BesselK1re[k] * nums[j][k];
+				for (int k = 0; k < na; ++k)
+					coeffs_array[j] += BesselK1re[k] * nums[j*na+k];
+				BC_chunk[iBC++] = coeffs_array[j];
 			}
-
-			//coeffs_array = gsl_cheb_coeffs (cs);
-			for (int icf = 0; icf < n_coeffs; ++icf)
-				BC_chunk[iBC++] = coeffs_array[icf];
 
 			//////////////////////////////////
 			//exp(x) * K_1(x), imaginary part
-			//F.function = &expBesselK1im;
-			//gsl_cheb_init (cs, &F, alpha_min, alpha_max);
-			for (int j = 0; j < n_alpha_points; ++j)
+			for (int j = 0; j < na; ++j)
 			{
 				coeffs_array[j] = 0.0;
-				for (int k = 0; k < n_alpha_points; ++k)
-					coeffs_array[j] += BesselK1im[k] * nums[j][k];
+				for (int k = 0; k < na; ++k)
+					coeffs_array[j] += BesselK1im[k] * nums[j*na+k];
+				BC_chunk[iBC++] = coeffs_array[j];
 			}
-
-			//coeffs_array = gsl_cheb_coeffs (cs);
-			for (int icf = 0; icf < n_coeffs; ++icf)
-				BC_chunk[iBC++] = coeffs_array[icf];
-
-			//finally, store the results
-			HDFcode = Set_besselcoeffs_in_HDF_array(iqt, iqz, ipY, BC_chunk);
-
-			//if (isurf > 1000) exit(8);
 		}
+
+		//finally, store the results
+		HDFcode = Set_besselcoeffs_in_HDF_array(iqt, iqz, ipY, BC_chunk);
+
 		sw_loop.Stop();
 		cout << "Finished in " << sw_loop.printTime() << " seconds." << endl;
 	}
@@ -1557,7 +1525,8 @@ void CorrelationFunction::Set_all_Bessel_grids()
 	delete [] alpha_pts;
 	delete [] x_pts;
 	delete [] dummy;
-	//gsl_cheb_free (cs);
+
+	cout << "Finished setting Bessel grids successfully." << endl;
 
 	return;
 }

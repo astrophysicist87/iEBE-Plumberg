@@ -855,7 +855,12 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid)
 
 	//prepare for reading...
 	int HDFcode = Open_besselcoeffs_HDF_array();
-	double BC_chunk[4 * FO_length * (n_alpha_points + 1)];
+	double * BC_chunk = new double [4 * FO_length * (n_alpha_points + 1)];
+	cs_accel_K0re = gsl_cheb_alloc (n_alpha_points);
+	cs_accel_K0im = gsl_cheb_alloc (n_alpha_points);
+	cs_accel_K1re = gsl_cheb_alloc (n_alpha_points);
+	cs_accel_K1im = gsl_cheb_alloc (n_alpha_points);
+
 
 	///////////////////////////////////
 	// Loop over qt, qz, and pY points
@@ -863,7 +868,7 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid)
 	for (int iqt = 0; iqt < (qtnpts / 2) + 1; ++iqt)	//assumes central qt point is zero
 	for (int iqz = 0; iqz < qznpts; ++iqz)
 	{
-		if (iqz > 0) exit(8);
+		//if (iqz > 0) exit(8);
 		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 		{
 			sw_qtqzpY.Reset();
@@ -889,6 +894,8 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid)
 
 	sw.Stop();
 	*global_out_stream_ptr << "CP#2: Took " << sw.printTime() << " seconds." << endl;
+
+	delete [] BC_chunk;
 
 	return;
 }
@@ -1238,26 +1245,26 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 	//gauss_quadrature(n_alpha_points, 1, 0.0, 0.0, alpha_min, alpha_max, alpha_pts, dummy);
 	//gauss_quadrature(n_alpha_points, 5, 0.0, 0.0, 3.85, 0.6, alpha_pts, dummy);		//n_alpha_points = 15
 
-	/*K0_Bessel_re = new double [n_alpha_points];
-	K0_Bessel_im = new double [n_alpha_points];
-	K1_Bessel_re = new double [n_alpha_points];
-	K1_Bessel_im = new double [n_alpha_points];*/
-	cs_accel_K0re = gsl_cheb_alloc (n_alpha_points);
+	double * K0_Bessel_re = new double [n_alpha_points+1];
+	double * K0_Bessel_im = new double [n_alpha_points+1];
+	double * K1_Bessel_re = new double [n_alpha_points+1];
+	double * K1_Bessel_im = new double [n_alpha_points+1];
+	//cs_accel_K0re = gsl_cheb_alloc (n_alpha_points);
 	cs_accel_K0re->a = alpha_min;
 	cs_accel_K0re->b = alpha_max;
-	cs_accel_K0im = gsl_cheb_alloc (n_alpha_points);
+	//cs_accel_K0im = gsl_cheb_alloc (n_alpha_points);
 	cs_accel_K0im->a = alpha_min;
 	cs_accel_K0im->b = alpha_max;
-	cs_accel_K1re = gsl_cheb_alloc (n_alpha_points);
+	//cs_accel_K1re = gsl_cheb_alloc (n_alpha_points);
 	cs_accel_K1re->a = alpha_min;
 	cs_accel_K1re->b = alpha_max;
-	cs_accel_K1im = gsl_cheb_alloc (n_alpha_points);
+	//cs_accel_K1im = gsl_cheb_alloc (n_alpha_points);
 	cs_accel_K1im->a = alpha_min;
 	cs_accel_K1im->b = alpha_max;
-	double K0_Bessel_re[n_alpha_points+1];
+	/*double K0_Bessel_re[n_alpha_points+1];
 	double K0_Bessel_im[n_alpha_points+1];
 	double K1_Bessel_re[n_alpha_points+1];
-	double K1_Bessel_im[n_alpha_points+1];
+	double K1_Bessel_im[n_alpha_points+1];*/
 	for (int ia = 0; ia < n_alpha_points+1; ++ia)
 	{
 		K0_Bessel_re[ia] = 0.0;
@@ -1446,16 +1453,16 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 				* current_dN_dypTdpTdphi_moments[indexer(ipT, ipphi, ipY, iqx, iqy, itrig)];*/
 
 	/*delete [] dummy;
-	delete [] alpha_pts;
+	delete [] alpha_pts;*/
 	delete [] K0_Bessel_re;
 	delete [] K0_Bessel_im;
 	delete [] K1_Bessel_re;
-	delete [] K1_Bessel_im;*/
+	delete [] K1_Bessel_im;
 
-	gsl_cheb_free (cs_accel_K0re);
-	gsl_cheb_free (cs_accel_K0im);
-	gsl_cheb_free (cs_accel_K1re);
-	gsl_cheb_free (cs_accel_K1im);
+	//gsl_cheb_free (cs_accel_K0re);
+	//gsl_cheb_free (cs_accel_K0im);
+	//gsl_cheb_free (cs_accel_K1re);
+	//gsl_cheb_free (cs_accel_K1im);
 	
 	sw.Stop();
 	*global_out_stream_ptr << "Total function call took " << sw.printTime() << " seconds." << endl;
