@@ -44,14 +44,6 @@ const int Maxparticle=400;            //size of array for storage of the particl
 const int Maxdecaychannel=13;
 const int Maxdecaypart=5;
 
-// Extrapolation information
-const int polynomial_fit_order = 4;
-const int UDPMsize = 15;
-static double usr_def_pc_markers[UDPMsize] = {
-					0.00, 0.77, 0.78, 0.79, 0.80, 0.81, 0.82,
-					0.83, 0.84, 0.85, 0.86, 0.87, 0.88, 0.89, 0.90
-				};
-
 // Spatial rapidity information
 const int eta_s_npts = 15;
 const double eta_s_i = 0.0;

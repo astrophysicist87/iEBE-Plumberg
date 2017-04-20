@@ -82,6 +82,20 @@ inline int CorrelationFunction::indexer4(const int ipT, const int ipphi, const i
 	);
 }
 
+inline int CorrelationFunction::NB2_indexer(const int iv, const int izeta)
+{
+	return (
+		iv * n_zeta_pts + izeta
+	);
+}
+
+inline int CorrelationFunction::NB3_indexer(const int is, const int iv, const int izeta)
+{
+	return (
+		( is * n_v_pts + iv ) * n_zeta_pts + izeta
+	);
+}
+
 /*inline int CorrelationFunction::arb_indexer(const vector<int> indices, const vector<int> sizes)
 {
 	int n = sizes.size();

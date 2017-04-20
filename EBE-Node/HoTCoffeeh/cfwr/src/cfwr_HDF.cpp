@@ -705,6 +705,9 @@ int CorrelationFunction::Initialize_besselcoeffs_HDF_array()
 		hsize_t chunk_dims[RANK2D] = {1, chunk_size};
 		cparms.setChunk( RANK2D, chunk_dims );
 
+		//trying compression...
+		cparms.setDeflate(6);
+
 		hsize_t dims[RANK2D] = {n_chunks, chunk_size};
 		besselcoeffs_dataspace = new H5::DataSpace (RANK2D, dims);
 

@@ -250,8 +250,8 @@ void CorrelationFunction::Compute_phase_space_integrals()
 		// begin resonance decay calculations here...
 		// ************************************************************
 
-		//for (int iqt = 0; iqt < (qtnpts / 2) + 1; ++iqt) //assumes central qt-point is zero
-		for (int iqt = 0; iqt < qtnpts; ++iqt) //assumes central qt-point is zero
+		for (int iqt = 0; iqt < (qtnpts / 2) + 1; ++iqt) //assumes central qt-point is zero
+		//for (int iqt = 0; iqt < qtnpts; ++iqt) //assumes central qt-point is zero
 		for (int iqz = 0; iqz < qznpts; ++iqz)
 		{
 			Set_qlist(iqt, iqz);
@@ -837,21 +837,13 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid)
 		local_name = all_particles[local_pid].name;
 	
 	// get spectra at each fluid cell, sort by importance
-	*global_out_stream_ptr << "Computing unweighted thermal spectra..." << endl;
-	double FOintegral_cutoff = usr_def_pc_markers[UDPMsize-1];
-	if (!USE_EXTRAPOLATION)
-		FOintegral_cutoff = 1.0;	//if not extrapolating, do full integrals
-	Stopwatch sw;
+	Stopwatch sw, sw_qtqzpY;
 	sw.Start();
-	Cal_dN_dypTdpTdphi_heap(local_pid, FOintegral_cutoff);
-	sw.Stop();
-	*global_out_stream_ptr << "CP#1: Took " << sw.printTime() << " seconds." << endl;
+	*global_out_stream_ptr << "Computing un-weighted thermal spectra..." << endl;
+	Cal_dN_dypTdpTdphi_heap(local_pid);
 
 	// get weighted spectra with only most important fluid cells, up to given threshhold
 	*global_out_stream_ptr << "Computing weighted thermal spectra..." << endl;
-
-	sw.Reset();
-	Stopwatch sw_qtqzpY;
 
 	//prepare for reading...
 	int HDFcode = Open_besselcoeffs_HDF_array();
@@ -860,7 +852,6 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid)
 	cs_accel_K0im = gsl_cheb_alloc (n_alpha_points);
 	cs_accel_K1re = gsl_cheb_alloc (n_alpha_points);
 	cs_accel_K1im = gsl_cheb_alloc (n_alpha_points);
-
 
 	///////////////////////////////////
 	// Loop over qt, qz, and pY points
@@ -893,99 +884,15 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid)
 	HDFcode = Close_besselcoeffs_HDF_array();
 
 	sw.Stop();
-	*global_out_stream_ptr << "CP#2: Took " << sw.printTime() << " seconds." << endl;
+	*global_out_stream_ptr << "Took " << sw.printTime() << " seconds to set dN/dypTdpTdphi moments." << endl;
 
 	delete [] BC_chunk;
 
 	return;
 }
 
-void CorrelationFunction::Set_most_important_FOcells(vector<size_t> * most_impt_FOcells_vec,
-														vector<double> * most_impt_FOcells_vals_vec,
-														priority_queue<pair<double, size_t> > FOcells_PQ)
+void CorrelationFunction::Cal_dN_dypTdpTdphi_heap(int local_pid)
 {
-	size_t FOcells_PQ_size = FOcells_PQ.size();
-
-	// read out full priority_queue into vector first
-	(*most_impt_FOcells_vec).reserve(FOcells_PQ_size);
-	(*most_impt_FOcells_vals_vec).reserve(FOcells_PQ_size);
-	for (int ii = 0; ii < FOcells_PQ_size; ii++)
-	{
-		pair<double, size_t> tmp = FOcells_PQ.top();
-		(*most_impt_FOcells_vals_vec).push_back(-tmp.first);	//recall: tmp.first <= 0
-		(*most_impt_FOcells_vec).push_back(tmp.second);
-		FOcells_PQ.pop();
-	}
-
-	// get vectors in the right order
-	reverse( (*most_impt_FOcells_vec).begin(), (*most_impt_FOcells_vec).end() );
-	reverse( (*most_impt_FOcells_vals_vec).begin(), (*most_impt_FOcells_vals_vec).end() );
-
-	return;
-}
-
-int CorrelationFunction::Set_percentage_cutoffs(vector<int> * cutoff_FOcells_at_pTpphi,
-												vector<double> * most_impt_FOcells_vals_vec,
-												double absolute_running_total, double cutoff)
-{
-	double running_sum = 0.0;
-	//int breaker = FOcells_PQ_size;
-	int breaker = (*most_impt_FOcells_vals_vec).size();
-	double abs_cutoff = cutoff * absolute_running_total;
-
-	int current_iPC = 0;
-	(*cutoff_FOcells_at_pTpphi).reserve( number_of_percentage_markers );
-
-	//set the cutoff %-age values here...
-	for (int ii = 0; ii < number_of_percentage_markers; ++ii)
-		pc_cutoff_vals[ii] = usr_def_pc_markers[ii];
-
-	if (USE_EXTRAPOLATION)
-	{
-		for (int ii = 0; ii < (*most_impt_FOcells_vals_vec).size(); ii++)
-		{
-			running_sum += (*most_impt_FOcells_vals_vec)[ii];	//starts with largest first...
-			if (running_sum >= abs_cutoff)	//cutoff-dependence only enters here
-			{
-				breaker = ii + 1;	//marks where the final cutoff was reached
-				break;
-			}
-			else if (running_sum > pc_cutoff_vals[current_iPC] * absolute_running_total)
-			{	//keep tabs on whether we've passed any other new cutoffs
-				++current_iPC;
-				(*cutoff_FOcells_at_pTpphi).push_back(ii+1);
-			}
-		}
-		(*cutoff_FOcells_at_pTpphi).push_back(breaker);
-		(*cutoff_FOcells_at_pTpphi)[0] = 0;		//make sure all cells are included!
-	}
-	else
-	{
-		(*cutoff_FOcells_at_pTpphi).push_back(0);
-		(*cutoff_FOcells_at_pTpphi).push_back((*most_impt_FOcells_vals_vec).size());
-	}
-
-	return (breaker);
-}
-
-void CorrelationFunction::Cal_dN_dypTdpTdphi_heap(int local_pid, double cutoff)
-{
-	//////////////////////////////////////////////////
-	// Some useful arrays and initializations
-	//////////////////////////////////////////////////
-	double ** running_total_FOdensity = new double * [n_pT_pts];
-	double ** abs_running_total_FOdensity = new double * [n_pT_pts];
-	for (int ipT = 0; ipT < n_pT_pts; ipT++)
-	{
-		running_total_FOdensity[ipT] = new double [n_pphi_pts];
-		abs_running_total_FOdensity[ipT] = new double [n_pphi_pts];
-		for (int ipphi = 0; ipphi < n_pphi_pts; ipphi++)
-		{
-			running_total_FOdensity[ipT][ipphi] = 0.0;
-			abs_running_total_FOdensity[ipT][ipphi] = 0.0;
-		}
-	}
-
 	// set particle information
 	double sign = all_particles[local_pid].sign;
 	double degen = all_particles[local_pid].gspin;
@@ -1005,14 +912,10 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_heap(int local_pid, double cutoff)
 
 	double eta_s_symmetry_factor = 2.0;
 
-	Stopwatch sw_ThermalResonanceSpectra, sw_VectorManipulations;
+	Stopwatch sw_ThermalResonanceSpectra;
 
 	//Time full calculation of thermal spectra for this resonance
 	sw_ThermalResonanceSpectra.Start();
-
-	//make sure these arrays are the right sizes
-	cutoff_FOcells.resize( n_pT_pts * n_pphi_pts );
-	pc_cutoff_vals.resize( number_of_percentage_markers );
 
 	//////////////////////////////////////////////////
 	// Organize calculation of boost-invariant spectra
@@ -1029,12 +932,8 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_heap(int local_pid, double cutoff)
 		double px = loc_pT*cos_pphi;
 		double py = loc_pT*sin_pphi;
 		double loc_mT = sqrt(loc_pT*loc_pT+localmass*localmass);
-		int number_of_FOcells_above_cutoff = FO_length;
 
-		double tempsum = 0.0, tempabssum = 0.0;
-		double * tmp_FOcell_density_array = new double [FO_length];
-		int iFOcell = 0;
-		priority_queue<pair<double, size_t> > FOcells_PQ;
+		double spectra_at_pTpphi = 0.0;
 
 		////////////////////////////////////////////////
 		// Loop over freeze-out surface fluid cells
@@ -1094,129 +993,28 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_heap(int local_pid, double cutoff)
 			//ignore points where delta f is large or emission function goes negative from pdsigma
 			if ( (term2 + term3 < 0.0) || (flagneg == 1 && FOcell_density < tol) )
 			{
-
 				FOcell_density = 0.0;
-
-				tmp_FOcell_density_array[iFOcell] = 0.0;
-
-				--number_of_FOcells_above_cutoff;	// might save some time, since forces FOcells_PQ to be smaller?
-				++iFOcell;
-				continue;
+				//continue;
 			}
 
-			// sort (abs)FOdensity into appropriate vectors, etc.
-			double absFOcell_density = abs(FOcell_density);
-			tmp_FOcell_density_array[iFOcell] = FOcell_density;
-			tempsum += FOcell_density;
-			tempabssum += absFOcell_density;
-			addElementToQueue(FOcells_PQ, pair<double, size_t>(-absFOcell_density, iFOcell), number_of_FOcells_above_cutoff);
-			++iFOcell;
+			// add FOdensity into full spectra at this pT, pphi
+			spectra_at_pTpphi += eta_s_symmetry_factor * FOcell_density;
 		}		//end of isurf loop
 
-
-		running_total_FOdensity[ipT][ipphi] = tempsum;
-		abs_running_total_FOdensity[ipT][ipphi] = tempabssum;
-
-		// start timing this part
-		sw_VectorManipulations.Start();
-		
-		// figure out just how many cells I need to reach cutoff
-		vector<size_t> most_impt_FOcells_vec;
-		vector<double> most_impt_FOcells_vals_vec;
-
-		////////////////////////////////////////////////////////////////////
-		// sorts FOdensities by most important contributions
-		////////////////////////////////////////////////////////////////////
-		Set_most_important_FOcells(	&most_impt_FOcells_vec,
-									&most_impt_FOcells_vals_vec,
-									FOcells_PQ );
-
-		//////////////////////////////////////////////////////////////////////////////////////////////////////
-		// loop through vectors from largest FOcell contribution to smallest, terminate when cutoff is reached
-		//////////////////////////////////////////////////////////////////////////////////////////////////////
-		int breaker = Set_percentage_cutoffs(	&(cutoff_FOcells[pTpphi_index]),
-												&most_impt_FOcells_vals_vec,
-												abs_running_total_FOdensity[ipT][ipphi],
-												cutoff );
-
-		// finally, chop off whatever is left
-		most_impt_FOcells_vec.erase ( most_impt_FOcells_vec.begin() + breaker, most_impt_FOcells_vec.end() );
-		most_impt_FOcells_vals_vec.erase ( most_impt_FOcells_vals_vec.begin() + breaker, most_impt_FOcells_vals_vec.end() );
-
-		//!!! - RESIZING THE CUTOFF COUNTER TO HOLD EXACTLY ONLY AS MANY CELLS AS NECESSARY
-		number_of_FOcells_above_cutoff_array[ipT][ipphi] = most_impt_FOcells_vec.size();
-		int FOcells_PQ_size = number_of_FOcells_above_cutoff_array[ipT][ipphi];
-
-		// define this array so that it's smaller at run-time...
-		FOcell_density_array[ipT][ipphi] = new double [FOcells_PQ_size];
-		most_important_FOcells[ipT][ipphi] = new size_t [FOcells_PQ_size];
-
-		// copy over sorted results
-		for (int ii = 0; ii < FOcells_PQ_size; ++ii)
-		{
-			size_t topFOcell = most_impt_FOcells_vec[ii];
-			most_important_FOcells[ipT][ipphi][ii] = topFOcell;	// ~ isurf
-			FOcell_density_array[ipT][ipphi][ii] = tmp_FOcell_density_array[topFOcell];
-		}
-
 		//update spectra
-		abs_spectra[local_pid][ipT][ipphi] = abs_running_total_FOdensity[ipT][ipphi];
-		spectra[local_pid][ipT][ipphi] = eta_s_symmetry_factor * tempsum;
-		thermal_spectra[local_pid][ipT][ipphi] = eta_s_symmetry_factor * tempsum;
-//cout << "CHECK: thermal_spectra[" << all_particles[local_pid].name << "][" << ipT << "][" << ipphi << "] = " << thermal_spectra[local_pid][ipT][ipphi] << endl;
-		log_spectra[local_pid][ipT][ipphi] = log(abs(eta_s_symmetry_factor * tempsum) + 1.e-100);
-		sign_spectra[local_pid][ipT][ipphi] = sgn(eta_s_symmetry_factor * tempsum);
-
-		//end of the section to time
-		sw_VectorManipulations.Stop();
-
-		delete [] tmp_FOcell_density_array;
-	}		// end of pT, pphi, pY loop
-	*global_out_stream_ptr << "\t\t\t*** Took total of " << sw_VectorManipulations.printTime() << " seconds on ordering and copying." << endl;
-
-	pc_fit_vals = pc_cutoff_vals;
-	pc_fit_vals.erase( pc_fit_vals.begin() );	//drop the 0th entry, which isn't used in fitting
+		spectra[local_pid][ipT][ipphi] = spectra_at_pTpphi;
+		thermal_spectra[local_pid][ipT][ipphi] = spectra_at_pTpphi;
+		log_spectra[local_pid][ipT][ipphi] = log(abs(spectra_at_pTpphi) + 1.e-100);
+		sign_spectra[local_pid][ipT][ipphi] = sgn(spectra_at_pTpphi);
+	}		// end of pT, pphi loop
 
 	sw_ThermalResonanceSpectra.Stop();
 	*global_out_stream_ptr << "\t\t\t*** Took " << sw_ThermalResonanceSpectra.printTime() << " seconds for whole function." << endl;
 
-	//////////////////////////////////////////
-	// Some clean up
-	//////////////////////////////////////////
-	for(int ipT = 0; ipT < n_pT_pts; ++ipT)
-	{
-		delete [] running_total_FOdensity[ipT];
-		delete [] abs_running_total_FOdensity[ipT];
-	}
-	delete [] running_total_FOdensity;
-	delete [] abs_running_total_FOdensity;
-
-//if (1) exit(8);
-
 	return;
 }
 
-/*void CorrelationFunction::Set_Bessel_function_grids(double beta, double gamma)
-{
-	double gsq = gamma*gamma;
-	for (int ia = 0; ia < n_alpha_points; ++ia)
-	{
-		complex<double> ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p;
-		complex<double> z0 = alpha_pts[ia] - i*beta;
-		complex<double> z0sq = z0 * z0;
-		complex<double> z = sqrt(z0sq + gsq);
-		int errorCode = bessf::cbessik01(z, ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p);
-
-		K0_Bessel_re[ia] = ck0.real();
-		K0_Bessel_im[ia] = ck0.imag();
-		K1_Bessel_re[ia] = ck1.real();
-		K1_Bessel_im[ia] = ck1.imag();
-	}
-
-	return;
-}*/
-
-//void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid)
+//////////////////////////////////////////
 void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY, int iqt, int iqz, double * BC_chunk)
 {
 	Stopwatch sw, sw_FOsurf;
@@ -1288,6 +1086,18 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 	{
 		long_array_C[isa] = 0.0;
 		long_array_S[isa] = 0.0;
+	}
+	double ** alt_long_array_C = new double * [qxnpts * qynpts];
+	double ** alt_long_array_S = new double * [qxnpts * qynpts];
+	for (int isa = 0; isa < qxnpts * qynpts; ++isa)
+	{
+		alt_long_array_C[isa] = new double [n_pT_pts * n_pphi_pts];
+		alt_long_array_S[isa] = new double [n_pT_pts * n_pphi_pts];
+		for (int isa2 = 0; isa2 < n_pT_pts * n_pphi_pts; ++isa2)
+		{
+			alt_long_array_C[isa][isa2] = 0.0;
+			alt_long_array_S[isa][isa2] = 0.0;
+		}
 	}
 	//////////
 	//////////
@@ -1364,9 +1174,6 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 			double mT = sqrt(pT*pT+localmass*localmass);
 			double alpha = one_by_Tdec*gammaT*mT;
 
-			//Iint(alpha, beta, gamma, I0_a_b_g_re, I1_a_b_g_re, I2_a_b_g_re, I3_a_b_g_re, I0_a_b_g_im, I1_a_b_g_im, I2_a_b_g_im, I3_a_b_g_im);
-			//if (use_delta_f)
-			//	Iint(2.0*alpha, beta, gamma, I0_2a_b_g_re, I1_2a_b_g_re, I2_2a_b_g_re, I3_2a_b_g_re, I0_2a_b_g_im, I1_2a_b_g_im, I2_2a_b_g_im, I3_2a_b_g_im);
 			Iint2(alpha, beta, gamma, I0_a_b_g_re, I1_a_b_g_re, I2_a_b_g_re, I3_a_b_g_re, I0_a_b_g_im, I1_a_b_g_im, I2_a_b_g_im, I3_a_b_g_im);
 			if (use_delta_f)
 				Iint2(2.0*alpha, beta, gamma, I0_2a_b_g_re, I1_2a_b_g_re, I2_2a_b_g_re, I3_2a_b_g_re, I0_2a_b_g_im, I1_2a_b_g_im, I2_2a_b_g_im, I3_2a_b_g_im);
@@ -1412,13 +1219,15 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 				double cosAy = tmpY[iqy * 2 + 0], sinAy = tmpY[iqy * 2 + 1];
 				double cos_trans_Fourier = cosAx*cosAy - sinAx*sinAy;
 				double sin_trans_Fourier = -sinAx*cosAy - cosAx*sinAy;
+				double * ala_C = alt_long_array_C[idx];
+				double * ala_S = alt_long_array_S[idx];
 				long iidx = 0;
 				while ( iidx != iidx_end )
 				{
 					double cos_qx_S_x_K = short_array_C[iidx];
-					double sin_qx_S_x_K = short_array_S[iidx++];
-					long_array_C[idx] += cos_trans_Fourier * cos_qx_S_x_K + sin_trans_Fourier * sin_qx_S_x_K;
-					long_array_S[idx++] += cos_trans_Fourier * sin_qx_S_x_K - sin_trans_Fourier * cos_qx_S_x_K;
+					double sin_qx_S_x_K = short_array_S[iidx];
+					ala_C[iidx] += cos_trans_Fourier * cos_qx_S_x_K + sin_trans_Fourier * sin_qx_S_x_K;
+					ala_S[iidx++] += cos_trans_Fourier * sin_qx_S_x_K - sin_trans_Fourier * cos_qx_S_x_K;
 				}
 			}
 		}
@@ -1433,8 +1242,10 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 	{
-		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,0)] = long_array_C[idx];
-		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,1)] = long_array_S[idx++];
+		//current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,0)] = long_array_C[idx];
+		//current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,1)] = long_array_S[idx++];
+		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,0)] = alt_long_array_C[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,1)] = alt_long_array_S[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
 	}
 	//////////
 	//////////
@@ -1467,60 +1278,6 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 	sw.Stop();
 	*global_out_stream_ptr << "Total function call took " << sw.printTime() << " seconds." << endl;
 	
-	return;
-}
-
-//performs extrapolation of running_sum of FO integrals to unity (1) by polynomial fit
-void CorrelationFunction::gsl_polynomial_fit(const vector<double> &data_x, const vector<double> &data_y, double * results, const int order, double * chisq, const int n)
-{
-	double * in_data_x = new double [n];
-	double * in_data_y = new double [n];
-	gsl_vector *y, *c;
-	gsl_matrix *X, *cov;
-	y = gsl_vector_alloc (n);
-	c = gsl_vector_alloc (order+1);
-	X   = gsl_matrix_alloc (n, order+1);
-	cov = gsl_matrix_alloc (order+1, order+1);
-	gsl_multifit_linear_workspace * work = gsl_multifit_linear_alloc (n, order+1);
-
-	int iterations = data_x.size() / n;
-	vector<double> vc;
-	vc.reserve(order+1);
-
-	for (int iter = 0; iter < iterations; ++iter)
-	{
-		for (int ii = 0; ii < n; ++ii)
-		{
-			for (int j = 0; j < order+1; ++j)
-			{
-				in_data_x[ii] = data_x[ii * iterations + iter];
-				gsl_matrix_set (X, ii, j, pow(in_data_x[ii],j));
-			}
-			in_data_y[ii] = data_y[ii * iterations + iter];
-			gsl_vector_set (y, ii, in_data_y[ii]);
-		}
-
-		gsl_multifit_linear (X, y, c, cov, &chisq[iterations], work);
-
-		for (int ii = 0; ii < order+1; ++ii)
-			vc[ii] = gsl_vector_get(c,ii);
-			//vc.push_back(gsl_vector_get(c,i));
-
-		//store the results
-		results[iter] = accumulate(vc.begin(), vc.end(), 0.0);
-	}
-
-	gsl_multifit_linear_free (work);
-	gsl_vector_free (y);
-	gsl_vector_free (c);
-	gsl_matrix_free (X);
-	gsl_matrix_free (cov);
-
-	vc.clear();
-
-	delete [] in_data_x;
-	delete [] in_data_y;
-
 	return;
 }
 

@@ -106,8 +106,8 @@ class CorrelationFunction
 		int full_FO_length;
 		int FO_length;
 		int n_alpha_points;
-		int nFO_cutoff;
-		int number_of_percentage_markers;
+		//int nFO_cutoff;
+		//int number_of_percentage_markers;
 		double q_space_CF_cutoff;		// when correlator falls below this value,
 							//	set correlator to zero for any q-points further away from q-origin than that
 		double ** current_q_space_cutoff;	// point in q-space at which cutoff of CF begins (depends on pT and pphi)
@@ -163,8 +163,6 @@ class CorrelationFunction
 	
 		//single particle spectra for plane angle determination
 		double SP_p_y, mean_pT;
-		size_t *** most_important_FOcells;
-		int ** number_of_FOcells_above_cutoff_array;
 
 		//pair momentum
 		double K_y, ch_K_y, sh_K_y;
@@ -186,22 +184,17 @@ class CorrelationFunction
 
 		//some arrays to save unnecessary multiple calculations for resonances
 		//	use these for n_body = 2
-		double VEC_n2_spt, VEC_n2_pstar, VEC_n2_Estar, VEC_n2_psBmT, VEC_n2_DeltaY, VEC_n2_Yp, VEC_n2_Ym;
-		double * VEC_n2_P_Y, * VEC_n2_MTbar, * VEC_n2_DeltaMT, * VEC_n2_MTp, * VEC_n2_MTm;
-		double ** VEC_n2_MT, ** VEC_n2_PPhi_tilde, ** VEC_n2_PPhi_tildeFLIP, ** VEC_n2_PT;
-		double VEC_n2_s_factor;
-		double * VEC_n2_v_factor;
-		double ** VEC_n2_zeta_factor;
-		double VEC_n2_g_s;
-		double **** VEC_n2_Ppm;
+		double VEC_n2_spt, VEC_n2_g_s, VEC_n2_s_factor;
+		double * VEC_n2_P_Y, * VEC_n2_PPhi_tilde, * VEC_n2_PPhi_tildeFLIP, * VEC_n2_PT;
+		double * VEC_n2_v_factor, * VEC_n2_zeta_factor;
+		double ** VEC_n2_Ppm;
 		//	use these for n_body = 3
-		double * VEC_pstar, * VEC_Estar, * VEC_DeltaY, * VEC_Yp, * VEC_Ym, * VEC_s_factor, * VEC_g_s;
-		double ** VEC_P_Y, ** VEC_MTbar, ** VEC_DeltaMT, ** VEC_MTp, ** VEC_MTm, ** VEC_v_factor;
-		double *** VEC_MT, *** VEC_PPhi_tilde, *** VEC_PPhi_tildeFLIP, *** VEC_PT, *** VEC_zeta_factor;
-		double ***** VEC_Ppm;
+		double * VEC_n3_s_factor, * VEC_n3_g_s, * VEC_n3_P_Y, * VEC_n3_v_factor;
+		double * VEC_n3_PPhi_tilde, * VEC_n3_PPhi_tildeFLIP, * VEC_n3_PT, * VEC_n3_zeta_factor;
+		double ** VEC_n3_Ppm;
 		double * ssum_vec, * vsum_vec, * zetasum_vec, * Csum_vec;
 		
-		double *** spectra, *** abs_spectra, *** thermal_spectra, *** log_spectra, *** sign_spectra;
+		double *** spectra, *** thermal_spectra, *** log_spectra, *** sign_spectra;
 		
 		// relative momentum information
 		double * qo_pts, * qs_pts, * ql_pts, * q_pts, * q_axes, * qt_pts, * qx_pts, * qy_pts, * qz_pts;
@@ -235,11 +228,6 @@ class CorrelationFunction
 
 		double ** res_sign_info, ** res_log_info, ** res_moments_info;
 		double ** spec_sign_info, ** spec_log_info, ** spec_vals_info;
-
-		double *** FOcell_density_array;
-
-		vector<vector<int> > cutoff_FOcells;
-		vector<double> pc_cutoff_vals, pc_fit_vals;
 		
 		//miscellaneous
 		ofstream * global_out_stream_ptr;
@@ -268,6 +256,8 @@ class CorrelationFunction
 		inline int FM_indexer(const int ipY, const int iqt, const int iqx, const int iqy, const int iqz);
 		inline int HDF_indexer(const int ir, const int iqt, const int iqz);
 		inline int BC_indexer(const int ipY, const int iqt, const int iqz);
+		inline int NB2_indexer(const int iv, const int izeta);
+		inline int NB3_indexer(const int is, const int iv, const int izeta);
 		inline void addElementToQueue(priority_queue<pair<double, size_t> >& p, pair<double, size_t> elem, size_t max_size);
 		inline void set_to_zero(double * array, size_t arraylength);
 		inline double dot_four_vectors(double * a, double * b);
@@ -303,14 +293,12 @@ class CorrelationFunction
 		void Set_dN_dypTdpTdphi_moments(int local_pid);
 		//void Set_Bessel_function_grids(double beta, double gamma);
 		void Set_all_Bessel_grids();
-		void Set_most_important_FOcells(vector<size_t> * most_impt_FOcells_vec, vector<double> * most_impt_FOcells_vals_vec, priority_queue<pair<double, size_t> > FOcells_PQ);
-		int Set_percentage_cutoffs(vector<int> * cutoff_FOcells_at_pTpphi, vector<double> * most_impt_FOcells_vals_vec, double absolute_running_total, double cutoff);
 		void Set_thermal_target_moments();
 		void Set_full_target_moments();
 		void form_trig_sign_z(int isurf, int ieta, int iqt, int iqx, int iqy, int iqz, int ii, double * results);
 		void Set_giant_arrays(int iqt, int iqx, int iqy, int iqz);
 		void Cal_dN_dypTdpTdphi(double** SP_p0, double** SP_px, double** SP_py, double** SP_pz);
-		void Cal_dN_dypTdpTdphi_heap(int local_pid, double cutoff);
+		void Cal_dN_dypTdpTdphi_heap(int local_pid);
 		void Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY, int iqt, int iqz, double * BC_chunk);
 		double Cal_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi);
 		void Cal_dN_dypTdpTdphi_with_weights_function(int local_pid, double pT, double pphi,
@@ -366,7 +354,6 @@ class CorrelationFunction
 		void Teardown_temp_arrays(double ***** local_temp_moments, double ******* temp_moments_array);
 		void Setup_current_daughters_dN_dypTdpTdphi_moments(int n_daughter);
 		void Cleanup_current_daughters_dN_dypTdpTdphi_moments(int n_daughter);
-		void Delete_FOcell_density_array();
 		void Allocate_osc_arrays(int FOarray_length);
 		void Delete_osc_arrays();
 		//void test_interpolator();

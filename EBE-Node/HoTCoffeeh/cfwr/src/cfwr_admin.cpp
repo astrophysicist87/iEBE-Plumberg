@@ -38,7 +38,6 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	PARTICLE_DIFF_TOLERANCE = paraRdr->getVal("particle_diff_tolerance");
 	USE_LAMBDA = paraRdr->getVal("use_lambda");
 	USE_LOG_FIT = paraRdr->getVal("use_log_fit");
-	USE_EXTRAPOLATION = paraRdr->getVal("use_extrapolation");
 	IGNORE_LONG_LIVED_RESONANCES = paraRdr->getVal("ignore_long_lived_resonances");
 	FIT_WITH_PROJECTED_CFVALS = paraRdr->getVal("fit_with_projected_cfvals");
 	FLESH_OUT_CF = paraRdr->getVal("flesh_out_cf");
@@ -98,8 +97,6 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	qspace_cs_slice_length = qxnpts*qynpts*ntrig;		//factor of 2 for sin or cos
 
 	//gsl_set_error_handler_off();
-
-	number_of_percentage_markers = UDPMsize;
 
 	//set arrays containing q points
 	Set_q_points();
@@ -278,47 +275,29 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 
 	// initialize spectra and correlation function arrays
 	spectra = new double ** [Nparticle];
-	abs_spectra = new double ** [Nparticle];
 	thermal_spectra = new double ** [Nparticle];
 	log_spectra = new double ** [Nparticle];
 	sign_spectra = new double ** [Nparticle];
 	for (int ir = 0; ir < Nparticle; ++ir)
 	{
 		spectra[ir] = new double * [n_pT_pts];
-		abs_spectra[ir] = new double * [n_pT_pts];
 		thermal_spectra[ir] = new double * [n_pT_pts];
 		log_spectra[ir] = new double * [n_pT_pts];
 		sign_spectra[ir] = new double * [n_pT_pts];
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		{
 			spectra[ir][ipT] = new double [n_pphi_pts];
-			abs_spectra[ir][ipT] = new double [n_pphi_pts];
 			thermal_spectra[ir][ipT] = new double [n_pphi_pts];
 			log_spectra[ir][ipT] = new double [n_pphi_pts];
 			sign_spectra[ir][ipT] = new double [n_pphi_pts];
 			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 			{
 				spectra[ir][ipT][ipphi] = 0.0;
-				abs_spectra[ir][ipT][ipphi] = 0.0;
 				thermal_spectra[ir][ipT][ipphi] = 0.0;
-				//cout << "thermal_spectra at " << ir << "   " << ipT << "   " << ipphi << " = " << thermal_spectra[ir][ipT][ipphi] << endl;
 				log_spectra[ir][ipT][ipphi] = 0.0;
 				sign_spectra[ir][ipT][ipphi] = 0.0;
 			}
 		}
-	}
-
-	FOcell_density_array = new double ** [n_pT_pts];
-	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
-		FOcell_density_array[ipT] = new double * [n_pphi_pts];
-
-	// used for keeping track of how many FO cells are important for given pT, pphi
-	number_of_FOcells_above_cutoff_array = new int * [n_pT_pts];
-	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
-	{
-		number_of_FOcells_above_cutoff_array[ipT] = new int [n_pphi_pts];
-		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-			number_of_FOcells_above_cutoff_array[ipT][ipphi] = 0;
 	}
 
 	flat_spectra = new double [n_pT_pts*n_pphi_pts];
@@ -616,15 +595,6 @@ void CorrelationFunction::Set_eiqx_matrices()
 		}
 	}
 
-	FOcell_density_array = new double ** [n_pT_pts];
-	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
-		FOcell_density_array[ipt] = new double * [n_pphi_pts];
-
-	// set the rest later
-	most_important_FOcells = new size_t ** [n_pT_pts];
-	for(int ipt = 0; ipt < n_pT_pts; ipt++)
-		most_important_FOcells[ipt] = new size_t * [n_pphi_pts];
-
 	return;
 }
 
@@ -790,97 +760,34 @@ void CorrelationFunction::Delete_CFvals()
 	return;
 }
 
-
-void CorrelationFunction::Delete_FOcell_density_array()
-{
-	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
-		delete [] FOcell_density_array[ipt];
-	delete [] FOcell_density_array;
-
-	return;
-}
-
 void CorrelationFunction::Allocate_decay_channel_info()
 {
 	if (VERBOSE > 2) *global_out_stream_ptr << "Reallocating memory for decay channel information..." << endl;
+
 	VEC_n2_v_factor = new double [n_v_pts];
-	VEC_n2_zeta_factor = new double * [n_v_pts];
 	VEC_n2_P_Y = new double [n_v_pts];
-	VEC_n2_MTbar = new double [n_v_pts];
-	VEC_n2_DeltaMT = new double [n_v_pts];
-	VEC_n2_MTp = new double [n_v_pts];
-	VEC_n2_MTm = new double [n_v_pts];
-	VEC_n2_MT = new double * [n_v_pts];
-	VEC_n2_PPhi_tilde = new double * [n_v_pts];
-	VEC_n2_PPhi_tildeFLIP = new double * [n_v_pts];
-	VEC_n2_PT = new double * [n_v_pts];
-	VEC_n2_Ppm = new double *** [n_v_pts];
-	for (int iv = 0; iv < n_v_pts; ++iv)
-	{
-		VEC_n2_MT[iv] = new double [n_zeta_pts];
-		VEC_n2_PPhi_tilde[iv] = new double [n_zeta_pts];
-		VEC_n2_PPhi_tildeFLIP[iv] = new double [n_zeta_pts];
-		VEC_n2_PT[iv] = new double [n_zeta_pts];
-		VEC_n2_zeta_factor[iv] = new double [n_zeta_pts];
-		VEC_n2_Ppm[iv] = new double ** [n_zeta_pts];
-		for (int izeta = 0; izeta < n_zeta_pts; ++izeta)
-		{
-			VEC_n2_Ppm[iv][izeta] = new double * [2];		//two corresponds to +/-
-			for (int i = 0; i < 2; ++i)
-				VEC_n2_Ppm[iv][izeta][i] = new double [4];	//four corresponds to space-time components
-		}
-	}
+	VEC_n2_zeta_factor = new double [n_v_pts * n_zeta_pts];
+	VEC_n2_PPhi_tilde = new double [n_v_pts * n_zeta_pts];
+	VEC_n2_PPhi_tildeFLIP = new double [n_v_pts * n_zeta_pts];
+	VEC_n2_PT = new double [n_v_pts * n_zeta_pts];
+	VEC_n2_Ppm = new double * [n_v_pts * n_zeta_pts * 2];
+	for(int ii = 0; ii < n_v_pts * n_zeta_pts * 2; ++ii)
+		VEC_n2_Ppm[ii] = new double [4];	//four corresponds to space-time components
+
 	s_pts = new double [n_s_pts];
 	s_wts = new double [n_s_pts];
-	VEC_pstar = new double [n_s_pts];
-	VEC_Estar = new double [n_s_pts];
-	VEC_DeltaY = new double [n_s_pts];
-	VEC_g_s = new double [n_s_pts];
-	VEC_s_factor = new double [n_s_pts];
-	VEC_v_factor = new double * [n_s_pts];
-	VEC_zeta_factor = new double ** [n_s_pts];
-	VEC_Yp = new double [n_s_pts];
-	VEC_Ym = new double [n_s_pts];
-	VEC_P_Y = new double * [n_s_pts];
-	VEC_MTbar = new double * [n_s_pts];
-	VEC_DeltaMT = new double * [n_s_pts];
-	VEC_MTp = new double * [n_s_pts];
-	VEC_MTm = new double * [n_s_pts];
-	VEC_MT = new double ** [n_s_pts];
-	VEC_PPhi_tilde = new double ** [n_s_pts];
-	VEC_PPhi_tildeFLIP = new double ** [n_s_pts];
-	VEC_PT = new double ** [n_s_pts];
-	VEC_Ppm = new double **** [n_s_pts];
-	for(int is = 0; is < n_s_pts; ++is)
-	{
-		VEC_v_factor[is] = new double [n_v_pts];
-		VEC_zeta_factor[is] = new double * [n_v_pts];
-		VEC_P_Y[is] = new double [n_v_pts];
-		VEC_MTbar[is] = new double [n_v_pts];
-		VEC_DeltaMT[is] = new double [n_v_pts];
-		VEC_MTp[is] = new double [n_v_pts];
-		VEC_MTm[is] = new double [n_v_pts];
-		VEC_MT[is] = new double * [n_v_pts];
-		VEC_PPhi_tilde[is] = new double * [n_v_pts];
-		VEC_PPhi_tildeFLIP[is] = new double * [n_v_pts];
-		VEC_PT[is] = new double * [n_v_pts];
-		VEC_Ppm[is] = new double *** [n_v_pts];
-		for(int iv = 0; iv < n_v_pts; ++iv)
-		{
-			VEC_MT[is][iv] = new double [n_zeta_pts];
-			VEC_PPhi_tilde[is][iv] = new double [n_zeta_pts];
-			VEC_PPhi_tildeFLIP[is][iv] = new double [n_zeta_pts];
-			VEC_PT[is][iv] = new double [n_zeta_pts];
-			VEC_zeta_factor[is][iv] = new double [n_zeta_pts];
-			VEC_Ppm[is][iv] = new double ** [n_zeta_pts];
-			for (int izeta = 0; izeta < n_zeta_pts; ++izeta)
-			{
-				VEC_Ppm[is][iv][izeta] = new double * [2];		//two corresponds to +/-
-				for (int i = 0; i < 2; ++i)
-					VEC_Ppm[is][iv][izeta][i] = new double [4];	//four corresponds to space-time components
-			}
-		}
-	}
+	VEC_n3_g_s = new double [n_s_pts];
+	VEC_n3_s_factor = new double [n_s_pts];
+	VEC_n3_v_factor = new double [n_s_pts * n_v_pts];
+	VEC_n3_zeta_factor = new double [n_s_pts * n_v_pts * n_zeta_pts];
+	VEC_n3_P_Y = new double [n_s_pts * n_v_pts];
+	VEC_n3_PPhi_tilde = new double [n_s_pts * n_v_pts * n_zeta_pts];
+	VEC_n3_PPhi_tildeFLIP = new double [n_s_pts * n_v_pts * n_zeta_pts];
+	VEC_n3_PT = new double [n_s_pts * n_v_pts * n_zeta_pts];
+	VEC_n3_Ppm = new double * [n_s_pts * n_v_pts * n_zeta_pts * 2];
+	for(int ii = 0; ii < n_s_pts * n_v_pts * n_zeta_pts * 2; ++ii)
+		VEC_n3_Ppm[ii] = new double [4];	//four corresponds to space-time components
+
 	if (VERBOSE > 2) *global_out_stream_ptr << "Reallocated memory for decay channel information." << endl;
 
 	return;
@@ -889,85 +796,32 @@ void CorrelationFunction::Allocate_decay_channel_info()
 void CorrelationFunction::Delete_decay_channel_info()
 {
 	if (VERBOSE > 2) *global_out_stream_ptr << "Deleting memory for decay channel information..." << endl;
-	for(int iv = 0; iv < n_v_pts; ++iv)
-	{
-		delete [] VEC_n2_MT[iv];
-		delete [] VEC_n2_PPhi_tilde[iv];
-		delete [] VEC_n2_PPhi_tildeFLIP[iv];
-		delete [] VEC_n2_PT[iv];
-		delete [] VEC_n2_zeta_factor[iv];
-		for (int izeta = 0; izeta < n_zeta_pts; ++izeta)
-		{
-			for (int i = 0; i < 2; ++i)
-				delete [] VEC_n2_Ppm[iv][izeta][i];
-			delete [] VEC_n2_Ppm[iv][izeta];
-		}
-		delete [] VEC_n2_Ppm[iv];
-	}
+
+	for(int ii = 0; ii < n_v_pts * n_zeta_pts * 2; ++ii)
+		delete [] VEC_n2_Ppm[ii];
+	for(int ii = 0; ii < n_s_pts * n_v_pts * n_zeta_pts * 2; ++ii)
+		delete [] VEC_n3_Ppm[ii];
+
 	delete [] VEC_n2_v_factor;
 	delete [] VEC_n2_zeta_factor;
 	delete [] VEC_n2_P_Y;
-	delete [] VEC_n2_MTbar ;
-	delete [] VEC_n2_DeltaMT;
-	delete [] VEC_n2_MTp;
-	delete [] VEC_n2_MTm;
-	delete [] VEC_n2_MT;
 	delete [] VEC_n2_PPhi_tilde;
 	delete [] VEC_n2_PPhi_tildeFLIP;
 	delete [] VEC_n2_PT;
 	delete [] VEC_n2_Ppm;
 
-	for(int is = 0; is < n_s_pts; ++is)
-	{
-		for(int iv = 0; iv < n_v_pts; ++iv)
-		{
-			delete [] VEC_MT[is][iv];
-			delete [] VEC_PPhi_tilde[is][iv];
-			delete [] VEC_PPhi_tildeFLIP[is][iv];
-			delete [] VEC_PT[is][iv];
-			delete [] VEC_zeta_factor[is][iv];
-			for (int izeta = 0; izeta < n_zeta_pts; ++izeta)
-			{
-				for (int i = 0; i < 2; ++i)
-					delete [] VEC_Ppm[is][iv][izeta][i];
-				delete [] VEC_Ppm[is][iv][izeta];
-			}
-			delete [] VEC_Ppm[is][iv];
-		}
-		delete [] VEC_v_factor[is];
-		delete [] VEC_zeta_factor[is];
-		delete [] VEC_P_Y[is];
-		delete [] VEC_MTbar[is];
-		delete [] VEC_DeltaMT[is];
-		delete [] VEC_MTp[is];
-		delete [] VEC_MTm[is];
-		delete [] VEC_MT[is];
-		delete [] VEC_PPhi_tilde[is];
-		delete [] VEC_PPhi_tildeFLIP[is];
-		delete [] VEC_PT[is];
-		delete [] VEC_Ppm[is];
-	}
 	delete [] s_pts;
 	delete [] s_wts;
-	delete [] VEC_pstar;
-	delete [] VEC_Estar;
-	delete [] VEC_DeltaY;
-	delete [] VEC_g_s;
-	delete [] VEC_s_factor;
-	delete [] VEC_v_factor;
-	delete [] VEC_zeta_factor;
-	delete [] VEC_Yp;
-	delete [] VEC_Ym;
-	delete [] VEC_P_Y;
-	delete [] VEC_MTbar;
-	delete [] VEC_DeltaMT;
-	delete [] VEC_MTp;
-	delete [] VEC_MTm;
-	delete [] VEC_MT;
-	delete [] VEC_PPhi_tilde;
-	delete [] VEC_PPhi_tildeFLIP;
-	delete [] VEC_PT;
-	delete [] VEC_Ppm;
+	delete [] VEC_n3_g_s;
+	delete [] VEC_n3_s_factor;
+	delete [] VEC_n3_v_factor;
+	delete [] VEC_n3_zeta_factor;
+	delete [] VEC_n3_P_Y;
+	delete [] VEC_n3_PPhi_tilde;
+	delete [] VEC_n3_PPhi_tildeFLIP;
+	delete [] VEC_n3_PT;
+	delete [] VEC_n3_Ppm;
+
 	if (VERBOSE > 2) *global_out_stream_ptr << "Deleted memory for decay channel information." << endl;
 
 	return;
@@ -1324,76 +1178,6 @@ void CorrelationFunction::Delete_fleshed_out_CF()
 
 	return;
 }
-//!!!!!!
-//note the exp(alpha) factor in these definitions!!!
-/*double expBesselK0re(double alpha, void * p)
-{
-	struct bessel_params * params = (struct bessel_params *)p;
-	double beta = (params->beta);
-	double gamma = (params->gamma);
-
-	double gsq = gamma*gamma;
-	const std::complex<double> i(0, 1);
-	complex<double> ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p;
-	complex<double> z0 = alpha - i*beta;
-	complex<double> z0sq = z0 * z0;
-	complex<double> z = sqrt(z0sq + gsq);
-	int errorCode = bessf::cbessik01(z, ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p);
-
-	return (exp(alpha)*ck0.real());
-}
-
-double expBesselK0im(double alpha, void * p)
-{
-	struct bessel_params * params = (struct bessel_params *)p;
-	double beta = (params->beta);
-	double gamma = (params->gamma);
-
-	double gsq = gamma*gamma;
-	const std::complex<double> i(0, 1);
-	complex<double> ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p;
-	complex<double> z0 = alpha - i*beta;
-	complex<double> z0sq = z0 * z0;
-	complex<double> z = sqrt(z0sq + gsq);
-	int errorCode = bessf::cbessik01(z, ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p);
-
-	return (exp(alpha)*ck0.imag());
-}
-
-double expBesselK1re(double alpha, void * p)
-{
-	struct bessel_params * params = (struct bessel_params *)p;
-	double beta = (params->beta);
-	double gamma = (params->gamma);
-
-	double gsq = gamma*gamma;
-	const std::complex<double> i(0, 1);
-	complex<double> ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p;
-	complex<double> z0 = alpha - i*beta;
-	complex<double> z0sq = z0 * z0;
-	complex<double> z = sqrt(z0sq + gsq);
-	int errorCode = bessf::cbessik01(z, ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p);
-
-	return (exp(alpha)*ck1.real());
-}
-
-double expBesselK1im(double alpha, void * p)
-{
-	struct bessel_params * params = (struct bessel_params *)p;
-	double beta = (params->beta);
-	double gamma = (params->gamma);
-
-	double gsq = gamma*gamma;
-	const std::complex<double> i(0, 1);
-	complex<double> ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p;
-	complex<double> z0 = alpha - i*beta;
-	complex<double> z0sq = z0 * z0;
-	complex<double> z = sqrt(z0sq + gsq);
-	int errorCode = bessf::cbessik01(z, ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p);
-
-	return (exp(alpha)*ck1.imag());
-}*/
-
 
 void CorrelationFunction::Set_all_Bessel_grids()
 {

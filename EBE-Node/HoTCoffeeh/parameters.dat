@@ -54,7 +54,6 @@ use_log_fit = 1				# fits log of C-1 instead of C-1
 calculate_CF_mode = 0			# 0 (default) - compute resonance decays, correlation function, and fit
 					# 1 - read in resonance decays, compute correlation function, and fit
 					# 2 - read in correlation function and fit
-use_extrapolation = 1			# extrapolates results of CF integrals instead of computing them, false (0) just calculates full integrals (slower)
 fit_with_projected_cfvals = 1		# as opposed to unprojected cfvals...
 flesh_out_cf = 1			# refines grid via interpolation before fitting
 ############################################################################
