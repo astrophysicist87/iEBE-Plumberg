@@ -300,10 +300,6 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 		}
 	}
 
-	flat_spectra = new double [n_pT_pts*n_pphi_pts];
-	for (int iii = 0; iii < n_pT_pts*n_pphi_pts; ++iii)
-		flat_spectra[iii] = 0.0;
-
 	// set-up integration points for resonance integrals
 	v_pts = new double [n_v_pts];
 	v_wts = new double [n_v_pts];
@@ -329,24 +325,41 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 		sin_SP_pphi[ipphi] = sin(SP_pphi[ipphi]);
 		cos_SP_pphi[ipphi] = cos(SP_pphi[ipphi]);
 	}
-	SP_pY = new double [n_pY_pts];
-	SP_pY_wts = new double [n_pY_pts];
-	gauss_quadrature(n_pY_pts, 1, 0.0, 0.0, SP_pY_min, SP_pY_max, SP_pY, SP_pY_wts);
+	//using this set of SP_Del_pY points to use Chebyshev interpolation for resonance feeddown
+	SP_Del_pY = new double [n_pY_pts];
+	double znodes[n_pY_pts];
+	double local_scale = 0.5 * (SP_Del_pY_min - SP_Del_pY_max);
+	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
+	{
+		znodes[ipY] = - cos( M_PI*(2.*(ipY+1.) - 1.) / (2.*n_pY_pts) );
+		SP_Del_pY[ipY] = 0.5 * (SP_Del_pY_min + SP_Del_pY_max) + local_scale * cos( M_PI*(2.*(ipY+1.) - 1.) / (2.*n_pY_pts) );
+	}
+
+	//also do Chebyshev function evaluations now
+	double chebTnorm[n_pY_pts];
+	chebTcfs = new double [n_pY_pts * n_pY_pts];
+	for (int ii = 0; ii < n_pY_pts; ++ii)
+	{
+		chebTnorm[ii] = 0.0;
+		for (int kk = 0; kk < n_pY_pts; ++kk)
+		{
+			double tf = csf::Tfun(ii,znodes[kk]);
+			chebTcfs[ii * n_pY_pts + kk] = tf;
+			chebTnorm[ii] += tf*tf;
+		}
+		for (int kk = 0; kk < n_pY_pts; ++kk)
+			chebTcfs[ii * n_pY_pts + kk] /= chebTnorm[ii];
+	}
+	// Usage: contract appropriate segment of chebTcfs vector with weighted resonance spectra
+	//	at fixed pT, pphi to get Chebyshev coeffcients to use in interpolation
+	// CAUTION: chebTcfs are NOT (yet) the coefficients which enter the final Chebyshev sum!!!
+
 	ch_SP_pY = new double [n_pY_pts];
 	sh_SP_pY = new double [n_pY_pts];
 	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 	{
-		ch_SP_pY[ipY] = cosh(SP_pY[ipY]);
-		sh_SP_pY[ipY] = sinh(SP_pY[ipY]);
-	}
-
-	//set p0 and pz points
-	SP_p0 = new double * [n_pT_pts];
-	SP_pz = new double * [n_pT_pts];
-	for(int ipt = 0; ipt < n_pT_pts; ++ipt)
-	{
-		SP_p0[ipt] = new double [eta_s_npts];
-		SP_pz[ipt] = new double [eta_s_npts];
+		ch_SP_pY[ipY] = 0.0;
+		sh_SP_pY[ipY] = 0.0;
 	}
 
 	plane_angle = new double [n_order];
@@ -364,18 +377,6 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	K_phi = new double [nKphi];
 	K_phi_weight = new double [nKphi];
 	gauss_quadrature(nKphi, 1, 0.0, 0.0, Kphi_min, Kphi_max, K_phi, K_phi_weight);
-
-	//spatial rapidity grid
-	eta_s = new double [eta_s_npts];
-	eta_s_weight = new double [eta_s_npts];
-	gauss_quadrature(eta_s_npts, 1, 0.0, 0.0, eta_s_i, eta_s_f, eta_s, eta_s_weight);
-	ch_eta_s = new double [eta_s_npts];
-	sh_eta_s = new double [eta_s_npts];
-	for (int ieta = 0; ieta < eta_s_npts; ieta++)
-	{
-		ch_eta_s[ieta] = cosh(eta_s[ieta]);
-		sh_eta_s[ieta] = sinh(eta_s[ieta]);
-	}
 
 	//set HBT radii
 	R2_side_GF = new double * [n_pT_pts];
@@ -1179,7 +1180,7 @@ void CorrelationFunction::Delete_fleshed_out_CF()
 	return;
 }
 
-void CorrelationFunction::Set_all_Bessel_grids()
+void CorrelationFunction::Set_all_Bessel_grids(int iqt, int iqz)
 {
 	const std::complex<double> i(0, 1);
 	int n_coeffs = n_alpha_points;
@@ -1209,20 +1210,18 @@ void CorrelationFunction::Set_all_Bessel_grids()
 		}
 	}
 
-	double BesselK0re[n_alpha_points];
-	double BesselK0im[n_alpha_points];
-	double BesselK1re[n_alpha_points];
-	double BesselK1im[n_alpha_points];
+	double expBesselK0re[n_alpha_points];
+	double expBesselK0im[n_alpha_points];
+	double expBesselK1re[n_alpha_points];
+	double expBesselK1im[n_alpha_points];
 
-	int HDFcode = Initialize_besselcoeffs_HDF_array();
+	int HDFcode = Administrate_besselcoeffs_HDF_array(0);	//initialize
 
 	///////////////////////////////////
 	// Loop over qt, qz, and pY points
 	///////////////////////////////////
 	Stopwatch sw_loop;
 	double * BC_chunk = new double [4 * FO_length * (n_alpha_points + 1)];
-	for (int iqt = 0; iqt < (qtnpts / 2) + 1; ++iqt)	//assumes central qt point is zero
-	for (int iqz = 0; iqz < qznpts; ++iqz)
 	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 	{
 		sw_loop.Reset();
@@ -1243,16 +1242,18 @@ void CorrelationFunction::Set_all_Bessel_grids()
 
 			for (int ia = 0; ia < na; ++ia)
 			{
+				double loc_alpha = alpha_pts[ia];
 				complex<double> ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p;
-				complex<double> z0 = alpha_pts[ia] - i*beta;
+				complex<double> z0 = loc_alpha - i*beta;
 				complex<double> z0sq = z0 * z0;
 				complex<double> z = sqrt(z0sq + gsq);
 				int errorCode = bessf::cbessik01(z, ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p);
+				double ea = exp(loc_alpha);
 
-				BesselK0re[ia] = ck0.real();
-				BesselK0im[ia] = ck0.imag();
-				BesselK1re[ia] = ck1.real();
-				BesselK1im[ia] = ck1.imag();
+				expBesselK0re[ia] = ea * ck0.real();
+				expBesselK0im[ia] = ea * ck0.imag();
+				expBesselK1re[ia] = ea * ck1.real();
+				expBesselK1im[ia] = ea * ck1.imag();
 			}
 
 			//////////////////////////////////
@@ -1261,8 +1262,8 @@ void CorrelationFunction::Set_all_Bessel_grids()
 			{
 				coeffs_array[j] = 0.0;
 				for (int k = 0; k < na; ++k)
-					coeffs_array[j] += BesselK0re[k] * nums[j*na+k];
-				BC_chunk[iBC++] = coeffs_array[j];
+					coeffs_array[j] += expBesselK0re[k] * nums[j*na+k];
+				BC_chunk[iBC++] = coeffs_array[j] / dens[j];
 			}
 
 			//////////////////////////////////
@@ -1271,8 +1272,8 @@ void CorrelationFunction::Set_all_Bessel_grids()
 			{
 				coeffs_array[j] = 0.0;
 				for (int k = 0; k < n_alpha_points; ++k)
-					coeffs_array[j] += BesselK0im[k] * nums[j*na+k];
-				BC_chunk[iBC++] = coeffs_array[j];
+					coeffs_array[j] += expBesselK0im[k] * nums[j*na+k];
+				BC_chunk[iBC++] = coeffs_array[j] / dens[j];
 			}
 
 			//////////////////////////////////
@@ -1281,8 +1282,8 @@ void CorrelationFunction::Set_all_Bessel_grids()
 			{
 				coeffs_array[j] = 0.0;
 				for (int k = 0; k < na; ++k)
-					coeffs_array[j] += BesselK1re[k] * nums[j*na+k];
-				BC_chunk[iBC++] = coeffs_array[j];
+					coeffs_array[j] += expBesselK1re[k] * nums[j*na+k];
+				BC_chunk[iBC++] = coeffs_array[j] / dens[j];
 			}
 
 			//////////////////////////////////
@@ -1291,8 +1292,8 @@ void CorrelationFunction::Set_all_Bessel_grids()
 			{
 				coeffs_array[j] = 0.0;
 				for (int k = 0; k < na; ++k)
-					coeffs_array[j] += BesselK1im[k] * nums[j*na+k];
-				BC_chunk[iBC++] = coeffs_array[j];
+					coeffs_array[j] += expBesselK1im[k] * nums[j*na+k];
+				BC_chunk[iBC++] = coeffs_array[j] / dens[j];
 			}
 		}
 

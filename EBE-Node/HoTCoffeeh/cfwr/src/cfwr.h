@@ -137,9 +137,7 @@ class CorrelationFunction
 		double * full_target_Yeq0_moments;
 
 		// needed these to avoid too many trigonometric evaluations
-		//double * oscx, * oscy;
 		double ** oscx, ** oscy;
-		double ** eiqtt, ** eiqxx, ** eiqyy, ** eiqzz;
 	
 		//needed for resonance calculations
 		//	kinematic info
@@ -170,12 +168,10 @@ class CorrelationFunction
 		double beta_perp, beta_l;
 		double * K_T, * K_phi, * K_phi_weight;
 		    
-		//spatial rapidity grid
-		double * eta_s, * ch_eta_s, * sh_eta_s, * eta_s_weight;
-		double * SP_pY, * ch_SP_pY, * sh_SP_pY, * SP_pY_wts;
-
-		//Chebyshev * approx_R2s, * approx_R2o, * approx_R2l, * approx_R2os, * approx_R2sl, * approx_R2ol;
-		double * flat_spectra;
+		//momentum rapidity grid
+		double * SP_Del_pY, * ch_SP_pY, * sh_SP_pY;
+		double * chebTcfs;
+		double ** chebyshev_a_cfs;	//for resonance interpolation
 
 		//points and weights for resonance integrals
 		double v_min, v_max, zeta_min, zeta_max, s_min, s_max;
@@ -238,7 +234,8 @@ class CorrelationFunction
 		double global_plane_psi;
 		set<int> daughter_resonance_indices;
 
-		int current_ipT, current_ipphi, current_ipY;
+		int current_ipT, current_ipphi, current_ipY, current_iqt, current_iqz;
+		double current_pY_shift;
 
 		//some private methods		
 		bool particles_are_the_same(int idx1, int idx2);
@@ -269,29 +266,17 @@ class CorrelationFunction
 
 		// HDF routines
 		// resonances
-		int Get_resonance_from_HDF_array(int local_pid, int iqt, int iqz, double * resonance_array_to_fill);
-		int Set_resonance_in_HDF_array(int local_pid, int iqt, int iqz, double * resonance_array_to_use);
-		int Initialize_resonance_HDF_array();
-		int Open_resonance_HDF_array(string resonance_local_file_name);
-		int Close_resonance_HDF_array();
-		// Bessel coefficients
-		int Get_besselcoeffs_from_HDF_array(int iqt, int iqz, int ipY, double * besselcoeffs_array_to_fill);
-		int Set_besselcoeffs_in_HDF_array( int iqt, int iqz, int ipY, double * besselcoeffs_array_to_use);
-		int Initialize_besselcoeffs_HDF_array();
-		int Open_besselcoeffs_HDF_array();
-		int Close_besselcoeffs_HDF_array();
-		// target thermal moments...
+		int Access_resonance_from_HDF_array(int local_pid, int iqt, int iqz, int access_mode, double * resonance_array_to_fill);
+		int Administrate_resonance_HDF_array(int administration_mode);
 		int Copy_chunk(int current_resonance_index, int reso_idx_to_be_copied);
-		int Dump_resonance_HDF_array_spectra(string output_filename, double * resonance_array_to_use);
-		void Unzip_HDF5_arrays();
-		int Initialize_target_thermal_HDF_array();
-		int Open_target_thermal_HDF_array();
-		int Close_target_thermal_HDF_array();
-		int Get_target_thermal_from_HDF_array(int iqt, int iqz, double * target_thermal_array_to_fill);
-		int Set_target_thermal_in_HDF_array(int iqt, int iqz, double * tta_array_to_use);
+		// Bessel coefficients
+		int Access_besselcoeffs_from_HDF_array(int iqt, int iqz, int ipY, int access_mode, double * besselcoeffs_array_to_fill);
+		int Administrate_besselcoeffs_HDF_array(int administration_mode);
+		// target thermal moments...
+		int Administrate_target_thermal_HDF_array(int administration_mode);
+		int Access_target_thermal_from_HDF_array(int iqt, int iqz, int access_mode, double * target_thermal_array_to_fill);
 
 		void Set_dN_dypTdpTdphi_moments(int local_pid);
-		//void Set_Bessel_function_grids(double beta, double gamma);
 		void Set_all_Bessel_grids();
 		void Set_thermal_target_moments();
 		void Set_full_target_moments();

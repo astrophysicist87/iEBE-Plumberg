@@ -217,12 +217,15 @@ int main(int argc, char *argv[])
 	//decide whether to compute resonances or read them in
 	if ((int)(paraRdr->getVal("calculate_CF_mode")) == 0)
 	{
-		output << "Calculating correlation function with all resonance decays..." << endl;
-		correlation_function.Fourier_transform_emission_function();
-		output << "Made it to the end!" << endl;
+		output << "Calculating correlation function with all resonance decays (looping over qt and qz)..." << endl;
+		//looping in this way keeps *h5 files and total loaded memory of program small at any one time
+		for (int iqt = 0; iqt < (qtnpts + 1)/2; ++iqt)
+		for (int iqz = 0; iqz < qznpts; ++iqz)
+		{
+			correlation_function.Fourier_transform_emission_function(iqt, iqz);
+			correlation_function.Compute_phase_space_integrals(iqt, iqz);
 if (1) exit(8);
-		correlation_function.Compute_phase_space_integrals();
-if (1) exit(8);
+		}
 	}
 
 	//decide whether to compute correlation function or read it in

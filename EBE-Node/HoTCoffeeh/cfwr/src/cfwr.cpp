@@ -24,9 +24,7 @@
 using namespace std;
 
 const std::complex<double> i(0, 1);
-//double * K0_Bessel_re, * K1_Bessel_re, * K0_Bessel_im, * K1_Bessel_im;
-//double * alpha_pts;
-gsl_cheb_series *cs_accel_K0re, *cs_accel_K0im, *cs_accel_K1re, *cs_accel_K1im;
+gsl_cheb_series *cs_accel_expK0re, *cs_accel_expK0im, *cs_accel_expK1re, *cs_accel_expK1im;
 
 // only need to calculated interpolation grid of spacetime moments for each resonance, NOT each decay channel!
 bool recycle_previous_moments = false;
@@ -56,48 +54,6 @@ inline void I(double alpha, double beta, double gamma, complex<double> & I0, com
 	return;
 }
 
-/*inline void Iint(double alpha, double beta, double gamma, double & I0r, double & I1r, double & I2r, double & I3r, double & I0i, double & I1i, double & I2i, double & I3i)
-{
-	complex<double> z0 = alpha - i*beta;
-	complex<double> z0sq = z0*z0;
-	double gsq = gamma*gamma;
-	complex<double> zsq = z0sq + gsq;
-	complex<double> z = sqrt(zsq);
-	complex<double> zcu = zsq*z;
-	complex<double> zqi = zsq*zcu;
-
-	long idx = binarySearch(alpha_pts, n_alpha_points, alpha, true);
-	if (idx<0 || idx>=n_alpha_points-1)
-		idx = (idx<0) ? 0 : n_alpha_points-2;	//uses extrapolation
-
-	double one_by_x2_m_x1 = alpha_pts[idx+1]-alpha_pts[idx];
-	double x_m_x1 = alpha-alpha_pts[idx];
-
-	complex<double> ck0(	lin_int(x_m_x1, one_by_x2_m_x1, K0_Bessel_re[idx], K0_Bessel_re[idx+1]),
-							lin_int(x_m_x1, one_by_x2_m_x1, K0_Bessel_im[idx], K0_Bessel_im[idx+1]) );
-	complex<double> ck1(	lin_int(x_m_x1, one_by_x2_m_x1, K1_Bessel_re[idx], K1_Bessel_re[idx+1]),
-							lin_int(x_m_x1, one_by_x2_m_x1, K1_Bessel_im[idx], K1_Bessel_im[idx+1]) );
-
-	complex<double> I0 = 2.0*ck0;
-	complex<double> I1 = 2.0*z0*ck1 / z;
-	complex<double> I2 = 2.0*z0sq*ck0 / zsq
-			+ 2.0*(z0sq - gsq)*ck1 / zcu;
-	complex<double> I3 = 2.0*z0*( ( z0sq*z0sq - 2.0* z0sq*gsq - 3.0 * gsq*gsq ) * ck0 / z
-						+ (-6.0*gsq + z0sq*(2.0 + z0sq + gsq)) * ck1
-				) / zqi;
-
-	I0r = I0.real();
-	I1r = I1.real();
-	I2r = I2.real();
-	I3r = I3.real();
-	I0i = I0.imag();
-	I1i = I1.imag();
-	I2i = I2.imag();
-	I3i = I3.imag();
-
-	return;
-}*/
-
 inline void Iint2(double alpha, double beta, double gamma, double & I0r, double & I1r, double & I2r, double & I3r, double & I0i, double & I1i, double & I2i, double & I3i)
 {
 	complex<double> z0 = alpha - i*beta;
@@ -109,10 +65,10 @@ inline void Iint2(double alpha, double beta, double gamma, double & I0r, double 
 	complex<double> zqi = zsq*zcu;
 	double ea = exp(-alpha);
 
-	complex<double> ck0(	ea * gsl_cheb_eval (cs_accel_K0re, alpha),
-							ea * gsl_cheb_eval (cs_accel_K0im, alpha) );
-	complex<double> ck1(	ea * gsl_cheb_eval (cs_accel_K1re, alpha),
-							ea * gsl_cheb_eval (cs_accel_K1im, alpha) );
+	complex<double> ck0(	ea * gsl_cheb_eval (cs_accel_expK0re, alpha),
+							ea * gsl_cheb_eval (cs_accel_expK0im, alpha) );
+	complex<double> ck1(	ea * gsl_cheb_eval (cs_accel_expK1re, alpha),
+							ea * gsl_cheb_eval (cs_accel_expK1im, alpha) );
 
 	complex<double> I0 = 2.0*ck0;
 	complex<double> I1 = 2.0*z0*ck1 / z;
@@ -148,23 +104,27 @@ double CorrelationFunction::place_in_range(double phi, double min, double max)
 // ************************************************************
 // Compute correlation function at all specified q points for all resonances here
 // ************************************************************
-void CorrelationFunction::Fourier_transform_emission_function()
+void CorrelationFunction::Fourier_transform_emission_function(int iqt, int iqz)
 {
 	Stopwatch BIGsw;
 	global_plane_psi = 0.0;	//for now
 
 	int decay_channel_loop_cutoff = n_decay_channels;			//loop over direct pions and decay_channels
+	current_iqt = iqt;
+	current_iqz = iqz;
+	double loc_qz = qz_pts[iqz];
+	double loc_qt = qt_pts[iqt];
+	current_pY_shift = - double(abs(loc_qz)>1.e-10) * asinh(loc_qz / sqrt(abs(loc_qt*loc_qt-loc_qz*loc_qz) + 1.e-100));
 
 	///////
-	*global_out_stream_ptr << "Initializing HDF file of resonance spectra..." << endl;
-	int HDFInitializationSuccess = Initialize_resonance_HDF_array();
-	
+	*global_out_stream_ptr << "Initializing HDF files...";
+	{
+		int HDFInitializationSuccess = Administrate_resonance_HDF_array(0);
+		HDFInitializationSuccess = Administrate_target_thermal_HDF_array(0);
+		Set_all_Bessel_grids(iqt, iqz);
+	}
+	*global_out_stream_ptr << "done." << endl << endl;
 	///////
-	*global_out_stream_ptr << "Initializing HDF file of target thermal moments..." << endl;
-	HDFInitializationSuccess = Initialize_target_thermal_HDF_array();
-
-	///////
-	Set_all_Bessel_grids();
 	
 	*global_out_stream_ptr << "Setting spacetime moments grid..." << endl;
 	BIGsw.Start();
@@ -178,51 +138,56 @@ void CorrelationFunction::Fourier_transform_emission_function()
 		else if (!Do_this_decay_channel(idc))
 			continue;
 	
-		// if so, set decay channel info
 		Set_current_particle_info(idc);
 
-		// decide whether to recycle old moments or calculate new moments
-		Get_spacetime_moments(idc);
+		Get_spacetime_moments(idc, iqt, iqz);
 	}
 
 	BIGsw.Stop();
-	*global_out_stream_ptr << "\t ...finished all (thermal) space-time moments in " << BIGsw.printTime() << " seconds." << endl;
-//if (1) exit (8);
+	*global_out_stream_ptr << "\t ...finished all (thermal) space-time moments for loop (iqt = " << iqt << ", iqz = " << iqz << ") in " << BIGsw.printTime() << " seconds." << endl;
 	
+	//only need to calculate spectra, etc. once
 	// Now dump all thermal spectra before continuing with resonance decay calculations
-	Dump_spectra_array("thermal_spectra.dat", thermal_spectra);
-	Dump_spectra_array("full_spectra.dat", spectra);
-
-	//everything currently in resonance*h5 file
-	for (int iqt = 0; iqt < qtnpts; ++iqt)
-	for (int iqz = 0; iqz < qznpts; ++iqz)
+	if ( iqt == 0 && iqz == 0 )
 	{
-		//make sure thermal target moments are saved here
-		Get_resonance_from_HDF_array(target_particle_id, iqt, iqz, thermal_target_dN_dypTdpTdphi_moments);
-		//make sure they are written to separate file here
-		Set_target_thermal_in_HDF_array(iqt, iqz, thermal_target_dN_dypTdpTdphi_moments);
+		Dump_spectra_array("thermal_spectra.dat", thermal_spectra);
+		Dump_spectra_array("full_spectra.dat", spectra);
+		//set logs and signs!
+		for (int ipid = 0; ipid < Nparticle; ++ipid)
+			Set_spectra_logs_and_signs(ipid);
 	}
 
-	//set logs and signs!
-	for (int ipid = 0; ipid < Nparticle; ++ipid)
-		Set_spectra_logs_and_signs(ipid);
+	///////
+	*global_out_stream_ptr << "Cleaning up HDF files...";
+	{
+		//get thermal target moments here
+		Access_resonance_from_HDF_array(target_particle_id, iqt, iqz, 1, thermal_target_dN_dypTdpTdphi_moments);
+		//make sure they are written to separate file here
+		Access_target_thermal_in_HDF_array(iqt, iqz, 0, thermal_target_dN_dypTdpTdphi_moments);
 
-	//save thermal moments (without resonance decay feeddown) separately
-	int closeHDFresonanceSpectra = Close_target_thermal_HDF_array();
+		//save thermal moments (without resonance decay feeddown) separately
+		int closeHDFresonanceSpectra = Administrate_resonance_HDF_array(2);
+		closeHDFresonanceSpectra = Administrate_target_thermal_HDF_array(2);
+	}
+	*global_out_stream_ptr << "done." << endl << endl;
+	///////
 
    return;
 }
 
-void CorrelationFunction::Compute_phase_space_integrals()
+void CorrelationFunction::Compute_phase_space_integrals(int iqt, int iqz)
 {
 	if (thermal_pions_only)
 	{
-		*global_out_stream_ptr << "No phase-space integrals need to be computed." << endl;
+		*global_out_stream_ptr << "Thermal pions only: no phase-space integrals need to be computed." << endl;
 		return;
 	}
 
 	Stopwatch BIGsw;
 	int decay_channel_loop_cutoff = n_decay_channels;			//loop over direct pions and decay_channels
+
+	//set needed q-points
+	Set_qlist(iqt, iqz);
 
 	*global_out_stream_ptr << "Computing all phase-space integrals..." << endl;
 	BIGsw.Start();
@@ -250,31 +215,28 @@ void CorrelationFunction::Compute_phase_space_integrals()
 		// begin resonance decay calculations here...
 		// ************************************************************
 
-		for (int iqt = 0; iqt < (qtnpts / 2) + 1; ++iqt) //assumes central qt-point is zero
-		//for (int iqt = 0; iqt < qtnpts; ++iqt) //assumes central qt-point is zero
-		for (int iqz = 0; iqz < qznpts; ++iqz)
+		Load_resonance_and_daughter_spectra(decay_channels[idc-1].resonance_particle_id, iqt, iqz);
+
+		for (int idc_DI = 0; idc_DI < current_reso_nbody; ++idc_DI)
 		{
-			Set_qlist(iqt, iqz);
-			Load_resonance_and_daughter_spectra(decay_channels[idc-1].resonance_particle_id, iqt, iqz);
+			int daughter_resonance_particle_id = -1;
+			if (!Do_this_daughter_particle(idc, idc_DI, &daughter_resonance_particle_id))
+				continue;
 
-			for (int idc_DI = 0; idc_DI < current_reso_nbody; ++idc_DI)
-			{
-				int daughter_resonance_particle_id = -1;
-				if (!Do_this_daughter_particle(idc, idc_DI, &daughter_resonance_particle_id))
-					continue;
+			Set_current_daughter_info(idc, idc_DI);
 
-				Set_current_daughter_info(idc, idc_DI);
-
-				Do_resonance_integrals(current_resonance_particle_id, daughter_resonance_particle_id, idc);
-			}
-			Update_daughter_spectra(decay_channels[idc-1].resonance_particle_id, iqt, iqz);
+			Do_resonance_integrals(current_resonance_particle_id, daughter_resonance_particle_id, idc);
 		}
+		Update_daughter_spectra(decay_channels[idc-1].resonance_particle_id, iqt, iqz);
+
 		Delete_decay_channel_info();				// free up memory
 	}											// END of decay channel loop
 	BIGsw.Stop();
-	*global_out_stream_ptr << "\t ...finished computing all phase-space integrals in " << BIGsw.printTime() << " seconds." << endl;
+	*global_out_stream_ptr << "\t ...finished computing all phase-space integrals for loop (iqt = "
+							<< iqt << ", iqz = " << iqz << ") in " << BIGsw.printTime() << " seconds." << endl;
 
-	Dump_spectra_array("full_spectra.dat", spectra);
+	if (iqt == 0 && iqz == 0)
+		Dump_spectra_array("full_spectra.dat", spectra);
 
 	return;
 }
@@ -671,7 +633,7 @@ if (HDFcopyChunkSuccess < 0) exit(1);
 void CorrelationFunction::Load_resonance_and_daughter_spectra(int local_pid, int iqt, int iqz)
 {
 	// get parent resonance spectra, set logs and signs arrays that are needed for interpolation
-	int getHDFresonanceSpectra = Get_resonance_from_HDF_array(local_pid, iqt, iqz, current_dN_dypTdpTdphi_moments);
+	int getHDFresonanceSpectra = Access_resonance_from_HDF_array(local_pid, iqt, iqz, 1, current_dN_dypTdpTdphi_moments);
 	Set_current_resonance_logs_and_signs();
 
 	// get spectra for all daughters, set all of the logs and signs arrays that are needed for interpolation
@@ -686,7 +648,7 @@ void CorrelationFunction::Load_resonance_and_daughter_spectra(int local_pid, int
 		for (set<int>::iterator it = daughter_resonance_indices.begin(); it != daughter_resonance_indices.end(); ++it)
 		{
 			int daughter_pid = *it;		//daughter pid is pointed to by iterator
-			getHDFresonanceSpectra = Get_resonance_from_HDF_array(daughter_pid, iqt, iqz, current_daughters_dN_dypTdpTdphi_moments[d_idx]);
+			getHDFresonanceSpectra = Access_resonance_from_HDF_array(daughter_pid, iqt, iqz, 1, current_daughters_dN_dypTdpTdphi_moments[d_idx]);
 			++d_idx;
 		}
 	
@@ -707,7 +669,7 @@ void CorrelationFunction::Update_daughter_spectra(int local_pid, int iqt, int iq
 	for (set<int>::iterator it = daughter_resonance_indices.begin(); it != daughter_resonance_indices.end(); ++it)
 	{
 		int daughter_pid = *it;		//daughter pid is pointed to by iterator
-		int setHDFresonanceSpectra = Set_resonance_in_HDF_array(daughter_pid, iqt, iqz, current_daughters_dN_dypTdpTdphi_moments[d_idx]);
+		int setHDFresonanceSpectra = Access_resonance_in_HDF_array(daughter_pid, iqt, iqz, 0, current_daughters_dN_dypTdpTdphi_moments[d_idx]);
 
 		++d_idx;
 	}
@@ -767,7 +729,7 @@ void CorrelationFunction::Set_current_daughters_resonance_logs_and_signs(int n_d
 //**************************************************************
 //**************************************************************
 
-void CorrelationFunction::Get_spacetime_moments(int dc_idx)
+void CorrelationFunction::Get_spacetime_moments(int dc_idx, int iqt, int iqz)
 {
 //**************************************************************
 //Set resonance name
@@ -820,7 +782,7 @@ void CorrelationFunction::Get_spacetime_moments(int dc_idx)
 		else
 		{
 			*global_out_stream_ptr << "  --> ACTUALLY DOING WEIGHTED THERMAL SPECTRA FOR " << local_name << endl;
-			Set_dN_dypTdpTdphi_moments(current_resonance_particle_id);
+			Set_dN_dypTdpTdphi_moments(current_resonance_particle_id, iqt, iqz);
 		}
 	}
 //**************************************************************
@@ -829,7 +791,7 @@ void CorrelationFunction::Get_spacetime_moments(int dc_idx)
 	return;
 }
 
-void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid)
+void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int iqz)
 {
 	double localmass = all_particles[local_pid].mass;
 	string local_name = "Thermal pion(+)";
@@ -839,49 +801,53 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid)
 	// get spectra at each fluid cell, sort by importance
 	Stopwatch sw, sw_qtqzpY;
 	sw.Start();
-	*global_out_stream_ptr << "Computing un-weighted thermal spectra..." << endl;
-	Cal_dN_dypTdpTdphi_heap(local_pid);
+	if (iqt == 0 && iqz == 0)
+	{
+		*global_out_stream_ptr << "Computing un-weighted thermal spectra..." << endl;
+		Cal_dN_dypTdpTdphi_no_weights(local_pid);
+	}
 
 	// get weighted spectra with only most important fluid cells, up to given threshhold
 	*global_out_stream_ptr << "Computing weighted thermal spectra..." << endl;
 
 	//prepare for reading...
-	int HDFcode = Open_besselcoeffs_HDF_array();
+	int HDFcode = Administrate_besselcoeffs_HDF_array(1);	//open
 	double * BC_chunk = new double [4 * FO_length * (n_alpha_points + 1)];
-	cs_accel_K0re = gsl_cheb_alloc (n_alpha_points);
-	cs_accel_K0im = gsl_cheb_alloc (n_alpha_points);
-	cs_accel_K1re = gsl_cheb_alloc (n_alpha_points);
-	cs_accel_K1im = gsl_cheb_alloc (n_alpha_points);
+	cs_accel_expK0re = gsl_cheb_alloc (n_alpha_points);
+	cs_accel_expK0im = gsl_cheb_alloc (n_alpha_points);
+	cs_accel_expK1re = gsl_cheb_alloc (n_alpha_points);
+	cs_accel_expK1im = gsl_cheb_alloc (n_alpha_points);
 
 	///////////////////////////////////
-	// Loop over qt, qz, and pY points
+	// Loop over pY points
 	///////////////////////////////////
-	for (int iqt = 0; iqt < (qtnpts / 2) + 1; ++iqt)	//assumes central qt point is zero
-	for (int iqz = 0; iqz < qznpts; ++iqz)
+	//if (iqz > 0) exit(8);
+	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 	{
-		//if (iqz > 0) exit(8);
-		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
-		{
-			sw_qtqzpY.Reset();
-			sw_qtqzpY.Start();
-			//load appropriate Bessel coefficients
-			HDFcode = Get_besselcoeffs_from_HDF_array(iqt, iqz, ipY, BC_chunk);
-			//do the calculations
-			Cal_dN_dypTdpTdphi_with_weights(local_pid, ipY, iqt, iqz, BC_chunk);
-			sw_qtqzpY.Stop();
-			*global_out_stream_ptr << "Finished loop with ( iqt, iqz, ipY ) = ( " << iqt << ", " << iqz << ", " << ipY << " ) in " << sw_qtqzpY.printTime() << " seconds." << endl;
-		}
+		sw_qtqzpY.Reset();
+		sw_qtqzpY.Start();
+		ch_SP_pY[ipY] = cosh(SP_Del_pY[ipY] + current_pY_shift);
+		sh_SP_pY[ipY] = sinh(SP_Del_pY[ipY] + current_pY_shift);
 
+		//load appropriate Bessel coefficients
+		HDFcode = Access_besselcoeffs_from_HDF_array(iqt, iqz, ipY, 1, BC_chunk);
+		//do the calculations
+		Cal_dN_dypTdpTdphi_with_weights(local_pid, ipY, iqt, iqz, BC_chunk);
+		sw_qtqzpY.Stop();
+		if (VERBOSE > 1) *global_out_stream_ptr << "Finished loop with ( iqt, iqz, ipY ) = ( " << iqt << ", " << iqz << ", " << ipY << " ) in " << sw_qtqzpY.printTime() << " seconds." << endl;
+	}
+
+	{
 		// store in HDF5 file
-		int setHDFresonanceSpectra = Set_resonance_in_HDF_array(local_pid, iqt, iqz, current_dN_dypTdpTdphi_moments);
+		int setHDFresonanceSpectra = Access_resonance_in_HDF_array(local_pid, iqt, iqz, 0, current_dN_dypTdpTdphi_moments);
 		if (setHDFresonanceSpectra < 0)
 		{
 			cerr << "Failed to set this resonance in HDF array!  Exiting..." << endl;
 			exit(1);
 		}
-	}
 
-	HDFcode = Close_besselcoeffs_HDF_array();
+		HDFcode = Administrate_besselcoeffs_HDF_array(2);
+	}
 
 	sw.Stop();
 	*global_out_stream_ptr << "Took " << sw.printTime() << " seconds to set dN/dypTdpTdphi moments." << endl;
@@ -891,7 +857,7 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid)
 	return;
 }
 
-void CorrelationFunction::Cal_dN_dypTdpTdphi_heap(int local_pid)
+void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights(int local_pid)
 {
 	// set particle information
 	double sign = all_particles[local_pid].sign;
@@ -1038,37 +1004,30 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 		deltaf_prefactor = 1./(2.0*Tdec*Tdec*(Edec+Pdec));
 
 	double alpha_min = 4.0, alpha_max = 75.0;
-	//double * dummy = new double [n_alpha_points];
-	//alpha_pts = new double [n_alpha_points];
-	//gauss_quadrature(n_alpha_points, 1, 0.0, 0.0, alpha_min, alpha_max, alpha_pts, dummy);
-	//gauss_quadrature(n_alpha_points, 5, 0.0, 0.0, 3.85, 0.6, alpha_pts, dummy);		//n_alpha_points = 15
 
-	double * K0_Bessel_re = new double [n_alpha_points+1];
-	double * K0_Bessel_im = new double [n_alpha_points+1];
-	double * K1_Bessel_re = new double [n_alpha_points+1];
-	double * K1_Bessel_im = new double [n_alpha_points+1];
-	//cs_accel_K0re = gsl_cheb_alloc (n_alpha_points);
-	cs_accel_K0re->a = alpha_min;
-	cs_accel_K0re->b = alpha_max;
-	//cs_accel_K0im = gsl_cheb_alloc (n_alpha_points);
-	cs_accel_K0im->a = alpha_min;
-	cs_accel_K0im->b = alpha_max;
-	//cs_accel_K1re = gsl_cheb_alloc (n_alpha_points);
-	cs_accel_K1re->a = alpha_min;
-	cs_accel_K1re->b = alpha_max;
-	//cs_accel_K1im = gsl_cheb_alloc (n_alpha_points);
-	cs_accel_K1im->a = alpha_min;
-	cs_accel_K1im->b = alpha_max;
-	/*double K0_Bessel_re[n_alpha_points+1];
-	double K0_Bessel_im[n_alpha_points+1];
-	double K1_Bessel_re[n_alpha_points+1];
-	double K1_Bessel_im[n_alpha_points+1];*/
+	double * expK0_Bessel_re = new double [n_alpha_points+1];
+	double * expK0_Bessel_im = new double [n_alpha_points+1];
+	double * expK1_Bessel_re = new double [n_alpha_points+1];
+	double * expK1_Bessel_im = new double [n_alpha_points+1];
+	//cs_accel_expK0re = gsl_cheb_alloc (n_alpha_points);
+	cs_accel_expK0re->a = alpha_min;
+	cs_accel_expK0re->b = alpha_max;
+	//cs_accel_expK0im = gsl_cheb_alloc (n_alpha_points);
+	cs_accel_expK0im->a = alpha_min;
+	cs_accel_expK0im->b = alpha_max;
+	//cs_accel_expK1re = gsl_cheb_alloc (n_alpha_points);
+	cs_accel_expK1re->a = alpha_min;
+	cs_accel_expK1re->b = alpha_max;
+	//cs_accel_expK1im = gsl_cheb_alloc (n_alpha_points);
+	cs_accel_expK1im->a = alpha_min;
+	cs_accel_expK1im->b = alpha_max;
+
 	for (int ia = 0; ia < n_alpha_points+1; ++ia)
 	{
-		K0_Bessel_re[ia] = 0.0;
-		K0_Bessel_im[ia] = 0.0;
-		K1_Bessel_re[ia] = 0.0;
-		K1_Bessel_im[ia] = 0.0;
+		expK0_Bessel_re[ia] = 0.0;
+		expK0_Bessel_im[ia] = 0.0;
+		expK1_Bessel_re[ia] = 0.0;
+		expK1_Bessel_im[ia] = 0.0;
 	}
 
 	double I0_a_b_g_re, I1_a_b_g_re, I2_a_b_g_re, I3_a_b_g_re;
@@ -1078,15 +1037,6 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 
 	double C = deltaf_prefactor;
 
-	//////////
-	//TESTING
-	//////////
-	double long_array_C[n_pT_pts * n_pphi_pts * qxnpts * qynpts], long_array_S[n_pT_pts * n_pphi_pts * qxnpts * qynpts];
-	for (int isa = 0; isa < n_pT_pts * n_pphi_pts * qxnpts * qynpts; ++isa)
-	{
-		long_array_C[isa] = 0.0;
-		long_array_S[isa] = 0.0;
-	}
 	double ** alt_long_array_C = new double * [qxnpts * qynpts];
 	double ** alt_long_array_S = new double * [qxnpts * qynpts];
 	for (int isa = 0; isa < qxnpts * qynpts; ++isa)
@@ -1099,8 +1049,6 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 			alt_long_array_S[isa][isa2] = 0.0;
 		}
 	}
-	//////////
-	//////////
 
 	/////////////////////////////////////////////////////////////
 	// Loop over all freeze-out surface fluid cells (for now)
@@ -1135,24 +1083,21 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 		double beta = tau * hbarCm1 * ( qt*ch_pY - qz*sh_pY );
 		double gamma = tau * hbarCm1 * ( qz*ch_pY - qt*sh_pY );
 
-		//Set_Bessel_function_grids(beta, gamma);
+		// Load Bessel Chebyshev coefficients
 		for (int ia = 0; ia < n_alpha_points+1; ++ia)
-			K0_Bessel_re[ia] = BC_chunk[iBC++];
+			expK0_Bessel_re[ia] = BC_chunk[iBC++];
 		for (int ia = 0; ia < n_alpha_points+1; ++ia)
-			K0_Bessel_im[ia] = BC_chunk[iBC++];
+			expK0_Bessel_im[ia] = BC_chunk[iBC++];
 		for (int ia = 0; ia < n_alpha_points+1; ++ia)
-			K1_Bessel_re[ia] = BC_chunk[iBC++];
+			expK1_Bessel_re[ia] = BC_chunk[iBC++];
 		for (int ia = 0; ia < n_alpha_points+1; ++ia)
-			K1_Bessel_im[ia] = BC_chunk[iBC++];
+			expK1_Bessel_im[ia] = BC_chunk[iBC++];
 
-		cs_accel_K0re->c = K0_Bessel_re;
-		cs_accel_K0im->c = K0_Bessel_im;
-		cs_accel_K1re->c = K1_Bessel_re;
-		cs_accel_K1im->c = K1_Bessel_im;
+		cs_accel_expK0re->c = expK0_Bessel_re;
+		cs_accel_expK0im->c = expK0_Bessel_im;
+		cs_accel_expK1re->c = expK1_Bessel_re;
+		cs_accel_expK1im->c = expK1_Bessel_im;
 
-		//////////
-		//TESTING
-		//////////
 		double * tmpX = oscx[isurf];
 		double * tmpY = oscy[isurf];
 		double short_array_C[n_pT_pts * n_pphi_pts], short_array_S[n_pT_pts * n_pphi_pts];
@@ -1161,12 +1106,10 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 			short_array_C[isa] = 0.0;
 			short_array_S[isa] = 0.0;
 		}
-		//////////
-		//////////
 
-		////////////////////////////////
-		// Loop over pT and pphi points
-		////////////////////////////////
+		/////////////////////////////////////////////////////
+		// Loop over pT and pphi points (as fast as possible)
+		/////////////////////////////////////////////////////
 		int iidx = 0;
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		{
@@ -1209,6 +1152,9 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 			}
 		}
 
+		////////////////////////////////////////
+		// Loop over qx, qy, pT, and pphi points
+		////////////////////////////////////////
 		long idx = 0;
 		const long iidx_end = (long)n_pT_pts * (long)n_pphi_pts;
 		for (int iqx = 0; iqx < qxnpts; ++iqx)
@@ -1233,47 +1179,35 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 		}
 	}
 
-	//////////
-	//TESTING
-	//////////
 	int idx = 0;
 	for (int iqx = 0; iqx < qxnpts; ++iqx)
 	for (int iqy = 0; iqy < qynpts; ++iqy)
 	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 	{
-		//current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,0)] = long_array_C[idx];
-		//current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,1)] = long_array_S[idx++];
 		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,0)] = alt_long_array_C[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
 		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,1)] = alt_long_array_S[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
 	}
 	//////////
 	//////////
 
-	//////////////////////////////////////////////////
-	// Use symmetry in q-space to get spectra for all
-	// positive qt points from negative qt points
-	//////////////////////////////////////////////////
-	/*for (int ipT = 0; ipT < n_pT_pts; ++ipT)
-	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-	for (int iqx = 0; iqx < qxnpts; ++iqx)
-	for (int iqy = 0; iqy < qynpts; ++iqy)
-	for (int itrig = 0; itrig < ntrig; ++itrig)
-		current_dN_dypTdpTdphi_moments[indexer(ipT, ipphi, ipY, qxnpts - iqx - 1, qynpts - iqy - 1, itrig)]
-			= (1.0 - 2.0 * itrig)
-				* current_dN_dypTdpTdphi_moments[indexer(ipT, ipphi, ipY, iqx, iqy, itrig)];*/
+	delete [] expK0_Bessel_re;
+	delete [] expK0_Bessel_im;
+	delete [] expK1_Bessel_re;
+	delete [] expK1_Bessel_im;
 
-	/*delete [] dummy;
-	delete [] alpha_pts;*/
-	delete [] K0_Bessel_re;
-	delete [] K0_Bessel_im;
-	delete [] K1_Bessel_re;
-	delete [] K1_Bessel_im;
+	for (int isa = 0; isa < qxnpts * qynpts; ++isa)
+	{
+		delete [] alt_long_array_C[isa];
+		delete [] alt_long_array_S[isa];
+	}
+	delete [] alt_long_array_C;
+	delete [] alt_long_array_S;
 
-	//gsl_cheb_free (cs_accel_K0re);
-	//gsl_cheb_free (cs_accel_K0im);
-	//gsl_cheb_free (cs_accel_K1re);
-	//gsl_cheb_free (cs_accel_K1im);
+	//gsl_cheb_free (cs_accel_expK0re);
+	//gsl_cheb_free (cs_accel_expK0im);
+	//gsl_cheb_free (cs_accel_expK1re);
+	//gsl_cheb_free (cs_accel_expK1im);
 	
 	sw.Stop();
 	*global_out_stream_ptr << "Total function call took " << sw.printTime() << " seconds." << endl;

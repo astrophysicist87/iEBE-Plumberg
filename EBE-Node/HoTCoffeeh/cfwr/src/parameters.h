@@ -44,11 +44,6 @@ const int Maxparticle=400;            //size of array for storage of the particl
 const int Maxdecaychannel=13;
 const int Maxdecaypart=5;
 
-// Spatial rapidity information
-const int eta_s_npts = 15;
-const double eta_s_i = 0.0;
-const double eta_s_f = 4.0;
-
 // Relative momentum information
 const double delta_qt = 0.00625;
 const double delta_qx = 0.0125;
@@ -59,10 +54,10 @@ const int new_nqpts = 51;	//for fleshing out
 // Single particle spectra info
 const double SP_pT_min = 0.0;
 const double SP_pphi_min = 0.0;
-const double SP_pY_min = -6.0;
+const double SP_pY_min = 0.0;
 const double SP_pT_max = 4.0;
 const double SP_pphi_max = 2.0*M_PI;
-const double SP_pY_max = 6.0;
+const double SP_pY_max = 4.0;
 
 // Pair momentum info
 const double Kphi_min = 0.0;

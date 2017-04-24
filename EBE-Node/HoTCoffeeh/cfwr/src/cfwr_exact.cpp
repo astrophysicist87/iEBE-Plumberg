@@ -25,9 +25,9 @@ const std::complex<double> i(0, 1);
 void CorrelationFunction::Cal_dN_dypTdpTdphi_with_rapdep_thermal(int local_pid)
 {
 	n_pY_pts = 101;
-	SP_pY = new double [n_pY_pts];
-	SP_pY_wts = new double [n_pY_pts];
-	gauss_quadrature(n_pY_pts, 1, 0.0, 0.0, -4.0, 4.0, SP_pY, SP_pY_wts);
+	SP_Del_pY = new double [n_pY_pts];
+	double * dummy = new double [n_pY_pts];
+	gauss_quadrature(n_pY_pts, 1, 0.0, 0.0, -4.0, 4.0, SP_Del_pY, dummy);
 
 	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
@@ -42,19 +42,19 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_rapdep_thermal(int local_pid)
 				//if ( (iqt != (qtnpts-1)/2) || (iqx != (qxnpts-1)/2) || (iqy != (qynpts-1)/2) || (iqz != (qznpts-1)/2 ) )
 				//	continue;
 
-				Cal_dN_dypTdpTdphi_with_weights_function_approx(local_pid, SP_pT[ipt], SP_pphi[ipphi], SP_pY,
+				Cal_dN_dypTdpTdphi_with_weights_function_approx(local_pid, SP_pT[ipt], SP_pphi[ipphi], SP_Del_pY,
 																qt_pts[iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[iqz], cos_vs_pY, sin_vs_pY);
 
 				for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 				{
 					//if (ipY != 1) continue;
 					double tmp_cos = 0.0, tmp_sin = 0.0, tmp_cos_BA = 0.0, tmp_sin_BA = 0.0;
-					Cal_dN_dypTdpTdphi_with_weights_function(local_pid, SP_pT[ipt], SP_pphi[ipphi], SP_pY[ipY],
+					Cal_dN_dypTdpTdphi_with_weights_function(local_pid, SP_pT[ipt], SP_pphi[ipphi], SP_Del_pY[ipY],
 																qt_pts[iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[iqz], &tmp_cos, &tmp_sin);
-					Cal_dN_dypTdpTdphi_with_weights_function_BoltzmannApproximation(local_pid, SP_pT[ipt], SP_pphi[ipphi], SP_pY[ipY],
+					Cal_dN_dypTdpTdphi_with_weights_function_BoltzmannApproximation(local_pid, SP_pT[ipt], SP_pphi[ipphi], SP_Del_pY[ipY],
 																qt_pts[iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[iqz], &tmp_cos_BA, &tmp_sin_BA);
 					printf("FT THERMAL RHOS: %15.8le  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le\n",
-							SP_pT[ipt], SP_pphi[ipphi], SP_pY[ipY], qt_pts[iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[iqz],
+							SP_pT[ipt], SP_pphi[ipphi], SP_Del_pY[ipY], qt_pts[iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[iqz],
 							tmp_cos, tmp_sin, tmp_cos_BA, tmp_sin_BA, cos_vs_pY[ipY], sin_vs_pY[ipY]);
 				}
 		}
@@ -316,7 +316,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_function_approx(int lo
 
 		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 		{
-			double local_pY = SP_pY[ipY];
+			double local_pY = SP_Del_pY[ipY];
 			double ch_pY = cosh(local_pY);
 			double sh_pY = sinh(local_pY);
 			double beta = (tau / hbarC) * ( qt*ch_pY - qz*sh_pY );

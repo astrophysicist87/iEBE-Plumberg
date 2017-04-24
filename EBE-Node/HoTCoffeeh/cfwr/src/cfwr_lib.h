@@ -46,13 +46,6 @@ inline int CorrelationFunction::HDF_indexer(const int ir, const int iqt, const i
 	);
 }
 
-inline int CorrelationFunction::BC_indexer(const int iqt, const int iqz, const int ipY)
-{
-	return (
-		( iqt * qznpts + iqz ) * n_pY_pts + ipY
-	);
-}
-
 inline int CorrelationFunction::mom_indexer(const int ipT, const int ipphi, const int ipY)
 {
 	return (
