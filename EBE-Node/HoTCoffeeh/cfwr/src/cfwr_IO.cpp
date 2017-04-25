@@ -444,7 +444,7 @@ void CorrelationFunction::Output_total_eiqx_dN_dypTdpTdphi(int local_pid)
 	filename_stream_dN_dypTdpTdphi << path << "/total_" << local_name << "_eiqx_dN_dypTdpTdphi_" << no_df_stem << ".dat";
 	ofstream output_dN_dypTdpTdphi(filename_stream_dN_dypTdpTdphi.str().c_str());
 
-	int HDFOpenSuccess = Open_resonance_HDF_array("resonance_spectra.h5");
+	int HDFOpenSuccess = Administrate_resonance_HDF_array(0);	// 0 - open
 	if (1)
 	{
 		cerr << "Need to fix things at this point!" << endl;
@@ -452,7 +452,7 @@ void CorrelationFunction::Output_total_eiqx_dN_dypTdpTdphi(int local_pid)
 		exit (1);
 		//int HDFloadTargetSuccess = Get_resonance_from_HDF_array(local_pid, (n_pY_pts - 1)/2, current_dN_dypTdpTdphi_moments);	//again, just pions at Y=0 for now
 	}
-	int HDFCloseSuccess = Close_resonance_HDF_array();
+	int HDFCloseSuccess = Administrate_resonance_HDF_array(2);	// 2 - close
 
 	// addresses NaN issue in sin component when all q^{\mu} == 0
 	if (qtnpts%2==1 && qxnpts%2==1 && qynpts%2==1 && qznpts%2==1)

@@ -15,7 +15,10 @@
 
 using namespace std;
 
+const int n_refinement_pts = 101;
+double Delta_DpY;
 const double PTCHANGE = 1.0;
+gsl_cheb_series *cs_accel_expEdNd3p;
 
 int local_verbose = 0;
 
@@ -63,11 +66,12 @@ double CorrelationFunction::g(double s)
 
 void CorrelationFunction::Tabulate_resonance_Chebyshev_coefficients(int parent_resonance_particle_id)
 {
+	cs_accel_expEdNd3p = gsl_cheb_alloc (n_pY_pts - 1);
 	cs_accel_expEdNd3p->a = SP_Del_pY_min;
 	cs_accel_expEdNd3p->b = SP_Del_pY_max;
 
 	long cfs_array_length = n_pT_pts * n_pphi_pts * qxnpts * qynpts * ntrig;
-	chebyshev_a_cfs = new double [cfs_array_length];
+	chebyshev_a_cfs = new double * [cfs_array_length];
 	for (int icf = 0; icf < cfs_array_length; ++icf)
 		chebyshev_a_cfs[icf] = new double [n_pY_pts];
 
@@ -82,7 +86,7 @@ void CorrelationFunction::Tabulate_resonance_Chebyshev_coefficients(int parent_r
 		{
 			chebyshev_a_cfs[idx][ipY] = 0.0;
 			for (int kpY = 0; kpY < n_pY_pts; ++kpY)
-				chebyshev_a_cfs[idx][ipY] += exp(abs(SP_Del_pY_pts[kpY])) * chebTcfs[ipY * n_pY_pts + kpY] 
+				chebyshev_a_cfs[idx][ipY] += exp(abs(SP_Del_pY[kpY])) * chebTcfs[ipY * n_pY_pts + kpY] 
 												* current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)];
 		}
 		++idx;
@@ -91,14 +95,33 @@ void CorrelationFunction::Tabulate_resonance_Chebyshev_coefficients(int parent_r
 	return;
 }
 
-inline double CorrelationFunction::Get_EdNd3p_moment(int idx, double pY)
+void CorrelationFunction::Refine_resonance_grids(int parent_resonance_particle_id)
 {
-	double abs_pY = abs(pY);
-	cs_accel_expEdNd3p->c = chebyshev_a_cfs[idx];
-	return (exp(-abs_pY) * gsl_cheb_eval (cs_accel_expEdNd3p, abs_pY));
+	Delta_DpY = (SP_Del_pY_max - SP_Del_pY_min) / (double)(n_refinement_pts - 1);
+
+	long cfs_array_length = n_pT_pts * n_pphi_pts * qxnpts * qynpts * ntrig * n_refinement_pts;
+	refined_resonance_grids = new double [cfs_array_length];
+
+	int idx = 0;
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+	for (int iqx = 0; iqx < qxnpts; ++iqx)
+	for (int iqy = 0; iqy < qynpts; ++iqy)
+	for (int itrig = 0; itrig < ntrig; ++itrig)
+	{
+		cs_accel_expEdNd3p->c = chebyshev_a_cfs[idx];
+		for (int iii = 0; iii < n_refinement_pts; ++iii)
+		{
+			double tmp_pY = SP_Del_pY_min + (double)iii * Delta_DpY;
+			refined_resonance_grids[idx*n_refinement_pts+iii] = exp(-tmp_pY) * gsl_cheb_eval (cs_accel_expEdNd3p, tmp_pY);
+		}
+		++idx;
+	}
+
+	return;
 }
 
-void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_id, int daughter_particle_id, int decay_channel)
+void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_id, int daughter_particle_id, int decay_channel, int iqt, int iqz)
 {
 	time_t rawtime;
   	struct tm * timeinfo;
@@ -113,6 +136,7 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 	spec_sign_info = sign_spectra[parent_resonance_particle_id];
 
 	Tabulate_resonance_Chebyshev_coefficients(parent_resonance_particle_id);
+	Refine_resonance_grids(parent_resonance_particle_id);
 
 	int tmp_parent_monval = all_particles[parent_resonance_particle_id].monval;
 	int tmp_daughter_monval = all_particles[daughter_particle_id].monval;
@@ -170,7 +194,7 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 							Edndp3(PKT, PKphi, &Csum);
 						//space-time moments
 						if (!IGNORE_LONG_LIVED_RESONANCES || Gamma >= hbarC / max_lifetime)
-							eiqxEdndp3(PKT, PKphi, PKY, Csum_vec, local_verbose);
+							eiqxEdndp3(PKT, PKphi, abs(PKY), Csum_vec, local_verbose);
 					}												// end of tempidx sum
 					for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
 						zetasum_vec[qpt_cs_idx] += VEC_n2_zeta_factor[NB2_indexer(iv,izeta)]*Csum_vec[qpt_cs_idx];
@@ -244,7 +268,7 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 								Edndp3(PKT, PKphi, &Csum);
 							//space-time moments
 							if (!IGNORE_LONG_LIVED_RESONANCES || Gamma >= hbarC / max_lifetime)
-								eiqxEdndp3(PKT, PKphi, PKY, Csum_vec, local_verbose);
+								eiqxEdndp3(PKT, PKphi, abs(PKY), Csum_vec, local_verbose);
 						}										// end of tempidx sum
 						for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
 							zetasum_vec[qpt_cs_idx] += VEC_n3_zeta_factor[NB3_indexer(is,iv,izeta)]*Csum_vec[qpt_cs_idx];
@@ -276,6 +300,13 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 	}										// end of nbody == 3
 
 	// clean up
+
+	long cfs_array_length = n_pT_pts * n_pphi_pts * qxnpts * qynpts * ntrig;
+	for (int icf = 0; icf < cfs_array_length; ++icf)
+		delete [] chebyshev_a_cfs[icf];
+	delete [] chebyshev_a_cfs;
+	delete [] refined_resonance_grids;
+
 	Delete_resonance_running_sum_vectors();
 
 	return;
@@ -390,11 +421,12 @@ void CorrelationFunction::Edndp3(double ptr, double pphir, double * result, int 
 ///////////////////////////////////////////////////////
 void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double * results, int loc_verb /*==0*/)
 {
-	double phi0, phi1;
+	double phi0, phi1, py0, py1;
 	double f1, f2;
 
 	int npphi_max = n_pphi_pts - 1;
 	int npT_max = n_pT_pts - 1;
+	int npY_max = n_pY_pts - 1;
 
 	// locate pT interval
 	int npt = 1;
@@ -428,22 +460,62 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 		phi1 = SP_pphi[nphi];
 	}
 
+	// locate py interval
+	long npy = 1, npym1 = 0;
+	/*if(pyr < SP_Del_pY[0])			//if rapidity is less than minimum rapidity grid point
+	{
+		py0 = SP_Del_pY[0];
+		py1 = SP_Del_pY[1];
+		npy = 1;
+		npym1 = 0;
+	}
+	else if(pyr > SP_Del_pY[npY_max])	//if rapidity is greater than maximum rapidity grid point
+	{
+		py0 = SP_Del_pY[npY_max];
+		py1 = SP_Del_pY[npY_max];
+		npy = npY_max;	//this just guarantees nearest neighbor if pY > pY_max
+		npym1 = npY_max;
+	}
+	else						//if rapidity is within grid range
+	{
+		while ((pyr > SP_Del_pY[npy]) &&
+				(npy < npY_max)) ++npy;
+		npym1 = npy - 1;
+		py0 = SP_Del_pY[npym1];
+		py1 = SP_Del_pY[npy];
+	}*/
+	if(pyr > SP_Del_pY_max)	//if rapidity is greater than maximum rapidity grid point
+	{
+		py0 = SP_Del_pY_max;
+		py1 = SP_Del_pY_max;
+		npy = n_refinement_pts - 1;	//this just guarantees nearest neighbor if pY > pY_max
+		npym1 = n_refinement_pts - 1;
+	}
+	else						//if rapidity is within grid range
+	{
+		//while ((pyr > SP_Del_pY[npy]) &&
+		//		(npy < npY_max)) ++npy;
+		long npym1 = floor((pyr-SP_Del_pY_min)/Delta_DpY);
+		long npy = npym1 + 1;
+		py0 = SP_Del_pY_min + (double)npym1 * Delta_DpY;
+		py1 = SP_Del_pY_min + (double)npy * Delta_DpY;
+	}
+
 	if (pT0==pT1 || phi0==phi1)
 	{
 		cerr << "ERROR in eiqxEdndp3(): pT and/or pphi values equal!" << endl;
 		exit(1);
 	}
 
-	double one_by_pTdiff = 1./(pT1 - pT0), one_by_pphidiff = 1./(phi1 - phi0);
-	double del_ptr_pt0 = ptr - pT0, del_phir_phi0 = phir - phi0;
+	double one_by_pTdiff = 1./(pT1 - pT0), one_by_pphidiff = 1./(phi1 - phi0), one_by_pYdiff = 1./(py1 - py0 + 1.e-100);
+	double del_ptr_pt0 = ptr - pT0, del_phir_phi0 = phir - phi0, del_pyr_py0 = pyr - py0;
 
 	// interpolate over pY first, then proceed as usual
 	// set index for looping
 	int qpt_cs_idx = 0;
-	double f11_arr[qxnpts*qynpts*ntrig];
-	double f12_arr[qxnpts*qynpts*ntrig];
-	double f21_arr[qxnpts*qynpts*ntrig];
-	double f22_arr[qxnpts*qynpts*ntrig];
+	double f11_arr[qxnpts*qynpts*ntrig], f12_arr[qxnpts*qynpts*ntrig], f21_arr[qxnpts*qynpts*ntrig], f22_arr[qxnpts*qynpts*ntrig];
+	double log_f11_arr[qxnpts*qynpts*ntrig], log_f12_arr[qxnpts*qynpts*ntrig], log_f21_arr[qxnpts*qynpts*ntrig], log_f22_arr[qxnpts*qynpts*ntrig];
+	double sign_of_f11_arr[qxnpts*qynpts*ntrig], sign_of_f12_arr[qxnpts*qynpts*ntrig], sign_of_f21_arr[qxnpts*qynpts*ntrig], sign_of_f22_arr[qxnpts*qynpts*ntrig];
 
 	// choose pt-pphi slice of resonance info arrays
 	// flatten arrays, since these are quicker to process
@@ -451,10 +523,19 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 	for (int iqy = 0; iqy < qynpts; ++iqy)
 	for (int itrig = 0; itrig < 2; ++itrig)
 	{
-		f11_arr[qpt_cs_idx] = Get_EdNd3p_moment(((npt-1)*n_pphi_pts+nphim1)*qxnpts + qpt_cs_idx, pyr);
+		/*f11_arr[qpt_cs_idx] = Get_EdNd3p_moment(((npt-1)*n_pphi_pts+nphim1)*qxnpts + qpt_cs_idx, pyr);
 		f12_arr[qpt_cs_idx] = Get_EdNd3p_moment(((npt-1)*n_pphi_pts+nphi)*qxnpts + qpt_cs_idx, pyr);
 		f21_arr[qpt_cs_idx] = Get_EdNd3p_moment((npt*n_pphi_pts+nphim1)*qxnpts + qpt_cs_idx, pyr);
-		f22_arr[qpt_cs_idx] = Get_EdNd3p_moment((npt*n_pphi_pts+nphi)*qxnpts + qpt_cs_idx, pyr);
+		f22_arr[qpt_cs_idx] = Get_EdNd3p_moment((npt*n_pphi_pts+nphi)*qxnpts + qpt_cs_idx, pyr);*/
+		//cout << (((npt-1)*n_pphi_pts+nphim1)*qxnpts + qpt_cs_idx)*n_refinement_pts+npym1 << "   " << (((npt-1)*n_pphi_pts+nphim1)*qxnpts + qpt_cs_idx)*n_refinement_pts+npy << endl;
+		f11_arr[qpt_cs_idx] = lin_int( del_pyr_py0, one_by_pYdiff, refined_resonance_grids[(((npt-1)*n_pphi_pts+nphim1)*qxnpts + qpt_cs_idx)*n_refinement_pts+npym1],
+																	refined_resonance_grids[(((npt-1)*n_pphi_pts+nphim1)*qxnpts + qpt_cs_idx)*n_refinement_pts+npy]);
+		f12_arr[qpt_cs_idx] = lin_int( del_pyr_py0, one_by_pYdiff, refined_resonance_grids[(((npt-1)*n_pphi_pts+nphi)*qxnpts + qpt_cs_idx)*n_refinement_pts+npym1],
+																	refined_resonance_grids[(((npt-1)*n_pphi_pts+nphi)*qxnpts + qpt_cs_idx)*n_refinement_pts+npy]);
+		f21_arr[qpt_cs_idx] = lin_int( del_pyr_py0, one_by_pYdiff, refined_resonance_grids[((npt*n_pphi_pts+nphim1)*qxnpts + qpt_cs_idx)*n_refinement_pts+npym1],
+																	refined_resonance_grids[((npt*n_pphi_pts+nphim1)*qxnpts + qpt_cs_idx)*n_refinement_pts+npy]);
+		f22_arr[qpt_cs_idx] = lin_int( del_pyr_py0, one_by_pYdiff, refined_resonance_grids[((npt*n_pphi_pts+nphi)*qxnpts + qpt_cs_idx)*n_refinement_pts+npym1],
+																	refined_resonance_grids[((npt*n_pphi_pts+nphi)*qxnpts + qpt_cs_idx)*n_refinement_pts+npy]);
 
 		log_f11_arr[qpt_cs_idx] = log(abs(f11_arr[qpt_cs_idx]) + 1.e-100);
 		log_f12_arr[qpt_cs_idx] = log(abs(f12_arr[qpt_cs_idx]) + 1.e-100);
@@ -471,7 +552,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 
 
 	// set index for looping
-	int qpt_cs_idx = 0;
+	qpt_cs_idx = 0;
 	int qlist_idx = 0;
 
 	if (ptr > PTCHANGE)                             // if pT interpolation point is larger than PTCHANGE (currently 1.0 GeV)

@@ -42,6 +42,10 @@ int CorrelationFunction::Administrate_resonance_HDF_array(int administration_mod
     {
 		Exception::dontPrint();
 	
+		DSetCreatPropList cparms;
+		hsize_t dimsm[RANK2D] = {1, chunk_size};
+		hsize_t dims[RANK2D] = { (NchosenParticle + 1) * qtnpts * qznpts, chunk_size};
+
 		switch (administration_mode)
 		{
 			case 0:	//Initialization
@@ -50,17 +54,17 @@ int CorrelationFunction::Administrate_resonance_HDF_array(int administration_mod
 
 				resonance_file = new H5::H5File(RESONANCE_FILE_NAME, H5F_ACC_TRUNC);
 
-				DSetCreatPropList cparms;
+				//DSetCreatPropList cparms;
 				hsize_t chunk_dims[RANK2D] = {1, chunk_size};
 				cparms.setChunk( RANK2D, chunk_dims );
 
-				hsize_t dims[RANK2D] = {(NchosenParticle + 1) * qtnpts * qznpts, chunk_size};
+				//hsize_t dims[RANK2D] = {(NchosenParticle + 1) * qtnpts * qznpts, chunk_size};
 				resonance_dataspace = new H5::DataSpace (RANK2D, dims);
 
 				resonance_dataset = new H5::DataSet( resonance_file->createDataSet(RESONANCE_DATASET_NAME, PredType::NATIVE_DOUBLE, *resonance_dataspace, cparms) );
 
 				hsize_t count[RANK2D] = {1, chunk_size};
-				hsize_t dimsm[RANK2D] = {1, chunk_size};
+				//hsize_t dimsm[RANK2D] = {1, chunk_size};
 				hsize_t offset[RANK2D] = {0, 0};
 
 				resonance_memspace = new H5::DataSpace (RANK2D, dimsm, NULL);
@@ -85,9 +89,6 @@ int CorrelationFunction::Administrate_resonance_HDF_array(int administration_mod
 				}
 				break;
 			case 1:
-				hsize_t dimsm[RANK2D] = {1, chunk_size};
-				hsize_t dims[RANK2D] = { (NchosenParticle + 1) * qtnpts * qznpts, chunk_size};
-
 				resonance_dataspace = new H5::DataSpace (RANK2D, dims);
 				resonance_file = new H5::H5File(RESONANCE_FILE_NAME, H5F_ACC_RDWR);
 				resonance_dataset = new H5::DataSet( resonance_file->openDataSet( RESONANCE_DATASET_NAME ) );
@@ -100,6 +101,7 @@ int CorrelationFunction::Administrate_resonance_HDF_array(int administration_mod
 				delete resonance_memspace;
 				delete resonance_file;
 				delete resonance_dataset;
+				break;
 			default:
 				cerr << "administration_mode = " << administration_mode << " not supported!  Exiting..." << endl;
 				exit(1);
@@ -156,6 +158,9 @@ int CorrelationFunction::Administrate_target_thermal_HDF_array(int administratio
     {
 		Exception::dontPrint();
 	
+		DSetCreatPropList cparms;
+		hsize_t dimsm[RANK2D] = {1, chunk_size};
+		hsize_t dims[RANK2D] = {qtnpts * qznpts, chunk_size};
 	
 		switch (administration_mode)
 		{
@@ -164,17 +169,17 @@ int CorrelationFunction::Administrate_target_thermal_HDF_array(int administratio
 				bool file_does_not_already_exist = true;	//force full initialization for timebeing...
 				tta_file = new H5::H5File(TARGET_THERMAL_FILE_NAME, H5F_ACC_TRUNC);
 
-				DSetCreatPropList cparms;
+				//DSetCreatPropList cparms;
 				hsize_t chunk_dims[RANK2D] = {1, chunk_size};
 				cparms.setChunk( 1, chunk_dims );
 
-				hsize_t dims[RANK2D] = {qtnpts * qznpts, chunk_size};
+				//hsize_t dims[RANK2D] = {qtnpts * qznpts, chunk_size};
 				tta_dataspace = new H5::DataSpace (1, dims);
 
 				tta_dataset = new H5::DataSet( tta_file->createDataSet(TARGET_THERMAL_DATASET_NAME, PredType::NATIVE_DOUBLE, *tta_dataspace, cparms) );
 
 				hsize_t count[RANK2D] = {1, chunk_size};
-				hsize_t dimsm[RANK2D] = {1, chunk_size};
+				//hsize_t dimsm[RANK2D] = {1, chunk_size};
 				hsize_t offset[RANK2D] = {0, 0};
 
 				tta_memspace = new H5::DataSpace (1, dimsm, NULL);
@@ -195,9 +200,10 @@ int CorrelationFunction::Administrate_target_thermal_HDF_array(int administratio
 						tta_dataset->write(tta_chunk, PredType::NATIVE_DOUBLE, *tta_memspace, *tta_dataspace);
 					}
 				}
+				break;
 			case 1:
-				hsize_t dimsm[RANK2D] = {1, chunk_size};
-				hsize_t dims[RANK2D] = {qtnpts * qznpts, chunk_size};
+				//hsize_t dimsm[RANK2D] = {1, chunk_size};
+				//hsize_t dims[RANK2D] = {qtnpts * qznpts, chunk_size};
 
 				tta_dataspace = new H5::DataSpace (RANK2D, dims);
 				tta_file = new H5::H5File(TARGET_THERMAL_FILE_NAME, H5F_ACC_RDWR);
@@ -254,8 +260,6 @@ int CorrelationFunction::Access_resonance_in_HDF_array(int local_pid, int iqt, i
 	//	1 - get array chunk
 	const int chunk_size = n_pT_pts * n_pphi_pts * n_pY_pts * qxnpts * qynpts * ntrig;
 
-	double * resonance_chunk = new double [chunk_size];
-
 	int local_icr;
 	if (local_pid == target_particle_id)
 		local_icr = 0;
@@ -305,8 +309,6 @@ int CorrelationFunction::Access_resonance_in_HDF_array(int local_pid, int iqt, i
 		return -3;
     }
 
-	delete [] resonance_chunk;
-
 	return (0);
 }
 
@@ -333,7 +335,7 @@ int CorrelationFunction::Access_target_thermal_in_HDF_array(int iqt, int iqz, in
 				tta_dataset->write(tta_array_to_use, PredType::NATIVE_DOUBLE, *tta_memspace, *tta_dataspace);
 				break;
 			case 1:
-				tta_dataset->read(tta_to_fill, PredType::NATIVE_DOUBLE, *tta_memspace, *tta_dataspace);
+				tta_dataset->read(tta_array_to_use, PredType::NATIVE_DOUBLE, *tta_memspace, *tta_dataspace);
 				break;
 			default:
 				cerr << "access_mode = " << access_mode << " not supported!  Exiting..." << endl;
@@ -457,6 +459,10 @@ int CorrelationFunction::Administrate_besselcoeffs_HDF_array(int administration_
     {
 		Exception::dontPrint();
 	
+		DSetCreatPropList cparms;
+		hsize_t dimsm[RANK2D] = {1, chunk_size};
+		hsize_t dims[RANK2D] = { n_chunks, chunk_size};
+
 		switch (administration_mode)
 		{
 			case 0:	//Initialization
@@ -464,17 +470,17 @@ int CorrelationFunction::Administrate_besselcoeffs_HDF_array(int administration_
 				//bool file_does_not_already_exist = true;	//force full initialization for timebeing...
 				besselcoeffs_file = new H5::H5File(BC_FILE_NAME, H5F_ACC_TRUNC);
 
-				DSetCreatPropList cparms;
+				//DSetCreatPropList cparms;
 				hsize_t chunk_dims[RANK2D] = {1, chunk_size};
 				cparms.setChunk( RANK2D, chunk_dims );
 
-				hsize_t dims[RANK2D] = {n_chunks, chunk_size};
+				//hsize_t dims[RANK2D] = {n_chunks, chunk_size};
 				besselcoeffs_dataspace = new H5::DataSpace (RANK2D, dims);
 
 				besselcoeffs_dataset = new H5::DataSet( besselcoeffs_file->createDataSet(BC_DATASET_NAME, PredType::NATIVE_DOUBLE, *besselcoeffs_dataspace, cparms) );
 
 				hsize_t count[RANK2D] = {1, chunk_size};
-				hsize_t dimsm[RANK2D] = {1, chunk_size};
+				//hsize_t dimsm[RANK2D] = {1, chunk_size};
 				hsize_t offset[RANK2D] = {0, 0};
 
 				besselcoeffs_memspace = new H5::DataSpace (RANK2D, dimsm, NULL);
@@ -484,7 +490,8 @@ int CorrelationFunction::Administrate_besselcoeffs_HDF_array(int administration_
 
 					for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 					{
-						offset[0] = BC_indexer(iqt, iqz, ipY);
+						//offset[0] = BC_indexer(iqt, iqz, ipY);
+						offset[0] = ipY;
 						besselcoeffs_dataspace->selectHyperslab(H5S_SELECT_SET, count, offset);
 
 						for (int iidx = 0; iidx < chunk_size; ++iidx)
@@ -496,8 +503,8 @@ int CorrelationFunction::Administrate_besselcoeffs_HDF_array(int administration_
 				}
 				break;
 			case 1:	//Open
-				hsize_t dimsm[RANK2D] = {1, chunk_size};
-				hsize_t dims[RANK2D] = { n_chunks, chunk_size};
+				//hsize_t dimsm[RANK2D] = {1, chunk_size};
+				//hsize_t dims[RANK2D] = { n_chunks, chunk_size};
 
 				besselcoeffs_dataspace = new H5::DataSpace (RANK2D, dims);
 				besselcoeffs_file = new H5::H5File(BC_FILE_NAME, H5F_ACC_RDWR);
@@ -547,7 +554,7 @@ int CorrelationFunction::Administrate_besselcoeffs_HDF_array(int administration_
 
 /////////////////////////////////////////////
 
-int CorrelationFunction::Access_besselcoeffs_in_HDF_array(int iqt, int iqz, int ipY, int access_mode, double * besselcoeffs_array_to_use)
+int CorrelationFunction::Access_besselcoeffs_in_HDF_array(int ipY, int access_mode, double * besselcoeffs_array_to_use)
 {
 	// access_mode:
 	//	0 - set array chunk

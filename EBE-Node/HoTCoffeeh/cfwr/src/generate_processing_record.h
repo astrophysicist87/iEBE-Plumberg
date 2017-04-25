@@ -49,11 +49,6 @@ void initialize_PRfile(ParameterReader* paraRdr, string currentworkingdirectory,
 	output << endl;
 
 	output << "General initializations:" << endl;
-	output << "   - Spatial rapidity information:" << endl;
-	output << "      --> eta_s_npts: " << eta_s_npts << endl;
-	output << "      --> eta_s_i: " << eta_s_i << endl;
-	output << "      --> eta_s_f: " << eta_s_f << endl;
-
 	output << "   - Single-particle momentum information:" << endl;
 	output << "      --> n_pT_pts: " << paraRdr->getVal("CF_npT") << endl;
 	output << "      --> n_pphi_pts: " << paraRdr->getVal("CF_npphi") << endl;
@@ -62,8 +57,8 @@ void initialize_PRfile(ParameterReader* paraRdr, string currentworkingdirectory,
 	output << "      --> SP_pT_max: " << SP_pT_max << endl;
 	output << "      --> SP_pphi_min: " << SP_pphi_min << endl;
 	output << "      --> SP_pphi_max: " << SP_pphi_max << endl;
-	output << "      --> SP_pY_min: " << SP_pY_min << endl;
-	output << "      --> SP_pY_max: " << SP_pY_max << endl;
+	output << "      --> SP_pY_min: " << SP_Del_pY_min << endl;
+	output << "      --> SP_pY_max: " << SP_Del_pY_max << endl;
 
 	output << "   - Relative momentum information:" << endl;
 	output << "      --> qtnpts: " << paraRdr->getVal("qtnpts") << endl;

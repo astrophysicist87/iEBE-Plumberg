@@ -197,7 +197,7 @@ int main(int argc, char *argv[])
 	output << "Using fraction_of_resonances = " << net_fraction_resonance_contribution << endl;
 
 	//allows me to omit thermal pions easily, e.g.
-	bool omit_specific_resonances = true;
+	bool omit_specific_resonances = false;
 	if (omit_specific_resonances)
 	{
 		vector<int> thermal_particles_to_omit;
@@ -218,14 +218,19 @@ int main(int argc, char *argv[])
 	if ((int)(paraRdr->getVal("calculate_CF_mode")) == 0)
 	{
 		output << "Calculating correlation function with all resonance decays (looping over qt and qz)..." << endl;
+
+		int local_qtnpts = (int)(paraRdr->getVal("qtnpts"));
+		int local_qznpts = (int)(paraRdr->getVal("qznpts"));
+
 		//looping in this way keeps *h5 files and total loaded memory of program small at any one time
-		for (int iqt = 0; iqt < (qtnpts + 1)/2; ++iqt)
-		for (int iqz = 0; iqz < qznpts; ++iqz)
+		for (int iqt = 0; iqt < (local_qtnpts + 1)/2; ++iqt)
+		for (int iqz = 0; iqz < local_qznpts; ++iqz)
 		{
+if (iqt > 0 || iqz > 0) exit(8);
 			correlation_function.Fourier_transform_emission_function(iqt, iqz);
 			correlation_function.Compute_phase_space_integrals(iqt, iqz);
-if (1) exit(8);
 		}
+//if (1) exit(8);
 	}
 
 	//decide whether to compute correlation function or read it in

@@ -630,8 +630,6 @@ CorrelationFunction::~CorrelationFunction()
    delete [] K_T;
    delete [] K_phi;
    delete [] K_phi_weight;
-   delete [] eta_s;
-   delete [] eta_s_weight;
 
 	for(int ipt=0; ipt<n_pT_pts; ipt++)
 	{
@@ -1298,13 +1296,13 @@ void CorrelationFunction::Set_all_Bessel_grids(int iqt, int iqz)
 		}
 
 		//finally, store the results
-		HDFcode = Set_besselcoeffs_in_HDF_array(iqt, iqz, ipY, BC_chunk);
+		HDFcode = Access_besselcoeffs_in_HDF_array(ipY, 0, BC_chunk);	// 0 - set
 
 		sw_loop.Stop();
 		cout << "Finished in " << sw_loop.printTime() << " seconds." << endl;
 	}
 
-	HDFcode = Close_besselcoeffs_HDF_array();
+	HDFcode = Administrate_besselcoeffs_HDF_array(2);	// 2 - close
 
 	delete [] BC_chunk;
 	delete [] alpha_pts;

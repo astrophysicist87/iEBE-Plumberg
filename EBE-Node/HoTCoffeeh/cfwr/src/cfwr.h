@@ -171,7 +171,7 @@ class CorrelationFunction
 		//momentum rapidity grid
 		double * SP_Del_pY, * ch_SP_pY, * sh_SP_pY;
 		double * chebTcfs;
-		double ** chebyshev_a_cfs;	//for resonance interpolation
+		double ** chebyshev_a_cfs, * refined_resonance_grids;	//for resonance interpolation
 
 		//points and weights for resonance integrals
 		double v_min, v_max, zeta_min, zeta_max, s_min, s_max;
@@ -252,50 +252,51 @@ class CorrelationFunction
 		inline int indexer4(const int ipt, const int ipphi, const int iqx, const int iqy);
 		inline int FM_indexer(const int ipY, const int iqt, const int iqx, const int iqy, const int iqz);
 		inline int HDF_indexer(const int ir, const int iqt, const int iqz);
-		inline int BC_indexer(const int ipY, const int iqt, const int iqz);
 		inline int NB2_indexer(const int iv, const int izeta);
 		inline int NB3_indexer(const int is, const int iv, const int izeta);
 		inline void addElementToQueue(priority_queue<pair<double, size_t> >& p, pair<double, size_t> elem, size_t max_size);
 		inline void set_to_zero(double * array, size_t arraylength);
 		inline double dot_four_vectors(double * a, double * b);
 
-		void Fourier_transform_emission_function();
-		void Compute_phase_space_integrals();
+		void Fourier_transform_emission_function(int iqt, int iqz);
+		void Compute_phase_space_integrals(int iqt, int iqz);
 		void Update_sourcefunction(particle_info* particle, int FOarray_length, int particle_idx);
 		bool fexists(const char *filename);
 
 		// HDF routines
 		// resonances
-		int Access_resonance_from_HDF_array(int local_pid, int iqt, int iqz, int access_mode, double * resonance_array_to_fill);
+		int Access_resonance_in_HDF_array(int local_pid, int iqt, int iqz, int access_mode, double * resonance_array_to_fill);
 		int Administrate_resonance_HDF_array(int administration_mode);
 		int Copy_chunk(int current_resonance_index, int reso_idx_to_be_copied);
 		// Bessel coefficients
-		int Access_besselcoeffs_from_HDF_array(int iqt, int iqz, int ipY, int access_mode, double * besselcoeffs_array_to_fill);
+		int Access_besselcoeffs_in_HDF_array(int ipY, int access_mode, double * besselcoeffs_array_to_fill);
 		int Administrate_besselcoeffs_HDF_array(int administration_mode);
 		// target thermal moments...
 		int Administrate_target_thermal_HDF_array(int administration_mode);
-		int Access_target_thermal_from_HDF_array(int iqt, int iqz, int access_mode, double * target_thermal_array_to_fill);
+		int Access_target_thermal_in_HDF_array(int iqt, int iqz, int access_mode, double * target_thermal_array_to_fill);
 
-		void Set_dN_dypTdpTdphi_moments(int local_pid);
-		void Set_all_Bessel_grids();
+		void Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int iqz);
+		void Set_all_Bessel_grids(int iqt, int iqz);
 		void Set_thermal_target_moments();
 		void Set_full_target_moments();
 		void form_trig_sign_z(int isurf, int ieta, int iqt, int iqx, int iqy, int iqz, int ii, double * results);
 		void Set_giant_arrays(int iqt, int iqx, int iqy, int iqz);
 		void Cal_dN_dypTdpTdphi(double** SP_p0, double** SP_px, double** SP_py, double** SP_pz);
-		void Cal_dN_dypTdpTdphi_heap(int local_pid);
+		void Cal_dN_dypTdpTdphi_no_weights(int local_pid);
 		void Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY, int iqt, int iqz, double * BC_chunk);
 		double Cal_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi);
 		void Cal_dN_dypTdpTdphi_with_weights_function(int local_pid, double pT, double pphi,
 												double qt, double qx, double qy, double qz, double * cosqx_dN_dypTdpTdphi, double * sinqx_dN_dypTdpTdphi);
-		void Do_resonance_integrals(int iKT, int iKphi, int dc_idx);
-		void Flatten_dN_dypTdpTdphi_moments(int parent_resonance_particle_id);
+		void Do_resonance_integrals(int parent_resonance_particle_id, int daughter_particle_id, int decay_channel, int iqt, int iqz);
+		void Tabulate_resonance_Chebyshev_coefficients(int parent_resonance_particle_id);
+		void Refine_resonance_grids(int parent_resonance_particle_id);
+		//inline double Get_EdNd3p_moment(int idx, double pY);
 		void Set_current_daughter_info(int dc_idx, int daughter_idx);
 		void Set_current_particle_info(int dc_idx);
 		void Set_target_pphiavgd_CFs();
 		bool Do_this_decay_channel(int dc_idx);
 		bool Do_this_daughter_particle(int dc_idx, int daughter_idx, int * daughter_resonance_pid);
-		void Get_spacetime_moments(int dc_idx);
+		void Get_spacetime_moments(int dc_idx, int iqt, int iqz);
 		void Recycle_spacetime_moments();
 		void Load_resonance_and_daughter_spectra(int local_pid, int iqt, int iqz);
 		void Update_daughter_spectra(int local_pid, int iqt, int iqz);
