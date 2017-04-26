@@ -99,8 +99,16 @@ void CorrelationFunction::Refine_resonance_grids(int parent_resonance_particle_i
 {
 	Delta_DpY = (SP_Del_pY_max - SP_Del_pY_min) / (double)(n_refinement_pts - 1);
 
-	long cfs_array_length = n_pT_pts * n_pphi_pts * qxnpts * qynpts * ntrig * n_refinement_pts;
-	refined_resonance_grids = new double [cfs_array_length];
+	long cfs_array_length = qxnpts * qynpts * ntrig;
+	refined_resonance_grids = new double * [n_pT_pts * n_pphi_pts * n_refinement_pts];
+	log_refined_grids = new double * [n_pT_pts * n_pphi_pts * n_refinement_pts];
+	sgn_refined_grids = new double * [n_pT_pts * n_pphi_pts * n_refinement_pts];
+	for (int ipTpphipY = 0; ipTpphipY < n_pT_pts * n_pphi_pts * n_refinement_pts; ++ipTpphipY)
+	{
+		refined_resonance_grids[ipTpphipY] = new double [cfs_array_length];
+		log_refined_grids[ipTpphipY] = new double [cfs_array_length];
+		sgn_refined_grids[ipTpphipY] = new double [cfs_array_length];
+	}
 
 	int idx = 0;
 	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
@@ -113,7 +121,10 @@ void CorrelationFunction::Refine_resonance_grids(int parent_resonance_particle_i
 		for (int iii = 0; iii < n_refinement_pts; ++iii)
 		{
 			double tmp_pY = SP_Del_pY_min + (double)iii * Delta_DpY;
-			refined_resonance_grids[idx*n_refinement_pts+iii] = exp(-tmp_pY) * gsl_cheb_eval (cs_accel_expEdNd3p, tmp_pY);
+			double tmp_result = exp(-tmp_pY) * gsl_cheb_eval (cs_accel_expEdNd3p, tmp_pY);
+			refined_resonance_grids[(ipT * n_pphi_pts + ipphi)*n_refinement_pts + iii][(iqx + qynpts + iqy)*ntrig + itrig] = tmp_result;
+			log_refined_grids[(ipT * n_pphi_pts + ipphi)*n_refinement_pts + iii][(iqx + qynpts + iqy)*ntrig + itrig] = log(abs(tmp_result)+1.e-100);
+			sgn_refined_grids[(ipT * n_pphi_pts + ipphi)*n_refinement_pts + iii][(iqx + qynpts + iqy)*ntrig + itrig] = sgn(tmp_result);
 		}
 		++idx;
 	}
@@ -305,7 +316,15 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 	for (int icf = 0; icf < cfs_array_length; ++icf)
 		delete [] chebyshev_a_cfs[icf];
 	delete [] chebyshev_a_cfs;
+	for (int ipTpphipY = 0; ipTpphipY < n_pT_pts * n_pphi_pts * n_refinement_pts; ++ipTpphipY)
+	{
+		delete [] refined_resonance_grids[ipTpphipY];
+		delete [] log_refined_grids[ipTpphipY];
+		delete [] sgn_refined_grids[ipTpphipY];
+	}
 	delete [] refined_resonance_grids;
+	delete [] log_refined_grids;
+	delete [] sgn_refined_grids;
 
 	Delete_resonance_running_sum_vectors();
 
@@ -422,7 +441,8 @@ void CorrelationFunction::Edndp3(double ptr, double pphir, double * result, int 
 void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double * results, int loc_verb /*==0*/)
 {
 	double phi0, phi1, py0, py1;
-	double f1, f2;
+	double val11, val12, val21, val22;	//store intermediate results of pT interpolation
+	double val1, val2;					//store intermediate results of pphi interpolation
 
 	int npphi_max = n_pphi_pts - 1;
 	int npT_max = n_pT_pts - 1;
@@ -462,28 +482,6 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 
 	// locate py interval
 	long npy = 1, npym1 = 0;
-	/*if(pyr < SP_Del_pY[0])			//if rapidity is less than minimum rapidity grid point
-	{
-		py0 = SP_Del_pY[0];
-		py1 = SP_Del_pY[1];
-		npy = 1;
-		npym1 = 0;
-	}
-	else if(pyr > SP_Del_pY[npY_max])	//if rapidity is greater than maximum rapidity grid point
-	{
-		py0 = SP_Del_pY[npY_max];
-		py1 = SP_Del_pY[npY_max];
-		npy = npY_max;	//this just guarantees nearest neighbor if pY > pY_max
-		npym1 = npY_max;
-	}
-	else						//if rapidity is within grid range
-	{
-		while ((pyr > SP_Del_pY[npy]) &&
-				(npy < npY_max)) ++npy;
-		npym1 = npy - 1;
-		py0 = SP_Del_pY[npym1];
-		py1 = SP_Del_pY[npy];
-	}*/
 	if(pyr > SP_Del_pY_max)	//if rapidity is greater than maximum rapidity grid point
 	{
 		py0 = SP_Del_pY_max;
@@ -493,8 +491,6 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 	}
 	else						//if rapidity is within grid range
 	{
-		//while ((pyr > SP_Del_pY[npy]) &&
-		//		(npy < npY_max)) ++npy;
 		long npym1 = floor((pyr-SP_Del_pY_min)/Delta_DpY);
 		long npy = npym1 + 1;
 		py0 = SP_Del_pY_min + (double)npym1 * Delta_DpY;
@@ -510,49 +506,35 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 	double one_by_pTdiff = 1./(pT1 - pT0), one_by_pphidiff = 1./(phi1 - phi0), one_by_pYdiff = 1./(py1 - py0 + 1.e-100);
 	double del_ptr_pt0 = ptr - pT0, del_phir_phi0 = phir - phi0, del_pyr_py0 = pyr - py0;
 
-	// interpolate over pY first, then proceed as usual
+	double * f111_arr = refined_resonance_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
+	double * f112_arr = refined_resonance_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npy];
+	double * f121_arr = refined_resonance_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npym1];
+	double * f122_arr = refined_resonance_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npy];
+	double * f211_arr = refined_resonance_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
+	double * f212_arr = refined_resonance_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npy];
+	double * f221_arr = refined_resonance_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npym1];
+	double * f222_arr = refined_resonance_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npy];
+
+	double * log_f111_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
+	double * log_f112_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npy];
+	double * log_f121_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npym1];
+	double * log_f122_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npy];
+	double * log_f211_arr = log_refined_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
+	double * log_f212_arr = log_refined_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npy];
+	double * log_f221_arr = log_refined_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npym1];
+	double * log_f222_arr = log_refined_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npy];
+
+	double * sign_of_f111_arr = sgn_refined_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
+	double * sign_of_f112_arr = sgn_refined_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npy];
+	double * sign_of_f121_arr = sgn_refined_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npym1];
+	double * sign_of_f122_arr = sgn_refined_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npy];
+	double * sign_of_f211_arr = sgn_refined_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
+	double * sign_of_f212_arr = sgn_refined_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npy];
+	double * sign_of_f221_arr = sgn_refined_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npym1];
+	double * sign_of_f222_arr = sgn_refined_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npy];
+
 	// set index for looping
 	int qpt_cs_idx = 0;
-	double f11_arr[qxnpts*qynpts*ntrig], f12_arr[qxnpts*qynpts*ntrig], f21_arr[qxnpts*qynpts*ntrig], f22_arr[qxnpts*qynpts*ntrig];
-	double log_f11_arr[qxnpts*qynpts*ntrig], log_f12_arr[qxnpts*qynpts*ntrig], log_f21_arr[qxnpts*qynpts*ntrig], log_f22_arr[qxnpts*qynpts*ntrig];
-	double sign_of_f11_arr[qxnpts*qynpts*ntrig], sign_of_f12_arr[qxnpts*qynpts*ntrig], sign_of_f21_arr[qxnpts*qynpts*ntrig], sign_of_f22_arr[qxnpts*qynpts*ntrig];
-
-	// choose pt-pphi slice of resonance info arrays
-	// flatten arrays, since these are quicker to process
-	for (int iqx = 0; iqx < qxnpts; ++iqx)
-	for (int iqy = 0; iqy < qynpts; ++iqy)
-	for (int itrig = 0; itrig < 2; ++itrig)
-	{
-		/*f11_arr[qpt_cs_idx] = Get_EdNd3p_moment(((npt-1)*n_pphi_pts+nphim1)*qxnpts + qpt_cs_idx, pyr);
-		f12_arr[qpt_cs_idx] = Get_EdNd3p_moment(((npt-1)*n_pphi_pts+nphi)*qxnpts + qpt_cs_idx, pyr);
-		f21_arr[qpt_cs_idx] = Get_EdNd3p_moment((npt*n_pphi_pts+nphim1)*qxnpts + qpt_cs_idx, pyr);
-		f22_arr[qpt_cs_idx] = Get_EdNd3p_moment((npt*n_pphi_pts+nphi)*qxnpts + qpt_cs_idx, pyr);*/
-		//cout << (((npt-1)*n_pphi_pts+nphim1)*qxnpts + qpt_cs_idx)*n_refinement_pts+npym1 << "   " << (((npt-1)*n_pphi_pts+nphim1)*qxnpts + qpt_cs_idx)*n_refinement_pts+npy << endl;
-		f11_arr[qpt_cs_idx] = lin_int( del_pyr_py0, one_by_pYdiff, refined_resonance_grids[(((npt-1)*n_pphi_pts+nphim1)*qxnpts + qpt_cs_idx)*n_refinement_pts+npym1],
-																	refined_resonance_grids[(((npt-1)*n_pphi_pts+nphim1)*qxnpts + qpt_cs_idx)*n_refinement_pts+npy]);
-		f12_arr[qpt_cs_idx] = lin_int( del_pyr_py0, one_by_pYdiff, refined_resonance_grids[(((npt-1)*n_pphi_pts+nphi)*qxnpts + qpt_cs_idx)*n_refinement_pts+npym1],
-																	refined_resonance_grids[(((npt-1)*n_pphi_pts+nphi)*qxnpts + qpt_cs_idx)*n_refinement_pts+npy]);
-		f21_arr[qpt_cs_idx] = lin_int( del_pyr_py0, one_by_pYdiff, refined_resonance_grids[((npt*n_pphi_pts+nphim1)*qxnpts + qpt_cs_idx)*n_refinement_pts+npym1],
-																	refined_resonance_grids[((npt*n_pphi_pts+nphim1)*qxnpts + qpt_cs_idx)*n_refinement_pts+npy]);
-		f22_arr[qpt_cs_idx] = lin_int( del_pyr_py0, one_by_pYdiff, refined_resonance_grids[((npt*n_pphi_pts+nphi)*qxnpts + qpt_cs_idx)*n_refinement_pts+npym1],
-																	refined_resonance_grids[((npt*n_pphi_pts+nphi)*qxnpts + qpt_cs_idx)*n_refinement_pts+npy]);
-
-		log_f11_arr[qpt_cs_idx] = log(abs(f11_arr[qpt_cs_idx]) + 1.e-100);
-		log_f12_arr[qpt_cs_idx] = log(abs(f12_arr[qpt_cs_idx]) + 1.e-100);
-		log_f21_arr[qpt_cs_idx] = log(abs(f21_arr[qpt_cs_idx]) + 1.e-100);
-		log_f22_arr[qpt_cs_idx] = log(abs(f22_arr[qpt_cs_idx]) + 1.e-100);
-
-		sign_of_f11_arr[qpt_cs_idx] = sgn(f11_arr[qpt_cs_idx]);
-		sign_of_f12_arr[qpt_cs_idx] = sgn(f12_arr[qpt_cs_idx]);
-		sign_of_f21_arr[qpt_cs_idx] = sgn(f21_arr[qpt_cs_idx]);
-		sign_of_f22_arr[qpt_cs_idx] = sgn(f22_arr[qpt_cs_idx]);
-
-		++qpt_cs_idx;
-	}
-
-
-	// set index for looping
-	qpt_cs_idx = 0;
 	int qlist_idx = 0;
 
 	if (ptr > PTCHANGE)                             // if pT interpolation point is larger than PTCHANGE (currently 1.0 GeV)
@@ -569,71 +551,132 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 			/////////////////////////////////////////////////////////////////
 			// interpolate over pT values first
 			/////////////////////////////////////////////////////////////////
-			double sign_of_f11 = sign_of_f11_arr[qpt_cs_idx];
-			double sign_of_f12 = sign_of_f12_arr[qpt_cs_idx];
-			double sign_of_f21 = sign_of_f21_arr[qpt_cs_idx];
-			double sign_of_f22 = sign_of_f22_arr[qpt_cs_idx];
+			double sign_of_f111 = sign_of_f111_arr[qpt_cs_idx];
+			double sign_of_f112 = sign_of_f112_arr[qpt_cs_idx];
+			double sign_of_f121 = sign_of_f121_arr[qpt_cs_idx];
+			double sign_of_f122 = sign_of_f122_arr[qpt_cs_idx];
+			double sign_of_f211 = sign_of_f211_arr[qpt_cs_idx];
+			double sign_of_f212 = sign_of_f212_arr[qpt_cs_idx];
+			double sign_of_f221 = sign_of_f221_arr[qpt_cs_idx];
+			double sign_of_f222 = sign_of_f222_arr[qpt_cs_idx];
 
-			//*******************************************************************************************************************
-			// set f1 first
-			//*******************************************************************************************************************
+			///////////////
+			// set val11 //
+			///////////////
 			// if using extrapolation and spectra at pT1 has larger magnitude than at pT0 (or the signs are different), just return zero
-			if ( ptr > pT1 && ( log_f21_arr[qpt_cs_idx] > log_f11_arr[qpt_cs_idx] || sign_of_f11 * sign_of_f21 < 0 ) )
-				f1 = 0.0;
-			else if (sign_of_f11 * sign_of_f21 > 0) // if the two points have the same sign in the pT direction, interpolate logs
-				f1 = sign_of_f11 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f11_arr[qpt_cs_idx], log_f21_arr[qpt_cs_idx]) );
+			if ( ptr > pT1 && ( log_f211_arr[qpt_cs_idx] > log_f111_arr[qpt_cs_idx] || sign_of_f111 * sign_of_f211 < 0 ) )
+				val11 = 0.0;
+			else if (sign_of_f111 * sign_of_f211 > 0) // if the two points have the same sign in the pT direction, interpolate logs
+				val11 = sign_of_f111 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) );
 			else                                    // otherwise, just interpolate original vals
-				f1 = lin_int(del_ptr_pt0, one_by_pTdiff, f11_arr[qpt_cs_idx], f21_arr[qpt_cs_idx]);
+				val11 = lin_int(del_ptr_pt0, one_by_pTdiff, f111_arr[qpt_cs_idx], f211_arr[qpt_cs_idx]);
 
-			//*******************************************************************************************************************
-			// set f2 next
-			//*******************************************************************************************************************
-			if ( ptr > pT1 && ( log_f22_arr[qpt_cs_idx] > log_f12_arr[qpt_cs_idx] || sign_of_f12 * sign_of_f22 < 0 ) )
-					f2 = 0.0;
-			else if (sign_of_f12 * sign_of_f22 > 0) // if the two points have the same sign in the pT direction, interpolate logs
-					f2 = sign_of_f12 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f12_arr[qpt_cs_idx], log_f22_arr[qpt_cs_idx]) );
+			///////////////
+			// set val21 //
+			///////////////
+			if ( ptr > pT1 && ( log_f221_arr[qpt_cs_idx] > log_f121_arr[qpt_cs_idx] || sign_of_f121 * sign_of_f221 < 0 ) )
+					val21 = 0.0;
+			else if (sign_of_f121 * sign_of_f221 > 0) // if the two points have the same sign in the pT direction, interpolate logs
+					val21 = sign_of_f121 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]) );
 			else                                    // otherwise, just interpolate original vals
-					f2 = lin_int(del_ptr_pt0, one_by_pTdiff, f12_arr[qpt_cs_idx], f22_arr[qpt_cs_idx]);
-			//*******************************************************************************************************************
-			// now, interpolate f1 and f2 over the pphi direction
-			double Zkr = lin_int(del_phir_phi0, one_by_pphidiff, f1, f2);
+					val21 = lin_int(del_ptr_pt0, one_by_pTdiff, f121_arr[qpt_cs_idx], f221_arr[qpt_cs_idx]);
 
-	        double f1s = f1, f2s = f2;			
+			///////////////
+			// set val12 //
+			///////////////
+			// if using extrapolation and spectra at pT1 has larger magnitude than at pT0 (or the signs are different), just return zero
+			if ( ptr > pT1 && ( log_f212_arr[qpt_cs_idx] > log_f112_arr[qpt_cs_idx] || sign_of_f112 * sign_of_f212 < 0 ) )
+				val12 = 0.0;
+			else if (sign_of_f112 * sign_of_f212 > 0) // if the two points have the same sign in the pT direction, interpolate logs
+				val12 = sign_of_f112 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]) );
+			else                                    // otherwise, just interpolate original vals
+				val12 = lin_int(del_ptr_pt0, one_by_pTdiff, f112_arr[qpt_cs_idx], f212_arr[qpt_cs_idx]);
+
+			///////////////
+			// set val22 //
+			///////////////
+			if ( ptr > pT1 && ( log_f222_arr[qpt_cs_idx] > log_f122_arr[qpt_cs_idx] || sign_of_f122 * sign_of_f222 < 0 ) )
+					val22 = 0.0;
+			else if (sign_of_f122 * sign_of_f222 > 0) // if the two points have the same sign in the pT direction, interpolate logs
+					val22 = sign_of_f122 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
+			else                                    // otherwise, just interpolate original vals
+					val22 = lin_int(del_ptr_pt0, one_by_pTdiff, f122_arr[qpt_cs_idx], f222_arr[qpt_cs_idx]);
+
+			//////////////////////////////////////
+			// interpolate val11 and val12 over the pphi direction to get val1
+			// similarly for val21 and val22 --> val2
+			//////////////////////////////////////
+			val1 = lin_int(del_phir_phi0, one_by_pphidiff, val11, val21);
+			val2 = lin_int(del_phir_phi0, one_by_pphidiff, val12, val22);
+
+			// finally, get the interpolated value
+			double Zkr = lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
 
 	        /////////////////////////////////////////////////////////////////
 	        // DO SINE PART NEXT
 	        /////////////////////////////////////////////////////////////////
 	        // interpolate over pT values first
 	        /////////////////////////////////////////////////////////////////
-	        sign_of_f11 = sign_of_f11_arr[qpt_cs_idx+1];
-	        sign_of_f12 = sign_of_f12_arr[qpt_cs_idx+1];
-	        sign_of_f21 = sign_of_f21_arr[qpt_cs_idx+1];
-	        sign_of_f22 = sign_of_f22_arr[qpt_cs_idx+1];
+			sign_of_f111 = sign_of_f111_arr[qpt_cs_idx+1];
+			sign_of_f112 = sign_of_f112_arr[qpt_cs_idx+1];
+			sign_of_f121 = sign_of_f121_arr[qpt_cs_idx+1];
+			sign_of_f122 = sign_of_f122_arr[qpt_cs_idx+1];
+			sign_of_f211 = sign_of_f211_arr[qpt_cs_idx+1];
+			sign_of_f212 = sign_of_f212_arr[qpt_cs_idx+1];
+			sign_of_f221 = sign_of_f221_arr[qpt_cs_idx+1];
+			sign_of_f222 = sign_of_f222_arr[qpt_cs_idx+1];
 
-	        //*******************************************************************************************************************
-	        // set f1 first
-	        //*******************************************************************************************************************
-	        // if using extrapolation and spectra at pT1 has larger magnitude than at pT0 (or the signs are different), just return zero
-	        if ( ptr > pT1 && ( log_f21_arr[qpt_cs_idx+1] > log_f11_arr[qpt_cs_idx+1] || sign_of_f11 * sign_of_f21 < 0 ) )
-				f1 = 0.0;
-	        else if (sign_of_f11 * sign_of_f21 > 0) // if the two points have the same sign in the pT direction, interpolate logs
-				f1 = sign_of_f11 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f11_arr[qpt_cs_idx+1], log_f21_arr[qpt_cs_idx+1]) );
-	        else                                    // otherwise, just interpolate original vals
-				f1 = lin_int(del_ptr_pt0, one_by_pTdiff, f11_arr[qpt_cs_idx+1], f21_arr[qpt_cs_idx+1]);
+			///////////////
+			// set val11 //
+			///////////////
+			// if using extrapolation and spectra at pT1 has larger magnitude than at pT0 (or the signs are different), just return zero
+			if ( ptr > pT1 && ( log_f211_arr[qpt_cs_idx+1] > log_f111_arr[qpt_cs_idx+1] || sign_of_f111 * sign_of_f211 < 0 ) )
+				val11 = 0.0;
+			else if (sign_of_f111 * sign_of_f211 > 0) // if the two points have the same sign in the pT direction, interpolate logs
+				val11 = sign_of_f111 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx+1], log_f211_arr[qpt_cs_idx+1]) );
+			else                                    // otherwise, just interpolate original vals
+				val11 = lin_int(del_ptr_pt0, one_by_pTdiff, f111_arr[qpt_cs_idx+1], f211_arr[qpt_cs_idx+1]);
 
-	        //*******************************************************************************************************************
-	        // set f2 next
-	        //*******************************************************************************************************************
-	        if ( ptr > pT1 && ( log_f22_arr[qpt_cs_idx+1] > log_f12_arr[qpt_cs_idx+1] || sign_of_f12 * sign_of_f22 < 0 ) )
-				f2 = 0.0;
-	        else if (sign_of_f12 * sign_of_f22 > 0) // if the two points have the same sign in the pT direction, interpolate logs
-				f2 = sign_of_f12 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f12_arr[qpt_cs_idx+1], log_f22_arr[qpt_cs_idx+1]) );
-	        else                                    // otherwise, just interpolate original vals
-				f2 = lin_int(del_ptr_pt0, one_by_pTdiff, f12_arr[qpt_cs_idx+1], f22_arr[qpt_cs_idx+1]);
-	        //*******************************************************************************************************************
+			///////////////
+			// set val21 //
+			///////////////
+			if ( ptr > pT1 && ( log_f221_arr[qpt_cs_idx+1] > log_f121_arr[qpt_cs_idx+1] || sign_of_f121 * sign_of_f221 < 0 ) )
+					val21 = 0.0;
+			else if (sign_of_f121 * sign_of_f221 > 0) // if the two points have the same sign in the pT direction, interpolate logs
+					val21 = sign_of_f121 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx+1], log_f221_arr[qpt_cs_idx+1]) );
+			else                                    // otherwise, just interpolate original vals
+					val21 = lin_int(del_ptr_pt0, one_by_pTdiff, f121_arr[qpt_cs_idx+1], f221_arr[qpt_cs_idx+1]);
 
-	        // now, interpolate f1 and f2 over the pphi direction
-	        double Zki = lin_int(del_phir_phi0, one_by_pphidiff, f1, f2);
+			///////////////
+			// set val12 //
+			///////////////
+			// if using extrapolation and spectra at pT1 has larger magnitude than at pT0 (or the signs are different), just return zero
+			if ( ptr > pT1 && ( log_f212_arr[qpt_cs_idx+1] > log_f112_arr[qpt_cs_idx+1] || sign_of_f112 * sign_of_f212 < 0 ) )
+				val12 = 0.0;
+			else if (sign_of_f112 * sign_of_f212 > 0) // if the two points have the same sign in the pT direction, interpolate logs
+				val12 = sign_of_f112 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx+1], log_f212_arr[qpt_cs_idx+1]) );
+			else                                    // otherwise, just interpolate original vals
+				val12 = lin_int(del_ptr_pt0, one_by_pTdiff, f112_arr[qpt_cs_idx+1], f212_arr[qpt_cs_idx+1]);
+
+			///////////////
+			// set val22 //
+			///////////////
+			if ( ptr > pT1 && ( log_f222_arr[qpt_cs_idx+1] > log_f122_arr[qpt_cs_idx+1] || sign_of_f122 * sign_of_f222 < 0 ) )
+					val22 = 0.0;
+			else if (sign_of_f122 * sign_of_f222 > 0) // if the two points have the same sign in the pT direction, interpolate logs
+					val22 = sign_of_f122 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx+1], log_f222_arr[qpt_cs_idx+1]) );
+			else                                    // otherwise, just interpolate original vals
+					val22 = lin_int(del_ptr_pt0, one_by_pTdiff, f122_arr[qpt_cs_idx+1], f222_arr[qpt_cs_idx+1]);
+
+			//////////////////////////////////////
+			// interpolate val11 and val12 over the pphi direction to get val1
+			// similarly for val21 and val22 --> val2
+			//////////////////////////////////////
+			val1 = lin_int(del_phir_phi0, one_by_pphidiff, val11, val21);
+			val2 = lin_int(del_phir_phi0, one_by_pphidiff, val12, val22);
+
+			// finally, get the interpolated value
+			double Zki = lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
 
 	        /////////////////////////////////////////////////////
 	        // Finally, update results vectors appropriately
@@ -661,24 +704,30 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 			/////////////////////////////////////////////////////////////////
 			// interpolate over pT values first
 			/////////////////////////////////////////////////////////////////
-			f1 = lin_int(del_ptr_pt0, one_by_pTdiff, f11_arr[qpt_cs_idx], f21_arr[qpt_cs_idx]);
-			f2 = lin_int(del_ptr_pt0, one_by_pTdiff, f12_arr[qpt_cs_idx], f22_arr[qpt_cs_idx]);
+			val11 = lin_int(del_ptr_pt0, one_by_pTdiff, f111_arr[qpt_cs_idx], f211_arr[qpt_cs_idx]);
+			val21 = lin_int(del_ptr_pt0, one_by_pTdiff, f121_arr[qpt_cs_idx], f221_arr[qpt_cs_idx]);
+			val12 = lin_int(del_ptr_pt0, one_by_pTdiff, f112_arr[qpt_cs_idx], f212_arr[qpt_cs_idx]);
+			val22 = lin_int(del_ptr_pt0, one_by_pTdiff, f122_arr[qpt_cs_idx], f222_arr[qpt_cs_idx]);
 
-			// now, interpolate f1 and f2 over the pphi direction
-			double Zkr = lin_int(del_phir_phi0, one_by_pphidiff, f1, f2);
+			val1 = lin_int(del_phir_phi0, one_by_pphidiff, val11, val21);
+			val2 = lin_int(del_phir_phi0, one_by_pphidiff, val12, val22);
 
-			double f1s = f1, f2s = f2;
+			double Zkr = lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
 
 			/////////////////////////////////////////////////////////////////
 			// DO SINE PART NEXT
 			/////////////////////////////////////////////////////////////////
 			// interpolate over pT values first
 			/////////////////////////////////////////////////////////////////
-			f1 = lin_int(del_ptr_pt0, one_by_pTdiff, f11_arr[qpt_cs_idx+1], f21_arr[qpt_cs_idx+1]);
-			f2 = lin_int(del_ptr_pt0, one_by_pTdiff, f12_arr[qpt_cs_idx+1], f22_arr[qpt_cs_idx+1]);
+			val11 = lin_int(del_ptr_pt0, one_by_pTdiff, f111_arr[qpt_cs_idx+1], f211_arr[qpt_cs_idx+1]);
+			val21 = lin_int(del_ptr_pt0, one_by_pTdiff, f121_arr[qpt_cs_idx+1], f221_arr[qpt_cs_idx+1]);
+			val12 = lin_int(del_ptr_pt0, one_by_pTdiff, f112_arr[qpt_cs_idx+1], f212_arr[qpt_cs_idx+1]);
+			val22 = lin_int(del_ptr_pt0, one_by_pTdiff, f122_arr[qpt_cs_idx+1], f222_arr[qpt_cs_idx+1]);
 
-			// now, interpolate f1 and f2 over the pphi direction
-			double Zki = lin_int(del_phir_phi0, one_by_pphidiff, f1, f2);
+			val1 = lin_int(del_phir_phi0, one_by_pphidiff, val11, val21);
+			val2 = lin_int(del_phir_phi0, one_by_pphidiff, val12, val22);
+
+			double Zki = lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
 
 			/////////////////////////////////////////////////////
 			// Finally, update results vectors appropriately
@@ -695,9 +744,6 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 
 	return;
 }
-
-//End of file
-
 
 ///////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////
