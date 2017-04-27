@@ -148,7 +148,7 @@ void CorrelationFunction::Fourier_transform_emission_function(int iqt, int iqz)
 	
 	//only need to calculate spectra, etc. once
 	// Now dump all thermal spectra before continuing with resonance decay calculations
-	if ( iqt == 0 && iqz == 0 )
+	if ( iqt == (qtnpts - 1)/2 && iqz == (qznpts - 1)/2 )
 	{
 		Dump_spectra_array("thermal_spectra.dat", thermal_spectra);
 		Dump_spectra_array("full_spectra.dat", spectra);
@@ -235,7 +235,7 @@ void CorrelationFunction::Compute_phase_space_integrals(int iqt, int iqz)
 	*global_out_stream_ptr << "\t ...finished computing all phase-space integrals for loop (iqt = "
 							<< iqt << ", iqz = " << iqz << ") in " << BIGsw.printTime() << " seconds." << endl;
 
-	if (iqt == 0 && iqz == 0)
+	if ( iqt == (qtnpts - 1)/2 && iqz == (qznpts - 1)/2 )
 		Dump_spectra_array("full_spectra.dat", spectra);
 
 	return;
@@ -801,7 +801,7 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 	// get spectra at each fluid cell, sort by importance
 	Stopwatch sw, sw_qtqzpY;
 	sw.Start();
-	if (iqt == 0 && iqz == 0)
+	if ( iqt == (qtnpts - 1)/2 && iqz == (qznpts - 1)/2 )
 	{
 		*global_out_stream_ptr << "Computing un-weighted thermal spectra..." << endl;
 		Cal_dN_dypTdpTdphi_no_weights(local_pid);
