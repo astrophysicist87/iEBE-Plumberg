@@ -1122,7 +1122,6 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 			double pT = SP_pT[ipT];
 			double mT = sqrt(pT*pT+localmass*localmass);
 			double alpha = one_by_Tdec*gammaT*mT;
-//cout << "HERE: " << one_by_Tdec << "   " << gammaT << "   " << localmass << "   " << pT << "   " << mT << "   " << alpha << endl;
 
 			Iint2(alpha, beta, gamma, I0_a_b_g_re, I1_a_b_g_re, I2_a_b_g_re, I3_a_b_g_re, I0_a_b_g_im, I1_a_b_g_im, I2_a_b_g_im, I3_a_b_g_im);
 			if (use_delta_f)
@@ -1171,7 +1170,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 			{
 				double cosAy = tmpY[iqy * 2 + 0], sinAy = tmpY[iqy * 2 + 1];
 				double cos_trans_Fourier = cosAx*cosAy - sinAx*sinAy;
-				double sin_trans_Fourier = -sinAx*cosAy - cosAx*sinAy;
+				double sin_trans_Fourier = sinAx*cosAy + cosAx*sinAy;
 				double * ala_C = alt_long_array_C[idx];
 				double * ala_S = alt_long_array_S[idx++];
 				long iidx = 0;

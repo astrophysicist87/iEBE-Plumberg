@@ -211,7 +211,7 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 					Zero_resonance_running_sum_vector(Csum_vec);
 					double Csum = 0.0;
 					double PKT = VEC_n2_PT[NB2_indexer(iv,izeta)];
-					double PKY = VEC_n2_P_Y[iv] - current_pY_shift;
+					double Del_PKY = VEC_n2_P_Y[iv] - current_pY_shift;
 					double PKphi = VEC_n2_PPhi_tilde[NB2_indexer(iv,izeta)];
 					for (int tempidx = 0; tempidx <= 1; ++tempidx)
 					{
@@ -223,7 +223,7 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 							Edndp3(PKT, PKphi, &Csum);
 						//space-time moments
 						if (!IGNORE_LONG_LIVED_RESONANCES || Gamma >= hbarC / max_lifetime)
-							eiqxEdndp3(PKT, PKphi, PKY, Csum_vec, local_verbose);
+							eiqxEdndp3(PKT, PKphi, abs(Del_PKY), Csum_vec, local_verbose);
 					}												// end of tempidx sum
 					for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
 						zetasum_vec[qpt_cs_idx] += VEC_n2_zeta_factor[NB2_indexer(iv,izeta)]*Csum_vec[qpt_cs_idx];
@@ -285,7 +285,7 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 						double Csum = 0.0;
 						Zero_resonance_running_sum_vector(Csum_vec);
 						double PKT = VEC_n3_PT[NB3_indexer(is,iv,izeta)];
-						double PKY = VEC_n3_P_Y[is*n_v_pts+iv] - current_pY_shift;
+						double Del_PKY = VEC_n3_P_Y[is*n_v_pts+iv] - current_pY_shift;
 						double PKphi = VEC_n3_PPhi_tilde[NB3_indexer(is,iv,izeta)];
 						for (int tempidx = 0; tempidx <= 1; ++tempidx)
 						{
@@ -297,7 +297,7 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 								Edndp3(PKT, PKphi, &Csum);
 							//space-time moments
 							if (!IGNORE_LONG_LIVED_RESONANCES || Gamma >= hbarC / max_lifetime)
-								eiqxEdndp3(PKT, PKphi, PKY, Csum_vec, local_verbose);
+								eiqxEdndp3(PKT, PKphi, abs(Del_PKY), Csum_vec, local_verbose);
 						}										// end of tempidx sum
 						for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
 							zetasum_vec[qpt_cs_idx] += VEC_n3_zeta_factor[NB3_indexer(is,iv,izeta)]*Csum_vec[qpt_cs_idx];
@@ -456,12 +456,12 @@ void CorrelationFunction::Edndp3(double ptr, double pphir, double * result, int 
 
 ///////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////
-void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, double * results, int loc_verb /*==0*/)
+void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double * results, int loc_verb /*==0*/)
 {
 	double phi0, phi1, py0, py1;
 	double val11, val12, val21, val22;	//store intermediate results of pT interpolation
 	double val1, val2;					//store intermediate results of pphi interpolation
-	double pyr = abs(spyr);
+	//double pyr = abs(spyr);			//used for checking 
 
 	int npphi_max = n_pphi_pts - 1;
 	int npT_max = n_pT_pts - 1;
@@ -520,8 +520,6 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 		cerr << "ERROR in eiqxEdndp3(): pT and/or pphi values equal!" << endl;
 		exit(1);
 	}
-	//if (pyr < SP_Del_pY_min)
-	//	cout << "Too small!  What do I do?" << endl;
 
 	double one_by_pTdiff = 1./(pT1 - pT0), one_by_pphidiff = 1./(phi1 - phi0), one_by_pYdiff = 1./(py1 - py0 + 1.e-100);
 	double del_ptr_pt0 = ptr - pT0, del_phir_phi0 = phir - phi0, del_pyr_py0 = pyr - py0;
