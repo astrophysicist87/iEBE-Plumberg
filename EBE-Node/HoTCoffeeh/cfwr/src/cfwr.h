@@ -285,12 +285,11 @@ class CorrelationFunction
 		void Cal_dN_dypTdpTdphi_no_weights(int local_pid);
 		void Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY, int iqt, int iqz, double * BC_chunk);
 		double Cal_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi);
-		void Cal_dN_dypTdpTdphi_with_weights_function(int local_pid, double pT, double pphi,
+		void Cal_dN_dypTdpTdphi_with_weights_function_approx(int local_pid, double pT, double pphi, double pY,
 												double qt, double qx, double qy, double qz, double * cosqx_dN_dypTdpTdphi, double * sinqx_dN_dypTdpTdphi);
 		void Do_resonance_integrals(int parent_resonance_particle_id, int daughter_particle_id, int decay_channel, int iqt, int iqz);
 		void Tabulate_resonance_Chebyshev_coefficients(int parent_resonance_particle_id);
 		void Refine_resonance_grids(int parent_resonance_particle_id);
-		//inline double Get_EdNd3p_moment(int idx, double pY);
 		void Set_current_daughter_info(int dc_idx, int daughter_idx);
 		void Set_current_particle_info(int dc_idx);
 		void Set_target_pphiavgd_CFs();

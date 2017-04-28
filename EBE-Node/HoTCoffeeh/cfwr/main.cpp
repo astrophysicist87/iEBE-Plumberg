@@ -197,7 +197,7 @@ int main(int argc, char *argv[])
 	output << "Using fraction_of_resonances = " << net_fraction_resonance_contribution << endl;
 
 	//allows me to omit thermal pions easily, e.g.
-	bool omit_specific_resonances = false;
+	bool omit_specific_resonances = true;
 	if (omit_specific_resonances)
 	{
 		vector<int> thermal_particles_to_omit;

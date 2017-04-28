@@ -86,12 +86,20 @@ void CorrelationFunction::Tabulate_resonance_Chebyshev_coefficients(int parent_r
 		{
 			chebyshev_a_cfs[idx][ipY] = 0.0;
 			for (int kpY = 0; kpY < n_pY_pts; ++kpY)
-				chebyshev_a_cfs[idx][ipY] += exp(abs(SP_Del_pY[kpY])) * chebTcfs[ipY * n_pY_pts + kpY] 
+			{
+				chebyshev_a_cfs[idx][ipY] += exp(SP_Del_pY[kpY]) * chebTcfs[ipY * n_pY_pts + kpY] 
 												* current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)];
+//if (ipT==1 && ipphi==1 && ipY==0 && iqx==0 && iqy==0)
+//{
+//	double tmpcos = 0.0, tmpsin = 0.0;
+//	Cal_dN_dypTdpTdphi_with_weights_function_approx(parent_resonance_particle_id, SP_pT[ipT], SP_pphi[ipphi], SP_Del_pY[kpY], qt_pts[current_iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[current_iqz], &tmpcos, &tmpsin);
+//	cout << "GRID: " << ipT << "   " << ipphi << "   " << kpY << "   " << SP_Del_pY[kpY] << "   " << iqx << "   " << iqy << "   " << itrig << "   " << tmpcos << "   " << tmpsin << "   " << current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)] << endl;
+//}
+			}
 		}
 		++idx;
 	}
-
+//if (1) exit(8);
 	return;
 }
 
@@ -120,15 +128,23 @@ void CorrelationFunction::Refine_resonance_grids(int parent_resonance_particle_i
 		cs_accel_expEdNd3p->c = chebyshev_a_cfs[idx];
 		for (int iii = 0; iii < n_refinement_pts; ++iii)
 		{
+			int tmp_index = (ipT * n_pphi_pts + ipphi)*n_refinement_pts + iii;
 			double tmp_pY = SP_Del_pY_min + (double)iii * Delta_DpY;
 			double tmp_result = exp(-tmp_pY) * gsl_cheb_eval (cs_accel_expEdNd3p, tmp_pY);
-			refined_resonance_grids[(ipT * n_pphi_pts + ipphi)*n_refinement_pts + iii][(iqx + qynpts + iqy)*ntrig + itrig] = tmp_result;
-			log_refined_grids[(ipT * n_pphi_pts + ipphi)*n_refinement_pts + iii][(iqx + qynpts + iqy)*ntrig + itrig] = log(abs(tmp_result)+1.e-100);
-			sgn_refined_grids[(ipT * n_pphi_pts + ipphi)*n_refinement_pts + iii][(iqx + qynpts + iqy)*ntrig + itrig] = sgn(tmp_result);
+			refined_resonance_grids[tmp_index][(iqx * qynpts + iqy)*ntrig + itrig] = tmp_result;
+//if (ipT==1 && ipphi==1 && iqx==0 && iqy==0)
+//{
+//	double tmpcos = 0.0, tmpsin = 0.0;
+//	Cal_dN_dypTdpTdphi_with_weights_function_approx(parent_resonance_particle_id, SP_pT[ipT], SP_pphi[ipphi], tmp_pY, qt_pts[current_iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[current_iqz], &tmpcos, &tmpsin);
+//	cout << "REFINED: " << iii << "   " << tmp_pY << "   " << ipT << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << itrig << "   " << tmpcos << "   " << tmpsin << "   " << tmp_result << endl;
+	//cout << "refined_resonance_grids[" << tmp_index << "][" << (iqx * qynpts + iqy)*ntrig + itrig << "] = " << tmp_result << ", *** " << ipT << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << itrig << "   " << iii << " ***" << endl;
+//}
+			log_refined_grids[tmp_index][(iqx * qynpts + iqy)*ntrig + itrig] = log(abs(tmp_result)+1.e-100);
+			sgn_refined_grids[tmp_index][(iqx * qynpts + iqy)*ntrig + itrig] = sgn(tmp_result);
 		}
 		++idx;
 	}
-
+//if (1) exit(8);
 	return;
 }
 
@@ -156,8 +172,10 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 
 	local_verbose = 0;
 
-	double loc_qz = qz_pts[current_iqz];
-	double loc_qt = qt_pts[current_iqt];
+	double loc_qz = qz_pts[iqz];
+	double loc_qt = qt_pts[iqt];
+	current_iqt = iqt;
+	current_iqz = iqz;
 	current_pY_shift = - double(abs(loc_qz)>1.e-10) * asinh(loc_qz / sqrt(abs(loc_qt*loc_qt-loc_qz*loc_qz) + 1.e-100));
 
 	if (n_body == 2)
@@ -205,7 +223,7 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 							Edndp3(PKT, PKphi, &Csum);
 						//space-time moments
 						if (!IGNORE_LONG_LIVED_RESONANCES || Gamma >= hbarC / max_lifetime)
-							eiqxEdndp3(PKT, PKphi, abs(PKY), Csum_vec, local_verbose);
+							eiqxEdndp3(PKT, PKphi, PKY, Csum_vec, local_verbose);
 					}												// end of tempidx sum
 					for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
 						zetasum_vec[qpt_cs_idx] += VEC_n2_zeta_factor[NB2_indexer(iv,izeta)]*Csum_vec[qpt_cs_idx];
@@ -279,7 +297,7 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 								Edndp3(PKT, PKphi, &Csum);
 							//space-time moments
 							if (!IGNORE_LONG_LIVED_RESONANCES || Gamma >= hbarC / max_lifetime)
-								eiqxEdndp3(PKT, PKphi, abs(PKY), Csum_vec, local_verbose);
+								eiqxEdndp3(PKT, PKphi, PKY, Csum_vec, local_verbose);
 						}										// end of tempidx sum
 						for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
 							zetasum_vec[qpt_cs_idx] += VEC_n3_zeta_factor[NB3_indexer(is,iv,izeta)]*Csum_vec[qpt_cs_idx];
@@ -438,15 +456,15 @@ void CorrelationFunction::Edndp3(double ptr, double pphir, double * result, int 
 
 ///////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////
-void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double * results, int loc_verb /*==0*/)
+void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, double * results, int loc_verb /*==0*/)
 {
 	double phi0, phi1, py0, py1;
 	double val11, val12, val21, val22;	//store intermediate results of pT interpolation
 	double val1, val2;					//store intermediate results of pphi interpolation
+	double pyr = abs(spyr);
 
 	int npphi_max = n_pphi_pts - 1;
 	int npT_max = n_pT_pts - 1;
-	int npY_max = n_pY_pts - 1;
 
 	// locate pT interval
 	int npt = 1;
@@ -491,8 +509,8 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 	}
 	else						//if rapidity is within grid range
 	{
-		long npym1 = floor((pyr-SP_Del_pY_min)/Delta_DpY);
-		long npy = npym1 + 1;
+		npym1 = floor((pyr-SP_Del_pY_min)/Delta_DpY);
+		npy = npym1 + 1;
 		py0 = SP_Del_pY_min + (double)npym1 * Delta_DpY;
 		py1 = SP_Del_pY_min + (double)npy * Delta_DpY;
 	}
@@ -502,31 +520,20 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 		cerr << "ERROR in eiqxEdndp3(): pT and/or pphi values equal!" << endl;
 		exit(1);
 	}
+	//if (pyr < SP_Del_pY_min)
+	//	cout << "Too small!  What do I do?" << endl;
 
 	double one_by_pTdiff = 1./(pT1 - pT0), one_by_pphidiff = 1./(phi1 - phi0), one_by_pYdiff = 1./(py1 - py0 + 1.e-100);
 	double del_ptr_pt0 = ptr - pT0, del_phir_phi0 = phir - phi0, del_pyr_py0 = pyr - py0;
 
-	double * DA_f111_arr = refined_resonance_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
-	double * DA_f112_arr = refined_resonance_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npy];
-	double * DA_f121_arr = refined_resonance_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npym1];
-	double * DA_f122_arr = refined_resonance_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npy];
-	double * DA_f211_arr = refined_resonance_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
-	double * DA_f212_arr = refined_resonance_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npy];
-	double * DA_f221_arr = refined_resonance_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npym1];
-	double * DA_f222_arr = refined_resonance_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npy];
-
-	//copy contents to stack for faster access
-	const long qpt_cs_length = qxnpts*qynpts*ntrig;
-	double f111_arr[qpt_cs_length], f112_arr[qpt_cs_length], f121_arr[qpt_cs_length], f122_arr[qpt_cs_length];
-	double f211_arr[qpt_cs_length], f212_arr[qpt_cs_length], f221_arr[qpt_cs_length], f222_arr[qpt_cs_length];
-	copy(DA_f111_arr, DA_f111_arr+qpt_cs_length, f111_arr);
-	copy(DA_f112_arr, DA_f112_arr+qpt_cs_length, f112_arr);
-	copy(DA_f121_arr, DA_f121_arr+qpt_cs_length, f121_arr);
-	copy(DA_f122_arr, DA_f122_arr+qpt_cs_length, f122_arr);
-	copy(DA_f211_arr, DA_f211_arr+qpt_cs_length, f211_arr);
-	copy(DA_f212_arr, DA_f212_arr+qpt_cs_length, f212_arr);
-	copy(DA_f221_arr, DA_f221_arr+qpt_cs_length, f221_arr);
-	copy(DA_f222_arr, DA_f222_arr+qpt_cs_length, f222_arr);
+	double * f111_arr = refined_resonance_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
+	double * f112_arr = refined_resonance_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npy];
+	double * f121_arr = refined_resonance_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npym1];
+	double * f122_arr = refined_resonance_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npy];
+	double * f211_arr = refined_resonance_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
+	double * f212_arr = refined_resonance_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npy];
+	double * f221_arr = refined_resonance_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npym1];
+	double * f222_arr = refined_resonance_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npy];
 
 	// set index for looping
 	int qpt_cs_idx = 0;
@@ -535,47 +542,23 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 	if (ptr > PTCHANGE)                             // if pT interpolation point is larger than PTCHANGE (currently 1.0 GeV)
 	{
 
-		double * DA_log_f111_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
-		double * DA_log_f112_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npy];
-		double * DA_log_f121_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npym1];
-		double * DA_log_f122_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npy];
-		double * DA_log_f211_arr = log_refined_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
-		double * DA_log_f212_arr = log_refined_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npy];
-		double * DA_log_f221_arr = log_refined_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npym1];
-		double * DA_log_f222_arr = log_refined_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npy];
+		double * log_f111_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
+		double * log_f112_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npy];
+		double * log_f121_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npym1];
+		double * log_f122_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npy];
+		double * log_f211_arr = log_refined_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
+		double * log_f212_arr = log_refined_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npy];
+		double * log_f221_arr = log_refined_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npym1];
+		double * log_f222_arr = log_refined_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npy];
 
-		double * DA_sign_of_f111_arr = sgn_refined_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
-		double * DA_sign_of_f112_arr = sgn_refined_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npy];
-		double * DA_sign_of_f121_arr = sgn_refined_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npym1];
-		double * DA_sign_of_f122_arr = sgn_refined_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npy];
-		double * DA_sign_of_f211_arr = sgn_refined_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
-		double * DA_sign_of_f212_arr = sgn_refined_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npy];
-		double * DA_sign_of_f221_arr = sgn_refined_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npym1];
-		double * DA_sign_of_f222_arr = sgn_refined_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npy];
-
-		//copy contents to stack for faster access
-		double log_f111_arr[qpt_cs_length], log_f112_arr[qpt_cs_length], log_f121_arr[qpt_cs_length], log_f122_arr[qpt_cs_length];
-		double log_f211_arr[qpt_cs_length], log_f212_arr[qpt_cs_length], log_f221_arr[qpt_cs_length], log_f222_arr[qpt_cs_length];
-		double sign_of_f111_arr[qpt_cs_length], sign_of_f112_arr[qpt_cs_length], sign_of_f121_arr[qpt_cs_length], sign_of_f122_arr[qpt_cs_length];
-		double sign_of_f211_arr[qpt_cs_length], sign_of_f212_arr[qpt_cs_length], sign_of_f221_arr[qpt_cs_length], sign_of_f222_arr[qpt_cs_length];
-
-		copy(DA_log_f111_arr, DA_log_f111_arr+qpt_cs_length, log_f111_arr);
-		copy(DA_log_f112_arr, DA_log_f112_arr+qpt_cs_length, log_f112_arr);
-		copy(DA_log_f121_arr, DA_log_f121_arr+qpt_cs_length, log_f121_arr);
-		copy(DA_log_f122_arr, DA_log_f122_arr+qpt_cs_length, log_f122_arr);
-		copy(DA_log_f211_arr, DA_log_f211_arr+qpt_cs_length, log_f211_arr);
-		copy(DA_log_f212_arr, DA_log_f212_arr+qpt_cs_length, log_f212_arr);
-		copy(DA_log_f221_arr, DA_log_f221_arr+qpt_cs_length, log_f221_arr);
-		copy(DA_log_f222_arr, DA_log_f222_arr+qpt_cs_length, log_f222_arr);
-
-		copy(DA_sign_of_f111_arr, DA_sign_of_f111_arr+qpt_cs_length, sign_of_f111_arr);
-		copy(DA_sign_of_f112_arr, DA_sign_of_f112_arr+qpt_cs_length, sign_of_f112_arr);
-		copy(DA_sign_of_f121_arr, DA_sign_of_f121_arr+qpt_cs_length, sign_of_f121_arr);
-		copy(DA_sign_of_f122_arr, DA_sign_of_f122_arr+qpt_cs_length, sign_of_f122_arr);
-		copy(DA_sign_of_f211_arr, DA_sign_of_f211_arr+qpt_cs_length, sign_of_f211_arr);
-		copy(DA_sign_of_f212_arr, DA_sign_of_f212_arr+qpt_cs_length, sign_of_f212_arr);
-		copy(DA_sign_of_f221_arr, DA_sign_of_f221_arr+qpt_cs_length, sign_of_f221_arr);
-		copy(DA_sign_of_f222_arr, DA_sign_of_f222_arr+qpt_cs_length, sign_of_f222_arr);
+		double * sign_of_f111_arr = sgn_refined_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
+		double * sign_of_f112_arr = sgn_refined_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npy];
+		double * sign_of_f121_arr = sgn_refined_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npym1];
+		double * sign_of_f122_arr = sgn_refined_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npy];
+		double * sign_of_f211_arr = sgn_refined_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
+		double * sign_of_f212_arr = sgn_refined_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npy];
+		double * sign_of_f221_arr = sgn_refined_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npym1];
+		double * sign_of_f222_arr = sgn_refined_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npy];
 
 		for (int iqx = 0; iqx < qxnpts; ++iqx)
 		for (int iqy = 0; iqy < qynpts; ++iqy)
@@ -716,6 +699,21 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 			// finally, get the interpolated value
 			double Zki = lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
 
+/*double cosqx_SxK = 0.0, sinqx_SxK = 0.0;
+double qt_local = qlist[qlist_idx][0];
+double qx_local = qlist[qlist_idx][1];
+double qy_local = qlist[qlist_idx][2];
+double qz_local = qlist[qlist_idx][3];
+Cal_dN_dypTdpTdphi_with_weights_function_approx(current_resonance_particle_id, ptr, phir, spyr, qt_local, qx_local, qy_local, qz_local, &cosqx_SxK, &sinqx_SxK);
+cout << "Comparison1: " << current_resonance_particle_id << "   " << ptr << "   " << phir << "   " << pyr << "   "
+						<< pT0 << "   " << pT1 << "   " << phi0 << "   " << phi1 << "   " << py0 << "   " << py1 << "   "
+						<< f111_arr[qpt_cs_idx] << "   " << f112_arr[qpt_cs_idx] << "   " << f121_arr[qpt_cs_idx] << "   " << f122_arr[qpt_cs_idx] << "   "
+						<< f211_arr[qpt_cs_idx] << "   " << f212_arr[qpt_cs_idx] << "   " << f221_arr[qpt_cs_idx] << "   " << f222_arr[qpt_cs_idx] << "   "
+						<< f111_arr[qpt_cs_idx+1] << "   " << f112_arr[qpt_cs_idx+1] << "   " << f121_arr[qpt_cs_idx+1] << "   " << f122_arr[qpt_cs_idx+1] << "   "
+						<< f211_arr[qpt_cs_idx+1] << "   " << f212_arr[qpt_cs_idx+1] << "   " << f221_arr[qpt_cs_idx+1] << "   " << f222_arr[qpt_cs_idx+1] << "   "
+						<< qt_local << "   " << qx_local << "   " << qy_local << "   " << qz_local << "   "
+						<< Zkr << "   " << Zki << "   " << cosqx_SxK << "   " << sinqx_SxK << endl;*/
+
 	        /////////////////////////////////////////////////////
 	        // Finally, update results vectors appropriately
 	        /////////////////////////////////////////////////////
@@ -767,6 +765,25 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 
 			double Zki = lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
 
+/*double cosqx_SxK = 0.0, sinqx_SxK = 0.0;
+double qt_local = qlist[qlist_idx][0];
+double qx_local = qlist[qlist_idx][1];
+double qy_local = qlist[qlist_idx][2];
+double qz_local = qlist[qlist_idx][3];
+Cal_dN_dypTdpTdphi_with_weights_function_approx(current_resonance_particle_id, ptr, phir, spyr, qt_local, qx_local, qy_local, qz_local, &cosqx_SxK, &sinqx_SxK);
+cout << "Comp2c: " << current_resonance_particle_id << "   " << ptr << "   " << phir << "   " << spyr << "   "
+						<< pT0 << "   " << pT1 << "   " << phi0 << "   " << phi1 << "   " << py0 << "   " << py1 << "   "
+						<< f111_arr[qpt_cs_idx] << "   " << f112_arr[qpt_cs_idx] << "   " << f121_arr[qpt_cs_idx] << "   " << f122_arr[qpt_cs_idx] << "   "
+						<< f211_arr[qpt_cs_idx] << "   " << f212_arr[qpt_cs_idx] << "   " << f221_arr[qpt_cs_idx] << "   " << f222_arr[qpt_cs_idx] << "   "
+						<< qt_local << "   " << qx_local << "   " << qy_local << "   " << qz_local << "   "
+						<< Zkr << "   " << cosqx_SxK << endl;
+cout << "Comp2s: " << current_resonance_particle_id << "   " << ptr << "   " << phir << "   " << spyr << "   "
+						<< pT0 << "   " << pT1 << "   " << phi0 << "   " << phi1 << "   " << py0 << "   " << py1 << "   "
+						<< f111_arr[qpt_cs_idx+1] << "   " << f112_arr[qpt_cs_idx+1] << "   " << f121_arr[qpt_cs_idx+1] << "   " << f122_arr[qpt_cs_idx+1] << "   "
+						<< f211_arr[qpt_cs_idx+1] << "   " << f212_arr[qpt_cs_idx+1] << "   " << f221_arr[qpt_cs_idx+1] << "   " << f222_arr[qpt_cs_idx+1] << "   "
+						<< qt_local << "   " << qx_local << "   " << qy_local << "   " << qz_local << "   "
+						<< Zki << "   " << sinqx_SxK << endl;*/
+
 			/////////////////////////////////////////////////////
 			// Finally, update results vectors appropriately
 			/////////////////////////////////////////////////////
@@ -779,6 +796,8 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 			qlist_idx++;
 		}       //end of all q-loops
 	}
+
+//if (1) exit(8);
 
 	return;
 }

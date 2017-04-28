@@ -446,7 +446,7 @@ int CorrelationFunction::Administrate_besselcoeffs_HDF_array(int administration_
 	//	1 - Open (already initialized)
 	//	2 - Close
 	const int n_chunks = n_pY_pts;
-	const int chunk_size = 4 * FO_length * (n_alpha_points + 1);
+	const int chunk_size = 4 * FO_length * n_alpha_points;
 
 	double * besselcoeffs_chunk = new double [chunk_size];
 
@@ -560,7 +560,7 @@ int CorrelationFunction::Access_besselcoeffs_in_HDF_array(int ipY, int access_mo
 	//	0 - set array chunk
 	//	1 - get array chunk
 	const int n_chunks = n_pY_pts;
-	const int chunk_size = 4 * FO_length * (n_alpha_points + 1);
+	const int chunk_size = 4 * FO_length * n_alpha_points;
 
 	double * besselcoeffs_chunk = new double [chunk_size];
 

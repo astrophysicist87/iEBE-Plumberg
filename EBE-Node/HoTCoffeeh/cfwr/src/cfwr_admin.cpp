@@ -348,7 +348,10 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 			chebTnorm[ii] += tf*tf;
 		}
 		for (int kk = 0; kk < n_pY_pts; ++kk)
+		{
 			chebTcfs[ii * n_pY_pts + kk] /= chebTnorm[ii];
+			if (ii==0) chebTcfs[ii * n_pY_pts + kk] *= 2.0;
+		}
 	}
 	// Usage: contract appropriate segment of chebTcfs vector with weighted resonance spectra
 	//	at fixed pT, pphi to get Chebyshev coeffcients to use in interpolation
@@ -1216,27 +1219,34 @@ void CorrelationFunction::Set_all_Bessel_grids(int iqt, int iqz)
 	int HDFcode = Administrate_besselcoeffs_HDF_array(0);	//initialize
 
 	///////////////////////////////////
-	// Loop over qt, qz, and pY points
+	// Loop over pY points
 	///////////////////////////////////
 	Stopwatch sw_loop;
-	double * BC_chunk = new double [4 * FO_length * (n_alpha_points + 1)];
+	double loc_qt = qt_pts[iqt];
+	double loc_qz = qz_pts[iqz];
+	current_pY_shift = - double(abs(loc_qz)>1.e-10) * asinh(loc_qz / sqrt(abs(loc_qt*loc_qt-loc_qz*loc_qz) + 1.e-100));
+
+	double * BC_chunk = new double [4 * FO_length * n_alpha_points];
 	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 	{
 		sw_loop.Reset();
 		sw_loop.Start();
 		cout << "Starting loop = " << iqt << "   " << iqz << "   " << ipY << endl;
+
+		ch_SP_pY[ipY] = cosh(SP_Del_pY[ipY] + current_pY_shift);
+		sh_SP_pY[ipY] = sinh(SP_Del_pY[ipY] + current_pY_shift);
+		double ch_pY = ch_SP_pY[ipY];
+		double sh_pY = sh_SP_pY[ipY];
+
 		int iBC = 0;
 		for (int isurf = 0; isurf < FO_length; ++isurf)
 		{
 			double tau = (&FOsurf_ptr[isurf])->tau;
 
-			double qt = qt_pts[iqt];
-			double qz = qz_pts[iqz];
-			double ch_pY = ch_SP_pY[ipY];
-			double sh_pY = sh_SP_pY[ipY];
-			double beta = tau * hbarCm1 * ( qt*ch_pY - qz*sh_pY );
-			double gamma = tau * hbarCm1 * ( qz*ch_pY - qt*sh_pY );
+			double beta = tau * hbarCm1 * ( loc_qt*ch_pY - loc_qz*sh_pY );
+			double gamma = tau * hbarCm1 * ( loc_qz*ch_pY - loc_qt*sh_pY );
 			double gsq = gamma*gamma;
+//cout << "beta and gamma = " << beta << "   " << gamma << "   " << loc_qt << "   " << loc_qz << "   " << ch_pY << "   " << sh_pY << endl;
 
 			for (int ia = 0; ia < na; ++ia)
 			{
@@ -1256,27 +1266,45 @@ void CorrelationFunction::Set_all_Bessel_grids(int iqt, int iqz)
 
 			//////////////////////////////////
 			//exp(x) * K_0(x), real part
-			for (int j = 0; j < na; ++j)
+			//separate out 0th coefficient for additional factor of 2.0
+			coeffs_array[0] = 0.0;
+			for (int k = 0; k < na; ++k)
+				coeffs_array[0] += 2.0*expBesselK0re[k] * nums[0*na+k];
+			BC_chunk[iBC++] = coeffs_array[0] / dens[0];
+			//cout << "a" << 0 << " = " << coeffs_array[0] / dens[0] << endl;
+			for (int j = 1; j < na; ++j)
 			{
 				coeffs_array[j] = 0.0;
 				for (int k = 0; k < na; ++k)
 					coeffs_array[j] += expBesselK0re[k] * nums[j*na+k];
 				BC_chunk[iBC++] = coeffs_array[j] / dens[j];
+			//cout << "a" << j << " = " << coeffs_array[j] / dens[j] << endl;
 			}
+//if (1) exit(8);
 
 			//////////////////////////////////
 			//exp(x) * K_0(x), imaginary part
-			for (int j = 0; j < n_alpha_points; ++j)
+			//separate out 0th coefficient for additional factor of 2.0
+			coeffs_array[0] = 0.0;
+			for (int k = 0; k < na; ++k)
+				coeffs_array[0] += 2.0*expBesselK0im[k] * nums[0*na+k];
+			BC_chunk[iBC++] = coeffs_array[0] / dens[0];
+			for (int j = 1; j < na; ++j)
 			{
 				coeffs_array[j] = 0.0;
-				for (int k = 0; k < n_alpha_points; ++k)
+				for (int k = 0; k < na; ++k)
 					coeffs_array[j] += expBesselK0im[k] * nums[j*na+k];
 				BC_chunk[iBC++] = coeffs_array[j] / dens[j];
 			}
 
 			//////////////////////////////////
 			//exp(x) * K_1(x), real part
-			for (int j = 0; j < na; ++j)
+			//separate out 0th coefficient for additional factor of 2.0
+			coeffs_array[0] = 0.0;
+			for (int k = 0; k < na; ++k)
+				coeffs_array[0] += 2.0*expBesselK1re[k] * nums[0*na+k];
+			BC_chunk[iBC++] = coeffs_array[0] / dens[0];
+			for (int j = 1; j < na; ++j)
 			{
 				coeffs_array[j] = 0.0;
 				for (int k = 0; k < na; ++k)
@@ -1286,13 +1314,19 @@ void CorrelationFunction::Set_all_Bessel_grids(int iqt, int iqz)
 
 			//////////////////////////////////
 			//exp(x) * K_1(x), imaginary part
-			for (int j = 0; j < na; ++j)
+			//separate out 0th coefficient for additional factor of 2.0
+			coeffs_array[0] = 0.0;
+			for (int k = 0; k < na; ++k)
+				coeffs_array[0] += 2.0*expBesselK1im[k] * nums[0*na+k];
+			BC_chunk[iBC++] = coeffs_array[0] / dens[0];
+			for (int j = 1; j < na; ++j)
 			{
 				coeffs_array[j] = 0.0;
 				for (int k = 0; k < na; ++k)
 					coeffs_array[j] += expBesselK1im[k] * nums[j*na+k];
 				BC_chunk[iBC++] = coeffs_array[j] / dens[j];
 			}
+			//cout << "Just set " << iBC - 1 << " of " << 4 * FO_length * n_alpha_points << "-length array." << endl;
 		}
 
 		//finally, store the results

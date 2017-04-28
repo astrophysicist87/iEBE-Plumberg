@@ -65,10 +65,19 @@ inline void Iint2(double alpha, double beta, double gamma, double & I0r, double 
 	complex<double> zqi = zsq*zcu;
 	double ea = exp(-alpha);
 
+	complex<double> Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p;
+	int errorCode = bessf::cbessik01(z, Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p);
+
+
 	complex<double> ck0(	ea * gsl_cheb_eval (cs_accel_expK0re, alpha),
 							ea * gsl_cheb_eval (cs_accel_expK0im, alpha) );
 	complex<double> ck1(	ea * gsl_cheb_eval (cs_accel_expK1re, alpha),
 							ea * gsl_cheb_eval (cs_accel_expK1im, alpha) );
+
+//cout << "Sanity Check1: " << ea * gsl_cheb_eval (cs_accel_expK0re, alpha) << "   " << ea * gsl_cheb_eval (cs_accel_expK0im, alpha) << "   " << ea * gsl_cheb_eval (cs_accel_expK1re, alpha) << "   " << ea * gsl_cheb_eval (cs_accel_expK1im, alpha) << endl;
+//cout << "Sanity Check2: " << Cck0.real() << "   " << Cck0.imag() << "   " << Cck1.real() << "   " << Cck1.imag() << endl;
+//cout << setw(18) << setprecision(16) << alpha << "   " << beta << "   " << gamma << endl;
+//if (1) exit(8);
 
 	complex<double> I0 = 2.0*ck0;
 	complex<double> I1 = 2.0*z0*ck1 / z;
@@ -812,11 +821,11 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 
 	//prepare for reading...
 	int HDFcode = Administrate_besselcoeffs_HDF_array(1);	//open
-	double * BC_chunk = new double [4 * FO_length * (n_alpha_points + 1)];
-	cs_accel_expK0re = gsl_cheb_alloc (n_alpha_points);
-	cs_accel_expK0im = gsl_cheb_alloc (n_alpha_points);
-	cs_accel_expK1re = gsl_cheb_alloc (n_alpha_points);
-	cs_accel_expK1im = gsl_cheb_alloc (n_alpha_points);
+	double * BC_chunk = new double [4 * FO_length * n_alpha_points];
+	cs_accel_expK0re = gsl_cheb_alloc (n_alpha_points - 1);
+	cs_accel_expK0im = gsl_cheb_alloc (n_alpha_points - 1);
+	cs_accel_expK1re = gsl_cheb_alloc (n_alpha_points - 1);
+	cs_accel_expK1im = gsl_cheb_alloc (n_alpha_points - 1);
 
 	///////////////////////////////////
 	// Loop over pY points
@@ -1006,10 +1015,10 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 
 	double alpha_min = 4.0, alpha_max = 75.0;
 
-	double * expK0_Bessel_re = new double [n_alpha_points+1];
-	double * expK0_Bessel_im = new double [n_alpha_points+1];
-	double * expK1_Bessel_re = new double [n_alpha_points+1];
-	double * expK1_Bessel_im = new double [n_alpha_points+1];
+	double * expK0_Bessel_re = new double [n_alpha_points];
+	double * expK0_Bessel_im = new double [n_alpha_points];
+	double * expK1_Bessel_re = new double [n_alpha_points];
+	double * expK1_Bessel_im = new double [n_alpha_points];
 	cs_accel_expK0re->a = alpha_min;
 	cs_accel_expK0re->b = alpha_max;
 	cs_accel_expK0im->a = alpha_min;
@@ -1019,7 +1028,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 	cs_accel_expK1im->a = alpha_min;
 	cs_accel_expK1im->b = alpha_max;
 
-	for (int ia = 0; ia < n_alpha_points+1; ++ia)
+	for (int ia = 0; ia < n_alpha_points; ++ia)
 	{
 		expK0_Bessel_re[ia] = 0.0;
 		expK0_Bessel_im[ia] = 0.0;
@@ -1081,13 +1090,13 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 		double gamma = tau * hbarCm1 * ( qz*ch_pY - qt*sh_pY );
 
 		// Load Bessel Chebyshev coefficients
-		for (int ia = 0; ia < n_alpha_points+1; ++ia)
+		for (int ia = 0; ia < n_alpha_points; ++ia)
 			expK0_Bessel_re[ia] = BC_chunk[iBC++];
-		for (int ia = 0; ia < n_alpha_points+1; ++ia)
+		for (int ia = 0; ia < n_alpha_points; ++ia)
 			expK0_Bessel_im[ia] = BC_chunk[iBC++];
-		for (int ia = 0; ia < n_alpha_points+1; ++ia)
+		for (int ia = 0; ia < n_alpha_points; ++ia)
 			expK1_Bessel_re[ia] = BC_chunk[iBC++];
-		for (int ia = 0; ia < n_alpha_points+1; ++ia)
+		for (int ia = 0; ia < n_alpha_points; ++ia)
 			expK1_Bessel_im[ia] = BC_chunk[iBC++];
 
 		cs_accel_expK0re->c = expK0_Bessel_re;
@@ -1113,6 +1122,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 			double pT = SP_pT[ipT];
 			double mT = sqrt(pT*pT+localmass*localmass);
 			double alpha = one_by_Tdec*gammaT*mT;
+//cout << "HERE: " << one_by_Tdec << "   " << gammaT << "   " << localmass << "   " << pT << "   " << mT << "   " << alpha << endl;
 
 			Iint2(alpha, beta, gamma, I0_a_b_g_re, I1_a_b_g_re, I2_a_b_g_re, I3_a_b_g_re, I0_a_b_g_im, I1_a_b_g_im, I2_a_b_g_im, I3_a_b_g_im);
 			if (use_delta_f)
@@ -1163,7 +1173,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 				double cos_trans_Fourier = cosAx*cosAy - sinAx*sinAy;
 				double sin_trans_Fourier = -sinAx*cosAy - cosAx*sinAy;
 				double * ala_C = alt_long_array_C[idx];
-				double * ala_S = alt_long_array_S[idx];
+				double * ala_S = alt_long_array_S[idx++];
 				long iidx = 0;
 				while ( iidx < iidx_end )
 				{
