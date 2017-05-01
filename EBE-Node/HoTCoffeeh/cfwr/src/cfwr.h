@@ -284,6 +284,7 @@ class CorrelationFunction
 		void Cal_dN_dypTdpTdphi(double** SP_p0, double** SP_px, double** SP_py, double** SP_pz);
 		void Cal_dN_dypTdpTdphi_no_weights(int local_pid);
 		void Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY, int iqt, int iqz, double * BC_chunk);
+		void Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_pid, int ipY, int iqt, int iqz, double * BC_chunk, int max_n_terms_to_compute);
 		double Cal_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi);
 		void Cal_dN_dypTdpTdphi_with_weights_function_approx(int local_pid, double pT, double pphi, double pY,
 												double qt, double qx, double qy, double qz, double * cosqx_dN_dypTdpTdphi, double * sinqx_dN_dypTdpTdphi);

@@ -99,6 +99,43 @@ inline void Iint2(double alpha, double beta, double gamma, double & I0r, double 
 	return;
 }
 
+inline void Iint3(double alpha, double beta, double gamma, vector<complex<double> > * I0, vector<complex<double> > * I1, vector<complex<double> > * I2, vector<complex<double> > * I3, int max_n_terms_to_compute)
+{
+	double gsq = gamma*gamma;
+	for (int k = 1; k <= max_n_terms_to_compute; ++k)
+	{
+		complex<double> z0 = k*alpha - i*beta;
+		complex<double> z0sq = z0*z0;
+		complex<double> zsq = z0sq + gsq;
+		complex<double> z = sqrt(zsq);
+		complex<double> zcu = zsq*z;
+		complex<double> zqi = zsq*zcu;
+		double ea = exp(-k * alpha);
+
+		complex<double> Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p;
+		int errorCode = bessf::cbessik01(z, Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p);
+
+
+		complex<double> ck0(	ea * gsl_cheb_eval (cs_accel_expK0re, alpha),
+								ea * gsl_cheb_eval (cs_accel_expK0im, alpha) );
+		complex<double> ck1(	ea * gsl_cheb_eval (cs_accel_expK1re, alpha),
+								ea * gsl_cheb_eval (cs_accel_expK1im, alpha) );
+
+		(*I0).push_back(2.0*ck0);
+		(*I1).push_back(2.0*z0*ck1 / z);
+		(*I2).push_back(
+				2.0*z0sq*ck0 / zsq
+				+ 2.0*(z0sq - gsq)*ck1 / zcu
+				);
+		(*I3).push_back(
+				2.0*z0*( ( z0sq*z0sq - 2.0* z0sq*gsq - 3.0 * gsq*gsq ) * ck0 / z
+				+ (-6.0*gsq + z0sq*(2.0 + z0sq + gsq)) * ck1 ) / zqi
+				);
+	}
+
+	return;
+}
+
 double CorrelationFunction::place_in_range(double phi, double min, double max)
 {
 	while (phi < min || phi > max)
@@ -841,7 +878,10 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 		//load appropriate Bessel coefficients
 		HDFcode = Access_besselcoeffs_in_HDF_array(ipY, 1, BC_chunk);
 		//do the calculations
-		Cal_dN_dypTdpTdphi_with_weights(local_pid, ipY, iqt, iqz, BC_chunk);
+		if (local_pid == 1)	//pion^+; eventually eneralize this to include other options for light particles, too
+			Cal_dN_dypTdpTdphi_with_weights_adjustable(local_pid, ipY, iqt, iqz, BC_chunk, 10);		//use 10-term Boltzmann-like expansion
+		else
+			Cal_dN_dypTdpTdphi_with_weights(local_pid, ipY, iqt, iqz, BC_chunk);					//otherwise, for heavier particles, only need first term in Boltzmann approximation
 		sw_qtqzpY.Stop();
 		if (VERBOSE > 1) *global_out_stream_ptr << "Finished loop with ( iqt, iqz, ipY ) = ( " << iqt << ", " << iqz << ", " << ipY << " ) in " << sw_qtqzpY.printTime() << " seconds." << endl;
 	}
@@ -1155,6 +1195,249 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 
 				short_array_C[iidx] = term1_re + term2_re + term3_re;
 				short_array_S[iidx++] = term1_im + term2_im + term3_im;
+			}
+		}
+
+		////////////////////////////////////////
+		// Loop over qx, qy, pT, and pphi points
+		////////////////////////////////////////
+		long idx = 0;
+		const long iidx_end = (long)n_pT_pts * (long)n_pphi_pts;
+		for (int iqx = 0; iqx < qxnpts; ++iqx)
+		{
+			double cosAx = tmpX[iqx * 2 + 0], sinAx = tmpX[iqx * 2 + 1];
+			for (int iqy = 0; iqy < qynpts; ++iqy)
+			{
+				double cosAy = tmpY[iqy * 2 + 0], sinAy = tmpY[iqy * 2 + 1];
+				double cos_trans_Fourier = cosAx*cosAy - sinAx*sinAy;
+				double sin_trans_Fourier = sinAx*cosAy + cosAx*sinAy;
+				double * ala_C = alt_long_array_C[idx];
+				double * ala_S = alt_long_array_S[idx++];
+				long iidx = 0;
+				while ( iidx < iidx_end )
+				{
+					double cos_qx_S_x_K = short_array_C[iidx];
+					double sin_qx_S_x_K = short_array_S[iidx];
+					ala_C[iidx] += cos_trans_Fourier * cos_qx_S_x_K + sin_trans_Fourier * sin_qx_S_x_K;
+					ala_S[iidx++] += cos_trans_Fourier * sin_qx_S_x_K - sin_trans_Fourier * cos_qx_S_x_K;
+				}
+			}
+		}
+	}
+
+	int idx = 0;
+	for (int iqx = 0; iqx < qxnpts; ++iqx)
+	for (int iqy = 0; iqy < qynpts; ++iqy)
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+	{
+		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,0)] = alt_long_array_C[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,1)] = alt_long_array_S[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+	}
+	//////////
+	//////////
+
+	delete [] expK0_Bessel_re;
+	delete [] expK0_Bessel_im;
+	delete [] expK1_Bessel_re;
+	delete [] expK1_Bessel_im;
+
+	for (int isa = 0; isa < qxnpts * qynpts; ++isa)
+	{
+		delete [] alt_long_array_C[isa];
+		delete [] alt_long_array_S[isa];
+	}
+	delete [] alt_long_array_C;
+	delete [] alt_long_array_S;
+
+	sw.Stop();
+	*global_out_stream_ptr << "Total function call took " << sw.printTime() << " seconds." << endl;
+	
+	return;
+}
+
+//////////////////////////////////////////
+void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_pid, int ipY, int iqt, int iqz, double * BC_chunk, int max_n_terms_to_compute)
+{
+	Stopwatch sw, sw_FOsurf;
+	sw.Start();
+
+	// set particle information
+	double sign = all_particles[local_pid].sign;
+	double degen = all_particles[local_pid].gspin;
+	double localmass = all_particles[local_pid].mass;
+	double mu = all_particles[local_pid].mu;
+
+	// set some freeze-out surface information that's constant the whole time
+	double prefactor = 1.0*degen/(8.0*M_PI*M_PI*M_PI)/(hbarC*hbarC*hbarC);
+	double eta_s_symmetry_factor = 2.0;
+	double Tdec = (&FOsurf_ptr[0])->Tdec;
+	double Pdec = (&FOsurf_ptr[0])->Pdec;
+	double Edec = (&FOsurf_ptr[0])->Edec;
+	double one_by_Tdec = 1./Tdec;
+	double deltaf_prefactor = 0.;
+	if (use_delta_f)
+		deltaf_prefactor = 1./(2.0*Tdec*Tdec*(Edec+Pdec));
+
+	double alpha_min = 4.0, alpha_max = 75.0;
+
+	double * expK0_Bessel_re = new double [n_alpha_points];
+	double * expK0_Bessel_im = new double [n_alpha_points];
+	double * expK1_Bessel_re = new double [n_alpha_points];
+	double * expK1_Bessel_im = new double [n_alpha_points];
+	cs_accel_expK0re->a = alpha_min;
+	cs_accel_expK0re->b = alpha_max;
+	cs_accel_expK0im->a = alpha_min;
+	cs_accel_expK0im->b = alpha_max;
+	cs_accel_expK1re->a = alpha_min;
+	cs_accel_expK1re->b = alpha_max;
+	cs_accel_expK1im->a = alpha_min;
+	cs_accel_expK1im->b = alpha_max;
+
+	for (int ia = 0; ia < n_alpha_points; ++ia)
+	{
+		expK0_Bessel_re[ia] = 0.0;
+		expK0_Bessel_im[ia] = 0.0;
+		expK1_Bessel_re[ia] = 0.0;
+		expK1_Bessel_im[ia] = 0.0;
+	}
+
+	double C = deltaf_prefactor;
+
+	double ** alt_long_array_C = new double * [qxnpts * qynpts];
+	double ** alt_long_array_S = new double * [qxnpts * qynpts];
+	for (int isa = 0; isa < qxnpts * qynpts; ++isa)
+	{
+		alt_long_array_C[isa] = new double [n_pT_pts * n_pphi_pts];
+		alt_long_array_S[isa] = new double [n_pT_pts * n_pphi_pts];
+		for (int isa2 = 0; isa2 < n_pT_pts * n_pphi_pts; ++isa2)
+		{
+			alt_long_array_C[isa][isa2] = 0.0;
+			alt_long_array_S[isa][isa2] = 0.0;
+		}
+	}
+
+	/////////////////////////////////////////////////////////////
+	// Loop over all freeze-out surface fluid cells (for now)
+	/////////////////////////////////////////////////////////////
+	int iBC = 0;
+	for (int isurf = 0; isurf < FO_length; ++isurf)
+	{
+		FO_surf * surf = &FOsurf_ptr[isurf];
+
+		double tau = surf->tau;
+
+		double vx = surf->vx;
+		double vy = surf->vy;
+		double gammaT = surf->gammaT;
+
+		double da0 = surf->da0;
+		double da1 = surf->da1;
+		double da2 = surf->da2;
+
+		double pi00 = surf->pi00;
+		double pi01 = surf->pi01;
+		double pi02 = surf->pi02;
+		double pi11 = surf->pi11;
+		double pi12 = surf->pi12;
+		double pi22 = surf->pi22;
+		double pi33 = surf->pi33;
+
+		double qt = qt_pts[iqt];
+		double qz = qz_pts[iqz];
+		double ch_pY = ch_SP_pY[ipY];
+		double sh_pY = sh_SP_pY[ipY];
+		double beta = tau * hbarCm1 * ( qt*ch_pY - qz*sh_pY );
+		double gamma = tau * hbarCm1 * ( qz*ch_pY - qt*sh_pY );
+
+		// Load Bessel Chebyshev coefficients
+		for (int ia = 0; ia < n_alpha_points; ++ia)
+			expK0_Bessel_re[ia] = BC_chunk[iBC++];
+		for (int ia = 0; ia < n_alpha_points; ++ia)
+			expK0_Bessel_im[ia] = BC_chunk[iBC++];
+		for (int ia = 0; ia < n_alpha_points; ++ia)
+			expK1_Bessel_re[ia] = BC_chunk[iBC++];
+		for (int ia = 0; ia < n_alpha_points; ++ia)
+			expK1_Bessel_im[ia] = BC_chunk[iBC++];
+
+		cs_accel_expK0re->c = expK0_Bessel_re;
+		cs_accel_expK0im->c = expK0_Bessel_im;
+		cs_accel_expK1re->c = expK1_Bessel_re;
+		cs_accel_expK1im->c = expK1_Bessel_im;
+
+		double * tmpX = oscx[isurf];
+		double * tmpY = oscy[isurf];
+		double short_array_C[n_pT_pts * n_pphi_pts], short_array_S[n_pT_pts * n_pphi_pts];
+		for (int isa = 0; isa < n_pT_pts * n_pphi_pts; ++isa)
+		{
+			short_array_C[isa] = 0.0;
+			short_array_S[isa] = 0.0;
+		}
+
+		/////////////////////////////////////////////////////
+		// Loop over pT and pphi points (as fast as possible)
+		/////////////////////////////////////////////////////
+		int iidx = 0;
+		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+		{
+			double pT = SP_pT[ipT];
+			double mT = sqrt(pT*pT+localmass*localmass);
+			double alpha = one_by_Tdec*gammaT*mT;
+
+			//Iint2(alpha, beta, gamma, I0_a_b_g_re, I1_a_b_g_re, I2_a_b_g_re, I3_a_b_g_re, I0_a_b_g_im, I1_a_b_g_im, I2_a_b_g_im, I3_a_b_g_im);
+			//if (use_delta_f)
+			//	Iint2(2.0*alpha, beta, gamma, I0_2a_b_g_re, I1_2a_b_g_re, I2_2a_b_g_re, I3_2a_b_g_re, I0_2a_b_g_im, I1_2a_b_g_im, I2_2a_b_g_im, I3_2a_b_g_im);
+			vector<complex<double> > I0, I1, I2, I3;
+			Iint3(alpha, beta, gamma, &I0, &I1, &I2, &I3, max_n_terms_to_compute);
+
+			double A = tau*prefactor*mT*da0;
+			double a = mT*mT*(pi00 + pi33);
+
+			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+			{
+				// initialize transverse momentum information
+				double px = pT*cos_SP_pphi[ipphi];
+				double py = pT*sin_SP_pphi[ipphi];
+
+				double B = tau*prefactor*(px*da1 + py*da2);
+				double b = -2.0*mT*(px*pi01 + py*pi02);
+				double c = px*px*pi11 + 2.0*px*py*pi12 + py*py*pi22 - mT*mT*pi33;
+
+				double transverse_f0 = exp( one_by_Tdec*(gammaT*(px*vx + py*vy) + mu) );
+
+				complex<double> I0_f(0,0), I1_f(0,0), I2_f(0,0), I3_f(0,0);
+				complex<double> I0_f2(0,0), I1_f2(0,0), I2_f2(0,0), I3_f2(0,0);
+				int sign_of_kth_term = 1.0;
+				double tf0_factor = 1.0;
+				for (int k = 1; k <= max_n_terms_to_compute - 1; ++k)
+				{
+					double tf0_factor_k = tf0_factor * transverse_f0;
+					I0_f += sign_of_kth_term * tf0_factor_k * I0[k-1];
+					I1_f += sign_of_kth_term * tf0_factor_k * I1[k-1];
+					I2_f += sign_of_kth_term * tf0_factor_k * I2[k-1];
+					I3_f += sign_of_kth_term * tf0_factor_k * I3[k-1];
+					int sign_of_lth_term = 1.0;
+					for (int l = 1; l <= max_n_terms_to_compute - k; ++l)
+					{
+						tf0_factor_k *= transverse_f0;
+						I0_f2 += sign_of_kth_term * sign_of_lth_term * tf0_factor_k * I0[k+l-1];
+						I1_f2 += sign_of_kth_term * sign_of_lth_term * tf0_factor_k * I1[k+l-1];
+						I2_f2 += sign_of_kth_term * sign_of_lth_term * tf0_factor_k * I2[k+l-1];
+						I3_f2 += sign_of_kth_term * sign_of_lth_term * tf0_factor_k * I3[k+l-1];
+						sign_of_lth_term *= -sign;
+					}
+					sign_of_kth_term *= -sign;
+					tf0_factor *= transverse_f0;
+				}
+
+				complex<double> term1 = A*I1_f + B*I0_f;
+				complex<double> term2 = C * ( A*a*I3_f + (B*a+b*A)*I2_f + (B*b+c*A)*I1_f + B*c*I0_f );
+				complex<double> term3 = -sign * C * ( A*a*I3_f2 + (B*a+b*A)*I2_f2 + (B*b+c*A)*I1_f2 + B*c*I0_f2 );
+
+				complex<double> eiqx_S_x_K = term1 + term2 + term3;
+
+				short_array_C[iidx] =  eiqx_S_x_K.real();
+				short_array_C[iidx++] =  eiqx_S_x_K.imag();
 			}
 		}
 
