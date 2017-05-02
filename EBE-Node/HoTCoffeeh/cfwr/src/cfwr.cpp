@@ -65,8 +65,8 @@ inline void Iint2(double alpha, double beta, double gamma, double & I0r, double 
 	complex<double> zqi = zsq*zcu;
 	double ea = exp(-alpha);
 
-	complex<double> Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p;
-	int errorCode = bessf::cbessik01(z, Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p);
+//	complex<double> Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p;
+//	int errorCode = bessf::cbessik01(z, Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p);
 
 
 	complex<double> ck0(	ea * gsl_cheb_eval (cs_accel_expK0re, alpha),
@@ -99,7 +99,7 @@ inline void Iint2(double alpha, double beta, double gamma, double & I0r, double 
 	return;
 }
 
-inline void Iint3(double alpha, double beta, double gamma, vector<complex<double> > * I0, vector<complex<double> > * I1, vector<complex<double> > * I2, vector<complex<double> > * I3, int max_n_terms_to_compute)
+/*inline void Iint3(double alpha, double beta, double gamma, vector<complex<double> > * I0, vector<complex<double> > * I1, vector<complex<double> > * I2, vector<complex<double> > * I3, int max_n_terms_to_compute)
 {
 	double gsq = gamma*gamma;
 	for (int k = 1; k <= max_n_terms_to_compute; ++k)
@@ -134,7 +134,7 @@ inline void Iint3(double alpha, double beta, double gamma, vector<complex<double
 	}
 
 	return;
-}
+}*/
 
 double CorrelationFunction::place_in_range(double phi, double min, double max)
 {
@@ -878,9 +878,9 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 		//load appropriate Bessel coefficients
 		HDFcode = Access_besselcoeffs_in_HDF_array(ipY, 1, BC_chunk);
 		//do the calculations
-		if (local_pid == 1)	//pion^+; eventually eneralize this to include other options for light particles, too
-			Cal_dN_dypTdpTdphi_with_weights_adjustable(local_pid, ipY, iqt, iqz, BC_chunk, 10);		//use 10-term Boltzmann-like expansion
-		else
+		//if (local_pid == 1)	//pion^+; eventually eneralize this to include other options for light particles, too
+		//	Cal_dN_dypTdpTdphi_with_weights_adjustable(local_pid, ipY, iqt, iqz, BC_chunk, 10);		//use 10-term Boltzmann-like expansion
+		//else
 			Cal_dN_dypTdpTdphi_with_weights(local_pid, ipY, iqt, iqz, BC_chunk);					//otherwise, for heavier particles, only need first term in Boltzmann approximation
 		sw_qtqzpY.Stop();
 		if (VERBOSE > 1) *global_out_stream_ptr << "Finished loop with ( iqt, iqz, ipY ) = ( " << iqt << ", " << iqz << ", " << ipY << " ) in " << sw_qtqzpY.printTime() << " seconds." << endl;
@@ -1095,6 +1095,13 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 			alt_long_array_S[isa][isa2] = 0.0;
 		}
 	}
+	/*long long_array_length = qxnpts * qynpts * n_pT_pts * n_pphi_pts;
+	double long_array_C[long_array_length], long_array_S[long_array_length];
+	for (int ila = 0; ila < long_array_length; ++ila)
+	{
+		long_array_C[ila] = 0.0;
+		long_array_S[ila] = 0.0;
+	}*/
 
 	/////////////////////////////////////////////////////////////
 	// Loop over all freeze-out surface fluid cells (for now)
@@ -1213,13 +1220,15 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 				double sin_trans_Fourier = sinAx*cosAy + cosAx*sinAy;
 				double * ala_C = alt_long_array_C[idx];
 				double * ala_S = alt_long_array_S[idx++];
-				long iidx = 0;
-				while ( iidx < iidx_end )
+				long iidx_local = 0;
+				while ( iidx_local < iidx_end )
 				{
-					double cos_qx_S_x_K = short_array_C[iidx];
-					double sin_qx_S_x_K = short_array_S[iidx];
-					ala_C[iidx] += cos_trans_Fourier * cos_qx_S_x_K + sin_trans_Fourier * sin_qx_S_x_K;
-					ala_S[iidx++] += cos_trans_Fourier * sin_qx_S_x_K - sin_trans_Fourier * cos_qx_S_x_K;
+					double cos_qx_S_x_K = short_array_C[iidx_local];
+					double sin_qx_S_x_K = short_array_S[iidx_local++];
+					ala_C[iidx_local] += cos_trans_Fourier * cos_qx_S_x_K + sin_trans_Fourier * sin_qx_S_x_K;
+					ala_S[iidx_local++] += cos_trans_Fourier * sin_qx_S_x_K - sin_trans_Fourier * cos_qx_S_x_K;
+					//long_array_C[idx] += cos_trans_Fourier * cos_qx_S_x_K + sin_trans_Fourier * sin_qx_S_x_K;
+					//long_array_S[idx++] += cos_trans_Fourier * sin_qx_S_x_K - sin_trans_Fourier * cos_qx_S_x_K;
 				}
 			}
 		}
@@ -1233,6 +1242,8 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 	{
 		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,0)] = alt_long_array_C[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
 		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,1)] = alt_long_array_S[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		//current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,0)] = long_array_C[idx];
+		//current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,1)] = long_array_S[idx++];
 	}
 	//////////
 	//////////
@@ -1257,7 +1268,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 }
 
 //////////////////////////////////////////
-void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_pid, int ipY, int iqt, int iqz, double * BC_chunk, int max_n_terms_to_compute)
+/*void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_pid, int ipY, int iqt, int iqz, double * BC_chunk, int max_n_terms_to_compute)
 {
 	Stopwatch sw, sw_FOsurf;
 	sw.Start();
@@ -1497,6 +1508,6 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_p
 	*global_out_stream_ptr << "Total function call took " << sw.printTime() << " seconds." << endl;
 	
 	return;
-}
+}*/
 
 //End of file
