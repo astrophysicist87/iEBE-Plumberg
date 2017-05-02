@@ -461,7 +461,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 	double phi0, phi1, py0, py1;
 	double val11, val12, val21, val22;	//store intermediate results of pT interpolation
 	double val1, val2;					//store intermediate results of pphi interpolation
-	//double pyr = abs(spyr);			//used for checking 
+	//double pyr = abs(spyr);			//used for checking
 
 	int npphi_max = n_pphi_pts - 1;
 	int npT_max = n_pT_pts - 1;
@@ -520,6 +520,8 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 		cerr << "ERROR in eiqxEdndp3(): pT and/or pphi values equal!" << endl;
 		exit(1);
 	}
+
+	bool ptr_greater_than_pT1 = (ptr > pT1);
 
 	double one_by_pTdiff = 1./(pT1 - pT0), one_by_pphidiff = 1./(phi1 - phi0), one_by_pYdiff = 1./(py1 - py0 + 1.e-100);
 	double del_ptr_pt0 = ptr - pT0, del_phir_phi0 = phir - phi0, del_pyr_py0 = pyr - py0;
@@ -583,7 +585,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 			// set val11 //
 			///////////////
 			// if using extrapolation and spectra at pT1 has larger magnitude than at pT0 (or the signs are different), just return zero
-			if ( ptr > pT1 && ( log_f211_arr[qpt_cs_idx] > log_f111_arr[qpt_cs_idx] || sign_of_f111 * sign_of_f211 < 0 ) )
+			if ( ptr_greater_than_pT1 && ( log_f211_arr[qpt_cs_idx] > log_f111_arr[qpt_cs_idx] || sign_of_f111 * sign_of_f211 < 0 ) )
 				val11 = 0.0;
 			else if (sign_of_f111 * sign_of_f211 > 0) // if the two points have the same sign in the pT direction, interpolate logs
 				val11 = sign_of_f111 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) );
@@ -593,7 +595,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 			///////////////
 			// set val21 //
 			///////////////
-			if ( ptr > pT1 && ( log_f221_arr[qpt_cs_idx] > log_f121_arr[qpt_cs_idx] || sign_of_f121 * sign_of_f221 < 0 ) )
+			if ( ptr_greater_than_pT1 && ( log_f221_arr[qpt_cs_idx] > log_f121_arr[qpt_cs_idx] || sign_of_f121 * sign_of_f221 < 0 ) )
 				val21 = 0.0;
 			else if (sign_of_f121 * sign_of_f221 > 0) // if the two points have the same sign in the pT direction, interpolate logs
 				val21 = sign_of_f121 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]) );
@@ -604,7 +606,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 			// set val12 //
 			///////////////
 			// if using extrapolation and spectra at pT1 has larger magnitude than at pT0 (or the signs are different), just return zero
-			if ( ptr > pT1 && ( log_f212_arr[qpt_cs_idx] > log_f112_arr[qpt_cs_idx] || sign_of_f112 * sign_of_f212 < 0 ) )
+			if ( ptr_greater_than_pT1 && ( log_f212_arr[qpt_cs_idx] > log_f112_arr[qpt_cs_idx] || sign_of_f112 * sign_of_f212 < 0 ) )
 				val12 = 0.0;
 			else if (sign_of_f112 * sign_of_f212 > 0) // if the two points have the same sign in the pT direction, interpolate logs
 				val12 = sign_of_f112 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]) );
@@ -614,7 +616,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 			///////////////
 			// set val22 //
 			///////////////
-			if ( ptr > pT1 && ( log_f222_arr[qpt_cs_idx] > log_f122_arr[qpt_cs_idx] || sign_of_f122 * sign_of_f222 < 0 ) )
+			if ( ptr_greater_than_pT1 && ( log_f222_arr[qpt_cs_idx] > log_f122_arr[qpt_cs_idx] || sign_of_f122 * sign_of_f222 < 0 ) )
 				val22 = 0.0;
 			else if (sign_of_f122 * sign_of_f222 > 0) // if the two points have the same sign in the pT direction, interpolate logs
 				val22 = sign_of_f122 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
@@ -649,7 +651,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 			// set val11 //
 			///////////////
 			// if using extrapolation and spectra at pT1 has larger magnitude than at pT0 (or the signs are different), just return zero
-			if ( ptr > pT1 && ( log_f211_arr[qpt_cs_idx+1] > log_f111_arr[qpt_cs_idx+1] || sign_of_f111 * sign_of_f211 < 0 ) )
+			if ( ptr_greater_than_pT1 && ( log_f211_arr[qpt_cs_idx+1] > log_f111_arr[qpt_cs_idx+1] || sign_of_f111 * sign_of_f211 < 0 ) )
 				val11 = 0.0;
 			else if (sign_of_f111 * sign_of_f211 > 0) // if the two points have the same sign in the pT direction, interpolate logs
 				val11 = sign_of_f111 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx+1], log_f211_arr[qpt_cs_idx+1]) );
@@ -659,7 +661,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 			///////////////
 			// set val21 //
 			///////////////
-			if ( ptr > pT1 && ( log_f221_arr[qpt_cs_idx+1] > log_f121_arr[qpt_cs_idx+1] || sign_of_f121 * sign_of_f221 < 0 ) )
+			if ( ptr_greater_than_pT1 && ( log_f221_arr[qpt_cs_idx+1] > log_f121_arr[qpt_cs_idx+1] || sign_of_f121 * sign_of_f221 < 0 ) )
 				val21 = 0.0;
 			else if (sign_of_f121 * sign_of_f221 > 0) // if the two points have the same sign in the pT direction, interpolate logs
 				val21 = sign_of_f121 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx+1], log_f221_arr[qpt_cs_idx+1]) );
@@ -670,7 +672,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 			// set val12 //
 			///////////////
 			// if using extrapolation and spectra at pT1 has larger magnitude than at pT0 (or the signs are different), just return zero
-			if ( ptr > pT1 && ( log_f212_arr[qpt_cs_idx+1] > log_f112_arr[qpt_cs_idx+1] || sign_of_f112 * sign_of_f212 < 0 ) )
+			if ( ptr_greater_than_pT1 && ( log_f212_arr[qpt_cs_idx+1] > log_f112_arr[qpt_cs_idx+1] || sign_of_f112 * sign_of_f212 < 0 ) )
 				val12 = 0.0;
 			else if (sign_of_f112 * sign_of_f212 > 0) // if the two points have the same sign in the pT direction, interpolate logs
 				val12 = sign_of_f112 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx+1], log_f212_arr[qpt_cs_idx+1]) );
@@ -680,7 +682,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 			///////////////
 			// set val22 //
 			///////////////
-			if ( ptr > pT1 && ( log_f222_arr[qpt_cs_idx+1] > log_f122_arr[qpt_cs_idx+1] || sign_of_f122 * sign_of_f222 < 0 ) )
+			if ( ptr_greater_than_pT1 && ( log_f222_arr[qpt_cs_idx+1] > log_f122_arr[qpt_cs_idx+1] || sign_of_f122 * sign_of_f222 < 0 ) )
 				val22 = 0.0;
 			else if (sign_of_f122 * sign_of_f222 > 0) // if the two points have the same sign in the pT direction, interpolate logs
 				val22 = sign_of_f122 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx+1], log_f222_arr[qpt_cs_idx+1]) );

@@ -866,7 +866,6 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 	///////////////////////////////////
 	// Loop over pY points
 	///////////////////////////////////
-	//if (iqz > 0) exit(8);
 	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 	{
 		sw_qtqzpY.Reset();
@@ -884,8 +883,8 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 		sw_qtqzpY.Stop();
 		if (VERBOSE > 1) *global_out_stream_ptr << "Finished loop with ( iqt, iqz, ipY ) = ( " << iqt << ", " << iqz << ", " << ipY << " ) in " << sw_qtqzpY.printTime() << " seconds." << endl;
 	}
-//if (1) exit (8);
 
+	//HDF5 block
 	{
 		// store in HDF5 file
 		int setHDFresonanceSpectra = Access_resonance_in_HDF_array(local_pid, iqt, iqz, 0, current_dN_dypTdpTdphi_moments);
@@ -1163,7 +1162,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 			double alpha = one_by_Tdec*gammaT*mT;
 
 			Iint2(alpha, beta, gamma, I0_a_b_g_re, I1_a_b_g_re, I2_a_b_g_re, I3_a_b_g_re, I0_a_b_g_im, I1_a_b_g_im, I2_a_b_g_im, I3_a_b_g_im);
-			if (use_delta_f)
+			//if (use_delta_f)
 				Iint2(2.0*alpha, beta, gamma, I0_2a_b_g_re, I1_2a_b_g_re, I2_2a_b_g_re, I3_2a_b_g_re, I0_2a_b_g_im, I1_2a_b_g_im, I2_2a_b_g_im, I3_2a_b_g_im);
 
 			double A = tau*prefactor*mT*da0;
@@ -1216,7 +1215,9 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 				while ( iidx_local < iidx_end )
 				{
 					double cos_qx_S_x_K = short_array_C[iidx_local];
-					double sin_qx_S_x_K = short_array_S[iidx_local++];
+					double sin_qx_S_x_K = short_array_S[iidx_local];
+//if (iidx_local==0)
+//	cout << "CHECK: " << isurf << "   " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << cos_trans_Fourier << "   " << sin_trans_Fourier << "   " << cos_qx_S_x_K << "   " << sin_qx_S_x_K << endl;
 					ala_C[iidx_local] += cos_trans_Fourier * cos_qx_S_x_K + sin_trans_Fourier * sin_qx_S_x_K;
 					ala_S[iidx_local++] += cos_trans_Fourier * sin_qx_S_x_K - sin_trans_Fourier * cos_qx_S_x_K;
 				}

@@ -226,9 +226,8 @@ int main(int argc, char *argv[])
 		for (int iqt = 0; iqt < (local_qtnpts + 1)/2; ++iqt)
 		for (int iqz = 0; iqz < local_qznpts; ++iqz)
 		{
-//if (iqt > 0 || iqz > 0) exit(8);
+if (iqt > 0 || iqz > 0) exit(8);
 			correlation_function.Fourier_transform_emission_function(iqt, iqz);
-if (1) exit(8);
 			correlation_function.Compute_phase_space_integrals(iqt, iqz);
 		}
 cout << "Made it to the end!" << endl;
