@@ -191,6 +191,9 @@ class CorrelationFunction
 		double * ssum_vec, * vsum_vec, * zetasum_vec, * Csum_vec;
 		
 		double *** spectra, *** thermal_spectra, *** log_spectra, *** sign_spectra;
+
+		//use this to hold full spectra (after various q-space symmetries have been exploited)
+		double * reflected_moments;
 		
 		// relative momentum information
 		double * qo_pts, * qs_pts, * ql_pts, * q_pts, * q_axes, * qt_pts, * qx_pts, * qy_pts, * qz_pts;
