@@ -176,7 +176,7 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 	double loc_qt = qt_pts[iqt];
 	current_iqt = iqt;
 	current_iqz = iqz;
-	current_pY_shift = - double(abs(loc_qz)>1.e-10) * asinh(loc_qz / sqrt(abs(loc_qt*loc_qt-loc_qz*loc_qz) + 1.e-100));
+	current_pY_shift = 0.5 * log(abs((loc_qt+loc_qz)/(loc_qt-loc_qz)));
 
 	if (n_body == 2)
 	{
@@ -223,7 +223,7 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 							Edndp3(PKT, PKphi, &Csum);
 						//space-time moments
 						if (!IGNORE_LONG_LIVED_RESONANCES || Gamma >= hbarC / max_lifetime)
-							eiqxEdndp3(PKT, PKphi, abs(Del_PKY), Csum_vec, local_verbose);
+							eiqxEdndp3(PKT, PKphi, Del_PKY, Csum_vec, local_verbose);
 					}												// end of tempidx sum
 					for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
 						zetasum_vec[qpt_cs_idx] += VEC_n2_zeta_factor[NB2_indexer(iv,izeta)]*Csum_vec[qpt_cs_idx];
@@ -297,7 +297,7 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 								Edndp3(PKT, PKphi, &Csum);
 							//space-time moments
 							if (!IGNORE_LONG_LIVED_RESONANCES || Gamma >= hbarC / max_lifetime)
-								eiqxEdndp3(PKT, PKphi, abs(Del_PKY), Csum_vec, local_verbose);
+								eiqxEdndp3(PKT, PKphi, Del_PKY, Csum_vec, local_verbose);
 						}										// end of tempidx sum
 						for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
 							zetasum_vec[qpt_cs_idx] += VEC_n3_zeta_factor[NB3_indexer(is,iv,izeta)]*Csum_vec[qpt_cs_idx];
@@ -456,12 +456,17 @@ void CorrelationFunction::Edndp3(double ptr, double pphir, double * result, int 
 
 ///////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////
-void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double * results, int loc_verb /*==0*/)
+void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, double * results, int loc_verb /*==0*/)
 {
 	double phi0, phi1, py0, py1;
 	double val11, val12, val21, val22;	//store intermediate results of pT interpolation
 	double val1, val2;					//store intermediate results of pphi interpolation
-	//double pyr = abs(spyr);			//used for checking
+	double pyr = abs(spyr);				//used for checking
+	double reflection_factor = 1.0;
+	if (abs(qt_pts[current_iqt]) < abs(qz_pts[current_iqz]))
+		reflection_factor = -1.0;		//used to get correct sign of imaginary part of spectra
+										//with Del_pY --> -Del_pY for |qt| < |qz|
+										//real part of spectra always symmetric about Del_pY == 0
 
 	int npphi_max = n_pphi_pts - 1;
 	int npT_max = n_pT_pts - 1;
@@ -697,22 +702,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 			val2 = lin_int(del_phir_phi0, one_by_pphidiff, val12, val22);
 
 			// finally, get the interpolated value
-			double Zki = lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
-
-/*double cosqx_SxK = 0.0, sinqx_SxK = 0.0;
-double qt_local = qlist[qlist_idx][0];
-double qx_local = qlist[qlist_idx][1];
-double qy_local = qlist[qlist_idx][2];
-double qz_local = qlist[qlist_idx][3];
-Cal_dN_dypTdpTdphi_with_weights_function_approx(current_resonance_particle_id, ptr, phir, spyr, qt_local, qx_local, qy_local, qz_local, &cosqx_SxK, &sinqx_SxK);
-cout << "Comparison1: " << current_resonance_particle_id << "   " << ptr << "   " << phir << "   " << pyr << "   "
-						<< pT0 << "   " << pT1 << "   " << phi0 << "   " << phi1 << "   " << py0 << "   " << py1 << "   "
-						<< f111_arr[qpt_cs_idx] << "   " << f112_arr[qpt_cs_idx] << "   " << f121_arr[qpt_cs_idx] << "   " << f122_arr[qpt_cs_idx] << "   "
-						<< f211_arr[qpt_cs_idx] << "   " << f212_arr[qpt_cs_idx] << "   " << f221_arr[qpt_cs_idx] << "   " << f222_arr[qpt_cs_idx] << "   "
-						<< f111_arr[qpt_cs_idx+1] << "   " << f112_arr[qpt_cs_idx+1] << "   " << f121_arr[qpt_cs_idx+1] << "   " << f122_arr[qpt_cs_idx+1] << "   "
-						<< f211_arr[qpt_cs_idx+1] << "   " << f212_arr[qpt_cs_idx+1] << "   " << f221_arr[qpt_cs_idx+1] << "   " << f222_arr[qpt_cs_idx+1] << "   "
-						<< qt_local << "   " << qx_local << "   " << qy_local << "   " << qz_local << "   "
-						<< Zkr << "   " << Zki << "   " << cosqx_SxK << "   " << sinqx_SxK << endl;*/
+			double Zki = reflection_factor * lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
 
 	        /////////////////////////////////////////////////////
 	        // Finally, update results vectors appropriately
@@ -763,26 +753,7 @@ cout << "Comparison1: " << current_resonance_particle_id << "   " << ptr << "   
 			val1 = lin_int(del_phir_phi0, one_by_pphidiff, val11, val21);
 			val2 = lin_int(del_phir_phi0, one_by_pphidiff, val12, val22);
 
-			double Zki = lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
-
-/*double cosqx_SxK = 0.0, sinqx_SxK = 0.0;
-double qt_local = qlist[qlist_idx][0];
-double qx_local = qlist[qlist_idx][1];
-double qy_local = qlist[qlist_idx][2];
-double qz_local = qlist[qlist_idx][3];
-Cal_dN_dypTdpTdphi_with_weights_function_approx(current_resonance_particle_id, ptr, phir, spyr, qt_local, qx_local, qy_local, qz_local, &cosqx_SxK, &sinqx_SxK);
-cout << "Comp2c: " << current_resonance_particle_id << "   " << ptr << "   " << phir << "   " << spyr << "   "
-						<< pT0 << "   " << pT1 << "   " << phi0 << "   " << phi1 << "   " << py0 << "   " << py1 << "   "
-						<< f111_arr[qpt_cs_idx] << "   " << f112_arr[qpt_cs_idx] << "   " << f121_arr[qpt_cs_idx] << "   " << f122_arr[qpt_cs_idx] << "   "
-						<< f211_arr[qpt_cs_idx] << "   " << f212_arr[qpt_cs_idx] << "   " << f221_arr[qpt_cs_idx] << "   " << f222_arr[qpt_cs_idx] << "   "
-						<< qt_local << "   " << qx_local << "   " << qy_local << "   " << qz_local << "   "
-						<< Zkr << "   " << cosqx_SxK << endl;
-cout << "Comp2s: " << current_resonance_particle_id << "   " << ptr << "   " << phir << "   " << spyr << "   "
-						<< pT0 << "   " << pT1 << "   " << phi0 << "   " << phi1 << "   " << py0 << "   " << py1 << "   "
-						<< f111_arr[qpt_cs_idx+1] << "   " << f112_arr[qpt_cs_idx+1] << "   " << f121_arr[qpt_cs_idx+1] << "   " << f122_arr[qpt_cs_idx+1] << "   "
-						<< f211_arr[qpt_cs_idx+1] << "   " << f212_arr[qpt_cs_idx+1] << "   " << f221_arr[qpt_cs_idx+1] << "   " << f222_arr[qpt_cs_idx+1] << "   "
-						<< qt_local << "   " << qx_local << "   " << qy_local << "   " << qz_local << "   "
-						<< Zki << "   " << sinqx_SxK << endl;*/
+			double Zki = reflection_factor * lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
 
 			/////////////////////////////////////////////////////
 			// Finally, update results vectors appropriately
@@ -796,8 +767,6 @@ cout << "Comp2s: " << current_resonance_particle_id << "   " << ptr << "   " << 
 			qlist_idx++;
 		}       //end of all q-loops
 	}
-
-//if (1) exit(8);
 
 	return;
 }

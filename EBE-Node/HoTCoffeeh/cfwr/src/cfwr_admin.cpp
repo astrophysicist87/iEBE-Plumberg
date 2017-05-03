@@ -1224,7 +1224,8 @@ void CorrelationFunction::Set_all_Bessel_grids(int iqt, int iqz)
 	Stopwatch sw_loop;
 	double loc_qt = qt_pts[iqt];
 	double loc_qz = qz_pts[iqz];
-	current_pY_shift = - double(abs(loc_qz)>1.e-10) * asinh(loc_qz / sqrt(abs(loc_qt*loc_qt-loc_qz*loc_qz) + 1.e-100));
+	//current_pY_shift = - double(abs(loc_qz)>1.e-10) * asinh(loc_qz / sqrt(abs(loc_qt*loc_qt-loc_qz*loc_qz) + 1.e-100));
+	current_pY_shift = 0.5 * log(abs((loc_qt+loc_qz)/(loc_qt-loc_qz)));
 
 	double * BC_chunk = new double [4 * FO_length * n_alpha_points];
 	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
