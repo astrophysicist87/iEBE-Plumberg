@@ -456,7 +456,7 @@ void CorrelationFunction::Output_total_eiqx_dN_dypTdpTdphi(int local_pid)
 
 	// addresses NaN issue in sin component when all q^{\mu} == 0
 	if (qtnpts%2==1 && qxnpts%2==1 && qynpts%2==1 && qznpts%2==1)
-	{	//if all q-ranges are odd and centered on q=0 ==> q=0 is included!
+	{
 		int iqt0 = (qtnpts-1)/2;
 		int iqx0 = (qxnpts-1)/2;
 		int iqy0 = (qynpts-1)/2;
@@ -480,7 +480,7 @@ void CorrelationFunction::Output_total_eiqx_dN_dypTdpTdphi(int local_pid)
 
 		output_dN_dypTdpTdphi << scientific << setprecision(8) << setw(12)
 			<< qt_pts[iqt] << "   " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[iqz] << "   "
-			<< SP_pT[ipT] << "   " << SP_pphi[ipphi] << "   "
+			<< SP_pT[ipT] << "   " << SP_pphi[ipphi] << "   " << SP_pphi[ipphi] << "   "
 			<< nonFTd_spectra << "   "																								//non-thermal + thermal
 			<< cos_transf_spectra << "   "																							//non-thermal + thermal (cos)
 			<< sin_transf_spectra << endl;
