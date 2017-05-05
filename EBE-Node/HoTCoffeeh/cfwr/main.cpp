@@ -224,11 +224,18 @@ int main(int argc, char *argv[])
 
 		//looping in this way keeps *h5 files and total loaded memory of program small at any one time
 		for (int iqt = 0; iqt < local_qtnpts; ++iqt)
-		for (int iqz = 0; iqz < local_qznpts; ++iqz)
 		{
-//if (iqt > 0 || iqz > 0) exit(8);
-			correlation_function.Fourier_transform_emission_function(iqt, iqz);
-			correlation_function.Compute_phase_space_integrals(iqt, iqz);
+			if (iqt > (qtnpts - 1) / 2)
+			{
+				correlation_function.Reflect_in_qt(iqt);
+				continue;
+			}
+			for (int iqz = 0; iqz < local_qznpts; ++iqz)
+			{
+				//if (iqt > 0 || iqz > 0) exit(8);
+				correlation_function.Fourier_transform_emission_function(iqt, iqz);
+				correlation_function.Compute_phase_space_integrals(iqt, iqz);
+			}
 		}
 cout << "Made it to the end!" << endl;
 if (1) exit(8);

@@ -173,8 +173,16 @@ void CorrelationFunction::Fourier_transform_emission_function(int iqt, int iqz)
 		Set_all_Bessel_grids(iqt, iqz);
 		*global_out_stream_ptr << "done." << endl << endl;
 	}
+	else
+	{
+		*global_out_stream_ptr << "Initializing/opening HDF files...";
+		int HDFInitializationSuccess = Administrate_resonance_HDF_array(1);		//open
+		HDFInitializationSuccess = Administrate_target_thermal_HDF_array(1);	//open
+		Set_all_Bessel_grids(iqt, iqz);
+		*global_out_stream_ptr << "done." << endl << endl;
+	}
 	///////
-	
+
 	*global_out_stream_ptr << "Setting spacetime moments grid..." << endl;
 	BIGsw.Start();
 
@@ -189,6 +197,14 @@ void CorrelationFunction::Fourier_transform_emission_function(int iqt, int iqz)
 	
 		Set_current_particle_info(idc);
 
+		// if past the qz-midpoint ( == 0 ), just use appropriate symmetries
+		// to reflect the results and skip the rest
+		if (iqz > (qnzpts - 1) / 2)
+		{
+			Reflect_in_qz(current_resonance_particle_id, iqt, iqz);
+			return;
+		}
+	
 		Get_spacetime_moments(idc, iqt, iqz);
 	}
 
@@ -1501,6 +1517,59 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_p
 	sw.Stop();
 	*global_out_stream_ptr << "Total function call took " << sw.printTime() << " seconds." << endl;
 	
+	return;
+}
+
+void CorrelationFunction::Reflect_in_qt(int iqt)
+{
+	int HDFcode = Administrate_resonance_HDF_array(1);	//open
+
+	long reflection_array_size = n_pT_pts * n_pphi_pts * n_pY_pts * qxnpts * qynpts * ntrig;
+	double * array_to_reflect[reflection_array_size];
+	double * reflection_of_array[reflection_array_size];
+
+	for (int iqz = 0; iqz < qznpts; ++iqz)
+	{
+		Access_resonance_in_HDF_array(local_pid, qtnpts - iqt - 1, qznpts - iqz - 1, 1, array_to_reflect);		//get
+
+		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
+		for (int iqx = 0; iqx < qxnpts; ++iqx)
+		for (int iqy = 0; iqy < qynpts; ++iqy)
+		for (int itrig = 0; itrig < ntrig; ++itrig)
+			reflection_of_array[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,itrig)] = (1.0 - 2.0 * itrig) * array_to_reflect[fixQTQZ_indexer(ipT,ipphi,ipY,qxnpts - iqx - 1,qynpts - iqy - 1,itrig)];
+
+		Access_resonance_in_HDF_array(local_pid, iqt, iqz, 0, reflection_of_array);		//set
+	}
+
+	HDFcode = Administrate_resonance_HDF_array(2);	//close
+
+	return;
+}
+
+void CorrelationFunction::Reflect_in_qz(int local_pid, int iqt, int iqz)
+{
+	int HDFcode = Administrate_resonance_HDF_array(1);	//open
+
+	long reflection_array_size = n_pT_pts * n_pphi_pts * n_pY_pts * qxnpts * qynpts * ntrig;
+	double * array_to_reflect[reflection_array_size];
+	double * reflection_of_array[reflection_array_size];
+
+	Access_resonance_in_HDF_array(local_pid, iqt, qznpts - iqz - 1, 1, array_to_reflect);	//get
+
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
+	for (int iqx = 0; iqx < qxnpts; ++iqx)
+	for (int iqy = 0; iqy < qynpts; ++iqy)
+	for (int itrig = 0; itrig < ntrig; ++itrig)
+		reflection_of_array[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,itrig)] = array_to_reflect[fixQTQZ_indexer(ipT,ipphi,n_pY_pts - ipY - 1,iqx,iqy,itrig)];
+
+	Access_resonance_in_HDF_array(local_pid, iqt, iqz, 0, reflection_of_array);		//set
+
+	HDFcode = Administrate_resonance_HDF_array(2);	//close
+
 	return;
 }
 
