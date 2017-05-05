@@ -114,7 +114,6 @@ inline void Iint3(double alpha, double beta, double gamma, vector<complex<double
 		complex<double> Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p;
 		int errorCode = bessf::cbessik01(z, Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p);
 
-
 		complex<double> ck0(	ea * gsl_cheb_eval (cs_accel_expK0re, alpha),
 								ea * gsl_cheb_eval (cs_accel_expK0im, alpha) );
 		complex<double> ck1(	ea * gsl_cheb_eval (cs_accel_expK1re, alpha),
@@ -160,7 +159,8 @@ void CorrelationFunction::Fourier_transform_emission_function(int iqt, int iqz)
 	double loc_qz = qz_pts[iqz];
 	double loc_qt = qt_pts[iqt];
 	//current_pY_shift = - double(abs(loc_qz)>1.e-10) * asinh(loc_qz / sqrt(abs(loc_qt*loc_qt-loc_qz*loc_qz) + 1.e-100));
-	current_pY_shift = 0.5 * log(abs((loc_qt+loc_qz)/(loc_qt-loc_qz)));
+	current_pY_shift = 0.5 * log(abs((loc_qt+loc_qz + 1.e-100)/(loc_qt-loc_qz + 1.e-100)));
+	//current_pY_shift = 0.0;
 
 	///////
 	*global_out_stream_ptr << "Initializing HDF files...";
@@ -1216,8 +1216,10 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 				{
 					double cos_qx_S_x_K = short_array_C[iidx_local];
 					double sin_qx_S_x_K = short_array_S[iidx_local];
-//if (iidx_local==0)
-//	cout << "CHECK: " << isurf << "   " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << cos_trans_Fourier << "   " << sin_trans_Fourier << "   " << cos_qx_S_x_K << "   " << sin_qx_S_x_K << endl;
+
+//if (ipY==1) cout << "CHECK(attempt): " << isurf << "   " << qt_pts[iqt] << "   " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[iqz] << "   " << SP_pT[ipT] << "   " << SP_pphi[ipphi] << "   "
+//		<< cos_qx_S_x_K << "   " << sin_qx_S_x_K << "   " << cos_trans_Fourier << "   " << sin_trans_Fourier << endl;
+
 					ala_C[iidx_local] += cos_trans_Fourier * cos_qx_S_x_K + sin_trans_Fourier * sin_qx_S_x_K;
 					ala_S[iidx_local++] += cos_trans_Fourier * sin_qx_S_x_K - sin_trans_Fourier * cos_qx_S_x_K;
 				}

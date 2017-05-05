@@ -223,10 +223,10 @@ int main(int argc, char *argv[])
 		int local_qznpts = (int)(paraRdr->getVal("qznpts"));
 
 		//looping in this way keeps *h5 files and total loaded memory of program small at any one time
-		for (int iqt = 0; iqt < (local_qtnpts + 1)/2; ++iqt)
+		for (int iqt = 0; iqt < local_qtnpts; ++iqt)
 		for (int iqz = 0; iqz < local_qznpts; ++iqz)
 		{
-if (iqt > 0 || iqz > 0) exit(8);
+//if (iqt > 0 || iqz > 0) exit(8);
 			correlation_function.Fourier_transform_emission_function(iqt, iqz);
 			correlation_function.Compute_phase_space_integrals(iqt, iqz);
 		}

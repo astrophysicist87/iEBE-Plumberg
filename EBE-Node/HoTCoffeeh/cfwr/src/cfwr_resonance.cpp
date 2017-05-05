@@ -15,7 +15,7 @@
 
 using namespace std;
 
-const int n_refinement_pts = 101;
+const int n_refinement_pts = 201;
 double Delta_DpY;
 const double PTCHANGE = 1.0;
 gsl_cheb_series *cs_accel_expEdNd3p;
@@ -89,12 +89,12 @@ void CorrelationFunction::Tabulate_resonance_Chebyshev_coefficients(int parent_r
 			{
 				chebyshev_a_cfs[idx][ipY] += exp(SP_Del_pY[kpY]) * chebTcfs[ipY * n_pY_pts + kpY] 
 												* current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)];
-//if (ipT==1 && ipphi==1 && ipY==0 && iqx==0 && iqy==0)
-//{
-//	double tmpcos = 0.0, tmpsin = 0.0;
-//	Cal_dN_dypTdpTdphi_with_weights_function_approx(parent_resonance_particle_id, SP_pT[ipT], SP_pphi[ipphi], SP_Del_pY[kpY], qt_pts[current_iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[current_iqz], &tmpcos, &tmpsin);
-//	cout << "GRID: " << ipT << "   " << ipphi << "   " << kpY << "   " << SP_Del_pY[kpY] << "   " << iqx << "   " << iqy << "   " << itrig << "   " << tmpcos << "   " << tmpsin << "   " << current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)] << endl;
-//}
+/*if (ipY==0)
+{
+	double tmpcos = 0.0, tmpsin = 0.0;
+	Cal_dN_dypTdpTdphi_with_weights_function_approx(parent_resonance_particle_id, SP_pT[ipT], SP_pphi[ipphi], SP_Del_pY[kpY], qt_pts[current_iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[current_iqz], &tmpcos, &tmpsin);
+	cout << "GRID: " << ipT << "   " << ipphi << "   " << kpY << "   " << SP_Del_pY[kpY] << "   " << iqx << "   " << iqy << "   " << itrig << "   " << tmpcos << "   " << tmpsin << "   " << current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)] << endl;
+}*/
 			}
 		}
 		++idx;
@@ -176,7 +176,8 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 	double loc_qt = qt_pts[iqt];
 	current_iqt = iqt;
 	current_iqz = iqz;
-	current_pY_shift = 0.5 * log(abs((loc_qt+loc_qz)/(loc_qt-loc_qz)));
+	current_pY_shift = 0.5 * log(abs((loc_qt+loc_qz + 1.e-100)/(loc_qt-loc_qz + 1.e-100)));
+	//current_pY_shift = 0.0;
 
 	if (n_body == 2)
 	{
@@ -456,17 +457,20 @@ void CorrelationFunction::Edndp3(double ptr, double pphir, double * result, int 
 
 ///////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////
-void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, double * results, int loc_verb /*==0*/)
+void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double * results, int loc_verb /*==0*/)
 {
 	double phi0, phi1, py0, py1;
 	double val11, val12, val21, val22;	//store intermediate results of pT interpolation
 	double val1, val2;					//store intermediate results of pphi interpolation
+	/*
 	double pyr = abs(spyr);				//used for checking
 	double reflection_factor = 1.0;
 	if (abs(qt_pts[current_iqt]) < abs(qz_pts[current_iqz]))
 		reflection_factor = -1.0;		//used to get correct sign of imaginary part of spectra
 										//with Del_pY --> -Del_pY for |qt| < |qz|
 										//real part of spectra always symmetric about Del_pY == 0
+	*/
+	bool pY_out_of_range = false;
 
 	int npphi_max = n_pphi_pts - 1;
 	int npT_max = n_pT_pts - 1;
@@ -486,6 +490,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 		phi1 = SP_pphi[0];
 		nphi = 0;
 		nphim1 = npphi_max;
+		pY_out_of_range = true;
 	}
 	else if(phir > SP_pphi[npphi_max])      //if angle is greater than maximum angle grid point
 	{
@@ -493,6 +498,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 		phi1 = SP_pphi[0] + 2. * M_PI;
 		nphi = 0;
 		nphim1 = npphi_max;
+		pY_out_of_range = true;
 	}
 	else                                            //if angle is within grid range
 	{
@@ -512,6 +518,13 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 		npy = n_refinement_pts - 1;	//this just guarantees nearest neighbor if pY > pY_max
 		npym1 = n_refinement_pts - 1;
 	}
+	else if(pyr < SP_Del_pY_min)	//else if rapidity is less than minimum rapidity grid point
+	{
+		py0 = SP_Del_pY_min;
+		py1 = SP_Del_pY_min;
+		npy = 0;	//this just guarantees nearest neighbor if pY > pY_max
+		npym1 = 0;
+	}
 	else						//if rapidity is within grid range
 	{
 		npym1 = floor((pyr-SP_Del_pY_min)/Delta_DpY);
@@ -528,7 +541,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 
 	bool ptr_greater_than_pT1 = (ptr > pT1);
 
-	double one_by_pTdiff = 1./(pT1 - pT0), one_by_pphidiff = 1./(phi1 - phi0), one_by_pYdiff = 1./(py1 - py0 + 1.e-100);
+	double one_by_pTdiff = 1./(pT1 - pT0), one_by_pphidiff = 1./(phi1 - phi0), one_by_pYdiff = 1./(py1 - py0 + 1.e-10);
 	double del_ptr_pt0 = ptr - pT0, del_phir_phi0 = phir - phi0, del_pyr_py0 = pyr - py0;
 
 	double * f111_arr = refined_resonance_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
@@ -702,7 +715,21 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 			val2 = lin_int(del_phir_phi0, one_by_pphidiff, val12, val22);
 
 			// finally, get the interpolated value
-			double Zki = reflection_factor * lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
+			double Zki = /*reflection_factor **/ lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
+
+/*if (!pY_out_of_range)
+{
+double cosqx_SxK = 0.0, sinqx_SxK = 0.0;
+double qt_local = qlist[qlist_idx][0];
+double qx_local = qlist[qlist_idx][1];
+double qy_local = qlist[qlist_idx][2];
+double qz_local = qlist[qlist_idx][3];
+Cal_dN_dypTdpTdphi_with_weights_function_approx(current_resonance_particle_id, ptr, phir, pyr, qt_local, qx_local, qy_local, qz_local, &cosqx_SxK, &sinqx_SxK);
+cout << "Comp1: " << current_resonance_particle_id << "   " << ptr << "   " << phir << "   " << pyr << "   "
+						<< pT0 << "   " << pT1 << "   " << phi0 << "   " << phi1 << "   " << py0 << "   " << py1 << "   "
+						<< qt_local << "   " << qx_local << "   " << qy_local << "   " << qz_local << "   "
+						<< Zkr << "   " << Zki << "   " << cosqx_SxK << "   " << sinqx_SxK << endl;
+}*/
 
 	        /////////////////////////////////////////////////////
 	        // Finally, update results vectors appropriately
@@ -753,7 +780,30 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 			val1 = lin_int(del_phir_phi0, one_by_pphidiff, val11, val21);
 			val2 = lin_int(del_phir_phi0, one_by_pphidiff, val12, val22);
 
-			double Zki = reflection_factor * lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
+			double Zki = /*reflection_factor **/ lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
+
+/*if (!pY_out_of_range)
+{
+double cosqx_SxK = 0.0, sinqx_SxK = 0.0;
+double qt_local = qlist[qlist_idx][0];
+double qx_local = qlist[qlist_idx][1];
+double qy_local = qlist[qlist_idx][2];
+double qz_local = qlist[qlist_idx][3];
+Cal_dN_dypTdpTdphi_with_weights_function_approx(current_resonance_particle_id, ptr, phir, pyr, qt_local, qx_local, qy_local, qz_local, &cosqx_SxK, &sinqx_SxK);
+cout << "Comp2c: " << current_resonance_particle_id << "   " << ptr << "   " << phir << "   " << pyr << "   "
+						<< pT0 << "   " << pT1 << "   " << phi0 << "   " << phi1 << "   " << py0 << "   " << py1 << "   "
+						<< f111_arr[qpt_cs_idx] << "   " << f112_arr[qpt_cs_idx] << "   " << f121_arr[qpt_cs_idx] << "   " << f122_arr[qpt_cs_idx] << "   "
+						<< f211_arr[qpt_cs_idx] << "   " << f212_arr[qpt_cs_idx] << "   " << f221_arr[qpt_cs_idx] << "   " << f222_arr[qpt_cs_idx] << "   "
+						<< qt_local << "   " << qx_local << "   " << qy_local << "   " << qz_local << "   "
+						<< Zkr << "   " << cosqx_SxK << endl;
+
+cout << "Comp2s: " << current_resonance_particle_id << "   " << ptr << "   " << phir << "   " << pyr << "   "
+						<< pT0 << "   " << pT1 << "   " << phi0 << "   " << phi1 << "   " << py0 << "   " << py1 << "   "
+						<< f111_arr[qpt_cs_idx+1] << "   " << f112_arr[qpt_cs_idx+1] << "   " << f121_arr[qpt_cs_idx+1] << "   " << f122_arr[qpt_cs_idx+1] << "   "
+						<< f211_arr[qpt_cs_idx+1] << "   " << f212_arr[qpt_cs_idx+1] << "   " << f221_arr[qpt_cs_idx+1] << "   " << f222_arr[qpt_cs_idx+1] << "   "
+						<< qt_local << "   " << qx_local << "   " << qy_local << "   " << qz_local << "   "
+						<< Zki << "   " << sinqx_SxK << endl;
+}*/
 
 			/////////////////////////////////////////////////////
 			// Finally, update results vectors appropriately
@@ -767,6 +817,8 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 			qlist_idx++;
 		}       //end of all q-loops
 	}
+
+//if (1) exit(8);
 
 	return;
 }
