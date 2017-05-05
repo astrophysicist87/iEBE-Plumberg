@@ -159,17 +159,20 @@ void CorrelationFunction::Fourier_transform_emission_function(int iqt, int iqz)
 	double loc_qz = qz_pts[iqz];
 	double loc_qt = qt_pts[iqt];
 	//current_pY_shift = - double(abs(loc_qz)>1.e-10) * asinh(loc_qz / sqrt(abs(loc_qt*loc_qt-loc_qz*loc_qz) + 1.e-100));
-	current_pY_shift = 0.5 * log(abs((loc_qt+loc_qz + 1.e-100)/(loc_qt-loc_qz + 1.e-100)));
+	estimate_pY_shift = 0.5 * log(abs((loc_qt+loc_qz + 1.e-100)/(loc_qt-loc_qz + 1.e-100)));
+	current_pY_shift = estimate_pY_shift;
 	//current_pY_shift = 0.0;
 
 	///////
-	*global_out_stream_ptr << "Initializing HDF files...";
+	//on first loop ONLY, initialize necessary HDF files
+	if (iqt == 0 && iqz == 0)
 	{
+		*global_out_stream_ptr << "Initializing HDF files...";
 		int HDFInitializationSuccess = Administrate_resonance_HDF_array(0);
 		HDFInitializationSuccess = Administrate_target_thermal_HDF_array(0);
 		Set_all_Bessel_grids(iqt, iqz);
+		*global_out_stream_ptr << "done." << endl << endl;
 	}
-	*global_out_stream_ptr << "done." << endl << endl;
 	///////
 	
 	*global_out_stream_ptr << "Setting spacetime moments grid..." << endl;
