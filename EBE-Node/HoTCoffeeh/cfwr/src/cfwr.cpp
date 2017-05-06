@@ -199,13 +199,10 @@ void CorrelationFunction::Fourier_transform_emission_function(int iqt, int iqz)
 
 		// if past the qz-midpoint ( == 0 ), just use appropriate symmetries
 		// to reflect the results and skip the rest
-		if (iqz > (qnzpts - 1) / 2)
-		{
+		if (iqz > (qznpts - 1) / 2)
 			Reflect_in_qz(current_resonance_particle_id, iqt, iqz);
-			return;
-		}
-	
-		Get_spacetime_moments(idc, iqt, iqz);
+		else
+			Get_spacetime_moments(idc, iqt, iqz);
 	}
 
 	BIGsw.Stop();
@@ -225,14 +222,17 @@ void CorrelationFunction::Fourier_transform_emission_function(int iqt, int iqz)
 	///////
 	*global_out_stream_ptr << "Cleaning up HDF files...";
 	{
+		int HDFInitializationSuccess = Administrate_resonance_HDF_array(1);		//open
+		HDFInitializationSuccess = Administrate_target_thermal_HDF_array(1);	//open
+
 		//get thermal target moments here
-		Access_resonance_in_HDF_array(target_particle_id, iqt, iqz, 1, thermal_target_dN_dypTdpTdphi_moments);
+		int accessHDFresonanceSpectra = Access_resonance_in_HDF_array(target_particle_id, iqt, iqz, 1, thermal_target_dN_dypTdpTdphi_moments, true);
 		//make sure they are written to separate file here
-		Access_target_thermal_in_HDF_array(iqt, iqz, 0, thermal_target_dN_dypTdpTdphi_moments);
+		accessHDFresonanceSpectra = Access_target_thermal_in_HDF_array(iqt, iqz, 0, thermal_target_dN_dypTdpTdphi_moments);
 
 		//save thermal moments (without resonance decay feeddown) separately
-		//int closeHDFresonanceSpectra = Administrate_resonance_HDF_array(2);
-		int closeHDFresonanceSpectra = Administrate_target_thermal_HDF_array(2);
+		int closeHDFresonanceSpectra = Administrate_resonance_HDF_array(2);
+		closeHDFresonanceSpectra = Administrate_target_thermal_HDF_array(2);
 	}
 	*global_out_stream_ptr << "done." << endl << endl;
 	///////
@@ -253,6 +253,8 @@ void CorrelationFunction::Compute_phase_space_integrals(int iqt, int iqz)
 
 	//set needed q-points
 	Set_qlist(iqt, iqz);
+
+	int openHDFresonanceSpectra = Administrate_resonance_HDF_array(1);	//open
 
 	*global_out_stream_ptr << "Computing all phase-space integrals..." << endl;
 	BIGsw.Start();
@@ -1522,15 +1524,19 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_p
 
 void CorrelationFunction::Reflect_in_qt(int iqt)
 {
+//debugger(__LINE__, __FILE__);
 	int HDFcode = Administrate_resonance_HDF_array(1);	//open
-
+//debugger(__LINE__, __FILE__);
 	long reflection_array_size = n_pT_pts * n_pphi_pts * n_pY_pts * qxnpts * qynpts * ntrig;
-	double * array_to_reflect[reflection_array_size];
-	double * reflection_of_array[reflection_array_size];
-
+	double * array_to_reflect = new double [reflection_array_size];
+	double * reflection_of_array = new double [reflection_array_size];
+//debugger(__LINE__, __FILE__);
+	for (int ir = 0; ir < NchosenParticle + 1; ++ir)
 	for (int iqz = 0; iqz < qznpts; ++iqz)
 	{
-		Access_resonance_in_HDF_array(local_pid, qtnpts - iqt - 1, qznpts - iqz - 1, 1, array_to_reflect);		//get
+//debugger(__LINE__, __FILE__);
+		int local_pid = chosen_resonances[ir-1];
+		int accessHDFresonanceSpectra = Access_resonance_in_HDF_array(local_pid, qtnpts - iqt - 1, qznpts - iqz - 1, 1, array_to_reflect);		//get
 
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
@@ -1540,35 +1546,54 @@ void CorrelationFunction::Reflect_in_qt(int iqt)
 		for (int itrig = 0; itrig < ntrig; ++itrig)
 			reflection_of_array[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,itrig)] = (1.0 - 2.0 * itrig) * array_to_reflect[fixQTQZ_indexer(ipT,ipphi,ipY,qxnpts - iqx - 1,qynpts - iqy - 1,itrig)];
 
-		Access_resonance_in_HDF_array(local_pid, iqt, iqz, 0, reflection_of_array);		//set
+		accessHDFresonanceSpectra = Access_resonance_in_HDF_array(local_pid, iqt, iqz, 0, reflection_of_array);		//set
+//debugger(__LINE__, __FILE__);
 	}
 
 	HDFcode = Administrate_resonance_HDF_array(2);	//close
+//debugger(__LINE__, __FILE__);
+	delete [] array_to_reflect;
+	delete [] reflection_of_array;
 
 	return;
 }
 
 void CorrelationFunction::Reflect_in_qz(int local_pid, int iqt, int iqz)
 {
+//if (iqt==0 && iqz==2) debugger(__LINE__, __FILE__);
 	int HDFcode = Administrate_resonance_HDF_array(1);	//open
+//if (iqt==0 && iqz==2) debugger(__LINE__, __FILE__);
+	double loc_qt = qt_pts[iqt];
+	double loc_qz = qz_pts[iqz];
+	current_pY_shift = 0.5 * log(abs((loc_qt+loc_qz + 1.e-100)/(loc_qt-loc_qz + 1.e-100)));
 
 	long reflection_array_size = n_pT_pts * n_pphi_pts * n_pY_pts * qxnpts * qynpts * ntrig;
-	double * array_to_reflect[reflection_array_size];
-	double * reflection_of_array[reflection_array_size];
-
-	Access_resonance_in_HDF_array(local_pid, iqt, qznpts - iqz - 1, 1, array_to_reflect);	//get
-
+	double * array_to_reflect = new double [reflection_array_size];
+	double * reflection_of_array = new double [reflection_array_size];
+//if (iqt==0 && iqz==2) debugger(__LINE__, __FILE__);
+	int accessHDFresonanceSpectra = Access_resonance_in_HDF_array(local_pid, iqt, qznpts - iqz - 1, 1, array_to_reflect, (iqt==0 && iqz==2));	//get
+//if (iqt==0 && iqz==2) debugger(__LINE__, __FILE__);
 	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 	for (int iqx = 0; iqx < qxnpts; ++iqx)
 	for (int iqy = 0; iqy < qynpts; ++iqy)
 	for (int itrig = 0; itrig < ntrig; ++itrig)
+	{
 		reflection_of_array[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,itrig)] = array_to_reflect[fixQTQZ_indexer(ipT,ipphi,n_pY_pts - ipY - 1,iqx,iqy,itrig)];
+		/*cout << "QZ-REFLECTION: " << scientific << setprecision(8) << setw(12)
+			<< qt_pts[iqt] << "   " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[iqz] << "   "
+			<< SP_pT[ipT] << "   " << SP_pphi[ipphi] << "   " << current_pY_shift + SP_Del_pY[ipY] << "   " << SP_Del_pY[ipY] << "   "
+			<< reflection_of_array[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,itrig)] << "   " << array_to_reflect[fixQTQZ_indexer(ipT,ipphi,n_pY_pts - ipY - 1,iqx,iqy,itrig)] << endl;*/
+	}
 
-	Access_resonance_in_HDF_array(local_pid, iqt, iqz, 0, reflection_of_array);		//set
-
+//if (iqt==0 && iqz==2) debugger(__LINE__, __FILE__);
+	accessHDFresonanceSpectra = Access_resonance_in_HDF_array(local_pid, iqt, iqz, 0, reflection_of_array, (iqt==0 && iqz==2));		//set
+//if (iqt==0 && iqz==2) debugger(__LINE__, __FILE__);
 	HDFcode = Administrate_resonance_HDF_array(2);	//close
+//if (iqt==0 && iqz==2) debugger(__LINE__, __FILE__);
+	delete [] array_to_reflect;
+	delete [] reflection_of_array;
 
 	return;
 }

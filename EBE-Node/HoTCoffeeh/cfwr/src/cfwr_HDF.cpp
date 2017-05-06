@@ -113,6 +113,7 @@ int CorrelationFunction::Administrate_resonance_HDF_array(int administration_mod
     {
 		error.printError();
 		cerr << "FileIException error!" << endl;
+debugger(__LINE__, __FILE__);
 		return -1;
     }
 
@@ -120,6 +121,7 @@ int CorrelationFunction::Administrate_resonance_HDF_array(int administration_mod
     {
 		error.printError();
 		cerr << "DataSetIException error!" << endl;
+debugger(__LINE__, __FILE__);
 		return -2;
     }
 
@@ -127,6 +129,7 @@ int CorrelationFunction::Administrate_resonance_HDF_array(int administration_mod
     {
 		error.printError();
 		cerr << "DataSpaceIException error!" << endl;
+debugger(__LINE__, __FILE__);
 		return -3;
     }
 
@@ -171,10 +174,10 @@ int CorrelationFunction::Administrate_target_thermal_HDF_array(int administratio
 
 				//DSetCreatPropList cparms;
 				hsize_t chunk_dims[RANK2D] = {1, chunk_size};
-				cparms.setChunk( 1, chunk_dims );
+				cparms.setChunk( RANK2D, chunk_dims );
 
 				//hsize_t dims[RANK2D] = {qtnpts * qznpts, chunk_size};
-				tta_dataspace = new H5::DataSpace (1, dims);
+				tta_dataspace = new H5::DataSpace (RANK2D, dims);
 
 				tta_dataset = new H5::DataSet( tta_file->createDataSet(TARGET_THERMAL_DATASET_NAME, PredType::NATIVE_DOUBLE, *tta_dataspace, cparms) );
 
@@ -182,7 +185,7 @@ int CorrelationFunction::Administrate_target_thermal_HDF_array(int administratio
 				//hsize_t dimsm[RANK2D] = {1, chunk_size};
 				hsize_t offset[RANK2D] = {0, 0};
 
-				tta_memspace = new H5::DataSpace (1, dimsm, NULL);
+				tta_memspace = new H5::DataSpace (RANK2D, dimsm, NULL);
 				if (file_does_not_already_exist)
 				{
 					*global_out_stream_ptr << "HDF thermal target moments file doesn't exist!  Initializing to zero..." << endl;
@@ -229,6 +232,7 @@ int CorrelationFunction::Administrate_target_thermal_HDF_array(int administratio
     {
 		error.printError();
 		cerr << "FileIException error!" << endl;
+debugger(__LINE__, __FILE__);
 		return -1;
     }
 
@@ -236,6 +240,7 @@ int CorrelationFunction::Administrate_target_thermal_HDF_array(int administratio
     {
 		error.printError();
 		cerr << "DataSetIException error!" << endl;
+debugger(__LINE__, __FILE__);
 		return -2;
     }
 
@@ -243,6 +248,7 @@ int CorrelationFunction::Administrate_target_thermal_HDF_array(int administratio
     {
 		error.printError();
 		cerr << "DataSpaceIException error!" << endl;
+debugger(__LINE__, __FILE__);
 		return -3;
     }
 
@@ -253,7 +259,7 @@ int CorrelationFunction::Administrate_target_thermal_HDF_array(int administratio
 
 /////////////////////////////////////////////
 
-int CorrelationFunction::Access_resonance_in_HDF_array(int local_pid, int iqt, int iqz, int access_mode, double * resonance_array_to_use)
+int CorrelationFunction::Access_resonance_in_HDF_array(int local_pid, int iqt, int iqz, int access_mode, double * resonance_array_to_use, bool verbose)
 {
 	// access_mode:
 	//	0 - set array chunk
@@ -270,15 +276,19 @@ int CorrelationFunction::Access_resonance_in_HDF_array(int local_pid, int iqt, i
     {
 		Exception::dontPrint();
 		hsize_t offset[RANK2D] = {HDF_indexer(local_icr, iqt, iqz), 0};
+if (verbose) cout << "In Access_resonance_in_HDF_array(...): called with/using arguments " << local_pid << "   " << iqt << "   " << iqz << "   " << access_mode << "   " << local_icr << "   " << HDF_indexer(local_icr, iqt, iqz) << endl;
 		hsize_t count[RANK2D] = {1, chunk_size};				// == chunk_dims
 		resonance_dataspace->selectHyperslab(H5S_SELECT_SET, count, offset);
+		if (verbose) debugger(__LINE__, __FILE__);
 		
 		switch(access_mode)
 		{
 			case 0:
+				if (verbose) debugger(__LINE__, __FILE__);
 				resonance_dataset->write(resonance_array_to_use, PredType::NATIVE_DOUBLE, *resonance_memspace, *resonance_dataspace);
 				break;
 			case 1:
+				if (verbose) debugger(__LINE__, __FILE__);
 				resonance_dataset->read(resonance_array_to_use, PredType::NATIVE_DOUBLE, *resonance_memspace, *resonance_dataspace);
 				break;
 			default:
@@ -292,6 +302,7 @@ int CorrelationFunction::Access_resonance_in_HDF_array(int local_pid, int iqt, i
     {
 		error.printError();
 		cerr << "FileIException error!" << endl;
+debugger(__LINE__, __FILE__);
 		return -1;
     }
 
@@ -299,6 +310,7 @@ int CorrelationFunction::Access_resonance_in_HDF_array(int local_pid, int iqt, i
     {
 		error.printError();
 		cerr << "DataSetIException error!" << endl;
+debugger(__LINE__, __FILE__);
 		return -2;
     }
 
@@ -306,8 +318,11 @@ int CorrelationFunction::Access_resonance_in_HDF_array(int local_pid, int iqt, i
     {
 		error.printError();
 		cerr << "DataSpaceIException error!" << endl;
+debugger(__LINE__, __FILE__);
 		return -3;
     }
+
+if (verbose) debugger(__LINE__, __FILE__);
 
 	return (0);
 }
@@ -332,6 +347,7 @@ int CorrelationFunction::Access_target_thermal_in_HDF_array(int iqt, int iqz, in
 		switch(access_mode)
 		{
 			case 0:
+				debugger(__LINE__, __FILE__);
 				tta_dataset->write(tta_array_to_use, PredType::NATIVE_DOUBLE, *tta_memspace, *tta_dataspace);
 				break;
 			case 1:
@@ -349,6 +365,7 @@ int CorrelationFunction::Access_target_thermal_in_HDF_array(int iqt, int iqz, in
     {
 		error.printError();
 		cerr << "FileIException error!" << endl;
+debugger(__LINE__, __FILE__);
 		return -1;
     }
 
@@ -356,6 +373,7 @@ int CorrelationFunction::Access_target_thermal_in_HDF_array(int iqt, int iqz, in
     {
 		error.printError();
 		cerr << "DataSetIException error!" << endl;
+debugger(__LINE__, __FILE__);
 		return -2;
     }
 
@@ -363,6 +381,7 @@ int CorrelationFunction::Access_target_thermal_in_HDF_array(int iqt, int iqz, in
     {
 		error.printError();
 		cerr << "DataSpaceIException error!" << endl;
+debugger(__LINE__, __FILE__);
 		return -3;
     }
 
@@ -413,6 +432,7 @@ int CorrelationFunction::Copy_chunk(int current_resonance_index, int reso_idx_to
     {
 		error.printError();
 		cerr << "FileIException error!" << endl;
+debugger(__LINE__, __FILE__);
 		return -1;
     }
 
@@ -420,6 +440,7 @@ int CorrelationFunction::Copy_chunk(int current_resonance_index, int reso_idx_to
     {
 		error.printError();
 		cerr << "DataSetIException error!" << endl;
+debugger(__LINE__, __FILE__);
 		return -2;
     }
 
@@ -427,6 +448,7 @@ int CorrelationFunction::Copy_chunk(int current_resonance_index, int reso_idx_to
     {
 		error.printError();
 		cerr << "DataSpaceIException error!" << endl;
+debugger(__LINE__, __FILE__);
 		return -3;
     }
 
@@ -530,6 +552,7 @@ int CorrelationFunction::Administrate_besselcoeffs_HDF_array(int administration_
     {
 		error.printError();
 		cerr << "FileIException error!" << endl;
+debugger(__LINE__, __FILE__);
 		return -1;
     }
 
@@ -537,6 +560,7 @@ int CorrelationFunction::Administrate_besselcoeffs_HDF_array(int administration_
     {
 		error.printError();
 		cerr << "DataSetIException error!" << endl;
+debugger(__LINE__, __FILE__);
 		return -2;
     }
 
@@ -544,6 +568,7 @@ int CorrelationFunction::Administrate_besselcoeffs_HDF_array(int administration_
     {
 		error.printError();
 		cerr << "DataSpaceIException error!" << endl;
+debugger(__LINE__, __FILE__);
 		return -3;
     }
 
@@ -590,6 +615,7 @@ int CorrelationFunction::Access_besselcoeffs_in_HDF_array(int ipY, int access_mo
     {
 		error.printError();
 		cerr << "FileIException error!" << endl;
+debugger(__LINE__, __FILE__);
 		return -1;
     }
 
@@ -597,6 +623,7 @@ int CorrelationFunction::Access_besselcoeffs_in_HDF_array(int ipY, int access_mo
     {
 		error.printError();
 		cerr << "DataSetIException error!" << endl;
+debugger(__LINE__, __FILE__);
 		return -2;
     }
 
@@ -604,6 +631,7 @@ int CorrelationFunction::Access_besselcoeffs_in_HDF_array(int ipY, int access_mo
     {
 		error.printError();
 		cerr << "DataSpaceIException error!" << endl;
+debugger(__LINE__, __FILE__);
 		return -3;
     }
 

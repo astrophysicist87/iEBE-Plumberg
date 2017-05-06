@@ -85,7 +85,10 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	current_total_resonance_percentage = 0.0;
 	all_particles = all_particles_in;
 	for (int icr = 0; icr < (int)chosen_resonances_in.size(); icr++)
+	{
 		chosen_resonances.push_back(chosen_resonances_in[icr]);
+		cout << "chosen_resonances_in[" << icr << "] = " << chosen_resonances_in[icr] << endl;
+	}
 	thermal_pions_only = false;
 	Nparticle = Nparticle_in;
 	NchosenParticle = (int)chosen_resonances_in.size();
@@ -869,7 +872,8 @@ void CorrelationFunction::Set_q_points()
 	double xi2 = mtarget*mtarget + SP_pT_max*SP_pT_max + 0.25*qxymax*qxymax;	//pretend that Kphi == 0, qx == qo and qs == ql == 0, to maximize qtmax
 	double qtmax = sqrt(xi2 + SP_pT_max*qxymax) - sqrt(xi2 - SP_pT_max*qxymax) + 1.e-10;
 
-	Fill_out_pts(qt_pts, qtnpts, qtmax, QT_POINTS_SPACING);
+	//Fill_out_pts(qt_pts, qtnpts, qtmax, QT_POINTS_SPACING);
+	Fill_out_pts(qt_pts, qtnpts, sqrt(1.1*init_qz*init_qz), 0);
 	Fill_out_pts(qx_pts, qxnpts, abs(init_qx), QX_POINTS_SPACING);
 	Fill_out_pts(qy_pts, qynpts, abs(init_qy), QY_POINTS_SPACING);
 	Fill_out_pts(qz_pts, qznpts, abs(init_qz), QZ_POINTS_SPACING);

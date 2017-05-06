@@ -268,7 +268,7 @@ class CorrelationFunction
 
 		// HDF routines
 		// resonances
-		int Access_resonance_in_HDF_array(int local_pid, int iqt, int iqz, int access_mode, double * resonance_array_to_fill);
+		int Access_resonance_in_HDF_array(int local_pid, int iqt, int iqz, int access_mode, double * resonance_array_to_fill, bool verbose = false);
 		int Administrate_resonance_HDF_array(int administration_mode);
 		int Copy_chunk(int current_resonance_index, int reso_idx_to_be_copied);
 		// Bessel coefficients
@@ -312,6 +312,9 @@ class CorrelationFunction
 		int Set_daughter_list(int parent_resonance_index);
 
 		void Fill_out_pts(double * pointsarray, int numpoints, double max_val, int spacing_type);
+
+		void Reflect_in_qt(int iqt);
+		void Reflect_in_qz(int local_pid, int iqt, int iqz);
 
 		//miscellaneous
 		void Set_path(string path_in);

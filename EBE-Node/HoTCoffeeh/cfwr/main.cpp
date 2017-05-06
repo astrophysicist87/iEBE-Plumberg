@@ -145,7 +145,11 @@ int main(int argc, char *argv[])
 		output << "Working with threshold = " << threshold << endl;
 		get_important_resonances(particle_idx, &chosen_resonance_indices, particle, Nparticle, threshold, net_fraction_resonance_contribution, output);
 		get_all_descendants(&chosen_resonance_indices, particle, Nparticle, output);
+
+		//chosen_resonance_indices.push_back(particle_idx);
+
 		sort_by_mass(&chosen_resonance_indices, particle, Nparticle, output);
+
 		for (int ii = 0; ii < (int)chosen_resonance_indices.size(); ii++)
 			output << ii << "   " << chosen_resonance_indices[ii] << "   " << particle[chosen_resonance_indices[ii]].name
 					<< "   ,   Gamma = " << particle[chosen_resonance_indices[ii]].width
@@ -197,7 +201,7 @@ int main(int argc, char *argv[])
 	output << "Using fraction_of_resonances = " << net_fraction_resonance_contribution << endl;
 
 	//allows me to omit thermal pions easily, e.g.
-	bool omit_specific_resonances = true;
+	bool omit_specific_resonances = false;
 	if (omit_specific_resonances)
 	{
 		vector<int> thermal_particles_to_omit;
@@ -225,7 +229,8 @@ int main(int argc, char *argv[])
 		//looping in this way keeps *h5 files and total loaded memory of program small at any one time
 		for (int iqt = 0; iqt < local_qtnpts; ++iqt)
 		{
-			if (iqt > (qtnpts - 1) / 2)
+//if (iqt > 0) exit(8);
+			if (iqt > (local_qtnpts - 1) / 2)
 			{
 				correlation_function.Reflect_in_qt(iqt);
 				continue;
