@@ -151,20 +151,6 @@ void CorrelationFunction::Refine_resonance_grids(int parent_resonance_particle_i
 	return;
 }
 
-void CorrelationFunction::Compute_pY_shifts_array(int parent_resonance_particle_id)
-{
-	int idx = 0;
-	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
-	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-	for (int iqx = 0; iqx < qxnpts; ++iqx)
-	for (int iqy = 0; iqy < qynpts; ++iqy)
-	for (int itrig = 0; itrig < ntrig; ++itrig)
-	{
-		pY_shifts_array[idx] = root_finder(chebyshev_a_cfs[idx], SP_Del_pY_min, SP_Del_pY_max);
-		++idx;
-	}
-}
-
 void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_id, int daughter_particle_id, int decay_channel, int iqt, int iqz)
 {
 	time_t rawtime;

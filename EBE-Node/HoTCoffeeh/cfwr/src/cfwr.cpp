@@ -1400,7 +1400,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_p
 		/////////////////////////////////////////////////////
 		// Loop over pT and pphi points (as fast as possible)
 		/////////////////////////////////////////////////////
-		int iidx = 0;
+		long iidx = 0;
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		{
 			double pT = SP_pT[ipT];
@@ -1459,8 +1459,8 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_p
 
 				complex<double> eiqx_S_x_K = term1 + term2 + term3;
 
-				short_array_C[iidx] =  eiqx_S_x_K.real();
-				short_array_C[iidx++] =  eiqx_S_x_K.imag();
+				short_array_C[iidx] = eiqx_S_x_K.real();
+				short_array_S[iidx++] = eiqx_S_x_K.imag();
 			}
 		}
 
@@ -1479,13 +1479,13 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_p
 				double sin_trans_Fourier = sinAx*cosAy + cosAx*sinAy;
 				double * ala_C = alt_long_array_C[idx];
 				double * ala_S = alt_long_array_S[idx++];
-				long iidx = 0;
+				long iidx_local = 0;
 				while ( iidx < iidx_end )
 				{
-					double cos_qx_S_x_K = short_array_C[iidx];
-					double sin_qx_S_x_K = short_array_S[iidx];
-					ala_C[iidx] += cos_trans_Fourier * cos_qx_S_x_K + sin_trans_Fourier * sin_qx_S_x_K;
-					ala_S[iidx++] += cos_trans_Fourier * sin_qx_S_x_K - sin_trans_Fourier * cos_qx_S_x_K;
+					double cos_qx_S_x_K = short_array_C[iidx_local];
+					double sin_qx_S_x_K = short_array_S[iidx_local];
+					ala_C[iidx_local] += cos_trans_Fourier * cos_qx_S_x_K + sin_trans_Fourier * sin_qx_S_x_K;
+					ala_S[iidx_local++] += cos_trans_Fourier * sin_qx_S_x_K - sin_trans_Fourier * cos_qx_S_x_K;
 				}
 			}
 		}
