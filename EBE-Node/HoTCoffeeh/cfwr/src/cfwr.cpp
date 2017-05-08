@@ -111,8 +111,8 @@ inline void Iint3(double alpha, double beta, double gamma, vector<complex<double
 		complex<double> zqi = zsq*zcu;
 		double ea = exp(-k * alpha);
 
-		complex<double> Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p;
-		int errorCode = bessf::cbessik01(z, Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p);
+		//complex<double> Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p;
+		//int errorCode = bessf::cbessik01(z, Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p);
 
 		complex<double> ck0(	ea * gsl_cheb_eval (cs_accel_expK0re, alpha),
 								ea * gsl_cheb_eval (cs_accel_expK0im, alpha) );
@@ -1535,7 +1535,9 @@ void CorrelationFunction::Reflect_in_qt(int iqt)
 	for (int iqz = 0; iqz < qznpts; ++iqz)
 	{
 //debugger(__LINE__, __FILE__);
-		int local_pid = chosen_resonances[ir-1];
+		int local_pid = target_particle_id;
+		if (ir > 0)
+			local_pid = chosen_resonances[ir-1];
 		int accessHDFresonanceSpectra = Access_resonance_in_HDF_array(local_pid, qtnpts - iqt - 1, qznpts - iqz - 1, 1, array_to_reflect);		//get
 
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)

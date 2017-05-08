@@ -87,7 +87,7 @@ void CorrelationFunction::Tabulate_resonance_Chebyshev_coefficients(int parent_r
 			chebyshev_a_cfs[idx][ipY] = 0.0;
 			for (int kpY = 0; kpY < n_pY_pts; ++kpY)
 			{
-				chebyshev_a_cfs[idx][ipY] += exp(SP_Del_pY[kpY]) * chebTcfs[ipY * n_pY_pts + kpY] 
+				chebyshev_a_cfs[idx][ipY] += exp(abs(SP_Del_pY[kpY])) * chebTcfs[ipY * n_pY_pts + kpY] 
 												* current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)];
 /*if (ipY==0)
 {
@@ -130,7 +130,7 @@ void CorrelationFunction::Refine_resonance_grids(int parent_resonance_particle_i
 		{
 			int tmp_index = (ipT * n_pphi_pts + ipphi)*n_refinement_pts + iii;
 			double tmp_pY = SP_Del_pY_min + (double)iii * Delta_DpY;
-			double tmp_result = exp(-tmp_pY) * gsl_cheb_eval (cs_accel_expEdNd3p, tmp_pY);
+			double tmp_result = exp(-abs(tmp_pY)) * gsl_cheb_eval (cs_accel_expEdNd3p, tmp_pY);
 			refined_resonance_grids[tmp_index][(iqx * qynpts + iqy)*ntrig + itrig] = tmp_result;
 //if (ipT==1 && ipphi==1 && iqx==0 && iqy==0)
 //{
