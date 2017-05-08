@@ -242,8 +242,7 @@ int main(int argc, char *argv[])
 				correlation_function.Compute_phase_space_integrals(iqt, iqz);
 			}
 		}
-                correlation_function.Output_total_eiqx_dN_dypTdpTdphi(1);       //pi^+
-		correlation_function.Output_total_eiqx_dN_dypTdpTdphi(9);	//rho^+
+		correlation_function.Output_total_eiqx_dN_dypTdpTdphi(9);	//look at rho^+ for now...
 cout << "Made it to the end!" << endl;
 if (1) exit(8);
 	}

@@ -22,7 +22,7 @@ CFLAGS= $(shell ../../crank/configure_compiler_C++_Flags.sh)
 #						-Wreorder -Wreturn-type -Wsign-compare -Wsequence-point -Wtrigraphs \
 #						-Wunused-function -Wunused-but-set-variable -Wunused-variable \
 #						-Wwrite-strings
-CFLAGS += -lgsl -lgslcblas -g
+CFLAGS += -lgsl -lgslcblas -profile-functions -profile-loops=all -profile-loops-report=2
 # -w3 -wd981
 ###CFLAGS += -lgsl -lgslcblas -g -profile-functions -profile-loops=all -profile-loops-report=2
 
@@ -51,6 +51,7 @@ SRC		=	main.cpp \
 			$(SRCDIR)/cfwr_exact.cpp \
 			$(SRCDIR)/cfwr_admin.cpp \
 			$(SRCDIR)/cfwr_resonance.cpp \
+			$(SRCDIR)/cfwr_root_finder.cpp \
 			$(SRCDIR)/cfwr_IO.cpp \
 			$(SRCDIR)/cfwr_GFroutines.cpp \
 			$(SRCDIR)/Arsenal.cpp \
@@ -128,6 +129,7 @@ $(SRCDIR)/cfwr_admin.cpp: $(SRCDIR)/cfwr.h $(SRCDIR)/Arsenal.h $(SRCDIR)/gauss_q
 $(SRCDIR)/cfwr_IO.cpp: $(SRCDIR)/cfwr.h $(SRCDIR)/Arsenal.h $(SRCDIR)/gauss_quadrature.h $(SRCDIR)/lib.h
 $(SRCDIR)/cfwr_GFroutines.cpp: $(SRCDIR)/cfwr.h $(SRCDIR)/Arsenal.h $(SRCDIR)/gauss_quadrature.h $(SRCDIR)/Stopwatch.h $(SRCDIR)/cfwr_lib.h $(SRCDIR)/lib.h
 $(SRCDIR)/cfwr_resonance.cpp: $(SRCDIR)/cfwr.h $(SRCDIR)/Arsenal.h $(SRCDIR)/gauss_quadrature.h $(SRCDIR)/cfwr_lib.h $(SRCDIR)/lib.h
+$(SRCDIR)/cfwr_root_finder.cpp: $(SRCDIR)/cfwr.h $(SRCDIR)/cfwr_lib.h $(SRCDIR)/lib.h
 $(SRCDIR)/cfwr.cpp: $(SRCDIR)/cfwr.h $(SRCDIR)/Arsenal.h $(SRCDIR)/gauss_quadrature.h $(SRCDIR)/Stopwatch.h $(SRCDIR)/cfwr_lib.h $(SRCDIR)/lib.h
 ./main.cpp: $(SRCDIR)/Stopwatch.h $(SRCDIR)/parameters.h $(SRCDIR)/readindata.h $(SRCDIR)/cfwr.h \
 				$(SRCDIR)/ParameterReader.h $(SRCDIR)/generate_processing_record.h $(SRCDIR)/lib.h main.h $(SRCDIR)/chebyshev.h

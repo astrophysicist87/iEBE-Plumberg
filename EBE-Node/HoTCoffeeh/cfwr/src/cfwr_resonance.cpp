@@ -19,6 +19,7 @@ const int n_refinement_pts = 201;
 double Delta_DpY;
 const double PTCHANGE = 1.0;
 gsl_cheb_series *cs_accel_expEdNd3p;
+double pY_shifts_array[n_pT_pts*n_pphi_pts*qxnpts*qynpts*ntrig];
 
 int local_verbose = 0;
 
@@ -87,7 +88,8 @@ void CorrelationFunction::Tabulate_resonance_Chebyshev_coefficients(int parent_r
 			chebyshev_a_cfs[idx][ipY] = 0.0;
 			for (int kpY = 0; kpY < n_pY_pts; ++kpY)
 			{
-				chebyshev_a_cfs[idx][ipY] += exp(abs(SP_Del_pY[kpY])) * chebTcfs[ipY * n_pY_pts + kpY] 
+				//chebyshev_a_cfs[idx][ipY] += exp(SP_Del_pY[kpY]) * chebTcfs[ipY * n_pY_pts + kpY] 
+				chebyshev_a_cfs[idx][ipY] += exp(abs(SP_Del_pY[kpY])) * chebTcfs[ipY * n_pY_pts + kpY]
 												* current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)];
 /*if (ipY==0)
 {
@@ -105,7 +107,8 @@ void CorrelationFunction::Tabulate_resonance_Chebyshev_coefficients(int parent_r
 
 void CorrelationFunction::Refine_resonance_grids(int parent_resonance_particle_id)
 {
-	Delta_DpY = (SP_Del_pY_max - SP_Del_pY_min) / (double)(n_refinement_pts - 1);
+	//Delta_DpY = (SP_Del_pY_max - SP_Del_pY_min) / (double)(n_refinement_pts - 1);
+	Delta_DpY = (SP_Del_pY_max - 0.0) / (double)(n_refinement_pts - 1);
 
 	long cfs_array_length = qxnpts * qynpts * ntrig;
 	refined_resonance_grids = new double * [n_pT_pts * n_pphi_pts * n_refinement_pts];
@@ -130,7 +133,7 @@ void CorrelationFunction::Refine_resonance_grids(int parent_resonance_particle_i
 		{
 			int tmp_index = (ipT * n_pphi_pts + ipphi)*n_refinement_pts + iii;
 			double tmp_pY = SP_Del_pY_min + (double)iii * Delta_DpY;
-			double tmp_result = exp(-abs(tmp_pY)) * gsl_cheb_eval (cs_accel_expEdNd3p, tmp_pY);
+			double tmp_result = exp(-tmp_pY) * gsl_cheb_eval (cs_accel_expEdNd3p, tmp_pY);
 			refined_resonance_grids[tmp_index][(iqx * qynpts + iqy)*ntrig + itrig] = tmp_result;
 //if (ipT==1 && ipphi==1 && iqx==0 && iqy==0)
 //{
@@ -146,6 +149,20 @@ void CorrelationFunction::Refine_resonance_grids(int parent_resonance_particle_i
 	}
 //if (1) exit(8);
 	return;
+}
+
+void CorrelationFunction::Compute_pY_shifts_array(int parent_resonance_particle_id)
+{
+	int idx = 0;
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+	for (int iqx = 0; iqx < qxnpts; ++iqx)
+	for (int iqy = 0; iqy < qynpts; ++iqy)
+	for (int itrig = 0; itrig < ntrig; ++itrig)
+	{
+		pY_shifts_array[idx] = root_finder(chebyshev_a_cfs[idx], SP_Del_pY_min, SP_Del_pY_max);
+		++idx;
+	}
 }
 
 void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_id, int daughter_particle_id, int decay_channel, int iqt, int iqz)

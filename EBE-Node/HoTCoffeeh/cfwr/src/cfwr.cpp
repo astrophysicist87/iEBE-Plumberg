@@ -1535,9 +1535,9 @@ void CorrelationFunction::Reflect_in_qt(int iqt)
 	for (int iqz = 0; iqz < qznpts; ++iqz)
 	{
 //debugger(__LINE__, __FILE__);
-		int local_pid = target_particle_id;
+		int local_pid = target_particle_id;	//default: pions
 		if (ir > 0)
-			local_pid = chosen_resonances[ir-1];
+			local_pid = chosen_resonances[ir-1];	//if it's a resonance, look up appropriate particle here...
 		int accessHDFresonanceSpectra = Access_resonance_in_HDF_array(local_pid, qtnpts - iqt - 1, qznpts - iqz - 1, 1, array_to_reflect);		//get
 
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
