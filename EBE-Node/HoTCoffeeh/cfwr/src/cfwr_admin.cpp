@@ -96,8 +96,8 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	output_all_dN_dypTdpTdphi = true;
 	//currentfolderindex = -1;
 	current_level_of_output = 0;
-	//qspace_cs_slice_length = qnpts*qnpts*qnpts*qnpts*ntrig;		//factor of 2 for sin or cos
-	qspace_cs_slice_length = qxnpts*qynpts*ntrig;		//factor of 2 for sin or cos
+	//qspace_cs_slice_length = qnpts*qnpts*qnpts*qnpts*ntrig;		//factor of 4 for sin or cos
+	qspace_cs_slice_length = qxnpts*qynpts*ntrig;		//factor of 4 for sin or cos, real or imaginary
 
 	//gsl_set_error_handler_off();
 
