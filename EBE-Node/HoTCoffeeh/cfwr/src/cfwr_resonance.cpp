@@ -19,7 +19,6 @@ const int n_refinement_pts = 101;
 double Delta_DpY;
 const double PTCHANGE = 1.0;
 gsl_cheb_series *cs_accel_expEdNd3p;
-//double pY_shifts_array[n_pT_pts*n_pphi_pts*qxnpts*qynpts*ntrig];
 
 int local_verbose = 0;
 

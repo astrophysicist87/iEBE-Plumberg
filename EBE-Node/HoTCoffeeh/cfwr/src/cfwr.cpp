@@ -158,9 +158,7 @@ void CorrelationFunction::Fourier_transform_emission_function(int iqt, int iqz)
 	current_iqz = iqz;
 	double loc_qz = qz_pts[iqz];
 	double loc_qt = qt_pts[iqt];
-	//current_pY_shift = - double(abs(loc_qz)>1.e-10) * asinh(loc_qz / sqrt(abs(loc_qt*loc_qt-loc_qz*loc_qz) + 1.e-100));
-	estimate_pY_shift = 0.5 * log(abs((loc_qt+loc_qz + 1.e-100)/(loc_qt-loc_qz + 1.e-100)));
-	current_pY_shift = estimate_pY_shift;
+	current_pY_shift = 0.5 * log(abs((loc_qt+loc_qz + 1.e-100)/(loc_qt-loc_qz + 1.e-100)));
 	//current_pY_shift = 0.0;
 
 	///////
@@ -1103,22 +1101,22 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 
 	double C = deltaf_prefactor;
 
-	double ** alt_long_array_CC = new double * [qxnpts * qynpts];
-	double ** alt_long_array_CS = new double * [qxnpts * qynpts];
-	double ** alt_long_array_SC = new double * [qxnpts * qynpts];
-	double ** alt_long_array_SS = new double * [qxnpts * qynpts];
+	double ** alt_long_array_CR = new double * [qxnpts * qynpts];
+	double ** alt_long_array_CI = new double * [qxnpts * qynpts];
+	double ** alt_long_array_SR = new double * [qxnpts * qynpts];
+	double ** alt_long_array_SI = new double * [qxnpts * qynpts];
 	for (int isa = 0; isa < qxnpts * qynpts; ++isa)
 	{
-		alt_long_array_CC[isa] = new double [n_pT_pts * n_pphi_pts];
-		alt_long_array_CS[isa] = new double [n_pT_pts * n_pphi_pts];
-		alt_long_array_SC[isa] = new double [n_pT_pts * n_pphi_pts];
-		alt_long_array_SS[isa] = new double [n_pT_pts * n_pphi_pts];
+		alt_long_array_CR[isa] = new double [n_pT_pts * n_pphi_pts];
+		alt_long_array_CI[isa] = new double [n_pT_pts * n_pphi_pts];
+		alt_long_array_SR[isa] = new double [n_pT_pts * n_pphi_pts];
+		alt_long_array_SI[isa] = new double [n_pT_pts * n_pphi_pts];
 		for (int isa2 = 0; isa2 < n_pT_pts * n_pphi_pts; ++isa2)
 		{
-			alt_long_array_CC[isa][isa2] = 0.0;
-			alt_long_array_CS[isa][isa2] = 0.0;
-			alt_long_array_SC[isa][isa2] = 0.0;
-			alt_long_array_SS[isa][isa2] = 0.0;
+			alt_long_array_CR[isa][isa2] = 0.0;
+			alt_long_array_CI[isa][isa2] = 0.0;
+			alt_long_array_SR[isa][isa2] = 0.0;
+			alt_long_array_SI[isa][isa2] = 0.0;
 		}
 	}
 
@@ -1236,21 +1234,19 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 				double cosAy = tmpY[iqy * 2 + 0], sinAy = tmpY[iqy * 2 + 1];
 				double cos_trans_Fourier = cosAx*cosAy - sinAx*sinAy;
 				double sin_trans_Fourier = sinAx*cosAy + cosAx*sinAy;
-				double * ala_CC = alt_long_array_CC[idx];
-				double * ala_CS = alt_long_array_CS[idx];
-				double * ala_SC = alt_long_array_SC[idx];
-				double * ala_SS = alt_long_array_SS[idx++];
+				double * ala_CR = alt_long_array_CR[idx];
+				double * ala_CI = alt_long_array_CI[idx];
+				double * ala_SR = alt_long_array_SR[idx];
+				double * ala_SI = alt_long_array_SI[idx++];
 				long iidx_local = 0;
 				while ( iidx_local < iidx_end )
 				{
 					double cos_qx_S_x_K = short_array_C[iidx_local];
 					double sin_qx_S_x_K = short_array_S[iidx_local];
-					//ala_C[iidx_local] += cos_trans_Fourier * cos_qx_S_x_K + sin_trans_Fourier * sin_qx_S_x_K;
-					//ala_S[iidx_local++] += cos_trans_Fourier * sin_qx_S_x_K - sin_trans_Fourier * cos_qx_S_x_K;
-					ala_CC[iidx_local] += cos_trans_Fourier * cos_qx_S_x_K;
-					ala_CS[iidx_local] += cos_trans_Fourier * sin_qx_S_x_K;
-					ala_SC[iidx_local] -= sin_trans_Fourier * cos_qx_S_x_K;
-					ala_SS[iidx_local++] += sin_trans_Fourier * sin_qx_S_x_K;
+					ala_CR[iidx_local] += cos_trans_Fourier * cos_qx_S_x_K;
+					ala_CI[iidx_local] += cos_trans_Fourier * sin_qx_S_x_K;
+					ala_SR[iidx_local] -= sin_trans_Fourier * cos_qx_S_x_K;
+					ala_SI[iidx_local++] += sin_trans_Fourier * sin_qx_S_x_K;
 				}
 			}
 		}
@@ -1262,12 +1258,10 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 	{
-		//current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,0)] = alt_long_array_C[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
-		//current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,1)] = alt_long_array_S[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
-		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,0)] = alt_long_array_CC[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
-		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,1)] = alt_long_array_CS[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
-		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,2)] = alt_long_array_SC[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
-		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,3)] = alt_long_array_SS[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,0)] = alt_long_array_CR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,1)] = alt_long_array_CI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,2)] = alt_long_array_SR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,3)] = alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
 	}
 	//////////
 	//////////
@@ -1279,15 +1273,15 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 
 	for (int isa = 0; isa < qxnpts * qynpts; ++isa)
 	{
-		delete [] alt_long_array_CC[isa];
-		delete [] alt_long_array_CS[isa];
-		delete [] alt_long_array_SC[isa];
-		delete [] alt_long_array_SS[isa];
+		delete [] alt_long_array_CR[isa];
+		delete [] alt_long_array_CI[isa];
+		delete [] alt_long_array_SR[isa];
+		delete [] alt_long_array_SI[isa];
 	}
-	delete [] alt_long_array_CC;
-	delete [] alt_long_array_CS;
-	delete [] alt_long_array_SC;
-	delete [] alt_long_array_SS;
+	delete [] alt_long_array_CR;
+	delete [] alt_long_array_CI;
+	delete [] alt_long_array_SR;
+	delete [] alt_long_array_SI;
 
 	sw.Stop();
 	*global_out_stream_ptr << "Total function call took " << sw.printTime() << " seconds." << endl;
@@ -1343,22 +1337,22 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_p
 
 	double C = deltaf_prefactor;
 
-	double ** alt_long_array_CC = new double * [qxnpts * qynpts];
-	double ** alt_long_array_CS = new double * [qxnpts * qynpts];
-	double ** alt_long_array_SC = new double * [qxnpts * qynpts];
-	double ** alt_long_array_SS = new double * [qxnpts * qynpts];
+	double ** alt_long_array_CR = new double * [qxnpts * qynpts];
+	double ** alt_long_array_CI = new double * [qxnpts * qynpts];
+	double ** alt_long_array_SR = new double * [qxnpts * qynpts];
+	double ** alt_long_array_SI = new double * [qxnpts * qynpts];
 	for (int isa = 0; isa < qxnpts * qynpts; ++isa)
 	{
-		alt_long_array_CC[isa] = new double [n_pT_pts * n_pphi_pts];
-		alt_long_array_CS[isa] = new double [n_pT_pts * n_pphi_pts];
-		alt_long_array_SC[isa] = new double [n_pT_pts * n_pphi_pts];
-		alt_long_array_SS[isa] = new double [n_pT_pts * n_pphi_pts];
+		alt_long_array_CR[isa] = new double [n_pT_pts * n_pphi_pts];
+		alt_long_array_CI[isa] = new double [n_pT_pts * n_pphi_pts];
+		alt_long_array_SR[isa] = new double [n_pT_pts * n_pphi_pts];
+		alt_long_array_SI[isa] = new double [n_pT_pts * n_pphi_pts];
 		for (int isa2 = 0; isa2 < n_pT_pts * n_pphi_pts; ++isa2)
 		{
-			alt_long_array_CC[isa][isa2] = 0.0;
-			alt_long_array_CS[isa][isa2] = 0.0;
-			alt_long_array_SC[isa][isa2] = 0.0;
-			alt_long_array_SS[isa][isa2] = 0.0;
+			alt_long_array_CR[isa][isa2] = 0.0;
+			alt_long_array_CI[isa][isa2] = 0.0;
+			alt_long_array_SR[isa][isa2] = 0.0;
+			alt_long_array_SI[isa][isa2] = 0.0;
 		}
 	}
 
@@ -1429,9 +1423,6 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_p
 			double mT = sqrt(pT*pT+localmass*localmass);
 			double alpha = one_by_Tdec*gammaT*mT;
 
-			//Iint2(alpha, beta, gamma, I0_a_b_g_re, I1_a_b_g_re, I2_a_b_g_re, I3_a_b_g_re, I0_a_b_g_im, I1_a_b_g_im, I2_a_b_g_im, I3_a_b_g_im);
-			//if (use_delta_f)
-			//	Iint2(2.0*alpha, beta, gamma, I0_2a_b_g_re, I1_2a_b_g_re, I2_2a_b_g_re, I3_2a_b_g_re, I0_2a_b_g_im, I1_2a_b_g_im, I2_2a_b_g_im, I3_2a_b_g_im);
 			vector<complex<double> > I0, I1, I2, I3;
 			Iint3(alpha, beta, gamma, &I0, &I1, &I2, &I3, max_n_terms_to_compute);
 
@@ -1499,21 +1490,19 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_p
 				double cosAy = tmpY[iqy * 2 + 0], sinAy = tmpY[iqy * 2 + 1];
 				double cos_trans_Fourier = cosAx*cosAy - sinAx*sinAy;
 				double sin_trans_Fourier = sinAx*cosAy + cosAx*sinAy;
-				double * ala_CC = alt_long_array_CC[idx];
-				double * ala_CS = alt_long_array_CS[idx];
-				double * ala_SC = alt_long_array_SC[idx];
-				double * ala_SS = alt_long_array_SS[idx++];
+				double * ala_CR = alt_long_array_CR[idx];
+				double * ala_CI = alt_long_array_CI[idx];
+				double * ala_SR = alt_long_array_SR[idx];
+				double * ala_SI = alt_long_array_SI[idx++];
 				long iidx_local = 0;
 				while ( iidx_local < iidx_end )
 				{
 					double cos_qx_S_x_K = short_array_C[iidx_local];
 					double sin_qx_S_x_K = short_array_S[iidx_local];
-					//ala_C[iidx_local] += cos_trans_Fourier * cos_qx_S_x_K + sin_trans_Fourier * sin_qx_S_x_K;
-					//ala_S[iidx_local++] += cos_trans_Fourier * sin_qx_S_x_K - sin_trans_Fourier * cos_qx_S_x_K;
-					ala_CC[iidx_local] += cos_trans_Fourier * cos_qx_S_x_K;
-					ala_CS[iidx_local] += cos_trans_Fourier * sin_qx_S_x_K;
-					ala_SC[iidx_local] -= sin_trans_Fourier * cos_qx_S_x_K;
-					ala_SS[iidx_local++] += sin_trans_Fourier * sin_qx_S_x_K;
+					ala_CR[iidx_local] += cos_trans_Fourier * cos_qx_S_x_K;
+					ala_CI[iidx_local] += cos_trans_Fourier * sin_qx_S_x_K;
+					ala_SR[iidx_local] -= sin_trans_Fourier * cos_qx_S_x_K;
+					ala_SI[iidx_local++] += sin_trans_Fourier * sin_qx_S_x_K;
 				}
 			}
 		}
@@ -1525,12 +1514,10 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_p
 	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 	{
-		//current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,0)] = alt_long_array_C[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
-		//current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,1)] = alt_long_array_S[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
-		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,0)] = alt_long_array_CC[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
-		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,1)] = alt_long_array_CS[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
-		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,2)] = alt_long_array_SC[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
-		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,3)] = alt_long_array_SS[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,0)] = alt_long_array_CR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,1)] = alt_long_array_CI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,2)] = alt_long_array_SR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,3)] = alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
 	}
 	//////////
 	//////////
@@ -1542,15 +1529,15 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_p
 
 	for (int isa = 0; isa < qxnpts * qynpts; ++isa)
 	{
-		delete [] alt_long_array_CC[isa];
-		delete [] alt_long_array_CS[isa];
-		delete [] alt_long_array_SC[isa];
-		delete [] alt_long_array_SS[isa];
+		delete [] alt_long_array_CR[isa];
+		delete [] alt_long_array_CI[isa];
+		delete [] alt_long_array_SR[isa];
+		delete [] alt_long_array_SI[isa];
 	}
-	delete [] alt_long_array_CC;
-	delete [] alt_long_array_CS;
-	delete [] alt_long_array_SC;
-	delete [] alt_long_array_SS;
+	delete [] alt_long_array_CR;
+	delete [] alt_long_array_CI;
+	delete [] alt_long_array_SR;
+	delete [] alt_long_array_SI;
 
 	sw.Stop();
 	*global_out_stream_ptr << "Total function call took " << sw.printTime() << " seconds." << endl;
