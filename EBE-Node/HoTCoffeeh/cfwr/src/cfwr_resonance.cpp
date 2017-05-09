@@ -447,14 +447,15 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 	double phi0, phi1, py0, py1;
 	double val11, val12, val21, val22;	//store intermediate results of pT interpolation
 	double val1, val2;					//store intermediate results of pphi interpolation
-	/*
+	
 	double pyr = abs(spyr);				//used for checking
-	double reflection_factor = 1.0;
+	double parity_factor = 1.0;
 	if (abs(qt_pts[current_iqt]) < abs(qz_pts[current_iqz]))
-		reflection_factor = -1.0;		//used to get correct sign of imaginary part of spectra
-										//with Del_pY --> -Del_pY for |qt| < |qz|
-										//real part of spectra always symmetric about Del_pY == 0
-	*/
+		parity_factor = -1.0;		//used to get correct sign of imaginary part of spectra
+									//with Del_pY --> -Del_pY for |qt| < |qz|
+									//real part of spectra always symmetric about Del_pY == 0
+	double reflection_factor = 1.0;
+	
 	bool pY_out_of_range = false;
 
 	int npphi_max = n_pphi_pts - 1;
@@ -565,7 +566,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 
 		for (int iqx = 0; iqx < qxnpts; ++iqx)
 		for (int iqy = 0; iqy < qynpts; ++iqy)
-		for (int iCS = 0; iCS < 2; ++iCS)
+		for (int iCS = 0; iCS < 2; ++iCS)	//cosine (rapidity-even), then sine (rapidity-odd)
 		{
 			double arg = one_by_Gamma_Mres * dot_four_vectors(qlist[qlist_idx], currentPpm);
 			double akr = 1./(1.+arg*arg);
@@ -701,7 +702,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 			val2 = lin_int(del_phir_phi0, one_by_pphidiff, val12, val22);
 
 			// finally, get the interpolated value
-			double Zki = /*reflection_factor **/ lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
+			double Zki = reflection_factor * lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
 
 	        /////////////////////////////////////////////////////
 	        // Finally, update results vectors appropriately
@@ -711,6 +712,8 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 	        //--> update the imaginary part of weighted daughter spectra
 	        results[qpt_cs_idx+1] += akr*Zki+aki*Zkr;
 
+			//needed to exploit symmetries of sine component
+			reflection_factor *= parity_factor;
 	        qpt_cs_idx += 2;
 	        qlist_idx++;
 		}   //end of all q-loops
@@ -753,7 +756,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 			val1 = lin_int(del_phir_phi0, one_by_pphidiff, val11, val21);
 			val2 = lin_int(del_phir_phi0, one_by_pphidiff, val12, val22);
 
-			double Zki = /*reflection_factor **/ lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
+			double Zki = reflection_factor * lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
 
 			/////////////////////////////////////////////////////
 			// Finally, update results vectors appropriately
@@ -763,6 +766,8 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double pyr, double
 			//--> update the imaginary part of weighted daughter spectra
 			results[qpt_cs_idx+1] += akr*Zki+aki*Zkr;
 
+			//needed to exploit symmetries of sine component
+			reflection_factor *= parity_factor;
 			qpt_cs_idx += 2;
 			qlist_idx++;
 		}       //end of all q-loops
