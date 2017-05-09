@@ -238,7 +238,7 @@ class CorrelationFunction
 		set<int> daughter_resonance_indices;
 
 		int current_ipT, current_ipphi, current_ipY, current_iqt, current_iqz;
-		double current_pY_shift, estimate_pY_shift, exact_pY_shift;
+		double current_pY_shift;
 
 		//some private methods		
 		bool particles_are_the_same(int idx1, int idx2);

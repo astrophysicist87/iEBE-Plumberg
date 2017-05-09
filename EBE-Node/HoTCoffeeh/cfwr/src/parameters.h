@@ -32,7 +32,8 @@ using namespace std;
 #endif
 
 // General information
-const int ntrig = 2;			// for cos or sin
+//const int ntrig = 2;			// for cos or sin
+const int ntrig = 4;			// for (C,C), (C,S), (S,C), or (S,S)
 const double hbarC = 0.197327053;		//GeV*fm
 const double hbarC3 = 0.00768351405;
 const double hbarCm1 = 5.067728853;

@@ -242,14 +242,14 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 		current_ln_dN_dypTdpTdphi_moments[i] = 0.0;
 		current_sign_of_dN_dypTdpTdphi_moments[i] = 0.0;
 	}
-	const int full_size = n_pT_pts * n_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
+	/*const int full_size = n_pT_pts * n_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
 	thermal_target_Yeq0_moments = new double [full_size];
 	full_target_Yeq0_moments = new double [full_size];
 	for (int i = 0; i < full_size; ++i)
 	{
 		thermal_target_Yeq0_moments[i] = 0.0;
 		full_target_Yeq0_moments[i] = 0.0;
-	}
+	}*/
 
 	int qidx = 0;
 	qlist = new double * [qxnpts*qynpts];
