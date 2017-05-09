@@ -1545,19 +1545,24 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_p
 	return;
 }
 
+/*inline double parity_reflector(double x)
+{
+	return (
+		1.0 + x * (-2.0 + (x - 1.0) * ( 2.0 - 4.0 * (x - 2.0) / 3.0 ) )
+	);
+}*/
+
 void CorrelationFunction::Reflect_in_qt(int iqt)
 {
-//debugger(__LINE__, __FILE__);
 	int HDFcode = Administrate_resonance_HDF_array(1);	//open
-//debugger(__LINE__, __FILE__);
+
 	long reflection_array_size = n_pT_pts * n_pphi_pts * n_pY_pts * qxnpts * qynpts * ntrig;
 	double * array_to_reflect = new double [reflection_array_size];
 	double * reflection_of_array = new double [reflection_array_size];
-//debugger(__LINE__, __FILE__);
+
 	for (int ir = 0; ir < NchosenParticle + 1; ++ir)
 	for (int iqz = 0; iqz < qznpts; ++iqz)
 	{
-//debugger(__LINE__, __FILE__);
 		int local_pid = target_particle_id;	//default: pions
 		if (ir > 0)
 			local_pid = chosen_resonances[ir-1];	//if it's a resonance, look up appropriate particle here...
@@ -1568,15 +1573,14 @@ void CorrelationFunction::Reflect_in_qt(int iqt)
 		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 		for (int iqx = 0; iqx < qxnpts; ++iqx)
 		for (int iqy = 0; iqy < qynpts; ++iqy)
-		for (int itrig = 0; itrig < ???; ++itrig)
-			reflection_of_array[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,itrig)] = (1.0 - 2.0 * itrig) * array_to_reflect[fixQTQZ_indexer(ipT,ipphi,ipY,qxnpts - iqx - 1,qynpts - iqy - 1,itrig)];
+		for (int itrig = 0; itrig < ntrig; ++itrig)
+			reflection_of_array[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,itrig)] = pow(-1.0, (double)itrig) * array_to_reflect[fixQTQZ_indexer(ipT,ipphi,ipY,qxnpts - iqx - 1,qynpts - iqy - 1,itrig)];
 
 		accessHDFresonanceSpectra = Access_resonance_in_HDF_array(local_pid, iqt, iqz, 0, reflection_of_array);		//set
-//debugger(__LINE__, __FILE__);
 	}
 
 	HDFcode = Administrate_resonance_HDF_array(2);	//close
-//debugger(__LINE__, __FILE__);
+
 	delete [] array_to_reflect;
 	delete [] reflection_of_array;
 
@@ -1585,9 +1589,9 @@ void CorrelationFunction::Reflect_in_qt(int iqt)
 
 void CorrelationFunction::Reflect_in_qz(int local_pid, int iqt, int iqz)
 {
-//if (iqt==0 && iqz==2) debugger(__LINE__, __FILE__);
+
 	int HDFcode = Administrate_resonance_HDF_array(1);	//open
-//if (iqt==0 && iqz==2) debugger(__LINE__, __FILE__);
+
 	double loc_qt = qt_pts[iqt];
 	double loc_qz = qz_pts[iqz];
 	current_pY_shift = 0.5 * log(abs((loc_qt+loc_qz + 1.e-100)/(loc_qt-loc_qz + 1.e-100)));
@@ -1595,15 +1599,15 @@ void CorrelationFunction::Reflect_in_qz(int local_pid, int iqt, int iqz)
 	long reflection_array_size = n_pT_pts * n_pphi_pts * n_pY_pts * qxnpts * qynpts * ntrig;
 	double * array_to_reflect = new double [reflection_array_size];
 	double * reflection_of_array = new double [reflection_array_size];
-//if (iqt==0 && iqz==2) debugger(__LINE__, __FILE__);
+
 	int accessHDFresonanceSpectra = Access_resonance_in_HDF_array(local_pid, iqt, qznpts - iqz - 1, 1, array_to_reflect, (iqt==0 && iqz==2));	//get
-//if (iqt==0 && iqz==2) debugger(__LINE__, __FILE__);
+
 	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 	for (int iqx = 0; iqx < qxnpts; ++iqx)
 	for (int iqy = 0; iqy < qynpts; ++iqy)
-	for (int itrig = 0; itrig < ???; ++itrig)
+	for (int itrig = 0; itrig < ntrig; ++itrig)
 	{
 		reflection_of_array[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,itrig)] = array_to_reflect[fixQTQZ_indexer(ipT,ipphi,n_pY_pts - ipY - 1,iqx,iqy,itrig)];
 		/*cout << "QZ-REFLECTION: " << scientific << setprecision(8) << setw(12)
@@ -1612,11 +1616,10 @@ void CorrelationFunction::Reflect_in_qz(int local_pid, int iqt, int iqz)
 			<< reflection_of_array[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,itrig)] << "   " << array_to_reflect[fixQTQZ_indexer(ipT,ipphi,n_pY_pts - ipY - 1,iqx,iqy,itrig)] << endl;*/
 	}
 
-//if (iqt==0 && iqz==2) debugger(__LINE__, __FILE__);
 	accessHDFresonanceSpectra = Access_resonance_in_HDF_array(local_pid, iqt, iqz, 0, reflection_of_array, (iqt==0 && iqz==2));		//set
-//if (iqt==0 && iqz==2) debugger(__LINE__, __FILE__);
+
 	HDFcode = Administrate_resonance_HDF_array(2);	//close
-//if (iqt==0 && iqz==2) debugger(__LINE__, __FILE__);
+
 	delete [] array_to_reflect;
 	delete [] reflection_of_array;
 

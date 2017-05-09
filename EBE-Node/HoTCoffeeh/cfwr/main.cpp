@@ -239,8 +239,8 @@ int main(int argc, char *argv[])
 			{
 				//if (iqt > 0 || iqz > 0) exit(8);
 				correlation_function.Fourier_transform_emission_function(iqt, iqz);
-if (1) exit(8);
 				correlation_function.Compute_phase_space_integrals(iqt, iqz);
+if (1) exit(8);
 			}
 		}
 		correlation_function.Output_total_eiqx_dN_dypTdpTdphi(9);	//look at rho^+ for now...
