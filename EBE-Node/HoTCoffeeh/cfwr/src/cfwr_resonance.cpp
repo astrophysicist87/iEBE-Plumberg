@@ -882,6 +882,14 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 		}       //end of all q-loops
 	}
 
+	qpt_cs_idx = 0;
+	for (int iqx = 0; iqx < qxnpts; ++iqx)
+	for (int iqy = 0; iqy < qynpts; ++iqy)
+		cout << "SANITY CHECK: " << qt_pts[current_iqt] << "   " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[current_iqz] << "   "
+				<< results[qpt_cs_idx++] << "   " << results[qpt_cs_idx++] << "   " << results[qpt_cs_idx++] << "   " << results[qpt_cs_idx++] << endl;
+
+if (1) exit(8);
+
 	return;
 }
 
