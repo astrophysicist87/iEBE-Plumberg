@@ -20,6 +20,8 @@ double Delta_DpY;
 const double PTCHANGE = 1.0;
 gsl_cheb_series *cs_accel_expEdNd3p;
 
+double * val11_arr, * val12_arr, * val21_arr, * val22_arr;
+
 int local_verbose = 0;
 
 template < typename T >
@@ -138,6 +140,11 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 	time_t rawtime;
   	struct tm * timeinfo;
 
+	val11_arr = new double [qspace_cs_slice_length];
+	val12_arr = new double [qspace_cs_slice_length];
+	val21_arr = new double [qspace_cs_slice_length];
+	val22_arr = new double [qspace_cs_slice_length];
+
 	int daughter_lookup_idx = distance(daughter_resonance_indices.begin(), daughter_resonance_indices.find(daughter_particle_id));
 
 	Allocate_resonance_running_sum_vectors();
@@ -199,6 +206,7 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 					double PKT = VEC_n2_PT[NB2_indexer(iv,izeta)];
 					double Del_PKY = VEC_n2_P_Y[iv] - current_pY_shift;
 					double PKphi = VEC_n2_PPhi_tilde[NB2_indexer(iv,izeta)];
+Set_val_arrays(PKT, PKphi, Del_PKY);
 					for (int tempidx = 0; tempidx <= 1; ++tempidx)
 					{
 						if (tempidx != 0)
@@ -273,6 +281,7 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 						double PKT = VEC_n3_PT[NB3_indexer(is,iv,izeta)];
 						double Del_PKY = VEC_n3_P_Y[is*n_v_pts+iv] - current_pY_shift;
 						double PKphi = VEC_n3_PPhi_tilde[NB3_indexer(is,iv,izeta)];
+Set_val_arrays(PKT, PKphi, Del_PKY);
 						for (int tempidx = 0; tempidx <= 1; ++tempidx)
 						{
 							if (tempidx != 0)
@@ -329,6 +338,11 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 	delete [] refined_resonance_grids;
 	delete [] log_refined_grids;
 	delete [] sgn_refined_grids;
+
+	delete [] val11_arr;
+	delete [] val12_arr;
+	delete [] val21_arr;
+	delete [] val22_arr;
 
 	Delete_resonance_running_sum_vectors();
 
@@ -530,14 +544,14 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 	double one_by_pTdiff = 1./(pT1 - pT0), one_by_pphidiff = 1./(phi1 - phi0), one_by_pYdiff = 1./(py1 - py0 + 1.e-10);
 	double del_ptr_pt0 = ptr - pT0, del_phir_phi0 = phir - phi0, del_pyr_py0 = pyr - py0;
 
-	double * f111_arr = refined_resonance_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
+	/*double * f111_arr = refined_resonance_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
 	double * f112_arr = refined_resonance_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npy];
 	double * f121_arr = refined_resonance_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npym1];
 	double * f122_arr = refined_resonance_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npy];
 	double * f211_arr = refined_resonance_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
 	double * f212_arr = refined_resonance_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npy];
 	double * f221_arr = refined_resonance_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npym1];
-	double * f222_arr = refined_resonance_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npy];
+	double * f222_arr = refined_resonance_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npy];*/
 
 	// set index for looping
 	int qpt_cs_idx = 0;
@@ -546,7 +560,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 	if ( ptr_greater_than_pT1 )                             // if pT interpolation point is outside of grid
 	{
 
-		double * log_f111_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
+		/*double * log_f111_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
 		double * log_f112_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npy];
 		double * log_f121_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npym1];
 		double * log_f122_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npy];
@@ -562,7 +576,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 		double * sign_of_f211_arr = sgn_refined_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
 		double * sign_of_f212_arr = sgn_refined_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npy];
 		double * sign_of_f221_arr = sgn_refined_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npym1];
-		double * sign_of_f222_arr = sgn_refined_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npy];
+		double * sign_of_f222_arr = sgn_refined_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npy];*/
 
 		for (int iqx = 0; iqx < qxnpts; ++iqx)
 		for (int iqy = 0; iqy < qynpts; ++iqy)
@@ -578,38 +592,42 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 				/////////////////////////////////////////////////////////////////
 				// interpolate over pT values first
 				/////////////////////////////////////////////////////////////////
-				double sign_of_f111 = sign_of_f111_arr[qpt_cs_idx];
+				/*double sign_of_f111 = sign_of_f111_arr[qpt_cs_idx];
 				double sign_of_f112 = sign_of_f112_arr[qpt_cs_idx];
 				double sign_of_f121 = sign_of_f121_arr[qpt_cs_idx];
 				double sign_of_f122 = sign_of_f122_arr[qpt_cs_idx];
 				double sign_of_f211 = sign_of_f211_arr[qpt_cs_idx];
 				double sign_of_f212 = sign_of_f212_arr[qpt_cs_idx];
 				double sign_of_f221 = sign_of_f221_arr[qpt_cs_idx];
-				double sign_of_f222 = sign_of_f222_arr[qpt_cs_idx];
+				double sign_of_f222 = sign_of_f222_arr[qpt_cs_idx];*/
 
 				// set val11
-				//if ( sign_of_f111 * sign_of_f211 > 0 && log_f211_arr[qpt_cs_idx] < log_f111_arr[qpt_cs_idx] )
+				/*if ( sign_of_f111 * sign_of_f211 > 0 && log_f211_arr[qpt_cs_idx] < log_f111_arr[qpt_cs_idx] )
 					val11 = sign_of_f111 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) );
-				//else
-				//	val11 = 0.0;
+				else
+					val11 = 0.0;
 
 				// set val21
-				//if ( sign_of_f121 * sign_of_f221 > 0 && log_f221_arr[qpt_cs_idx] < log_f121_arr[qpt_cs_idx] )
+				if ( sign_of_f121 * sign_of_f221 > 0 && log_f221_arr[qpt_cs_idx] < log_f121_arr[qpt_cs_idx] )
 					val21 = sign_of_f121 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]) );
-				//else
-				//	val21 = 0.0;
+				else
+					val21 = 0.0;
 
 				// set val12
-				//if ( sign_of_f112 * sign_of_f212 > 0 && log_f212_arr[qpt_cs_idx] < log_f112_arr[qpt_cs_idx] )
+				if ( sign_of_f112 * sign_of_f212 > 0 && log_f212_arr[qpt_cs_idx] < log_f112_arr[qpt_cs_idx] )
 					val12 = sign_of_f112 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]) );
-				//else
-				//	val12 = 0.0;
+				else
+					val12 = 0.0;
 
 				// set val22
-				//if ( sign_of_f122 * sign_of_f222 > 0 && log_f222_arr[qpt_cs_idx] < log_f122_arr[qpt_cs_idx] )
+				if ( sign_of_f122 * sign_of_f222 > 0 && log_f222_arr[qpt_cs_idx] < log_f122_arr[qpt_cs_idx] )
 					val22 = sign_of_f122 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
-				//else
-				//	val22 = 0.0;
+				else
+					val22 = 0.0;*/
+				val11 = val11_arr[qpt_cs_idx];
+				val21 = val21_arr[qpt_cs_idx];
+				val12 = val12_arr[qpt_cs_idx];
+				val22 = val22_arr[qpt_cs_idx];
 
 				//////////////////////////////////////
 				// interpolate val11 and val12 over the pphi direction to get val1
@@ -626,38 +644,42 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 			    /////////////////////////////////////////////////////////////////
 			    // interpolate over pT values first
 			    /////////////////////////////////////////////////////////////////
-				sign_of_f111 = sign_of_f111_arr[qpt_cs_idx+1];
+				/*sign_of_f111 = sign_of_f111_arr[qpt_cs_idx+1];
 				sign_of_f112 = sign_of_f112_arr[qpt_cs_idx+1];
 				sign_of_f121 = sign_of_f121_arr[qpt_cs_idx+1];
 				sign_of_f122 = sign_of_f122_arr[qpt_cs_idx+1];
 				sign_of_f211 = sign_of_f211_arr[qpt_cs_idx+1];
 				sign_of_f212 = sign_of_f212_arr[qpt_cs_idx+1];
 				sign_of_f221 = sign_of_f221_arr[qpt_cs_idx+1];
-				sign_of_f222 = sign_of_f222_arr[qpt_cs_idx+1];
+				sign_of_f222 = sign_of_f222_arr[qpt_cs_idx+1];*/
 
 				// set val11
-				//if ( sign_of_f111 * sign_of_f211 > 0 && log_f211_arr[qpt_cs_idx+1] < log_f111_arr[qpt_cs_idx+1] )
+				/*if ( sign_of_f111 * sign_of_f211 > 0 && log_f211_arr[qpt_cs_idx+1] < log_f111_arr[qpt_cs_idx+1] )
 					val11 = sign_of_f111 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx+1], log_f211_arr[qpt_cs_idx+1]) );
-				//else
-				//	val11 = 0.0;
+				else
+					val11 = 0.0;
 
 				// set val21
-				//if ( sign_of_f121 * sign_of_f221 > 0 && log_f221_arr[qpt_cs_idx+1] < log_f121_arr[qpt_cs_idx+1] )
+				if ( sign_of_f121 * sign_of_f221 > 0 && log_f221_arr[qpt_cs_idx+1] < log_f121_arr[qpt_cs_idx+1] )
 					val21 = sign_of_f121 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx+1], log_f221_arr[qpt_cs_idx+1]) );
-				//else
-				//	val21 = 0.0;
+				else
+					val21 = 0.0;
 
 				// set val12
-				//if ( sign_of_f112 * sign_of_f212 > 0 && log_f212_arr[qpt_cs_idx+1] < log_f112_arr[qpt_cs_idx+1] )
+				if ( sign_of_f112 * sign_of_f212 > 0 && log_f212_arr[qpt_cs_idx+1] < log_f112_arr[qpt_cs_idx+1] )
 					val12 = sign_of_f112 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx+1], log_f212_arr[qpt_cs_idx+1]) );
-				//else
-				//	val12 = 0.0;
+				else
+					val12 = 0.0;
 
 				// set val22
-				//if ( sign_of_f122 * sign_of_f222 > 0 && log_f222_arr[qpt_cs_idx+1] < log_f122_arr[qpt_cs_idx+1] )
+				if ( sign_of_f122 * sign_of_f222 > 0 && log_f222_arr[qpt_cs_idx+1] < log_f122_arr[qpt_cs_idx+1] )
 					val22 = sign_of_f122 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx+1], log_f222_arr[qpt_cs_idx+1]) );
-				//else
-				//	val22 = 0.0;
+				else
+					val22 = 0.0;*/
+				val11 = val11_arr[qpt_cs_idx+1];
+				val21 = val21_arr[qpt_cs_idx+1];
+				val12 = val12_arr[qpt_cs_idx+1];
+				val22 = val22_arr[qpt_cs_idx+1];
 
 				//////////////////////////////////////
 				// interpolate val11 and val12 over the pphi direction to get val1
@@ -687,7 +709,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 	else if (ptr > PTCHANGE)                             // if pT interpolation point is larger than PTCHANGE (currently 1.0 GeV)
 	{
 
-		double * log_f111_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
+		/*double * log_f111_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
 		double * log_f112_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npy];
 		double * log_f121_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npym1];
 		double * log_f122_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npy];
@@ -703,7 +725,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 		double * sign_of_f211_arr = sgn_refined_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
 		double * sign_of_f212_arr = sgn_refined_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npy];
 		double * sign_of_f221_arr = sgn_refined_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npym1];
-		double * sign_of_f222_arr = sgn_refined_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npy];
+		double * sign_of_f222_arr = sgn_refined_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npy];*/
 
 		for (int iqx = 0; iqx < qxnpts; ++iqx)
 		for (int iqy = 0; iqy < qynpts; ++iqy)
@@ -719,38 +741,42 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 				/////////////////////////////////////////////////////////////////
 				// interpolate over pT values first
 				/////////////////////////////////////////////////////////////////
-				double sign_of_f111 = sign_of_f111_arr[qpt_cs_idx];
+				/*double sign_of_f111 = sign_of_f111_arr[qpt_cs_idx];
 				double sign_of_f112 = sign_of_f112_arr[qpt_cs_idx];
 				double sign_of_f121 = sign_of_f121_arr[qpt_cs_idx];
 				double sign_of_f122 = sign_of_f122_arr[qpt_cs_idx];
 				double sign_of_f211 = sign_of_f211_arr[qpt_cs_idx];
 				double sign_of_f212 = sign_of_f212_arr[qpt_cs_idx];
 				double sign_of_f221 = sign_of_f221_arr[qpt_cs_idx];
-				double sign_of_f222 = sign_of_f222_arr[qpt_cs_idx];
+				double sign_of_f222 = sign_of_f222_arr[qpt_cs_idx];*/
 
 				// set val11
-				//if (sign_of_f111 * sign_of_f211 > 0) // if the two points have the same sign in the pT direction, interpolate logs
+				/*if (sign_of_f111 * sign_of_f211 > 0) // if the two points have the same sign in the pT direction, interpolate logs
 					val11 = sign_of_f111 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) );
-				//else                                    // otherwise, just interpolate original vals
-				//	val11 = lin_int(del_ptr_pt0, one_by_pTdiff, f111_arr[qpt_cs_idx], f211_arr[qpt_cs_idx]);
+				else                                    // otherwise, just interpolate original vals
+					val11 = lin_int(del_ptr_pt0, one_by_pTdiff, f111_arr[qpt_cs_idx], f211_arr[qpt_cs_idx]);
 
 				// set val21
-				//if (sign_of_f121 * sign_of_f221 > 0) // if the two points have the same sign in the pT direction, interpolate logs
+				if (sign_of_f121 * sign_of_f221 > 0) // if the two points have the same sign in the pT direction, interpolate logs
 					val21 = sign_of_f121 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]) );
-				//else                                    // otherwise, just interpolate original vals
-				//	val21 = lin_int(del_ptr_pt0, one_by_pTdiff, f121_arr[qpt_cs_idx], f221_arr[qpt_cs_idx]);
+				else                                    // otherwise, just interpolate original vals
+					val21 = lin_int(del_ptr_pt0, one_by_pTdiff, f121_arr[qpt_cs_idx], f221_arr[qpt_cs_idx]);
 
 				// set val12
-				//if (sign_of_f112 * sign_of_f212 > 0) // if the two points have the same sign in the pT direction, interpolate logs
+				if (sign_of_f112 * sign_of_f212 > 0) // if the two points have the same sign in the pT direction, interpolate logs
 					val12 = sign_of_f112 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]) );
-				//else                                    // otherwise, just interpolate original vals
-				//	val12 = lin_int(del_ptr_pt0, one_by_pTdiff, f112_arr[qpt_cs_idx], f212_arr[qpt_cs_idx]);
+				else                                    // otherwise, just interpolate original vals
+					val12 = lin_int(del_ptr_pt0, one_by_pTdiff, f112_arr[qpt_cs_idx], f212_arr[qpt_cs_idx]);
 
 				// set val22
-				//if (sign_of_f122 * sign_of_f222 > 0) // if the two points have the same sign in the pT direction, interpolate logs
+				if (sign_of_f122 * sign_of_f222 > 0) // if the two points have the same sign in the pT direction, interpolate logs
 					val22 = sign_of_f122 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
-				//else                                    // otherwise, just interpolate original vals
-				//	val22 = lin_int(del_ptr_pt0, one_by_pTdiff, f122_arr[qpt_cs_idx], f222_arr[qpt_cs_idx]);
+				else                                    // otherwise, just interpolate original vals
+					val22 = lin_int(del_ptr_pt0, one_by_pTdiff, f122_arr[qpt_cs_idx], f222_arr[qpt_cs_idx]);*/
+				val11 = val11_arr[qpt_cs_idx];
+				val21 = val21_arr[qpt_cs_idx];
+				val12 = val12_arr[qpt_cs_idx];
+				val22 = val22_arr[qpt_cs_idx];
 
 				//////////////////////////////////////
 				// interpolate val11 and val12 over the pphi direction to get val1
@@ -767,38 +793,42 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 			    /////////////////////////////////////////////////////////////////
 			    // interpolate over pT values first
 			    /////////////////////////////////////////////////////////////////
-				sign_of_f111 = sign_of_f111_arr[qpt_cs_idx+1];
+				/*sign_of_f111 = sign_of_f111_arr[qpt_cs_idx+1];
 				sign_of_f112 = sign_of_f112_arr[qpt_cs_idx+1];
 				sign_of_f121 = sign_of_f121_arr[qpt_cs_idx+1];
 				sign_of_f122 = sign_of_f122_arr[qpt_cs_idx+1];
 				sign_of_f211 = sign_of_f211_arr[qpt_cs_idx+1];
 				sign_of_f212 = sign_of_f212_arr[qpt_cs_idx+1];
 				sign_of_f221 = sign_of_f221_arr[qpt_cs_idx+1];
-				sign_of_f222 = sign_of_f222_arr[qpt_cs_idx+1];
+				sign_of_f222 = sign_of_f222_arr[qpt_cs_idx+1];*/
 
 				// set val11
-				//if (sign_of_f111 * sign_of_f211 > 0) // if the two points have the same sign in the pT direction, interpolate logs
+				/*if (sign_of_f111 * sign_of_f211 > 0) // if the two points have the same sign in the pT direction, interpolate logs
 					val11 = sign_of_f111 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx+1], log_f211_arr[qpt_cs_idx+1]) );
-				//else                                    // otherwise, just interpolate original vals
-				//	val11 = lin_int(del_ptr_pt0, one_by_pTdiff, f111_arr[qpt_cs_idx+1], f211_arr[qpt_cs_idx+1]);
+				else                                    // otherwise, just interpolate original vals
+					val11 = lin_int(del_ptr_pt0, one_by_pTdiff, f111_arr[qpt_cs_idx+1], f211_arr[qpt_cs_idx+1]);
 
 				// set val21
-				//if (sign_of_f121 * sign_of_f221 > 0) // if the two points have the same sign in the pT direction, interpolate logs
+				if (sign_of_f121 * sign_of_f221 > 0) // if the two points have the same sign in the pT direction, interpolate logs
 					val21 = sign_of_f121 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx+1], log_f221_arr[qpt_cs_idx+1]) );
-				//else                                    // otherwise, just interpolate original vals
-				//	val21 = lin_int(del_ptr_pt0, one_by_pTdiff, f121_arr[qpt_cs_idx+1], f221_arr[qpt_cs_idx+1]);
+				else                                    // otherwise, just interpolate original vals
+					val21 = lin_int(del_ptr_pt0, one_by_pTdiff, f121_arr[qpt_cs_idx+1], f221_arr[qpt_cs_idx+1]);
 
 				// set val12
-				//if (sign_of_f112 * sign_of_f212 > 0) // if the two points have the same sign in the pT direction, interpolate logs
+				if (sign_of_f112 * sign_of_f212 > 0) // if the two points have the same sign in the pT direction, interpolate logs
 					val12 = sign_of_f112 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx+1], log_f212_arr[qpt_cs_idx+1]) );
-				//else                                    // otherwise, just interpolate original vals
-				//	val12 = lin_int(del_ptr_pt0, one_by_pTdiff, f112_arr[qpt_cs_idx+1], f212_arr[qpt_cs_idx+1]);
+				else                                    // otherwise, just interpolate original vals
+					val12 = lin_int(del_ptr_pt0, one_by_pTdiff, f112_arr[qpt_cs_idx+1], f212_arr[qpt_cs_idx+1]);
 
 				// set val22
-				//if (sign_of_f122 * sign_of_f222 > 0) // if the two points have the same sign in the pT direction, interpolate logs
+				if (sign_of_f122 * sign_of_f222 > 0) // if the two points have the same sign in the pT direction, interpolate logs
 					val22 = sign_of_f122 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx+1], log_f222_arr[qpt_cs_idx+1]) );
-				//else                                    // otherwise, just interpolate original vals
-				//	val22 = lin_int(del_ptr_pt0, one_by_pTdiff, f122_arr[qpt_cs_idx+1], f222_arr[qpt_cs_idx+1]);
+				else                                    // otherwise, just interpolate original vals
+					val22 = lin_int(del_ptr_pt0, one_by_pTdiff, f122_arr[qpt_cs_idx+1], f222_arr[qpt_cs_idx+1]);*/
+				val11 = val11_arr[qpt_cs_idx+1];
+				val21 = val21_arr[qpt_cs_idx+1];
+				val12 = val12_arr[qpt_cs_idx+1];
+				val22 = val22_arr[qpt_cs_idx+1];
 
 				//////////////////////////////////////
 				// interpolate val11 and val12 over the pphi direction to get val1
@@ -841,10 +871,14 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 				/////////////////////////////////////////////////////////////////
 				// interpolate over pT values first
 				/////////////////////////////////////////////////////////////////
-				val11 = lin_int(del_ptr_pt0, one_by_pTdiff, f111_arr[qpt_cs_idx], f211_arr[qpt_cs_idx]);
+				/*val11 = lin_int(del_ptr_pt0, one_by_pTdiff, f111_arr[qpt_cs_idx], f211_arr[qpt_cs_idx]);
 				val21 = lin_int(del_ptr_pt0, one_by_pTdiff, f121_arr[qpt_cs_idx], f221_arr[qpt_cs_idx]);
 				val12 = lin_int(del_ptr_pt0, one_by_pTdiff, f112_arr[qpt_cs_idx], f212_arr[qpt_cs_idx]);
-				val22 = lin_int(del_ptr_pt0, one_by_pTdiff, f122_arr[qpt_cs_idx], f222_arr[qpt_cs_idx]);
+				val22 = lin_int(del_ptr_pt0, one_by_pTdiff, f122_arr[qpt_cs_idx], f222_arr[qpt_cs_idx]);*/
+				val11 = val11_arr[qpt_cs_idx];
+				val21 = val21_arr[qpt_cs_idx];
+				val12 = val12_arr[qpt_cs_idx];
+				val22 = val22_arr[qpt_cs_idx];
 
 				val1 = lin_int(del_phir_phi0, one_by_pphidiff, val11, val21);
 				val2 = lin_int(del_phir_phi0, one_by_pphidiff, val12, val22);
@@ -856,10 +890,14 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 				/////////////////////////////////////////////////////////////////
 				// interpolate over pT values first
 				/////////////////////////////////////////////////////////////////
-				val11 = lin_int(del_ptr_pt0, one_by_pTdiff, f111_arr[qpt_cs_idx+1], f211_arr[qpt_cs_idx+1]);
+				/*val11 = lin_int(del_ptr_pt0, one_by_pTdiff, f111_arr[qpt_cs_idx+1], f211_arr[qpt_cs_idx+1]);
 				val21 = lin_int(del_ptr_pt0, one_by_pTdiff, f121_arr[qpt_cs_idx+1], f221_arr[qpt_cs_idx+1]);
 				val12 = lin_int(del_ptr_pt0, one_by_pTdiff, f112_arr[qpt_cs_idx+1], f212_arr[qpt_cs_idx+1]);
-				val22 = lin_int(del_ptr_pt0, one_by_pTdiff, f122_arr[qpt_cs_idx+1], f222_arr[qpt_cs_idx+1]);
+				val22 = lin_int(del_ptr_pt0, one_by_pTdiff, f122_arr[qpt_cs_idx+1], f222_arr[qpt_cs_idx+1]);*/
+				val11 = val11_arr[qpt_cs_idx+1];
+				val21 = val21_arr[qpt_cs_idx+1];
+				val12 = val12_arr[qpt_cs_idx+1];
+				val22 = val22_arr[qpt_cs_idx+1];
 
 				val1 = lin_int(del_phir_phi0, one_by_pphidiff, val11, val21);
 				val2 = lin_int(del_phir_phi0, one_by_pphidiff, val12, val22);
@@ -895,150 +933,239 @@ if (1) exit(8);*/
 
 ///////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////
-void CorrelationFunction::Load_decay_channel_info(int dc_idx, double K_T_local, double K_phi_local, double K_y_local)
+void CorrelationFunction::Set_val_arrays(double ptr, double phir, double spyr)
 {
-	Mres = current_resonance_mass;
-	Gamma = current_resonance_Gamma;
-	one_by_Gamma_Mres = 1./(Gamma*Mres + 1.e-25);	//keeps calculation safe when Gamma == 0
-	//N.B. - no need for hbarc, since this will only multiply something with GeV^2 units in the end
-	mass = current_daughter_mass;
-	br = current_resonance_direct_br;	//doesn't depend on target daughter particle, just parent resonance and decay channel
-	m2 = current_resonance_decay_masses[0];
-	m3 = current_resonance_decay_masses[1];
+	double phi0, phi1, py0, py1;
+	double val11, val12, val21, val22;	//store intermediate results of pT interpolation
+	double val1, val2;					//store intermediate results of pphi interpolation
+	
+	double pyr = abs(spyr);				//used for checking
+	
+	bool pY_out_of_range = false;
 
-	pT = K_T_local;
-	current_K_phi = K_phi_local;
-	p_y = K_y_local;
+	int npphi_max = n_pphi_pts - 1;
+	int npT_max = n_pT_pts - 1;
 
-	n_body = current_reso_nbody;
+	// locate pT interval
+	int npt = 1;
+	while ((ptr > SP_pT[npt]) &&
+		(npt < npT_max)) ++npt;
+	double pT0 = SP_pT[npt-1];
+	double pT1 = SP_pT[npt];
 
-	if (n_body == 2)
+	// locate pphi interval
+	int nphi = 1, nphim1 = 0;
+	if(phir < SP_pphi[0])                   //if angle is less than minimum angle grid point
 	{
-		// some particles may decay to particles with more total mass than originally
-		// --> broaden with resonance widths
-		while ((mass + m2) > Mres)
+		phi0 = SP_pphi[npphi_max] - 2. * M_PI;
+		phi1 = SP_pphi[0];
+		nphi = 0;
+		nphim1 = npphi_max;
+		pY_out_of_range = true;
+	}
+	else if(phir > SP_pphi[npphi_max])      //if angle is greater than maximum angle grid point
+	{
+		phi0 = SP_pphi[npphi_max];
+		phi1 = SP_pphi[0] + 2. * M_PI;
+		nphi = 0;
+		nphim1 = npphi_max;
+		pY_out_of_range = true;
+	}
+	else                                            //if angle is within grid range
+	{
+		while ((phir > SP_pphi[nphi]) &&
+			(nphi < npphi_max)) ++nphi;
+		nphim1 = nphi - 1;
+		phi0 = SP_pphi[nphim1];
+		phi1 = SP_pphi[nphi];
+	}
+
+	// locate py interval
+	long npy = 1, npym1 = 0;
+	if(pyr > SP_Del_pY_max)	//if rapidity is greater than maximum rapidity grid point
+	{
+		py0 = SP_Del_pY_max;
+		py1 = SP_Del_pY_max;
+		npy = n_refinement_pts - 1;	//this just guarantees nearest neighbor if pY > pY_max
+		npym1 = n_refinement_pts - 1;
+	}
+	else if(pyr < SP_Del_pY_min)	//else if rapidity is less than minimum rapidity grid point
+	{
+		py0 = SP_Del_pY_min;
+		py1 = SP_Del_pY_min;
+		npy = 0;	//this just guarantees nearest neighbor if pY > pY_max
+		npym1 = 0;
+	}
+	else						//if rapidity is within grid range
+	{
+		npym1 = floor((pyr-SP_Del_pY_min)/Delta_DpY);
+		npy = npym1 + 1;
+		py0 = SP_Del_pY_min + (double)npym1 * Delta_DpY;
+		py1 = SP_Del_pY_min + (double)npy * Delta_DpY;
+	}
+
+	if (pT0==pT1 || phi0==phi1)
+	{
+		cerr << "ERROR in eiqxEdndp3(): pT and/or pphi values equal!" << endl;
+		exit(1);
+	}
+
+	bool ptr_greater_than_pT1 = (ptr > pT1);
+
+	double one_by_pTdiff = 1./(pT1 - pT0), one_by_pphidiff = 1./(phi1 - phi0), one_by_pYdiff = 1./(py1 - py0 + 1.e-10);
+	double del_ptr_pt0 = ptr - pT0, del_phir_phi0 = phir - phi0, del_pyr_py0 = pyr - py0;
+
+	double * f111_arr = refined_resonance_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
+	double * f112_arr = refined_resonance_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npy];
+	double * f121_arr = refined_resonance_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npym1];
+	double * f122_arr = refined_resonance_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npy];
+	double * f211_arr = refined_resonance_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
+	double * f212_arr = refined_resonance_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npy];
+	double * f221_arr = refined_resonance_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npym1];
+	double * f222_arr = refined_resonance_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npy];
+
+	// set index for looping
+	int qpt_cs_idx = 0;
+
+	if ( ptr_greater_than_pT1 )                             // if pT interpolation point is outside of grid
+	{
+
+		double * log_f111_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
+		double * log_f112_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npy];
+		double * log_f121_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npym1];
+		double * log_f122_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npy];
+		double * log_f211_arr = log_refined_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
+		double * log_f212_arr = log_refined_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npy];
+		double * log_f221_arr = log_refined_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npym1];
+		double * log_f222_arr = log_refined_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npy];
+
+		double * sign_of_f111_arr = sgn_refined_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
+		double * sign_of_f112_arr = sgn_refined_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npy];
+		double * sign_of_f121_arr = sgn_refined_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npym1];
+		double * sign_of_f122_arr = sgn_refined_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npy];
+		double * sign_of_f211_arr = sgn_refined_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
+		double * sign_of_f212_arr = sgn_refined_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npy];
+		double * sign_of_f221_arr = sgn_refined_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npym1];
+		double * sign_of_f222_arr = sgn_refined_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npy];
+
+		for (int iqx = 0; iqx < qxnpts; ++iqx)
+		for (int iqy = 0; iqy < qynpts; ++iqy)
+		for (int iCS = 0; iCS < 2; ++iCS)	//cos/sin
+		for (int iRI = 0; iRI < 2; ++iRI)	//real/imag
 		{
-			Mres += 0.25 * current_resonance_Gamma;
-			mass -= 0.5 * current_daughter_Gamma;
-			m2 -= 0.5 * current_m2_Gamma;
-		}
+			double sign_of_f111 = sign_of_f111_arr[qpt_cs_idx];
+			double sign_of_f112 = sign_of_f112_arr[qpt_cs_idx];
+			double sign_of_f121 = sign_of_f121_arr[qpt_cs_idx];
+			double sign_of_f122 = sign_of_f122_arr[qpt_cs_idx];
+			double sign_of_f211 = sign_of_f211_arr[qpt_cs_idx];
+			double sign_of_f212 = sign_of_f212_arr[qpt_cs_idx];
+			double sign_of_f221 = sign_of_f221_arr[qpt_cs_idx];
+			double sign_of_f222 = sign_of_f222_arr[qpt_cs_idx];
 
-		mT = sqrt(mass*mass + pT*pT);
+			// set val11
+			if ( sign_of_f111 * sign_of_f211 > 0 && log_f211_arr[qpt_cs_idx] < log_f111_arr[qpt_cs_idx] )
+				val11_arr[qpt_cs_idx] = sign_of_f111 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) );
+			else
+				val11_arr[qpt_cs_idx] = 0.0;
 
-		//set up vectors of points to speed-up integrals...
-		double s_loc = m2*m2;
-		double pstar_loc = sqrt( ((Mres+mass)*(Mres+mass) - s_loc)*((Mres-mass)*(Mres-mass) - s_loc) )/(2.0*Mres);
-		double g_s_loc = g(s_loc);	//for n_body == 2, doesn't actually use s_loc since result is just a factor * delta(...); just returns factor
-		double Estar_loc = sqrt(mass*mass + pstar_loc*pstar_loc);
-		double psBmT = pstar_loc / mT;
-		double DeltaY_loc = log(psBmT + sqrt(1.+psBmT*psBmT));
+			// set val21
+			if ( sign_of_f121 * sign_of_f221 > 0 && log_f221_arr[qpt_cs_idx] < log_f121_arr[qpt_cs_idx] )
+				val21_arr[qpt_cs_idx] = sign_of_f121 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]) );
+			else
+				val21_arr[qpt_cs_idx] = 0.0;
 
-		VEC_n2_s_factor = br/(4.*M_PI*pstar_loc);	//==g_s_loc
+			// set val12
+			if ( sign_of_f112 * sign_of_f212 > 0 && log_f212_arr[qpt_cs_idx] < log_f112_arr[qpt_cs_idx] )
+				val12_arr[qpt_cs_idx] = sign_of_f112 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]) );
+			else
+				val12_arr[qpt_cs_idx] = 0.0;
 
-		for(int iv = 0; iv < n_v_pts; ++iv)
-		{
-			double v_loc = v_pts[iv];
-			double P_Y_loc = p_y + v_loc*DeltaY_loc;
-			double mT_ch_P_Y_p_y = mT*cosh(v_loc*DeltaY_loc);
-			double x2 = mT_ch_P_Y_p_y*mT_ch_P_Y_p_y - pT*pT;
-			double MTbar_loc = Estar_loc*Mres*mT_ch_P_Y_p_y/x2;
-			double DeltaMT_loc = Mres*pT*sqrt(Estar_loc*Estar_loc - x2)/x2;
-
-			VEC_n2_P_Y[iv] = P_Y_loc;
-			VEC_n2_v_factor[iv] = v_wts[iv]*DeltaY_loc/sqrt(x2);
-
-			for(int izeta = 0; izeta < n_zeta_pts; ++izeta)
-			{
-				double zeta_loc = zeta_pts[izeta];
-				double MT_loc = MTbar_loc + cos(zeta_loc)*DeltaMT_loc;
-				double PT_loc = sqrt(MT_loc*MT_loc - Mres*Mres);
-				double temp_cos_PPhi_tilde_loc = (mT*MT_loc*cosh(P_Y_loc-p_y) - Estar_loc*Mres)/(pT*PT_loc);
-				//assume that PPhi_tilde is +ve in next step...
-				double temp_sin_PPhi_tilde_loc = sqrt(1. - temp_cos_PPhi_tilde_loc*temp_cos_PPhi_tilde_loc);
-				double PPhi_tilde_loc = place_in_range( atan2(temp_sin_PPhi_tilde_loc, temp_cos_PPhi_tilde_loc), Kphi_min, Kphi_max);
-
-				VEC_n2_zeta_factor[NB2_indexer(iv, izeta)] = zeta_wts[izeta]*MT_loc;
-				VEC_n2_PPhi_tilde[NB2_indexer(iv, izeta)] = place_in_range( K_phi_local + PPhi_tilde_loc, Kphi_min, Kphi_max);
-				VEC_n2_PPhi_tildeFLIP[NB2_indexer(iv, izeta)] = place_in_range( K_phi_local - PPhi_tilde_loc, Kphi_min, Kphi_max);
-				VEC_n2_PT[NB2_indexer(iv, izeta)] = PT_loc;
-				//set P^+ components
-				VEC_n2_Ppm[NB2_indexer(iv, izeta)*2+0][0] = MT_loc * cosh(P_Y_loc);
-				VEC_n2_Ppm[NB2_indexer(iv, izeta)*2+0][1] = PT_loc * cos(K_phi_local + PPhi_tilde_loc);
-				VEC_n2_Ppm[NB2_indexer(iv, izeta)*2+0][2] = PT_loc * sin(K_phi_local + PPhi_tilde_loc);
-				VEC_n2_Ppm[NB2_indexer(iv, izeta)*2+0][3] = MT_loc * sinh(P_Y_loc);
-				//set P^- components
-				VEC_n2_Ppm[NB2_indexer(iv, izeta)*2+1][0] = MT_loc * cosh(P_Y_loc);
-				VEC_n2_Ppm[NB2_indexer(iv, izeta)*2+1][1] = PT_loc * cos(K_phi_local - PPhi_tilde_loc);
-				VEC_n2_Ppm[NB2_indexer(iv, izeta)*2+1][2] = PT_loc * sin(K_phi_local - PPhi_tilde_loc);
-				VEC_n2_Ppm[NB2_indexer(iv, izeta)*2+1][3] = MT_loc * sinh(P_Y_loc);
-			}
+			// set val22
+			if ( sign_of_f122 * sign_of_f222 > 0 && log_f222_arr[qpt_cs_idx] < log_f122_arr[qpt_cs_idx] )
+				val22_arr[qpt_cs_idx] = sign_of_f122 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
+			else
+				val22_arr[qpt_cs_idx] = 0.0;
+		    ++qpt_cs_idx;
 		}
 	}
-	else
+	else if (ptr > PTCHANGE)                             // if pT interpolation point is larger than PTCHANGE (currently 1.0 GeV)
 	{
-		mT = sqrt(mass*mass + pT*pT);
-		double s_min_temp = (m2 + m3)*(m2 + m3);
-		double s_max_temp = (Mres - mass)*(Mres - mass);
-		gauss_quadrature(n_s_pts, 1, 0.0, 0.0, s_min_temp, s_max_temp, s_pts, s_wts);
-		Qfunc = get_Q();
+		double * log_f111_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
+		double * log_f112_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npy];
+		double * log_f121_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npym1];
+		double * log_f122_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npy];
+		double * log_f211_arr = log_refined_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
+		double * log_f212_arr = log_refined_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npy];
+		double * log_f221_arr = log_refined_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npym1];
+		double * log_f222_arr = log_refined_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npy];
 
-		// s-loop
-		for (int is = 0; is < n_s_pts; ++is)
+		double * sign_of_f111_arr = sgn_refined_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
+		double * sign_of_f112_arr = sgn_refined_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npy];
+		double * sign_of_f121_arr = sgn_refined_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npym1];
+		double * sign_of_f122_arr = sgn_refined_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npy];
+		double * sign_of_f211_arr = sgn_refined_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
+		double * sign_of_f212_arr = sgn_refined_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npy];
+		double * sign_of_f221_arr = sgn_refined_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npym1];
+		double * sign_of_f222_arr = sgn_refined_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npy];
+
+		for (int iqx = 0; iqx < qxnpts; ++iqx)
+		for (int iqy = 0; iqy < qynpts; ++iqy)
+		for (int iCS = 0; iCS < 2; ++iCS)	//cos/sin
+		for (int iRI = 0; iRI < 2; ++iRI)	//real/imag
 		{
+			double sign_of_f111 = sign_of_f111_arr[qpt_cs_idx];
+			double sign_of_f112 = sign_of_f112_arr[qpt_cs_idx];
+			double sign_of_f121 = sign_of_f121_arr[qpt_cs_idx];
+			double sign_of_f122 = sign_of_f122_arr[qpt_cs_idx];
+			double sign_of_f211 = sign_of_f211_arr[qpt_cs_idx];
+			double sign_of_f212 = sign_of_f212_arr[qpt_cs_idx];
+			double sign_of_f221 = sign_of_f221_arr[qpt_cs_idx];
+			double sign_of_f222 = sign_of_f222_arr[qpt_cs_idx];
 
-			double s_loc = s_pts[is];
-			double g_s_loc = g(s_loc);
-			double pstar_loc = sqrt(((Mres+mass)*(Mres+mass) - s_loc)*((Mres-mass)*(Mres-mass) - s_loc))/(2.0*Mres);
-			double Estar_loc = sqrt(mass*mass + pstar_loc*pstar_loc);
-			double psBmT = pstar_loc / mT;
-			double DeltaY_loc = log(psBmT + sqrt(1.+psBmT*psBmT));
+			// set val11
+			if (sign_of_f111 * sign_of_f211 > 0) // if the two points have the same sign in the pT direction, interpolate logs
+				val11_arr[qpt_cs_idx] = sign_of_f111 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) );
+			else                                    // otherwise, just interpolate original vals
+				val11_arr[qpt_cs_idx] = lin_int(del_ptr_pt0, one_by_pTdiff, f111_arr[qpt_cs_idx], f211_arr[qpt_cs_idx]);
 
-			VEC_n3_s_factor[is] = s_wts[is]*g_s_loc;
+			// set val21
+			if (sign_of_f121 * sign_of_f221 > 0) // if the two points have the same sign in the pT direction, interpolate logs
+				val21_arr[qpt_cs_idx] = sign_of_f121 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]) );
+			else                                    // otherwise, just interpolate original vals
+				val21_arr[qpt_cs_idx] = lin_int(del_ptr_pt0, one_by_pTdiff, f121_arr[qpt_cs_idx], f221_arr[qpt_cs_idx]);
 
-			// v-loop
-			for(int iv = 0; iv < n_v_pts; ++iv)
-			{
-				double v_loc = v_pts[iv];
-				double P_Y_loc = p_y + v_loc*DeltaY_loc;
-				double mT_ch_P_Y_p_y = mT*cosh(v_loc*DeltaY_loc);
-				double x2 = mT_ch_P_Y_p_y*mT_ch_P_Y_p_y - pT*pT;
-				double MTbar_loc = Estar_loc*Mres*mT_ch_P_Y_p_y/x2;
-				double DeltaMT_loc = Mres*pT*sqrt(Estar_loc*Estar_loc - x2)/x2;
+			// set val12
+			if (sign_of_f112 * sign_of_f212 > 0) // if the two points have the same sign in the pT direction, interpolate logs
+				val12_arr[qpt_cs_idx] = sign_of_f112 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]) );
+			else                                    // otherwise, just interpolate original vals
+				val12_arr[qpt_cs_idx] = lin_int(del_ptr_pt0, one_by_pTdiff, f112_arr[qpt_cs_idx], f212_arr[qpt_cs_idx]);
 
-				VEC_n3_P_Y[is * n_v_pts + iv] = P_Y_loc;
-				VEC_n3_v_factor[is * n_v_pts + iv] = v_wts[iv]*DeltaY_loc/sqrt(x2);
-
-				// zeta-loop
-				for(int izeta = 0; izeta < n_zeta_pts; ++izeta)
-				{
-					double zeta_loc = zeta_pts[izeta];
-					double MT_loc = MTbar_loc + cos(zeta_loc)*DeltaMT_loc;
-					double PT_loc = sqrt(MT_loc*MT_loc - Mres*Mres);
-					double temp_cos_PPhi_tilde_loc = (mT*MT_loc*cosh(P_Y_loc-p_y) - Estar_loc*Mres)/(pT*PT_loc);
-					//assume that PPhi_tilde is +ve in next step...
-					double temp_sin_PPhi_tilde_loc = sqrt(1. - temp_cos_PPhi_tilde_loc*temp_cos_PPhi_tilde_loc);
-					double PPhi_tilde_loc = place_in_range( atan2(temp_sin_PPhi_tilde_loc, temp_cos_PPhi_tilde_loc), Kphi_min, Kphi_max);
-
-					VEC_n3_zeta_factor[NB3_indexer(is, iv, izeta)] = zeta_wts[izeta]*MT_loc;
-					VEC_n3_PPhi_tilde[NB3_indexer(is, iv, izeta)] = place_in_range( K_phi_local + PPhi_tilde_loc, Kphi_min, Kphi_max);
-					VEC_n3_PPhi_tildeFLIP[NB3_indexer(is, iv, izeta)] = place_in_range( K_phi_local - PPhi_tilde_loc, Kphi_min, Kphi_max);
-					VEC_n3_PT[NB3_indexer(is, iv, izeta)] = PT_loc;
-					//set P^+ components
-					VEC_n3_Ppm[NB3_indexer(is, iv, izeta)*2+0][0] = MT_loc * cosh(P_Y_loc);
-					VEC_n3_Ppm[NB3_indexer(is, iv, izeta)*2+0][1] = PT_loc * cos(K_phi_local + PPhi_tilde_loc);
-					VEC_n3_Ppm[NB3_indexer(is, iv, izeta)*2+0][2] = PT_loc * sin(K_phi_local + PPhi_tilde_loc);
-					VEC_n3_Ppm[NB3_indexer(is, iv, izeta)*2+0][3] = MT_loc * sinh(P_Y_loc);
-					//set P^- components
-					VEC_n3_Ppm[NB3_indexer(is, iv, izeta)*2+1][0] = MT_loc * cosh(P_Y_loc);
-					VEC_n3_Ppm[NB3_indexer(is, iv, izeta)*2+1][1] = PT_loc * cos(K_phi_local - PPhi_tilde_loc);
-					VEC_n3_Ppm[NB3_indexer(is, iv, izeta)*2+1][2] = PT_loc * sin(K_phi_local - PPhi_tilde_loc);
-					VEC_n3_Ppm[NB3_indexer(is, iv, izeta)*2+1][3] = MT_loc * sinh(P_Y_loc);
-				}
-			}
+			// set val22
+			if (sign_of_f122 * sign_of_f222 > 0) // if the two points have the same sign in the pT direction, interpolate logs
+				val22_arr[qpt_cs_idx] = sign_of_f122 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
+			else                                    // otherwise, just interpolate original vals
+				val22_arr[qpt_cs_idx] = lin_int(del_ptr_pt0, one_by_pTdiff, f122_arr[qpt_cs_idx], f222_arr[qpt_cs_idx]);
+			++qpt_cs_idx;
+		}
+	}
+	else                                            // if pT is smaller than PTCHANGE, just use linear interpolation, no matter what
+	{
+		for (int iqx = 0; iqx < qxnpts; ++iqx)
+		for (int iqy = 0; iqy < qynpts; ++iqy)
+		for (int iCS = 0; iCS < 2; ++iCS)	//cos/sin
+		for (int iRI = 0; iRI < 2; ++iRI)	//real/imag
+		{
+			val11_arr[qpt_cs_idx] = lin_int(del_ptr_pt0, one_by_pTdiff, f111_arr[qpt_cs_idx], f211_arr[qpt_cs_idx]);
+			val21_arr[qpt_cs_idx] = lin_int(del_ptr_pt0, one_by_pTdiff, f121_arr[qpt_cs_idx], f221_arr[qpt_cs_idx]);
+			val12_arr[qpt_cs_idx] = lin_int(del_ptr_pt0, one_by_pTdiff, f112_arr[qpt_cs_idx], f212_arr[qpt_cs_idx]);
+			val22_arr[qpt_cs_idx] = lin_int(del_ptr_pt0, one_by_pTdiff, f122_arr[qpt_cs_idx], f222_arr[qpt_cs_idx]);
+			++qpt_cs_idx;
 		}
 	}
 
 	return;
 }
+
+
 
 //End of file

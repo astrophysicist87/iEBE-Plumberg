@@ -1122,6 +1122,154 @@ void CorrelationFunction::Cleanup_current_daughters_dN_dypTdpTdphi_moments(int n
 	return;
 }
 
+///////////////////////////////////////////////////////
+///////////////////////////////////////////////////////
+void CorrelationFunction::Load_decay_channel_info(int dc_idx, double K_T_local, double K_phi_local, double K_y_local)
+{
+	Mres = current_resonance_mass;
+	Gamma = current_resonance_Gamma;
+	one_by_Gamma_Mres = 1./(Gamma*Mres + 1.e-25);	//keeps calculation safe when Gamma == 0
+	//N.B. - no need for hbarc, since this will only multiply something with GeV^2 units in the end
+	mass = current_daughter_mass;
+	br = current_resonance_direct_br;	//doesn't depend on target daughter particle, just parent resonance and decay channel
+	m2 = current_resonance_decay_masses[0];
+	m3 = current_resonance_decay_masses[1];
+
+	pT = K_T_local;
+	current_K_phi = K_phi_local;
+	p_y = K_y_local;
+
+	n_body = current_reso_nbody;
+
+	if (n_body == 2)
+	{
+		// some particles may decay to particles with more total mass than originally
+		// --> broaden with resonance widths
+		while ((mass + m2) > Mres)
+		{
+			Mres += 0.25 * current_resonance_Gamma;
+			mass -= 0.5 * current_daughter_Gamma;
+			m2 -= 0.5 * current_m2_Gamma;
+		}
+
+		mT = sqrt(mass*mass + pT*pT);
+
+		//set up vectors of points to speed-up integrals...
+		double s_loc = m2*m2;
+		double pstar_loc = sqrt( ((Mres+mass)*(Mres+mass) - s_loc)*((Mres-mass)*(Mres-mass) - s_loc) )/(2.0*Mres);
+		double g_s_loc = g(s_loc);	//for n_body == 2, doesn't actually use s_loc since result is just a factor * delta(...); just returns factor
+		double Estar_loc = sqrt(mass*mass + pstar_loc*pstar_loc);
+		double psBmT = pstar_loc / mT;
+		double DeltaY_loc = log(psBmT + sqrt(1.+psBmT*psBmT));
+
+		VEC_n2_s_factor = br/(4.*M_PI*pstar_loc);	//==g_s_loc
+
+		for(int iv = 0; iv < n_v_pts; ++iv)
+		{
+			double v_loc = v_pts[iv];
+			double P_Y_loc = p_y + v_loc*DeltaY_loc;
+			double mT_ch_P_Y_p_y = mT*cosh(v_loc*DeltaY_loc);
+			double x2 = mT_ch_P_Y_p_y*mT_ch_P_Y_p_y - pT*pT;
+			double MTbar_loc = Estar_loc*Mres*mT_ch_P_Y_p_y/x2;
+			double DeltaMT_loc = Mres*pT*sqrt(Estar_loc*Estar_loc - x2)/x2;
+
+			VEC_n2_P_Y[iv] = P_Y_loc;
+			VEC_n2_v_factor[iv] = v_wts[iv]*DeltaY_loc/sqrt(x2);
+
+			for(int izeta = 0; izeta < n_zeta_pts; ++izeta)
+			{
+				double zeta_loc = zeta_pts[izeta];
+				double MT_loc = MTbar_loc + cos(zeta_loc)*DeltaMT_loc;
+				double PT_loc = sqrt(MT_loc*MT_loc - Mres*Mres);
+				double temp_cos_PPhi_tilde_loc = (mT*MT_loc*cosh(P_Y_loc-p_y) - Estar_loc*Mres)/(pT*PT_loc);
+				//assume that PPhi_tilde is +ve in next step...
+				double temp_sin_PPhi_tilde_loc = sqrt(1. - temp_cos_PPhi_tilde_loc*temp_cos_PPhi_tilde_loc);
+				double PPhi_tilde_loc = place_in_range( atan2(temp_sin_PPhi_tilde_loc, temp_cos_PPhi_tilde_loc), Kphi_min, Kphi_max);
+
+				VEC_n2_zeta_factor[NB2_indexer(iv, izeta)] = zeta_wts[izeta]*MT_loc;
+				VEC_n2_PPhi_tilde[NB2_indexer(iv, izeta)] = place_in_range( K_phi_local + PPhi_tilde_loc, Kphi_min, Kphi_max);
+				VEC_n2_PPhi_tildeFLIP[NB2_indexer(iv, izeta)] = place_in_range( K_phi_local - PPhi_tilde_loc, Kphi_min, Kphi_max);
+				VEC_n2_PT[NB2_indexer(iv, izeta)] = PT_loc;
+				//set P^+ components
+				VEC_n2_Ppm[NB2_indexer(iv, izeta)*2+0][0] = MT_loc * cosh(P_Y_loc);
+				VEC_n2_Ppm[NB2_indexer(iv, izeta)*2+0][1] = PT_loc * cos(K_phi_local + PPhi_tilde_loc);
+				VEC_n2_Ppm[NB2_indexer(iv, izeta)*2+0][2] = PT_loc * sin(K_phi_local + PPhi_tilde_loc);
+				VEC_n2_Ppm[NB2_indexer(iv, izeta)*2+0][3] = MT_loc * sinh(P_Y_loc);
+				//set P^- components
+				VEC_n2_Ppm[NB2_indexer(iv, izeta)*2+1][0] = MT_loc * cosh(P_Y_loc);
+				VEC_n2_Ppm[NB2_indexer(iv, izeta)*2+1][1] = PT_loc * cos(K_phi_local - PPhi_tilde_loc);
+				VEC_n2_Ppm[NB2_indexer(iv, izeta)*2+1][2] = PT_loc * sin(K_phi_local - PPhi_tilde_loc);
+				VEC_n2_Ppm[NB2_indexer(iv, izeta)*2+1][3] = MT_loc * sinh(P_Y_loc);
+			}
+		}
+	}
+	else
+	{
+		mT = sqrt(mass*mass + pT*pT);
+		double s_min_temp = (m2 + m3)*(m2 + m3);
+		double s_max_temp = (Mres - mass)*(Mres - mass);
+		gauss_quadrature(n_s_pts, 1, 0.0, 0.0, s_min_temp, s_max_temp, s_pts, s_wts);
+		Qfunc = get_Q();
+
+		// s-loop
+		for (int is = 0; is < n_s_pts; ++is)
+		{
+
+			double s_loc = s_pts[is];
+			double g_s_loc = g(s_loc);
+			double pstar_loc = sqrt(((Mres+mass)*(Mres+mass) - s_loc)*((Mres-mass)*(Mres-mass) - s_loc))/(2.0*Mres);
+			double Estar_loc = sqrt(mass*mass + pstar_loc*pstar_loc);
+			double psBmT = pstar_loc / mT;
+			double DeltaY_loc = log(psBmT + sqrt(1.+psBmT*psBmT));
+
+			VEC_n3_s_factor[is] = s_wts[is]*g_s_loc;
+
+			// v-loop
+			for(int iv = 0; iv < n_v_pts; ++iv)
+			{
+				double v_loc = v_pts[iv];
+				double P_Y_loc = p_y + v_loc*DeltaY_loc;
+				double mT_ch_P_Y_p_y = mT*cosh(v_loc*DeltaY_loc);
+				double x2 = mT_ch_P_Y_p_y*mT_ch_P_Y_p_y - pT*pT;
+				double MTbar_loc = Estar_loc*Mres*mT_ch_P_Y_p_y/x2;
+				double DeltaMT_loc = Mres*pT*sqrt(Estar_loc*Estar_loc - x2)/x2;
+
+				VEC_n3_P_Y[is * n_v_pts + iv] = P_Y_loc;
+				VEC_n3_v_factor[is * n_v_pts + iv] = v_wts[iv]*DeltaY_loc/sqrt(x2);
+
+				// zeta-loop
+				for(int izeta = 0; izeta < n_zeta_pts; ++izeta)
+				{
+					double zeta_loc = zeta_pts[izeta];
+					double MT_loc = MTbar_loc + cos(zeta_loc)*DeltaMT_loc;
+					double PT_loc = sqrt(MT_loc*MT_loc - Mres*Mres);
+					double temp_cos_PPhi_tilde_loc = (mT*MT_loc*cosh(P_Y_loc-p_y) - Estar_loc*Mres)/(pT*PT_loc);
+					//assume that PPhi_tilde is +ve in next step...
+					double temp_sin_PPhi_tilde_loc = sqrt(1. - temp_cos_PPhi_tilde_loc*temp_cos_PPhi_tilde_loc);
+					double PPhi_tilde_loc = place_in_range( atan2(temp_sin_PPhi_tilde_loc, temp_cos_PPhi_tilde_loc), Kphi_min, Kphi_max);
+
+					VEC_n3_zeta_factor[NB3_indexer(is, iv, izeta)] = zeta_wts[izeta]*MT_loc;
+					VEC_n3_PPhi_tilde[NB3_indexer(is, iv, izeta)] = place_in_range( K_phi_local + PPhi_tilde_loc, Kphi_min, Kphi_max);
+					VEC_n3_PPhi_tildeFLIP[NB3_indexer(is, iv, izeta)] = place_in_range( K_phi_local - PPhi_tilde_loc, Kphi_min, Kphi_max);
+					VEC_n3_PT[NB3_indexer(is, iv, izeta)] = PT_loc;
+					//set P^+ components
+					VEC_n3_Ppm[NB3_indexer(is, iv, izeta)*2+0][0] = MT_loc * cosh(P_Y_loc);
+					VEC_n3_Ppm[NB3_indexer(is, iv, izeta)*2+0][1] = PT_loc * cos(K_phi_local + PPhi_tilde_loc);
+					VEC_n3_Ppm[NB3_indexer(is, iv, izeta)*2+0][2] = PT_loc * sin(K_phi_local + PPhi_tilde_loc);
+					VEC_n3_Ppm[NB3_indexer(is, iv, izeta)*2+0][3] = MT_loc * sinh(P_Y_loc);
+					//set P^- components
+					VEC_n3_Ppm[NB3_indexer(is, iv, izeta)*2+1][0] = MT_loc * cosh(P_Y_loc);
+					VEC_n3_Ppm[NB3_indexer(is, iv, izeta)*2+1][1] = PT_loc * cos(K_phi_local - PPhi_tilde_loc);
+					VEC_n3_Ppm[NB3_indexer(is, iv, izeta)*2+1][2] = PT_loc * sin(K_phi_local - PPhi_tilde_loc);
+					VEC_n3_Ppm[NB3_indexer(is, iv, izeta)*2+1][3] = MT_loc * sinh(P_Y_loc);
+				}
+			}
+		}
+	}
+
+	return;
+}
+
 void CorrelationFunction::Allocate_fleshed_out_CF()
 {
 	fleshed_out_CF = new double ** [new_nqpts];

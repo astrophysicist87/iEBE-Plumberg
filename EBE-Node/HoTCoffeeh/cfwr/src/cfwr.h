@@ -329,10 +329,11 @@ class CorrelationFunction
 		int lookup_resonance_idx_from_particle_id(int particle_id);
 		int list_daughters(int parent_resonance_index, set<int> * daughter_resonance_indices_ptr, particle_info * particle, int Nparticle);
 		void eiqxEdndp3(double ptr, double phir, double pyr, double * results, int loc_verb = 0);
-		void eiqxEdndp3_at_pY(double ptr, double pphir, double pyr, double pT0, double pT1, double phi0, double phi1,
-								double * sign_of_f11_arr, double * sign_of_f12_arr, double * sign_of_f21_arr, double * sign_of_f22_arr,
-								double * log_f11_arr, double * log_f12_arr, double * log_f21_arr, double * log_f22_arr,
-								double * f11_arr, double * f12_arr, double * f21_arr, double * f22_arr, double * results);
+		//void eiqxEdndp3_at_pY(double ptr, double pphir, double pyr, double pT0, double pT1, double phi0, double phi1,
+		//						double * sign_of_f11_arr, double * sign_of_f12_arr, double * sign_of_f21_arr, double * sign_of_f22_arr,
+		//						double * log_f11_arr, double * log_f12_arr, double * log_f21_arr, double * log_f22_arr,
+		//						double * f11_arr, double * f12_arr, double * f21_arr, double * f22_arr, double * results);
+		void Set_val_arrays(double ptr, double phir, double spyr);
 		void Edndp3(double ptr, double phir, double * result, int loc_verb = 0);
 		void Set_correlation_function_q_pts();
 		void Set_q_points();
