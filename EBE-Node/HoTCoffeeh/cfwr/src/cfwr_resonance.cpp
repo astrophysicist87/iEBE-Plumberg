@@ -588,28 +588,28 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 				double sign_of_f222 = sign_of_f222_arr[qpt_cs_idx];
 
 				// set val11
-				if ( sign_of_f111 * sign_of_f211 > 0 && log_f211_arr[qpt_cs_idx] < log_f111_arr[qpt_cs_idx] )
+				//if ( sign_of_f111 * sign_of_f211 > 0 && log_f211_arr[qpt_cs_idx] < log_f111_arr[qpt_cs_idx] )
 					val11 = sign_of_f111 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) );
-				else
-					val11 = 0.0;
+				//else
+				//	val11 = 0.0;
 
 				// set val21
-				if ( sign_of_f121 * sign_of_f221 > 0 && log_f221_arr[qpt_cs_idx] < log_f121_arr[qpt_cs_idx] )
+				//if ( sign_of_f121 * sign_of_f221 > 0 && log_f221_arr[qpt_cs_idx] < log_f121_arr[qpt_cs_idx] )
 					val21 = sign_of_f121 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]) );
-				else
-					val21 = 0.0;
+				//else
+				//	val21 = 0.0;
 
 				// set val12
-				if ( sign_of_f112 * sign_of_f212 > 0 && log_f212_arr[qpt_cs_idx] < log_f112_arr[qpt_cs_idx] )
+				//if ( sign_of_f112 * sign_of_f212 > 0 && log_f212_arr[qpt_cs_idx] < log_f112_arr[qpt_cs_idx] )
 					val12 = sign_of_f112 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]) );
-				else
-					val12 = 0.0;
+				//else
+				//	val12 = 0.0;
 
 				// set val22
-				if ( sign_of_f122 * sign_of_f222 > 0 && log_f222_arr[qpt_cs_idx] < log_f122_arr[qpt_cs_idx] )
+				//if ( sign_of_f122 * sign_of_f222 > 0 && log_f222_arr[qpt_cs_idx] < log_f122_arr[qpt_cs_idx] )
 					val22 = sign_of_f122 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
-				else
-					val22 = 0.0;
+				//else
+				//	val22 = 0.0;
 
 				//////////////////////////////////////
 				// interpolate val11 and val12 over the pphi direction to get val1
@@ -636,28 +636,28 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 				sign_of_f222 = sign_of_f222_arr[qpt_cs_idx+1];
 
 				// set val11
-				if ( sign_of_f111 * sign_of_f211 > 0 && log_f211_arr[qpt_cs_idx+1] < log_f111_arr[qpt_cs_idx+1] )
+				//if ( sign_of_f111 * sign_of_f211 > 0 && log_f211_arr[qpt_cs_idx+1] < log_f111_arr[qpt_cs_idx+1] )
 					val11 = sign_of_f111 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx+1], log_f211_arr[qpt_cs_idx+1]) );
-				else
-					val11 = 0.0;
+				//else
+				//	val11 = 0.0;
 
 				// set val21
-				if ( sign_of_f121 * sign_of_f221 > 0 && log_f221_arr[qpt_cs_idx+1] < log_f121_arr[qpt_cs_idx+1] )
+				//if ( sign_of_f121 * sign_of_f221 > 0 && log_f221_arr[qpt_cs_idx+1] < log_f121_arr[qpt_cs_idx+1] )
 					val21 = sign_of_f121 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx+1], log_f221_arr[qpt_cs_idx+1]) );
-				else
-					val21 = 0.0;
+				//else
+				//	val21 = 0.0;
 
 				// set val12
-				if ( sign_of_f112 * sign_of_f212 > 0 && log_f212_arr[qpt_cs_idx+1] < log_f112_arr[qpt_cs_idx+1] )
+				//if ( sign_of_f112 * sign_of_f212 > 0 && log_f212_arr[qpt_cs_idx+1] < log_f112_arr[qpt_cs_idx+1] )
 					val12 = sign_of_f112 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx+1], log_f212_arr[qpt_cs_idx+1]) );
-				else
-					val12 = 0.0;
+				//else
+				//	val12 = 0.0;
 
 				// set val22
-				if ( sign_of_f122 * sign_of_f222 > 0 && log_f222_arr[qpt_cs_idx+1] < log_f122_arr[qpt_cs_idx+1] )
+				//if ( sign_of_f122 * sign_of_f222 > 0 && log_f222_arr[qpt_cs_idx+1] < log_f122_arr[qpt_cs_idx+1] )
 					val22 = sign_of_f122 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx+1], log_f222_arr[qpt_cs_idx+1]) );
-				else
-					val22 = 0.0;
+				//else
+				//	val22 = 0.0;
 
 				//////////////////////////////////////
 				// interpolate val11 and val12 over the pphi direction to get val1
@@ -729,28 +729,28 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 				double sign_of_f222 = sign_of_f222_arr[qpt_cs_idx];
 
 				// set val11
-				if (sign_of_f111 * sign_of_f211 > 0) // if the two points have the same sign in the pT direction, interpolate logs
+				//if (sign_of_f111 * sign_of_f211 > 0) // if the two points have the same sign in the pT direction, interpolate logs
 					val11 = sign_of_f111 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) );
-				else                                    // otherwise, just interpolate original vals
-					val11 = lin_int(del_ptr_pt0, one_by_pTdiff, f111_arr[qpt_cs_idx], f211_arr[qpt_cs_idx]);
+				//else                                    // otherwise, just interpolate original vals
+				//	val11 = lin_int(del_ptr_pt0, one_by_pTdiff, f111_arr[qpt_cs_idx], f211_arr[qpt_cs_idx]);
 
 				// set val21
-				if (sign_of_f121 * sign_of_f221 > 0) // if the two points have the same sign in the pT direction, interpolate logs
+				//if (sign_of_f121 * sign_of_f221 > 0) // if the two points have the same sign in the pT direction, interpolate logs
 					val21 = sign_of_f121 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]) );
-				else                                    // otherwise, just interpolate original vals
-					val21 = lin_int(del_ptr_pt0, one_by_pTdiff, f121_arr[qpt_cs_idx], f221_arr[qpt_cs_idx]);
+				//else                                    // otherwise, just interpolate original vals
+				//	val21 = lin_int(del_ptr_pt0, one_by_pTdiff, f121_arr[qpt_cs_idx], f221_arr[qpt_cs_idx]);
 
 				// set val12
-				if (sign_of_f112 * sign_of_f212 > 0) // if the two points have the same sign in the pT direction, interpolate logs
+				//if (sign_of_f112 * sign_of_f212 > 0) // if the two points have the same sign in the pT direction, interpolate logs
 					val12 = sign_of_f112 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]) );
-				else                                    // otherwise, just interpolate original vals
-					val12 = lin_int(del_ptr_pt0, one_by_pTdiff, f112_arr[qpt_cs_idx], f212_arr[qpt_cs_idx]);
+				//else                                    // otherwise, just interpolate original vals
+				//	val12 = lin_int(del_ptr_pt0, one_by_pTdiff, f112_arr[qpt_cs_idx], f212_arr[qpt_cs_idx]);
 
 				// set val22
-				if (sign_of_f122 * sign_of_f222 > 0) // if the two points have the same sign in the pT direction, interpolate logs
+				//if (sign_of_f122 * sign_of_f222 > 0) // if the two points have the same sign in the pT direction, interpolate logs
 					val22 = sign_of_f122 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
-				else                                    // otherwise, just interpolate original vals
-					val22 = lin_int(del_ptr_pt0, one_by_pTdiff, f122_arr[qpt_cs_idx], f222_arr[qpt_cs_idx]);
+				//else                                    // otherwise, just interpolate original vals
+				//	val22 = lin_int(del_ptr_pt0, one_by_pTdiff, f122_arr[qpt_cs_idx], f222_arr[qpt_cs_idx]);
 
 				//////////////////////////////////////
 				// interpolate val11 and val12 over the pphi direction to get val1
@@ -777,28 +777,28 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 				sign_of_f222 = sign_of_f222_arr[qpt_cs_idx+1];
 
 				// set val11
-				if (sign_of_f111 * sign_of_f211 > 0) // if the two points have the same sign in the pT direction, interpolate logs
+				//if (sign_of_f111 * sign_of_f211 > 0) // if the two points have the same sign in the pT direction, interpolate logs
 					val11 = sign_of_f111 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx+1], log_f211_arr[qpt_cs_idx+1]) );
-				else                                    // otherwise, just interpolate original vals
-					val11 = lin_int(del_ptr_pt0, one_by_pTdiff, f111_arr[qpt_cs_idx+1], f211_arr[qpt_cs_idx+1]);
+				//else                                    // otherwise, just interpolate original vals
+				//	val11 = lin_int(del_ptr_pt0, one_by_pTdiff, f111_arr[qpt_cs_idx+1], f211_arr[qpt_cs_idx+1]);
 
 				// set val21
-				if (sign_of_f121 * sign_of_f221 > 0) // if the two points have the same sign in the pT direction, interpolate logs
+				//if (sign_of_f121 * sign_of_f221 > 0) // if the two points have the same sign in the pT direction, interpolate logs
 					val21 = sign_of_f121 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx+1], log_f221_arr[qpt_cs_idx+1]) );
-				else                                    // otherwise, just interpolate original vals
-					val21 = lin_int(del_ptr_pt0, one_by_pTdiff, f121_arr[qpt_cs_idx+1], f221_arr[qpt_cs_idx+1]);
+				//else                                    // otherwise, just interpolate original vals
+				//	val21 = lin_int(del_ptr_pt0, one_by_pTdiff, f121_arr[qpt_cs_idx+1], f221_arr[qpt_cs_idx+1]);
 
 				// set val12
-				if (sign_of_f112 * sign_of_f212 > 0) // if the two points have the same sign in the pT direction, interpolate logs
+				//if (sign_of_f112 * sign_of_f212 > 0) // if the two points have the same sign in the pT direction, interpolate logs
 					val12 = sign_of_f112 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx+1], log_f212_arr[qpt_cs_idx+1]) );
-				else                                    // otherwise, just interpolate original vals
-					val12 = lin_int(del_ptr_pt0, one_by_pTdiff, f112_arr[qpt_cs_idx+1], f212_arr[qpt_cs_idx+1]);
+				//else                                    // otherwise, just interpolate original vals
+				//	val12 = lin_int(del_ptr_pt0, one_by_pTdiff, f112_arr[qpt_cs_idx+1], f212_arr[qpt_cs_idx+1]);
 
 				// set val22
-				if (sign_of_f122 * sign_of_f222 > 0) // if the two points have the same sign in the pT direction, interpolate logs
+				//if (sign_of_f122 * sign_of_f222 > 0) // if the two points have the same sign in the pT direction, interpolate logs
 					val22 = sign_of_f122 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx+1], log_f222_arr[qpt_cs_idx+1]) );
-				else                                    // otherwise, just interpolate original vals
-					val22 = lin_int(del_ptr_pt0, one_by_pTdiff, f122_arr[qpt_cs_idx+1], f222_arr[qpt_cs_idx+1]);
+				//else                                    // otherwise, just interpolate original vals
+				//	val22 = lin_int(del_ptr_pt0, one_by_pTdiff, f122_arr[qpt_cs_idx+1], f222_arr[qpt_cs_idx+1]);
 
 				//////////////////////////////////////
 				// interpolate val11 and val12 over the pphi direction to get val1
@@ -882,13 +882,13 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 		}       //end of all q-loops
 	}
 
-	qpt_cs_idx = 0;
+	/*qpt_cs_idx = 0;
 	for (int iqx = 0; iqx < qxnpts; ++iqx)
 	for (int iqy = 0; iqy < qynpts; ++iqy)
 		cout << "SANITY CHECK: " << qt_pts[current_iqt] << "   " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[current_iqz] << "   "
 				<< results[qpt_cs_idx++] << "   " << results[qpt_cs_idx++] << "   " << results[qpt_cs_idx++] << "   " << results[qpt_cs_idx++] << endl;
 
-if (1) exit(8);
+if (1) exit(8);*/
 
 	return;
 }

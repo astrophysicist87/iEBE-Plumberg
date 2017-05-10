@@ -1226,7 +1226,6 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 		////////////////////////////////////////
 		long idx = 0;
 		const long iidx_end = (long)n_pT_pts * (long)n_pphi_pts;
-		//for (int iqx = 0; iqx < qxnpts; ++iqx)
 		for (int iqx = 0; iqx < (qxnpts+1)/2; ++iqx)
 		{
 			double cosAx = tmpX[iqx * 2 + 0], sinAx = tmpX[iqx * 2 + 1];
@@ -1243,27 +1242,31 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 				while ( iidx_local < iidx_end )
 				{
 					double cos_qx_S_x_K = short_array_C[iidx_local];
-					double sin_qx_S_x_K = short_array_S[iidx_local];
 					ala_CR[iidx_local] += cos_trans_Fourier * cos_qx_S_x_K;
-					ala_CI[iidx_local] += cos_trans_Fourier * sin_qx_S_x_K;
-					ala_SR[iidx_local] -= sin_trans_Fourier * cos_qx_S_x_K;
+					ala_CI[iidx_local++] -= sin_trans_Fourier * cos_qx_S_x_K;
+				}
+				iidx_local = 0;
+				while ( iidx_local < iidx_end )
+				{
+					double sin_qx_S_x_K = short_array_S[iidx_local];
+					ala_SR[iidx_local] += cos_trans_Fourier * sin_qx_S_x_K;
 					ala_SI[iidx_local++] += sin_trans_Fourier * sin_qx_S_x_K;
 				}
 			}
 		}
 	}
 
+	//use reflection symmetry in transverse plane to get speed-up
 	for (int iqx = 0; iqx < (qxnpts-1)/2; ++iqx)
 	for (int iqy = 0; iqy < qynpts; ++iqy)
 	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 	{
-		alt_long_array_CR[(qxnpts-iqx-1) * qynpts + iqy][ipT * n_pphi_pts + ipphi] = alt_long_array_CR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
-		alt_long_array_CI[(qxnpts-iqx-1) * qynpts + iqy][ipT * n_pphi_pts + ipphi] = -alt_long_array_CI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];	//N.B. - imag. parts are odd
-		alt_long_array_SR[(qxnpts-iqx-1) * qynpts + iqy][ipT * n_pphi_pts + ipphi] = alt_long_array_SR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
-		alt_long_array_SI[(qxnpts-iqx-1) * qynpts + iqy][ipT * n_pphi_pts + ipphi] = -alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];	//N.B. - imag. parts are odd
+		alt_long_array_CR[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] = alt_long_array_CR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		alt_long_array_CI[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] = -alt_long_array_CI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];	//N.B. - imag. parts are odd
+		alt_long_array_SR[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] = alt_long_array_SR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		alt_long_array_SI[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] = -alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];	//N.B. - imag. parts are odd
 	}
-
 
 	for (int iqx = 0; iqx < qxnpts; ++iqx)
 	for (int iqy = 0; iqy < qynpts; ++iqy)
@@ -1274,14 +1277,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,1)] = alt_long_array_CI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
 		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,2)] = alt_long_array_SR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
 		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,3)] = alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
-/*if (ipT==0 && ipphi==0)
-	cout << "SANITY CHECK: " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   "
-			<< alt_long_array_CR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi] << "   "
-			<< alt_long_array_CI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi] << "   "
-			<< alt_long_array_SR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi] << "   "
-			<< alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi] << endl;*/
 	}
-//if (1) exit(8);
 	//////////
 	//////////
 
@@ -1501,7 +1497,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_p
 		////////////////////////////////////////
 		long idx = 0;
 		const long iidx_end = (long)n_pT_pts * (long)n_pphi_pts;
-		for (int iqx = 0; iqx < qxnpts; ++iqx)
+		for (int iqx = 0; iqx < (qxnpts+1)/2; ++iqx)
 		{
 			double cosAx = tmpX[iqx * 2 + 0], sinAx = tmpX[iqx * 2 + 1];
 			for (int iqy = 0; iqy < qynpts; ++iqy)
@@ -1517,17 +1513,32 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_p
 				while ( iidx_local < iidx_end )
 				{
 					double cos_qx_S_x_K = short_array_C[iidx_local];
-					double sin_qx_S_x_K = short_array_S[iidx_local];
 					ala_CR[iidx_local] += cos_trans_Fourier * cos_qx_S_x_K;
-					ala_CI[iidx_local] += cos_trans_Fourier * sin_qx_S_x_K;
-					ala_SR[iidx_local] -= sin_trans_Fourier * cos_qx_S_x_K;
+					ala_CI[iidx_local++] -= sin_trans_Fourier * cos_qx_S_x_K;
+				}
+				iidx_local = 0;
+				while ( iidx_local < iidx_end )
+				{
+					double sin_qx_S_x_K = short_array_S[iidx_local];
+					ala_SR[iidx_local] += cos_trans_Fourier * sin_qx_S_x_K;
 					ala_SI[iidx_local++] += sin_trans_Fourier * sin_qx_S_x_K;
 				}
 			}
 		}
 	}
 
-	int idx = 0;
+	//use reflection symmetry in transverse plane to get speed-up
+	for (int iqx = 0; iqx < (qxnpts-1)/2; ++iqx)
+	for (int iqy = 0; iqy < qynpts; ++iqy)
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+	{
+		alt_long_array_CR[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] = alt_long_array_CR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		alt_long_array_CI[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] = -alt_long_array_CI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];	//N.B. - imag. parts are odd
+		alt_long_array_SR[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] = alt_long_array_SR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		alt_long_array_SI[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] = -alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];	//N.B. - imag. parts are odd
+	}
+
 	for (int iqx = 0; iqx < qxnpts; ++iqx)
 	for (int iqy = 0; iqy < qynpts; ++iqy)
 	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
