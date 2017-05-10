@@ -232,7 +232,7 @@ int main(int argc, char *argv[])
 //if (iqt > 0) exit(8);
 			if (iqt > (local_qtnpts - 1) / 2)
 			{
-				correlation_function.Reflect_in_qt(iqt);
+				//correlation_function.Reflect_in_qt(iqt);	//no need to reflect in qt and store in *.h5 files, since they don't need to store it anyway
 				continue;
 			}
 			for (int iqz = 0; iqz < local_qznpts; ++iqz)
