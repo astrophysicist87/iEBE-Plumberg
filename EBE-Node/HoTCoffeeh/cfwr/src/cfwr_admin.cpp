@@ -198,7 +198,6 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 				decay_channels[temp_idx].resonance_Gamma = particle_temp.width;
 				decay_channels[temp_idx].resonance_total_br = particle_temp.decays_effective_branchratio[idecay];
 				decay_channels[temp_idx].resonance_direct_br = particle_temp.decays_branchratio[idecay];
-
 				
 				//check if particle lifetime is too long for inclusion in source variances
 				bool lifetime_is_too_long = false;
@@ -988,7 +987,7 @@ void CorrelationFunction::Get_current_decay_string(int dc_idx, string * decay_st
 	for (int decay_part_idx = 0; decay_part_idx < decay_channels[dc_idx - 1].nbody; decay_part_idx++)
 	{
 		temp_monval = decay_channels[dc_idx - 1].resonance_decay_monvals[decay_part_idx];
-		/*if (VERBOSE > 0)*/ *global_out_stream_ptr << "Get_current_decay_string(): temp_monval = " << temp_monval << endl;
+		if (VERBOSE > 0) *global_out_stream_ptr << "Get_current_decay_string(): temp_monval = " << temp_monval << endl;
 		if (temp_monval == 0)
 			continue;
 		else

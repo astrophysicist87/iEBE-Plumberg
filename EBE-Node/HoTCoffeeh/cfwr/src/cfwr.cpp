@@ -274,6 +274,8 @@ void CorrelationFunction::Compute_phase_space_integrals(int iqt, int iqz)
 		// if so, set decay channel info
 		// ************************************************************
 		Set_current_particle_info(idc);
+//if (decay_channels[idc-1].resonance_particle_id != 21 && decay_channels[idc-1].resonance_particle_id != 8)
+//	continue;
 		Allocate_decay_channel_info();				// allocate needed memory
 
 		// ************************************************************
@@ -282,6 +284,8 @@ void CorrelationFunction::Compute_phase_space_integrals(int iqt, int iqz)
 
 		Load_resonance_and_daughter_spectra(decay_channels[idc-1].resonance_particle_id, iqt, iqz);
 
+		Stopwatch decay_sw;
+		decay_sw.Start();
 		for (int idc_DI = 0; idc_DI < current_reso_nbody; ++idc_DI)
 		{
 			int daughter_resonance_particle_id = -1;
@@ -290,11 +294,18 @@ void CorrelationFunction::Compute_phase_space_integrals(int iqt, int iqz)
 
 			Set_current_daughter_info(idc, idc_DI);
 
-			Do_resonance_integrals(current_resonance_particle_id, daughter_resonance_particle_id, idc, iqt, iqz);
+			// if past the qz-midpoint ( == 0 ), just use appropriate symmetries
+			// to reflect the results and skip the rest
+			if (iqz > (qznpts - 1) / 2)
+				Reflect_in_qz(daughter_resonance_particle_id, iqt, iqz);
+			else
+				Do_resonance_integrals(current_resonance_particle_id, daughter_resonance_particle_id, idc, iqt, iqz);
 		}
 		Update_daughter_spectra(decay_channels[idc-1].resonance_particle_id, iqt, iqz);
 
 		Delete_decay_channel_info();				// free up memory
+		decay_sw.Stop();
+		*global_out_stream_ptr << " - Finished decay loop for " << decay_channels[idc-1].resonance_name << " in " << decay_sw.printTime() << " seconds." << endl;
 	}											// END of decay channel loop
 	BIGsw.Stop();
 	*global_out_stream_ptr << "\t ...finished computing all phase-space integrals for loop (iqt = "
@@ -910,7 +921,7 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 		int setHDFresonanceSpectra = Access_resonance_in_HDF_array(local_pid, iqt, iqz, 0, current_dN_dypTdpTdphi_moments);
 		if (setHDFresonanceSpectra < 0)
 		{
-			cerr << "Failed to set this resonance in HDF array!  Exiting..." << endl;
+			cerr << "Failed to set this resonance(local_pid = " << local_pid << ") in HDF array!  Exiting..." << endl;
 			exit(1);
 		}
 
@@ -1310,6 +1321,10 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_p
 	Stopwatch sw, sw_FOsurf;
 	sw.Start();
 
+	//for the timebeing, let's skip pions not at Y==0
+	if (MIDRAPIDITY_PIONS_ONLY && local_pid == target_particle_id && ipY > 0)
+		return;
+
 	// set particle information
 	double sign = all_particles[local_pid].sign;
 	double degen = all_particles[local_pid].gspin;
@@ -1462,19 +1477,19 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_p
 				double tf0_factor = 1.0;
 				for (int k = 1; k <= max_n_terms_to_compute - 1; ++k)
 				{
-					double tf0_factor_k = tf0_factor * transverse_f0;
-					I0_f += sign_of_kth_term * tf0_factor_k * I0[k-1];
-					I1_f += sign_of_kth_term * tf0_factor_k * I1[k-1];
-					I2_f += sign_of_kth_term * tf0_factor_k * I2[k-1];
-					I3_f += sign_of_kth_term * tf0_factor_k * I3[k-1];
+					double tf0_factor_k = sign_of_kth_term * tf0_factor * transverse_f0;
+					I0_f += tf0_factor_k * I0[k-1];
+					I1_f += tf0_factor_k * I1[k-1];
+					I2_f += tf0_factor_k * I2[k-1];
+					I3_f += tf0_factor_k * I3[k-1];
 					int sign_of_lth_term = 1.0;
 					for (int l = 1; l <= max_n_terms_to_compute - k; ++l)
 					{
 						tf0_factor_k *= transverse_f0;
-						I0_f2 += sign_of_kth_term * sign_of_lth_term * tf0_factor_k * I0[k+l-1];
-						I1_f2 += sign_of_kth_term * sign_of_lth_term * tf0_factor_k * I1[k+l-1];
-						I2_f2 += sign_of_kth_term * sign_of_lth_term * tf0_factor_k * I2[k+l-1];
-						I3_f2 += sign_of_kth_term * sign_of_lth_term * tf0_factor_k * I3[k+l-1];
+						I0_f2 += sign_of_lth_term * tf0_factor_k * I0[k+l-1];
+						I1_f2 += sign_of_lth_term * tf0_factor_k * I1[k+l-1];
+						I2_f2 += sign_of_lth_term * tf0_factor_k * I2[k+l-1];
+						I3_f2 += sign_of_lth_term * tf0_factor_k * I3[k+l-1];
 						sign_of_lth_term *= -sign;
 					}
 					sign_of_kth_term *= -sign;
@@ -1574,13 +1589,6 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_p
 	
 	return;
 }
-
-/*inline double parity_reflector(double x)
-{
-	return (
-		1.0 + x * (-2.0 + (x - 1.0) * ( 2.0 - 4.0 * (x - 2.0) / 3.0 ) )
-	);
-}*/
 
 void CorrelationFunction::Reflect_in_qt(int iqt)
 {

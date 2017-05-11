@@ -20,12 +20,13 @@
 
 using namespace std;
 
-#define VERBOSE 			3		// specifies level of output - 0 is lowest (no output)
+#define VERBOSE 				3		// specifies level of output - 0 is lowest (no output)
 #define QT_POINTS_SPACING		1		// 0 - uniform from -qmax to +qmax
-							// 1 - Chebyshev nodes from -qmax to +qmax
+										// 1 - Chebyshev nodes from -qmax to +qmax
 #define QX_POINTS_SPACING		0		// same
 #define QY_POINTS_SPACING		0		// same
 #define QZ_POINTS_SPACING		0		// same
+#define MIDRAPIDITY_PIONS_ONLY	1		// obvious
 
 #ifndef H5_NO_NAMESPACE
     using namespace H5;
@@ -33,7 +34,7 @@ using namespace std;
 
 // General information
 //const int ntrig = 2;			// for cos or sin
-const int ntrig = 4;			// for (C,C), (C,S), (S,C), or (S,S)
+const int ntrig = 4;			// for (C,R), (C,I), (S,R), or (S,I)
 const double hbarC = 0.197327053;		//GeV*fm
 const double hbarC3 = 0.00768351405;
 const double hbarCm1 = 5.067728853;
@@ -65,9 +66,9 @@ const double Kphi_min = 0.0;
 const double Kphi_max = 2.0*M_PI;
 
 // Phase-space integral information
-const int n_zeta_pts = 12;
-const int n_v_pts = 12;
-const int n_s_pts = 12;
+const int n_zeta_pts = 10;
+const int n_v_pts = 10;
+const int n_s_pts = 10;
 
 // Fitting information
 const size_t fit_max_iterations = 1000;  // stop at this point if not converged 

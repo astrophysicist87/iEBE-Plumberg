@@ -44,7 +44,7 @@ int CorrelationFunction::Administrate_resonance_HDF_array(int administration_mod
 	
 		DSetCreatPropList cparms;
 		hsize_t dimsm[RANK2D] = {1, chunk_size};
-		hsize_t dims[RANK2D] = { (NchosenParticle + 1) * ((qtnpts+1)/2) * qznpts, chunk_size};	//only hold half of q-space to keep *h5 files as small as possible
+		hsize_t dims[RANK2D] = { (NchosenParticle + 1) * ((qtnpts+1)/2) * ((qznpts+1)/2), chunk_size};	//only hold quarter of q-space to keep *h5 files as small as possible
 
 		switch (administration_mode)
 		{
@@ -58,7 +58,7 @@ int CorrelationFunction::Administrate_resonance_HDF_array(int administration_mod
 				hsize_t chunk_dims[RANK2D] = {1, chunk_size};
 				cparms.setChunk( RANK2D, chunk_dims );
 
-				//hsize_t dims[RANK2D] = {(NchosenParticle + 1) * ((qtnpts+1)/2) * qznpts, chunk_size};
+				//hsize_t dims[RANK2D] = {(NchosenParticle + 1) * ((qtnpts+1)/2) * (qznpts+1)/2, chunk_size};
 				resonance_dataspace = new H5::DataSpace (RANK2D, dims);
 
 				resonance_dataset = new H5::DataSet( resonance_file->createDataSet(RESONANCE_DATASET_NAME, PredType::NATIVE_DOUBLE, *resonance_dataspace, cparms) );
@@ -75,7 +75,7 @@ int CorrelationFunction::Administrate_resonance_HDF_array(int administration_mod
 					for (int ir = 0; ir < NchosenParticle + 1; ++ir)
 					//for (int iqt = 0; iqt < qtnpts; ++iqt)
 					for (int iqt = 0; iqt < (qtnpts+1)/2; ++iqt)
-					for (int iqz = 0; iqz < qznpts; ++iqz)
+					for (int iqz = 0; iqz < (qznpts+1)/2; ++iqz)
 					{
 						//offset[0] = ir;
 						offset[0] = HDF_indexer(ir, iqt, iqz);
@@ -164,7 +164,7 @@ int CorrelationFunction::Administrate_target_thermal_HDF_array(int administratio
 	
 		DSetCreatPropList cparms;
 		hsize_t dimsm[RANK2D] = {1, chunk_size};
-		hsize_t dims[RANK2D] = {((qtnpts+1)/2) * qznpts, chunk_size};
+		hsize_t dims[RANK2D] = {((qtnpts+1)/2) * ((qznpts+1)/2), chunk_size};
 	
 		switch (administration_mode)
 		{
@@ -177,7 +177,7 @@ int CorrelationFunction::Administrate_target_thermal_HDF_array(int administratio
 				hsize_t chunk_dims[RANK2D] = {1, chunk_size};
 				cparms.setChunk( RANK2D, chunk_dims );
 
-				//hsize_t dims[RANK2D] = {((qtnpts+1)/2) * qznpts, chunk_size};
+				//hsize_t dims[RANK2D] = {((qtnpts+1)/2) * ((qznpts+1)/2), chunk_size};
 				tta_dataspace = new H5::DataSpace (RANK2D, dims);
 
 				tta_dataset = new H5::DataSet( tta_file->createDataSet(TARGET_THERMAL_DATASET_NAME, PredType::NATIVE_DOUBLE, *tta_dataspace, cparms) );
@@ -192,7 +192,7 @@ int CorrelationFunction::Administrate_target_thermal_HDF_array(int administratio
 					*global_out_stream_ptr << "HDF thermal target moments file doesn't exist!  Initializing to zero..." << endl;
 
 					for (int iqt = 0; iqt < (qtnpts+1)/2; ++iqt)
-					for (int iqz = 0; iqz < qznpts; ++iqz)
+					for (int iqz = 0; iqz < (qznpts+1)/2; ++iqz)
 					{
 						offset[0] = HDF_indexer(0, iqt, iqz);
 						tta_dataspace->selectHyperslab(H5S_SELECT_SET, count, offset);
@@ -207,7 +207,7 @@ int CorrelationFunction::Administrate_target_thermal_HDF_array(int administratio
 				break;
 			case 1:
 				//hsize_t dimsm[RANK2D] = {1, chunk_size};
-				//hsize_t dims[RANK2D] = {((qtnpts+1)/2) * qznpts, chunk_size};
+				//hsize_t dims[RANK2D] = {((qtnpts+1)/2) * ((qznpts+1)/2), chunk_size};
 
 				tta_dataspace = new H5::DataSpace (RANK2D, dims);
 				tta_file = new H5::H5File(TARGET_THERMAL_FILE_NAME, H5F_ACC_RDWR);
@@ -413,7 +413,7 @@ int CorrelationFunction::Copy_chunk(int current_resonance_index, int reso_idx_to
 		Exception::dontPrint();
 	
 		for (int iqt = 0; iqt < (qtnpts+1)/2; ++iqt)
-		for (int iqz = 0; iqz < qznpts; ++iqz)
+		for (int iqz = 0; iqz < (qznpts+1)/2; ++iqz)
 		{
 			hsize_t offset[RANK2D] = {HDF_indexer(local_icr2, iqt, iqz), 0};
 			hsize_t count[RANK2D] = {1, chunk_size};
@@ -513,7 +513,6 @@ int CorrelationFunction::Administrate_besselcoeffs_HDF_array(int administration_
 
 					for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 					{
-						//offset[0] = BC_indexer(iqt, iqz, ipY);
 						offset[0] = ipY;
 						besselcoeffs_dataspace->selectHyperslab(H5S_SELECT_SET, count, offset);
 
