@@ -172,7 +172,8 @@ class CorrelationFunction
 		double * SP_Del_pY, * ch_SP_pY, * sh_SP_pY;
 		double * chebTcfs;
 		double ** chebyshev_a_cfs, ** refined_resonance_grids, ** log_refined_grids, ** sgn_refined_grids;	//for resonance interpolation
-		//double ** exp_table;
+		double ** exp_table;
+		bool * grids_calculated;
 
 		//points and weights for resonance integrals
 		double v_min, v_max, zeta_min, zeta_max, s_min, s_max;
@@ -292,8 +293,8 @@ class CorrelationFunction
 		double Cal_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi);
 		void Cal_dN_dypTdpTdphi_with_weights_function_approx(int local_pid, double pT, double pphi, double pY,
 												double qt, double qx, double qy, double qz, double * cosqx_dN_dypTdpTdphi, double * sinqx_dN_dypTdpTdphi);
-		//void Clear_and_set_exp_table(int n_body);
 		void Do_resonance_integrals(int parent_resonance_particle_id, int daughter_particle_id, int decay_channel, int iqt, int iqz);
+		void Clear_and_set_exp_table(int n_body);
 		void Tabulate_resonance_Chebyshev_coefficients(int parent_resonance_particle_id);
 		void Refine_resonance_grids(int parent_resonance_particle_id);
 		void Set_current_daughter_info(int dc_idx, int daughter_idx);
