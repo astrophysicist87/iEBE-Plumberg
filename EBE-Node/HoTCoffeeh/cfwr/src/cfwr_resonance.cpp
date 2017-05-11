@@ -149,18 +149,27 @@ void CorrelationFunction::Refine_resonance_grids(int parent_resonance_particle_i
 	return;
 }
 
-void CorrelationFunction::Clear_and_set_exp_table()
+/*void CorrelationFunction::Clear_and_set_exp_table(int n_body)
 {
-	long cfs_array_length = qxnpts * qynpts * ntrig;
-	long momentum_length = n_pT_pts * n_pphi_pts * n_refinement_pts;
-	for (int imom = 0; imom < momentum_length; ++imom)
+	if (n_body == 2)
 	{
-		exp_table[imom] = new double [cfs_array_length];
+		long cfs_array_length = qxnpts * qynpts * ntrig;
+		long momentum_length = n_v_pts * n_zeta_pts;
+		for (int imom = 0; imom < momentum_length; ++imom)
 		for (int icf = 0; icf < cfs_array_length; ++icf)
 			exp_table[imom][icf] = -1.0;
 	}
+	else
+	{
+		long cfs_array_length = qxnpts * qynpts * ntrig;
+		long momentum_length = n_s_pts * n_v_pts * n_zeta_pts;
+		for (int imom = 0; imom < momentum_length; ++imom)
+		for (int icf = 0; icf < cfs_array_length; ++icf)
+			exp_table[imom][icf] = -1.0;
+	}
+
 	return;
-}
+}*/
 
 void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_id, int daughter_particle_id, int decay_channel, int iqt, int iqz)
 {
@@ -177,10 +186,9 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 	//exp_table = new double [table_size];
 	//for (int ix = 0; ix < table_size; ++ix)
 	//	exp_table[ix] = exp(table_min + (double)ix * table_delta_x);
-	exp_table = new double * [momentum_length];
+	/*exp_table = new double * [momentum_length];
 	for (int imom = 0; imom < momentum_length; ++imom)
-		exp_table[imom] = new double [cfs_array_length];
-
+		exp_table[imom] = new double [cfs_array_length];*/
 
 	Allocate_resonance_running_sum_vectors();
 
@@ -210,178 +218,183 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 	if (n_body == 2)
 	{
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
-		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 		{
-			double local_pT = SP_pT[ipT];
-			double local_pphi = SP_pphi[ipphi];
-			double local_pY = SP_Del_pY[ipY] + current_pY_shift;
-			current_ipT = ipT;
-			current_ipphi = ipphi;
-			current_ipY = ipY;
-			//current_qlist_slice = qlist[ipT];
-			Zero_resonance_running_sum_vector(ssum_vec);
-			Zero_resonance_running_sum_vector(vsum_vec);
-			Zero_resonance_running_sum_vector(zetasum_vec);
-			Zero_resonance_running_sum_vector(Csum_vec);
-			Load_decay_channel_info(decay_channel, local_pT, local_pphi, local_pY);	// set decay channel information
-
-			//then g(s) is delta-function, skip s-integration entirely
-			//double s_loc = m2*m2;
-			current_is = -1;
-			double vsum = 0.0;
-			for (int iv = 0; iv < n_v_pts; ++iv)
+			//Clear_and_set_exp_table(n_body);
+			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 			{
-				current_iv = iv;
-				//time (&rawtime);
-				//timeinfo = localtime (&rawtime);
+				double local_pT = SP_pT[ipT];
+				double local_pphi = SP_pphi[ipphi];
+				double local_pY = SP_Del_pY[ipY] + current_pY_shift;
+				current_ipT = ipT;
+				current_ipphi = ipphi;
+				current_ipY = ipY;
+				Zero_resonance_running_sum_vector(ssum_vec);
+				Zero_resonance_running_sum_vector(vsum_vec);
 				Zero_resonance_running_sum_vector(zetasum_vec);
-				double zetasum = 0.0;
-				for (int izeta = 0; izeta < n_zeta_pts; ++izeta)
-				{
-					current_izeta = izeta;
-					Zero_resonance_running_sum_vector(Csum_vec);
-					double Csum = 0.0;
-					double PKT = VEC_n2_PT[NB2_indexer(iv,izeta)];
-					double Del_PKY = VEC_n2_P_Y[iv] - current_pY_shift;
-					double PKphi = VEC_n2_PPhi_tilde[NB2_indexer(iv,izeta)];
+				Zero_resonance_running_sum_vector(Csum_vec);
+				Load_decay_channel_info(decay_channel, local_pT, local_pphi, local_pY);	// set decay channel information
 
-					for (int tempidx = 0; tempidx <= 1; ++tempidx)
-					{
-						current_tempidx = tempidx;
-						if (tempidx != 0)
-							PKphi = VEC_n2_PPhi_tildeFLIP[NB2_indexer(iv,izeta)];		//also takes Pp --> Pm
-						currentPpm = VEC_n2_Ppm[NB2_indexer(iv,izeta)*2 + tempidx];
-						//spectra
-						if ( iqt == (qtnpts - 1)/2 && iqz == (qznpts - 1)/2 )
-							Edndp3(PKT, PKphi, &Csum);
-						//space-time moments
-						if (!IGNORE_LONG_LIVED_RESONANCES || Gamma >= hbarC / max_lifetime)
-						{
-							//if (iv==0 && izeta==0 && tempidx==0)
-							//	cout << "Doing eiqxEdndp3(nb=2, parent_pid = " << parent_resonance_particle_id
-							//			<< "): IGNORE_LONG_LIVED_RESONANCES = " << IGNORE_LONG_LIVED_RESONANCES << "::: "
-							//			<< Gamma << "   " << hbarC / max_lifetime << "   " << max_lifetime << endl;
-							Set_val_arrays(PKT, PKphi, Del_PKY);
-							eiqxEdndp3(PKT, PKphi, Del_PKY, Csum_vec, local_verbose);
-						}
-					}												// end of tempidx sum
-					for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
-						zetasum_vec[qpt_cs_idx] += VEC_n2_zeta_factor[NB2_indexer(iv,izeta)]*Csum_vec[qpt_cs_idx];
-					zetasum += VEC_n2_zeta_factor[NB2_indexer(iv,izeta)]*Csum;
-				}													// end of zeta sum
-				for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
-					vsum_vec[qpt_cs_idx] += VEC_n2_v_factor[iv]*zetasum_vec[qpt_cs_idx];
-				vsum += VEC_n2_v_factor[iv]*zetasum;
-			}														// end of v sum
-			for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
-				ssum_vec[qpt_cs_idx] += Mres*VEC_n2_s_factor*vsum_vec[qpt_cs_idx];
-			double ssum = Mres*VEC_n2_s_factor*vsum;
-
-			//update all gridpoints for all daughter moments
-			int qpt_cs_idx = 0;
-			for (int iqx = 0; iqx < qxnpts; ++iqx)
-			for (int iqy = 0; iqy < qynpts; ++iqy)
-			for (int itrig = 0; itrig < ntrig; ++itrig)
-			{
-				current_daughters_dN_dypTdpTdphi_moments[daughter_lookup_idx][fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,itrig)] += ssum_vec[qpt_cs_idx];
-				++qpt_cs_idx;
-			}
-
-			//update daughter spectra separately
-			spectra[daughter_particle_id][ipT][ipphi] += ssum;
-			log_spectra[daughter_particle_id][ipT][ipphi] = log(abs(spectra[daughter_particle_id][ipT][ipphi])+1.e-100);
-			sign_spectra[daughter_particle_id][ipT][ipphi] = sgn(spectra[daughter_particle_id][ipT][ipphi]);
-		}											// end of pT, pphi, pY loops
-	}												// end of nbody == 2
-	else
-	{
-		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
-		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
-		{
-			double local_pT = SP_pT[ipT];
-			double local_pphi = SP_pphi[ipphi];
-			double local_pY = SP_Del_pY[ipY] + current_pY_shift;
-			current_ipT = ipT;
-			current_ipphi = ipphi;
-			current_ipY = ipY;
-			Zero_resonance_running_sum_vector(ssum_vec);
-			Zero_resonance_running_sum_vector(vsum_vec);
-			Zero_resonance_running_sum_vector(zetasum_vec);
-			Zero_resonance_running_sum_vector(Csum_vec);
-			Load_decay_channel_info(decay_channel, local_pT, local_pphi, local_pY);	// set decay channel information
-
-			double ssum = 0.0;
-			for (int is = 0; is < n_s_pts; ++is)
-			{
-current_is = is;
+				//then g(s) is delta-function, skip s-integration entirely
+				//double s_loc = m2*m2;
+				current_is = -1;
 				double vsum = 0.0;
- 		  		Zero_resonance_running_sum_vector(vsum_vec);
 				for (int iv = 0; iv < n_v_pts; ++iv)
 				{
-current_iv = iv;
-					double zetasum = 0.0;
+					current_iv = iv;
+					//time (&rawtime);
+					//timeinfo = localtime (&rawtime);
 					Zero_resonance_running_sum_vector(zetasum_vec);
+					double zetasum = 0.0;
 					for (int izeta = 0; izeta < n_zeta_pts; ++izeta)
 					{
-current_izeta = izeta;
-						double Csum = 0.0;
+						current_izeta = izeta;
 						Zero_resonance_running_sum_vector(Csum_vec);
-						double PKT = VEC_n3_PT[NB3_indexer(is,iv,izeta)];
-						double Del_PKY = VEC_n3_P_Y[is*n_v_pts+iv] - current_pY_shift;
-						double PKphi = VEC_n3_PPhi_tilde[NB3_indexer(is,iv,izeta)];
+						double Csum = 0.0;
+						double PKT = VEC_n2_PT[NB2_indexer(iv,izeta)];
+						double Del_PKY = VEC_n2_P_Y[iv] - current_pY_shift;
+						double PKphi = VEC_n2_PPhi_tilde[NB2_indexer(iv,izeta)];
 
 						for (int tempidx = 0; tempidx <= 1; ++tempidx)
 						{
-current_tempidx = tempidx;
-if (current_resonance_particle_id==12 && daughter_resonance_particle_id==1 && current_ipT==2 && current_ipphi==6 && current_ipY==6 && current_is==1 && current_iv==4 && current_izeta==2)
-	cout << "SANITY CHECK: " << tempidx << "   " << PKT << "   " << PKphi << "   " << Del_PKY << endl;
+							current_tempidx = tempidx;
 							if (tempidx != 0)
-								PKphi = VEC_n3_PPhi_tildeFLIP[NB3_indexer(is,iv,izeta)];		//also takes Pp --> Pm
-							currentPpm = VEC_n3_Ppm[NB3_indexer(is,iv,izeta)*2+tempidx];
+								PKphi = VEC_n2_PPhi_tildeFLIP[NB2_indexer(iv,izeta)];		//also takes Pp --> Pm
+							currentPpm = VEC_n2_Ppm[NB2_indexer(iv,izeta)*2 + tempidx];
 							//spectra
 							if ( iqt == (qtnpts - 1)/2 && iqz == (qznpts - 1)/2 )
 								Edndp3(PKT, PKphi, &Csum);
 							//space-time moments
 							if (!IGNORE_LONG_LIVED_RESONANCES || Gamma >= hbarC / max_lifetime)
 							{
-								//if (is==0 && iv==0 && izeta==0 && tempidx==0)
-								//	cout << "Doing eiqxEdndp3(nb=3, parent_pid = " << parent_resonance_particle_id
+								//if (iv==0 && izeta==0 && tempidx==0)
+								//	cout << "Doing eiqxEdndp3(nb=2, parent_pid = " << parent_resonance_particle_id
 								//			<< "): IGNORE_LONG_LIVED_RESONANCES = " << IGNORE_LONG_LIVED_RESONANCES << "::: "
 								//			<< Gamma << "   " << hbarC / max_lifetime << "   " << max_lifetime << endl;
 								Set_val_arrays(PKT, PKphi, Del_PKY);
 								eiqxEdndp3(PKT, PKphi, Del_PKY, Csum_vec, local_verbose);
 							}
-						}										// end of tempidx sum
+						}												// end of tempidx sum
 						for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
-							zetasum_vec[qpt_cs_idx] += VEC_n3_zeta_factor[NB3_indexer(is,iv,izeta)]*Csum_vec[qpt_cs_idx];
-						zetasum += VEC_n3_zeta_factor[NB3_indexer(is,iv,izeta)]*Csum;
-					}											// end of zeta sum
+							zetasum_vec[qpt_cs_idx] += VEC_n2_zeta_factor[NB2_indexer(iv,izeta)]*Csum_vec[qpt_cs_idx];
+						zetasum += VEC_n2_zeta_factor[NB2_indexer(iv,izeta)]*Csum;
+					}													// end of zeta sum
 					for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
-					    vsum_vec[qpt_cs_idx] += VEC_n3_v_factor[is*n_v_pts+iv]*zetasum_vec[qpt_cs_idx];
-					vsum += VEC_n3_v_factor[is*n_v_pts+iv]*zetasum;
-				}												// end of v sum
+						vsum_vec[qpt_cs_idx] += VEC_n2_v_factor[iv]*zetasum_vec[qpt_cs_idx];
+					vsum += VEC_n2_v_factor[iv]*zetasum;
+				}														// end of v sum
 				for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
-					ssum_vec[qpt_cs_idx] += Mres*VEC_n3_s_factor[is]*vsum_vec[qpt_cs_idx];
-				ssum += Mres*VEC_n3_s_factor[is]*vsum;
-			}													// end of s sum
-			//update all gridpoints for daughter moments
-			int qpt_cs_idx = 0;
-			for (int iqx = 0; iqx < qxnpts; ++iqx)
-			for (int iqy = 0; iqy < qynpts; ++iqy)
-			for (int itrig = 0; itrig < ntrig; ++itrig)
-			{
-				current_daughters_dN_dypTdpTdphi_moments[daughter_lookup_idx][fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,itrig)] += ssum_vec[qpt_cs_idx];
-				++qpt_cs_idx;
-			}
+					ssum_vec[qpt_cs_idx] += Mres*VEC_n2_s_factor*vsum_vec[qpt_cs_idx];
+				double ssum = Mres*VEC_n2_s_factor*vsum;
 
-			//update daughter spectra separately
-			spectra[daughter_particle_id][ipT][ipphi] += ssum;
-			log_spectra[daughter_particle_id][ipT][ipphi] = log(abs(spectra[daughter_particle_id][ipT][ipphi])+1.e-100);
-			sign_spectra[daughter_particle_id][ipT][ipphi] = sgn(spectra[daughter_particle_id][ipT][ipphi]);
+				//update all gridpoints for all daughter moments
+				int qpt_cs_idx = 0;
+				for (int iqx = 0; iqx < qxnpts; ++iqx)
+				for (int iqy = 0; iqy < qynpts; ++iqy)
+				for (int itrig = 0; itrig < ntrig; ++itrig)
+				{
+					current_daughters_dN_dypTdpTdphi_moments[daughter_lookup_idx][fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,itrig)] += ssum_vec[qpt_cs_idx];
+					++qpt_cs_idx;
+				}
+
+				//update daughter spectra separately
+				spectra[daughter_particle_id][ipT][ipphi] += ssum;
+				log_spectra[daughter_particle_id][ipT][ipphi] = log(abs(spectra[daughter_particle_id][ipT][ipphi])+1.e-100);
+				sign_spectra[daughter_particle_id][ipT][ipphi] = sgn(spectra[daughter_particle_id][ipT][ipphi]);
+			}
+		}											// end of pT, pphi, pY loops
+	}												// end of nbody == 2
+	else
+	{
+		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
+		{
+			//Clear_and_set_exp_table(n_body);
+			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+			{
+				double local_pT = SP_pT[ipT];
+				double local_pphi = SP_pphi[ipphi];
+				double local_pY = SP_Del_pY[ipY] + current_pY_shift;
+				current_ipT = ipT;
+				current_ipphi = ipphi;
+				current_ipY = ipY;
+				Zero_resonance_running_sum_vector(ssum_vec);
+				Zero_resonance_running_sum_vector(vsum_vec);
+				Zero_resonance_running_sum_vector(zetasum_vec);
+				Zero_resonance_running_sum_vector(Csum_vec);
+				Load_decay_channel_info(decay_channel, local_pT, local_pphi, local_pY);	// set decay channel information
+
+				double ssum = 0.0;
+				for (int is = 0; is < n_s_pts; ++is)
+				{
+current_is = is;
+					double vsum = 0.0;
+	 		  		Zero_resonance_running_sum_vector(vsum_vec);
+					for (int iv = 0; iv < n_v_pts; ++iv)
+					{
+current_iv = iv;
+						double zetasum = 0.0;
+						Zero_resonance_running_sum_vector(zetasum_vec);
+						for (int izeta = 0; izeta < n_zeta_pts; ++izeta)
+						{
+current_izeta = izeta;
+							double Csum = 0.0;
+							Zero_resonance_running_sum_vector(Csum_vec);
+							double PKT = VEC_n3_PT[NB3_indexer(is,iv,izeta)];
+							double Del_PKY = VEC_n3_P_Y[is*n_v_pts+iv] - current_pY_shift;
+							double PKphi = VEC_n3_PPhi_tilde[NB3_indexer(is,iv,izeta)];
+
+							for (int tempidx = 0; tempidx <= 1; ++tempidx)
+							{
+current_tempidx = tempidx;
+if (current_resonance_particle_id==12 && daughter_resonance_particle_id==1 && current_ipT==2 && current_ipphi==6 && current_ipY==6 && current_is==1 && current_iv==4 && current_izeta==2)
+	cout << "SANITY CHECK: " << tempidx << "   " << PKT << "   " << PKphi << "   " << Del_PKY << endl;
+								if (tempidx != 0)
+									PKphi = VEC_n3_PPhi_tildeFLIP[NB3_indexer(is,iv,izeta)];		//also takes Pp --> Pm
+								currentPpm = VEC_n3_Ppm[NB3_indexer(is,iv,izeta)*2+tempidx];
+								//spectra
+								if ( iqt == (qtnpts - 1)/2 && iqz == (qznpts - 1)/2 )
+									Edndp3(PKT, PKphi, &Csum);
+								//space-time moments
+								if (!IGNORE_LONG_LIVED_RESONANCES || Gamma >= hbarC / max_lifetime)
+								{
+									//if (is==0 && iv==0 && izeta==0 && tempidx==0)
+									//	cout << "Doing eiqxEdndp3(nb=3, parent_pid = " << parent_resonance_particle_id
+									//			<< "): IGNORE_LONG_LIVED_RESONANCES = " << IGNORE_LONG_LIVED_RESONANCES << "::: "
+									//			<< Gamma << "   " << hbarC / max_lifetime << "   " << max_lifetime << endl;
+									Set_val_arrays(PKT, PKphi, Del_PKY);
+									eiqxEdndp3(PKT, PKphi, Del_PKY, Csum_vec, local_verbose);
+								}
+							}										// end of tempidx sum
+							for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
+								zetasum_vec[qpt_cs_idx] += VEC_n3_zeta_factor[NB3_indexer(is,iv,izeta)]*Csum_vec[qpt_cs_idx];
+							zetasum += VEC_n3_zeta_factor[NB3_indexer(is,iv,izeta)]*Csum;
+						}											// end of zeta sum
+						for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
+							vsum_vec[qpt_cs_idx] += VEC_n3_v_factor[is*n_v_pts+iv]*zetasum_vec[qpt_cs_idx];
+						vsum += VEC_n3_v_factor[is*n_v_pts+iv]*zetasum;
+					}												// end of v sum
+					for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
+						ssum_vec[qpt_cs_idx] += Mres*VEC_n3_s_factor[is]*vsum_vec[qpt_cs_idx];
+					ssum += Mres*VEC_n3_s_factor[is]*vsum;
+				}													// end of s sum
+				//update all gridpoints for daughter moments
+				int qpt_cs_idx = 0;
+				for (int iqx = 0; iqx < qxnpts; ++iqx)
+				for (int iqy = 0; iqy < qynpts; ++iqy)
+				for (int itrig = 0; itrig < ntrig; ++itrig)
+				{
+					current_daughters_dN_dypTdpTdphi_moments[daughter_lookup_idx][fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,itrig)] += ssum_vec[qpt_cs_idx];
+					++qpt_cs_idx;
+				}
+
+				//update daughter spectra separately
+				spectra[daughter_particle_id][ipT][ipphi] += ssum;
+				log_spectra[daughter_particle_id][ipT][ipphi] = log(abs(spectra[daughter_particle_id][ipT][ipphi])+1.e-100);
+				sign_spectra[daughter_particle_id][ipT][ipphi] = sgn(spectra[daughter_particle_id][ipT][ipphi]);
+			}
 		}								// end of pT, pphi, pY loops
-	}										// end of nbody == 3
+	}										// end of nbody == 3 or 4
 
 	// clean up
 
@@ -404,9 +417,9 @@ if (current_resonance_particle_id==12 && daughter_resonance_particle_id==1 && cu
 	delete [] val21_arr;
 	delete [] val22_arr;
 
-	for (int ipTpphipY = 0; ipTpphipY < n_pT_pts * n_pphi_pts * n_refinement_pts; ++ipTpphipY)
+	/*for (int ipTpphipY = 0; ipTpphipY < n_pT_pts * n_pphi_pts * n_refinement_pts; ++ipTpphipY)
 		delete [] exp_table[ipTpphipY];
-	delete [] exp_table;
+	delete [] exp_table;*/
 
 	Delete_resonance_running_sum_vectors();
 
