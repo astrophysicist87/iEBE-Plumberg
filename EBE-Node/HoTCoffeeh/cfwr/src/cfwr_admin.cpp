@@ -1019,13 +1019,13 @@ for (int i = 0; i < (int)chosen_resonances.size(); ++i)
 		for (int l = 0; l < nb; l++)				// loop through each daughter particle
 		{
 			int pid = lookup_particle_id_from_monval(all_particles, Nparticle, parent.decays_part[k][l]);
-cout << "Searching for " << pid << "   (" << all_particles[pid].name << ", " << all_particles[pid].effective_branchratio << ")"<< endl;
+//cout << "Searching for " << pid << "   (" << all_particles[pid].name << ", " << all_particles[pid].effective_branchratio << ")"<< endl;
 			if ( all_particles[pid].effective_branchratio >= 1.e-12 || pid == target_particle_id )
 				daughter_resonance_indices.insert(pid);		// using a <set> object will automatically remove duplicates and keep pid's in a fixed order
 		}
 	}
 
-cout << endl << "Ended up with n_daughter = " << daughter_resonance_indices.size() << " for " << all_particles[parent_pid].name << " (" << parent_pid << ")" << endl;
+//cout << endl << "Ended up with n_daughter = " << daughter_resonance_indices.size() << " for " << all_particles[parent_pid].name << " (" << parent_pid << ")" << endl;
 int i = 0;
 for (set<int>::iterator it = daughter_resonance_indices.begin(); it != daughter_resonance_indices.end(); ++it)
 	cout << i++ << "   " << *it << "   " << all_particles[*it].name << "   " << all_particles[*it].effective_branchratio << endl;

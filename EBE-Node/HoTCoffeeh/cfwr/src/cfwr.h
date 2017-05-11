@@ -172,6 +172,7 @@ class CorrelationFunction
 		double * SP_Del_pY, * ch_SP_pY, * sh_SP_pY;
 		double * chebTcfs;
 		double ** chebyshev_a_cfs, ** refined_resonance_grids, ** log_refined_grids, ** sgn_refined_grids;	//for resonance interpolation
+		double ** exp_table;
 
 		//points and weights for resonance integrals
 		double v_min, v_max, zeta_min, zeta_max, s_min, s_max;

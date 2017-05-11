@@ -23,6 +23,20 @@ gsl_cheb_series *cs_accel_expEdNd3p;
 double * val11_arr, * val12_arr, * val21_arr, * val22_arr;
 
 int local_verbose = 0;
+int daughter_resonance_particle_id = -1;
+int current_is, current_iv, current_izeta, current_tempidx;
+
+/*const int table_size = 65536;
+double * exp_table;
+double table_min = -100.0, table_max = 0.0;
+double table_delta_x = (table_max - table_min) / (double)(table_size - 1);
+
+inline double exp_NN(double x)
+{
+	return (
+		( x < table_min ) ? 0.0 : exp_table[(int)floor( ( x - table_min ) / table_delta_x )]
+	);
+}*/
 
 template < typename T >
 void check_for_NaNs(string variable_name, const T variable_value, ofstream& localout)
@@ -135,6 +149,19 @@ void CorrelationFunction::Refine_resonance_grids(int parent_resonance_particle_i
 	return;
 }
 
+void CorrelationFunction::Clear_and_set_exp_table()
+{
+	long cfs_array_length = qxnpts * qynpts * ntrig;
+	long momentum_length = n_pT_pts * n_pphi_pts * n_refinement_pts;
+	for (int imom = 0; imom < momentum_length; ++imom)
+	{
+		exp_table[imom] = new double [cfs_array_length];
+		for (int icf = 0; icf < cfs_array_length; ++icf)
+			exp_table[imom][icf] = -1.0;
+	}
+	return;
+}
+
 void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_id, int daughter_particle_id, int decay_channel, int iqt, int iqz)
 {
 	time_t rawtime;
@@ -146,6 +173,14 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 	val22_arr = new double [qspace_cs_slice_length];
 
 	int daughter_lookup_idx = distance(daughter_resonance_indices.begin(), daughter_resonance_indices.find(daughter_particle_id));
+
+	//exp_table = new double [table_size];
+	//for (int ix = 0; ix < table_size; ++ix)
+	//	exp_table[ix] = exp(table_min + (double)ix * table_delta_x);
+	exp_table = new double * [momentum_length];
+	for (int imom = 0; imom < momentum_length; ++imom)
+		exp_table[imom] = new double [cfs_array_length];
+
 
 	Allocate_resonance_running_sum_vectors();
 
@@ -161,6 +196,7 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 	int tmp_daughter_monval = all_particles[daughter_particle_id].monval;
 	n_body = current_reso_nbody;
 	current_parent_resonance = parent_resonance_particle_id;
+	daughter_resonance_particle_id = daughter_particle_id;
 
 	local_verbose = 0;
 
@@ -192,15 +228,18 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 
 			//then g(s) is delta-function, skip s-integration entirely
 			//double s_loc = m2*m2;
+			current_is = -1;
 			double vsum = 0.0;
 			for (int iv = 0; iv < n_v_pts; ++iv)
 			{
+				current_iv = iv;
 				//time (&rawtime);
 				//timeinfo = localtime (&rawtime);
 				Zero_resonance_running_sum_vector(zetasum_vec);
 				double zetasum = 0.0;
 				for (int izeta = 0; izeta < n_zeta_pts; ++izeta)
 				{
+					current_izeta = izeta;
 					Zero_resonance_running_sum_vector(Csum_vec);
 					double Csum = 0.0;
 					double PKT = VEC_n2_PT[NB2_indexer(iv,izeta)];
@@ -209,6 +248,7 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 
 					for (int tempidx = 0; tempidx <= 1; ++tempidx)
 					{
+						current_tempidx = tempidx;
 						if (tempidx != 0)
 							PKphi = VEC_n2_PPhi_tildeFLIP[NB2_indexer(iv,izeta)];		//also takes Pp --> Pm
 						currentPpm = VEC_n2_Ppm[NB2_indexer(iv,izeta)*2 + tempidx];
@@ -265,7 +305,7 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 			double local_pY = SP_Del_pY[ipY] + current_pY_shift;
 			current_ipT = ipT;
 			current_ipphi = ipphi;
-			current_ipphi = ipY;
+			current_ipY = ipY;
 			Zero_resonance_running_sum_vector(ssum_vec);
 			Zero_resonance_running_sum_vector(vsum_vec);
 			Zero_resonance_running_sum_vector(zetasum_vec);
@@ -275,14 +315,17 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 			double ssum = 0.0;
 			for (int is = 0; is < n_s_pts; ++is)
 			{
+current_is = is;
 				double vsum = 0.0;
  		  		Zero_resonance_running_sum_vector(vsum_vec);
 				for (int iv = 0; iv < n_v_pts; ++iv)
 				{
+current_iv = iv;
 					double zetasum = 0.0;
 					Zero_resonance_running_sum_vector(zetasum_vec);
 					for (int izeta = 0; izeta < n_zeta_pts; ++izeta)
 					{
+current_izeta = izeta;
 						double Csum = 0.0;
 						Zero_resonance_running_sum_vector(Csum_vec);
 						double PKT = VEC_n3_PT[NB3_indexer(is,iv,izeta)];
@@ -291,6 +334,9 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 
 						for (int tempidx = 0; tempidx <= 1; ++tempidx)
 						{
+current_tempidx = tempidx;
+if (current_resonance_particle_id==12 && daughter_resonance_particle_id==1 && current_ipT==2 && current_ipphi==6 && current_ipY==6 && current_is==1 && current_iv==4 && current_izeta==2)
+	cout << "SANITY CHECK: " << tempidx << "   " << PKT << "   " << PKphi << "   " << Del_PKY << endl;
 							if (tempidx != 0)
 								PKphi = VEC_n3_PPhi_tildeFLIP[NB3_indexer(is,iv,izeta)];		//also takes Pp --> Pm
 							currentPpm = VEC_n3_Ppm[NB3_indexer(is,iv,izeta)*2+tempidx];
@@ -357,6 +403,10 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 	delete [] val12_arr;
 	delete [] val21_arr;
 	delete [] val22_arr;
+
+	for (int ipTpphipY = 0; ipTpphipY < n_pT_pts * n_pphi_pts * n_refinement_pts; ++ipTpphipY)
+		delete [] exp_table[ipTpphipY];
+	delete [] exp_table;
 
 	Delete_resonance_running_sum_vectors();
 
@@ -893,29 +943,45 @@ void CorrelationFunction::Set_val_arrays(double ptr, double phir, double spyr)
 			double sign_of_f221 = sign_of_f221_arr[qpt_cs_idx];
 			double sign_of_f222 = sign_of_f222_arr[qpt_cs_idx];
 
+			bool test11 = sign_of_f111 * sign_of_f211 > 0 && log_f211_arr[qpt_cs_idx] < log_f111_arr[qpt_cs_idx];
+			bool test21 = sign_of_f121 * sign_of_f221 > 0 && log_f221_arr[qpt_cs_idx] < log_f121_arr[qpt_cs_idx];
+			bool test12 = sign_of_f112 * sign_of_f212 > 0 && log_f212_arr[qpt_cs_idx] < log_f112_arr[qpt_cs_idx];
+			bool test22 = sign_of_f122 * sign_of_f222 > 0 && log_f222_arr[qpt_cs_idx] < log_f122_arr[qpt_cs_idx];
+
 			// set val11
-			if ( sign_of_f111 * sign_of_f211 > 0 && log_f211_arr[qpt_cs_idx] < log_f111_arr[qpt_cs_idx] )
+			if ( test11 )
 				val11_arr[qpt_cs_idx] = sign_of_f111 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) );
 			else
 				val11_arr[qpt_cs_idx] = 0.0;
 
 			// set val21
-			if ( sign_of_f121 * sign_of_f221 > 0 && log_f221_arr[qpt_cs_idx] < log_f121_arr[qpt_cs_idx] )
+			if ( test21 )
 				val21_arr[qpt_cs_idx] = sign_of_f121 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]) );
 			else
 				val21_arr[qpt_cs_idx] = 0.0;
 
 			// set val12
-			if ( sign_of_f112 * sign_of_f212 > 0 && log_f212_arr[qpt_cs_idx] < log_f112_arr[qpt_cs_idx] )
+			if ( test12 )
 				val12_arr[qpt_cs_idx] = sign_of_f112 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]) );
 			else
 				val12_arr[qpt_cs_idx] = 0.0;
 
 			// set val22
-			if ( sign_of_f122 * sign_of_f222 > 0 && log_f222_arr[qpt_cs_idx] < log_f122_arr[qpt_cs_idx] )
+			if ( test22 )
 				val22_arr[qpt_cs_idx] = sign_of_f122 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
 			else
 				val22_arr[qpt_cs_idx] = 0.0;
+
+			if ( current_reso_nbody==3 && test11 && test12 && test21 && test22 )
+				printf( "MOMENTA: %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le\n",
+						current_resonance_particle_id, daughter_resonance_particle_id, current_ipT, current_ipphi, current_ipY,
+						current_is, current_iv, current_izeta, current_tempidx,
+						iqx, iqy, iCS, iRI, ptr, phir, spyr,
+						lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]),
+						lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]),
+						lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]),
+						lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
+			
 		    ++qpt_cs_idx;
 		}
 	}
@@ -953,6 +1019,11 @@ void CorrelationFunction::Set_val_arrays(double ptr, double phir, double spyr)
 			double sign_of_f221 = sign_of_f221_arr[qpt_cs_idx];
 			double sign_of_f222 = sign_of_f222_arr[qpt_cs_idx];
 
+			bool test11 = sign_of_f111 * sign_of_f211 > 0;
+			bool test21 = sign_of_f121 * sign_of_f221 > 0;
+			bool test12 = sign_of_f112 * sign_of_f212 > 0;
+			bool test22 = sign_of_f122 * sign_of_f222 > 0;
+
 			// set val11
 			if (sign_of_f111 * sign_of_f211 > 0) // if the two points have the same sign in the pT direction, interpolate logs
 				val11_arr[qpt_cs_idx] = sign_of_f111 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) );
@@ -976,6 +1047,17 @@ void CorrelationFunction::Set_val_arrays(double ptr, double phir, double spyr)
 				val22_arr[qpt_cs_idx] = sign_of_f122 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
 			else                                    // otherwise, just interpolate original vals
 				val22_arr[qpt_cs_idx] = lin_int(del_ptr_pt0, one_by_pTdiff, f122_arr[qpt_cs_idx], f222_arr[qpt_cs_idx]);
+
+			if ( current_reso_nbody==3 && test11 && test12 && test21 && test22 )
+				printf( "MOMENTA: %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le\n",
+						current_resonance_particle_id, daughter_resonance_particle_id, current_ipT, current_ipphi, current_ipY,
+						current_is, current_iv, current_izeta, current_tempidx,
+						iqx, iqy, iCS, iRI, ptr, phir, spyr,
+						lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]),
+						lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]),
+						lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]),
+						lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
+
 			++qpt_cs_idx;
 		}
 	}

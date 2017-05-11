@@ -198,7 +198,10 @@ void CorrelationFunction::Fourier_transform_emission_function(int iqt, int iqz)
 		// if past the qz-midpoint ( == 0 ), just use appropriate symmetries
 		// to reflect the results and skip the rest
 		if (iqz > (qznpts - 1) / 2)
-			Reflect_in_qz(current_resonance_particle_id, iqt, iqz);
+		{
+			//Reflect_in_qz(current_resonance_particle_id, iqt, iqz);
+			continue;
+		}
 		else
 			Get_spacetime_moments(idc, iqt, iqz);
 	}
@@ -297,7 +300,10 @@ void CorrelationFunction::Compute_phase_space_integrals(int iqt, int iqz)
 			// if past the qz-midpoint ( == 0 ), just use appropriate symmetries
 			// to reflect the results and skip the rest
 			if (iqz > (qznpts - 1) / 2)
-				Reflect_in_qz(daughter_resonance_particle_id, iqt, iqz);
+			{
+				//Reflect_in_qz(daughter_resonance_particle_id, iqt, iqz);
+				continue;
+			}
 			else
 				Do_resonance_integrals(current_resonance_particle_id, daughter_resonance_particle_id, idc, iqt, iqz);
 		}
