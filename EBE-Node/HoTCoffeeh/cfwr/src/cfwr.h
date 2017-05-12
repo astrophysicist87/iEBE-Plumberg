@@ -172,7 +172,7 @@ class CorrelationFunction
 		double * SP_Del_pY, * ch_SP_pY, * sh_SP_pY;
 		double * chebTcfs;
 		double ** chebyshev_a_cfs, ** refined_resonance_grids, ** log_refined_grids, ** sgn_refined_grids;	//for resonance interpolation
-		double ** exp_table;
+		double ** exp_table_11, ** exp_table_21, ** exp_table_12, ** exp_table_22;
 		bool * grids_calculated;
 
 		//points and weights for resonance integrals

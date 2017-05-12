@@ -68,7 +68,7 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	init_qy = -0.5*double(qynpts-1)*delta_qy;
 	init_qz = -0.5*double(qznpts-1)*delta_qz;
 
-	n_alpha_points = 15;
+	n_alpha_points = 3;
 
 	//set ofstream for output file
 	global_out_stream_ptr = &myout;

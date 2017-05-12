@@ -15,6 +15,6 @@ if [ "$RunCFWR" = true ]
 then
 	#valgrind --tool=massif ./cfwr.e $AllArgs
 	#valgrind --error-limit=no --track-origins=yes --leak-check=full ./cfwr.e $AllArgs
-	#valgrind --error-limit=no ./cfwr.e $AllArgs
+	#valgrind ./cfwr.e $AllArgs
 	./cfwr.e $AllArgs
 fi
