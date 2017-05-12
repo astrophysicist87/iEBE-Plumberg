@@ -11,7 +11,11 @@
 #include "cfwr.h"
 #include "cfwr_lib.h"
 #include "Arsenal.h"
+#include "Stopwatch.h"
+#include "fastexp.h"
 #include "gauss_quadrature.h"
+
+#define USE_EXP_RECYCLING	1
 
 using namespace std;
 
@@ -149,34 +153,33 @@ void CorrelationFunction::Refine_resonance_grids(int parent_resonance_particle_i
 	return;
 }
 
-void CorrelationFunction::Clear_and_set_exp_table(int n_body)
+void CorrelationFunction::Clear_and_set_exp_table_nb2()
 {
-	if (n_body == 2)
+	long cfs_array_length = qxnpts * qynpts * ntrig;
+	long momentum_length = n_pphi_pts * n_v_pts * n_zeta_pts;
+	for (int imom = 0; imom < momentum_length; ++imom)
+	for (int icf = 0; icf < cfs_array_length; ++icf)
 	{
-		long cfs_array_length = qxnpts * qynpts * ntrig;
-		long momentum_length = n_pphi_pts * n_v_pts * n_zeta_pts;
-		for (int imom = 0; imom < momentum_length; ++imom)
-		for (int icf = 0; icf < cfs_array_length; ++icf)
-		{
-			exp_table_11[imom][icf] = -1.0;
-			exp_table_21[imom][icf] = -1.0;
-			exp_table_12[imom][icf] = -1.0;
-			exp_table_22[imom][icf] = -1.0;
-		}
+		exp_table_11[imom][icf] = -1.0;
+		exp_table_21[imom][icf] = -1.0;
+		exp_table_12[imom][icf] = -1.0;
+		exp_table_22[imom][icf] = -1.0;
 	}
-	else
+
+	return;
+}
+
+void CorrelationFunction::Clear_and_set_exp_table_nb3()
+{
+	long cfs_array_length = qxnpts * qynpts * ntrig;
+	long momentum_length = n_pphi_pts * n_s_pts * n_v_pts * n_zeta_pts;
+	for (int imom = 0; imom < momentum_length; ++imom)
+	for (int icf = 0; icf < cfs_array_length; ++icf)
 	{
-		long cfs_array_length = qxnpts * qynpts * ntrig;
-		long momentum_length = n_pphi_pts * n_s_pts * n_v_pts * n_zeta_pts;
-		for (int imom = 0; imom < momentum_length; ++imom)
-		for (int icf = 0; icf < cfs_array_length; ++icf)
-		{
-//cout << imom << "   " << icf << endl;
-			exp_table_11[imom][icf] = -1.0;
-			exp_table_21[imom][icf] = -1.0;
-			exp_table_12[imom][icf] = -1.0;
-			exp_table_22[imom][icf] = -1.0;
-		}
+		exp_table_11[imom][icf] = -1.0;
+		exp_table_21[imom][icf] = -1.0;
+		exp_table_12[imom][icf] = -1.0;
+		exp_table_22[imom][icf] = -1.0;
 	}
 
 	return;
@@ -184,8 +187,19 @@ void CorrelationFunction::Clear_and_set_exp_table(int n_body)
 
 void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_id, int daughter_particle_id, int decay_channel, int iqt, int iqz)
 {
-	time_t rawtime;
-  	struct tm * timeinfo;
+	//time_t rawtime;
+  	//struct tm * timeinfo;
+	Stopwatch do_resonance_integrals_sw;
+	do_resonance_integrals_sw.Start();
+
+	bool doing_spectra = ( iqt == (qtnpts - 1)/2 && iqz == (qznpts - 1)/2 );
+	bool doing_moments = ( !IGNORE_LONG_LIVED_RESONANCES || current_resonance_Gamma >= hbarC / max_lifetime );
+
+	if (!doing_spectra && !doing_moments)
+	{
+		cout << "Not doing spectra or moments!  Returning..." << endl;
+		return;
+	}
 
 	val11_arr = new double [qspace_cs_slice_length];
 	val12_arr = new double [qspace_cs_slice_length];
@@ -218,23 +232,26 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 
 	long grids_calculated_length = momentum_length;
 
-cout << "Initializing and declaring arrays..." << endl;
-	exp_table_11 = new double * [momentum_length];
-	exp_table_21 = new double * [momentum_length];
-	exp_table_12 = new double * [momentum_length];
-	exp_table_22 = new double * [momentum_length];
-	for (int imom = 0; imom < momentum_length; ++imom)
+//cout << "Initializing and declaring arrays..." << endl;
+	if (doing_moments)
 	{
-		exp_table_11[imom] = new double [qxnpts * qynpts * ntrig];
-		exp_table_21[imom] = new double [qxnpts * qynpts * ntrig];
-		exp_table_12[imom] = new double [qxnpts * qynpts * ntrig];
-		exp_table_22[imom] = new double [qxnpts * qynpts * ntrig];
-	}
+		exp_table_11 = new double * [momentum_length];
+		exp_table_21 = new double * [momentum_length];
+		exp_table_12 = new double * [momentum_length];
+		exp_table_22 = new double * [momentum_length];
+		for (int imom = 0; imom < momentum_length; ++imom)
+		{
+			exp_table_11[imom] = new double [qxnpts * qynpts * ntrig];
+			exp_table_21[imom] = new double [qxnpts * qynpts * ntrig];
+			exp_table_12[imom] = new double [qxnpts * qynpts * ntrig];
+			exp_table_22[imom] = new double [qxnpts * qynpts * ntrig];
+		}
 	
-	grids_calculated = new bool [grids_calculated_length];
-	for (int igrid = 0; igrid < grids_calculated_length; ++igrid)
-		grids_calculated[igrid] = false;
-cout << "...finished." << endl;
+		grids_calculated = new bool [grids_calculated_length];
+		for (int igrid = 0; igrid < grids_calculated_length; ++igrid)
+			grids_calculated[igrid] = false;
+	}
+//cout << "...finished." << endl;
 
 	Allocate_resonance_running_sum_vectors();
 
@@ -251,25 +268,26 @@ cout << "...finished." << endl;
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 		{
-			for (int igrid = 0; igrid < grids_calculated_length; ++igrid)
-				grids_calculated[igrid] = false;
-			Clear_and_set_exp_table(n_body);
-//debugger(__LINE__, __FILE__);
+			if (doing_moments)
+			{
+				for (int igrid = 0; igrid < grids_calculated_length; ++igrid)
+					grids_calculated[igrid] = false;
+				Clear_and_set_exp_table_nb2();
+			}
+
 			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 			{
-//debugger(__LINE__, __FILE__);
 				double local_pT = SP_pT[ipT];
 				double local_pphi = SP_pphi[ipphi];
 				double local_pY = SP_Del_pY[ipY] + current_pY_shift;
 				current_ipT = ipT;
 				current_ipphi = ipphi;
 				current_ipY = ipY;
-				//current_qlist_slice = qlist[ipT];
 				Zero_resonance_running_sum_vector(ssum_vec);
 				Zero_resonance_running_sum_vector(vsum_vec);
 				Zero_resonance_running_sum_vector(zetasum_vec);
 				Zero_resonance_running_sum_vector(Csum_vec);
-				Load_decay_channel_info(decay_channel, local_pT, local_pphi, local_pY);	// set decay channel information
+				Load_decay_channel_info_nb2(decay_channel, local_pT, local_pphi, local_pY);	// set decay channel information
 
 				//then g(s) is delta-function, skip s-integration entirely
 				//double s_loc = m2*m2;
@@ -277,15 +295,11 @@ cout << "...finished." << endl;
 				double vsum = 0.0;
 				for (int iv = 0; iv < n_v_pts; ++iv)
 				{
-//debugger(__LINE__, __FILE__);
 					current_iv = iv;
-					//time (&rawtime);
-					//timeinfo = localtime (&rawtime);
 					Zero_resonance_running_sum_vector(zetasum_vec);
 					double zetasum = 0.0;
 					for (int izeta = 0; izeta < n_zeta_pts; ++izeta)
 					{
-//debugger(__LINE__, __FILE__);
 						current_izeta = izeta;
 						Zero_resonance_running_sum_vector(Csum_vec);
 						double Csum = 0.0;
@@ -295,49 +309,55 @@ cout << "...finished." << endl;
 
 						for (int tempidx = 0; tempidx <= 1; ++tempidx)
 						{
-//debugger(__LINE__, __FILE__);
 							current_tempidx = tempidx;
 							if (tempidx != 0)
 								PKphi = VEC_n2_PPhi_tildeFLIP[NB2_indexer(iv,izeta)];		//also takes Pp --> Pm
 							currentPpm = VEC_n2_Ppm[NB2_indexer(iv,izeta)*2 + tempidx];
 							//spectra
-							if ( iqt == (qtnpts - 1)/2 && iqz == (qznpts - 1)/2 )
+							if ( doing_spectra )
 								Edndp3(PKT, PKphi, &Csum);
 							//space-time moments
-							if (!IGNORE_LONG_LIVED_RESONANCES || Gamma >= hbarC / max_lifetime)
+							if ( doing_moments )
 							{
-//debugger(__LINE__, __FILE__);
 								Set_val_arrays(PKT, PKphi, Del_PKY);
 								eiqxEdndp3(PKT, PKphi, Del_PKY, Csum_vec, local_verbose);
 							}
 						}												// end of tempidx sum
-						for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
-							zetasum_vec[qpt_cs_idx] += VEC_n2_zeta_factor[NB2_indexer(iv,izeta)]*Csum_vec[qpt_cs_idx];
+						if (doing_moments)
+							for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
+								zetasum_vec[qpt_cs_idx] += VEC_n2_zeta_factor[NB2_indexer(iv,izeta)]*Csum_vec[qpt_cs_idx];
 						zetasum += VEC_n2_zeta_factor[NB2_indexer(iv,izeta)]*Csum;
 					}													// end of zeta sum
-					for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
-						vsum_vec[qpt_cs_idx] += VEC_n2_v_factor[iv]*zetasum_vec[qpt_cs_idx];
+					if (doing_moments)
+						for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
+							vsum_vec[qpt_cs_idx] += VEC_n2_v_factor[iv]*zetasum_vec[qpt_cs_idx];
 					vsum += VEC_n2_v_factor[iv]*zetasum;
 				}														// end of v sum
-				for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
-					ssum_vec[qpt_cs_idx] += Mres*VEC_n2_s_factor*vsum_vec[qpt_cs_idx];
+				if (doing_moments)
+					for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
+						ssum_vec[qpt_cs_idx] += Mres*VEC_n2_s_factor*vsum_vec[qpt_cs_idx];
 				double ssum = Mres*VEC_n2_s_factor*vsum;
 
 				//update all gridpoints for all daughter moments
-				int qpt_cs_idx = 0;
-				for (int iqx = 0; iqx < qxnpts; ++iqx)
-				for (int iqy = 0; iqy < qynpts; ++iqy)
-				for (int itrig = 0; itrig < ntrig; ++itrig)
+				if ( doing_moments )
 				{
-					current_daughters_dN_dypTdpTdphi_moments[daughter_lookup_idx][fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,itrig)] += ssum_vec[qpt_cs_idx];
-					++qpt_cs_idx;
+					int qpt_cs_idx = 0;
+					for (int iqx = 0; iqx < qxnpts; ++iqx)
+					for (int iqy = 0; iqy < qynpts; ++iqy)
+					for (int itrig = 0; itrig < ntrig; ++itrig)
+					{
+						current_daughters_dN_dypTdpTdphi_moments[daughter_lookup_idx][fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,itrig)] += ssum_vec[qpt_cs_idx];
+						++qpt_cs_idx;
+					}
 				}
 
 				//update daughter spectra separately
-				spectra[daughter_particle_id][ipT][ipphi] += ssum;
-				log_spectra[daughter_particle_id][ipT][ipphi] = log(abs(spectra[daughter_particle_id][ipT][ipphi])+1.e-100);
-				sign_spectra[daughter_particle_id][ipT][ipphi] = sgn(spectra[daughter_particle_id][ipT][ipphi]);
-//debugger(__LINE__, __FILE__);
+				if ( doing_spectra && ipY == (n_pY_pts+1)/2 )	//only need spectra at Y == 0
+				{
+					spectra[daughter_particle_id][ipT][ipphi] += ssum;
+					log_spectra[daughter_particle_id][ipT][ipphi] = log(abs(spectra[daughter_particle_id][ipT][ipphi])+1.e-100);
+					sign_spectra[daughter_particle_id][ipT][ipphi] = sgn(spectra[daughter_particle_id][ipT][ipphi]);
+				}
 			}
 		}											// end of pT, pphi, pY loops
 	}												// end of nbody == 2
@@ -346,9 +366,12 @@ cout << "...finished." << endl;
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 		{
-			for (int igrid = 0; igrid < grids_calculated_length; ++igrid)
-				grids_calculated[igrid] = false;
-			Clear_and_set_exp_table(n_body);
+			if (doing_moments)
+			{
+				for (int igrid = 0; igrid < grids_calculated_length; ++igrid)
+					grids_calculated[igrid] = false;
+				Clear_and_set_exp_table_nb3();
+			}
 
 			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 			{
@@ -362,7 +385,7 @@ cout << "...finished." << endl;
 				Zero_resonance_running_sum_vector(vsum_vec);
 				Zero_resonance_running_sum_vector(zetasum_vec);
 				Zero_resonance_running_sum_vector(Csum_vec);
-				Load_decay_channel_info(decay_channel, local_pT, local_pphi, local_pY);	// set decay channel information
+				Load_decay_channel_info_nb3(decay_channel, local_pT, local_pphi, local_pY);	// set decay channel information
 
 				double ssum = 0.0;
 				for (int is = 0; is < n_s_pts; ++is)
@@ -391,43 +414,52 @@ cout << "...finished." << endl;
 									PKphi = VEC_n3_PPhi_tildeFLIP[NB3_indexer(is,iv,izeta)];		//also takes Pp --> Pm
 								currentPpm = VEC_n3_Ppm[NB3_indexer(is,iv,izeta)*2+tempidx];
 								//spectra
-								if ( iqt == (qtnpts - 1)/2 && iqz == (qznpts - 1)/2 )
+								if ( doing_spectra )
 									Edndp3(PKT, PKphi, &Csum);
 								//space-time moments
-								if (!IGNORE_LONG_LIVED_RESONANCES || Gamma >= hbarC / max_lifetime)
+								if ( doing_moments )
 								{
 									Set_val_arrays(PKT, PKphi, Del_PKY);
 									eiqxEdndp3(PKT, PKphi, Del_PKY, Csum_vec, local_verbose);
 								}
 							}										// end of tempidx sum
-							for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
-								zetasum_vec[qpt_cs_idx] += VEC_n3_zeta_factor[NB3_indexer(is,iv,izeta)]*Csum_vec[qpt_cs_idx];
+							if (doing_moments)
+								for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
+									zetasum_vec[qpt_cs_idx] += VEC_n3_zeta_factor[NB3_indexer(is,iv,izeta)]*Csum_vec[qpt_cs_idx];
 							zetasum += VEC_n3_zeta_factor[NB3_indexer(is,iv,izeta)]*Csum;
 						}											// end of zeta sum
-						for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
-							vsum_vec[qpt_cs_idx] += VEC_n3_v_factor[is*n_v_pts+iv]*zetasum_vec[qpt_cs_idx];
+						if (doing_moments)
+							for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
+								vsum_vec[qpt_cs_idx] += VEC_n3_v_factor[is*n_v_pts+iv]*zetasum_vec[qpt_cs_idx];
 						vsum += VEC_n3_v_factor[is*n_v_pts+iv]*zetasum;
 					}												// end of v sum
-					for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
-						ssum_vec[qpt_cs_idx] += Mres*VEC_n3_s_factor[is]*vsum_vec[qpt_cs_idx];
+					if (doing_moments)
+						for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
+							ssum_vec[qpt_cs_idx] += Mres*VEC_n3_s_factor[is]*vsum_vec[qpt_cs_idx];
 					ssum += Mres*VEC_n3_s_factor[is]*vsum;
 				}													// end of s sum
-				//update all gridpoints for daughter moments
-				int qpt_cs_idx = 0;
-				for (int iqx = 0; iqx < qxnpts; ++iqx)
-				for (int iqy = 0; iqy < qynpts; ++iqy)
-				for (int itrig = 0; itrig < ntrig; ++itrig)
+
+				if ( doing_moments )
 				{
-					current_daughters_dN_dypTdpTdphi_moments[daughter_lookup_idx][fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,itrig)] += ssum_vec[qpt_cs_idx];
-					++qpt_cs_idx;
+					//update all gridpoints for daughter moments
+					int qpt_cs_idx = 0;
+					for (int iqx = 0; iqx < qxnpts; ++iqx)
+					for (int iqy = 0; iqy < qynpts; ++iqy)
+					for (int itrig = 0; itrig < ntrig; ++itrig)
+					{
+						current_daughters_dN_dypTdpTdphi_moments[daughter_lookup_idx][fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,itrig)] += ssum_vec[qpt_cs_idx];
+						++qpt_cs_idx;
+					}
 				}
 
-				//update daughter spectra separately
-				spectra[daughter_particle_id][ipT][ipphi] += ssum;
-				log_spectra[daughter_particle_id][ipT][ipphi] = log(abs(spectra[daughter_particle_id][ipT][ipphi])+1.e-100);
-				sign_spectra[daughter_particle_id][ipT][ipphi] = sgn(spectra[daughter_particle_id][ipT][ipphi]);
+				if ( doing_spectra && ipY == (n_pY_pts+1)/2 )	//only need spectra at Y == 0
+				{
+					//update daughter spectra separately
+					spectra[daughter_particle_id][ipT][ipphi] += ssum;
+					log_spectra[daughter_particle_id][ipT][ipphi] = log(abs(spectra[daughter_particle_id][ipT][ipphi])+1.e-100);
+					sign_spectra[daughter_particle_id][ipT][ipphi] = sgn(spectra[daughter_particle_id][ipT][ipphi]);
+				}
 			}
-//if (1) exit(8);
 		}								// end of pT, pphi, pY loops
 	}										// end of nbody == 3
 
@@ -452,22 +484,26 @@ cout << "...finished." << endl;
 	delete [] val21_arr;
 	delete [] val22_arr;
 
-//debugger(__LINE__, __FILE__);
-//cout << "Shouldn't have made it here yet!" << endl;
-	for (int imom = 0; imom < momentum_length; ++imom)
+	if (doing_moments)
 	{
-		delete [] exp_table_11[imom];
-		delete [] exp_table_21[imom];
-		delete [] exp_table_12[imom];
-		delete [] exp_table_22[imom];
+		for (int imom = 0; imom < momentum_length; ++imom)
+		{
+			delete [] exp_table_11[imom];
+			delete [] exp_table_21[imom];
+			delete [] exp_table_12[imom];
+			delete [] exp_table_22[imom];
+		}
+		delete [] exp_table_11;
+		delete [] exp_table_21;
+		delete [] exp_table_12;
+		delete [] exp_table_22;
+		delete [] grids_calculated;
 	}
-	delete [] exp_table_11;
-	delete [] exp_table_21;
-	delete [] exp_table_12;
-	delete [] exp_table_22;
-	delete [] grids_calculated;
 
 	Delete_resonance_running_sum_vectors();
+
+	do_resonance_integrals_sw.Stop();
+	*global_out_stream_ptr << "\t--> Finished this decay loop through Do_resonance_integrals(...) in " << do_resonance_integrals_sw.printTime() << " seconds." << endl;
 
 	return;
 }
@@ -1001,16 +1037,6 @@ void CorrelationFunction::Set_val_arrays(double ptr, double phir, double spyr)
 
 	if ( ptr_greater_than_pT1 )                             // if pT interpolation point is outside of grid
 	{
-
-		double * log_f111_arr = log_refined_grids[idx111];
-		double * log_f112_arr = log_refined_grids[idx112];
-		double * log_f121_arr = log_refined_grids[idx121];
-		double * log_f122_arr = log_refined_grids[idx122];
-		double * log_f211_arr = log_refined_grids[idx211];
-		double * log_f212_arr = log_refined_grids[idx212];
-		double * log_f221_arr = log_refined_grids[idx221];
-		double * log_f222_arr = log_refined_grids[idx222];
-
 		double * sign_of_f111_arr = sgn_refined_grids[idx111];
 		double * sign_of_f112_arr = sgn_refined_grids[idx112];
 		double * sign_of_f121_arr = sgn_refined_grids[idx121];
@@ -1020,55 +1046,105 @@ void CorrelationFunction::Set_val_arrays(double ptr, double phir, double spyr)
 		double * sign_of_f221_arr = sgn_refined_grids[idx221];
 		double * sign_of_f222_arr = sgn_refined_grids[idx222];
 
-		for (int iqx = 0; iqx < qxnpts; ++iqx)
-		for (int iqy = 0; iqy < qynpts; ++iqy)
-		for (int iCS = 0; iCS < 2; ++iCS)	//cos/sin
-		for (int iRI = 0; iRI < 2; ++iRI)	//real/imag
+		if ( use_recycling && USE_EXP_RECYCLING )	//if recycling applicable here
 		{
-			double sign_of_f111 = sign_of_f111_arr[qpt_cs_idx];
-			double sign_of_f112 = sign_of_f112_arr[qpt_cs_idx];
-			double sign_of_f121 = sign_of_f121_arr[qpt_cs_idx];
-			double sign_of_f122 = sign_of_f122_arr[qpt_cs_idx];
-			double sign_of_f211 = sign_of_f211_arr[qpt_cs_idx];
-			double sign_of_f212 = sign_of_f212_arr[qpt_cs_idx];
-			double sign_of_f221 = sign_of_f221_arr[qpt_cs_idx];
-			double sign_of_f222 = sign_of_f222_arr[qpt_cs_idx];
-
-			bool test11 = sign_of_f111 * sign_of_f211 > 0 && log_f211_arr[qpt_cs_idx] < log_f111_arr[qpt_cs_idx];
-			bool test21 = sign_of_f121 * sign_of_f221 > 0 && log_f221_arr[qpt_cs_idx] < log_f121_arr[qpt_cs_idx];
-			bool test12 = sign_of_f112 * sign_of_f212 > 0 && log_f212_arr[qpt_cs_idx] < log_f112_arr[qpt_cs_idx];
-			bool test22 = sign_of_f122 * sign_of_f222 > 0 && log_f222_arr[qpt_cs_idx] < log_f122_arr[qpt_cs_idx];
-
-			if ( use_recycling && false )
+			for (int iqx = 0; iqx < qxnpts; ++iqx)
+			for (int iqy = 0; iqy < qynpts; ++iqy)
+			for (int iCS = 0; iCS < 2; ++iCS)	//cos/sin
+			for (int iRI = 0; iRI < 2; ++iRI)	//real/imag
 			{
+				double sign_of_f111 = sign_of_f111_arr[qpt_cs_idx];
+				double sign_of_f112 = sign_of_f112_arr[qpt_cs_idx];
+				double sign_of_f121 = sign_of_f121_arr[qpt_cs_idx];
+				double sign_of_f122 = sign_of_f122_arr[qpt_cs_idx];
+				double sign_of_f211 = sign_of_f211_arr[qpt_cs_idx];
+				double sign_of_f212 = sign_of_f212_arr[qpt_cs_idx];
+				double sign_of_f221 = sign_of_f221_arr[qpt_cs_idx];
+				double sign_of_f222 = sign_of_f222_arr[qpt_cs_idx];
+
 				val11_arr[qpt_cs_idx] = sign_of_f111 * exp_table_mom_11[qpt_cs_idx];
 				val21_arr[qpt_cs_idx] = sign_of_f121 * exp_table_mom_21[qpt_cs_idx];
 				val12_arr[qpt_cs_idx] = sign_of_f112 * exp_table_mom_12[qpt_cs_idx];
 				val22_arr[qpt_cs_idx] = sign_of_f122 * exp_table_mom_22[qpt_cs_idx];
+	/*if (verbose) cout << "Set_val_arrays(), dump: " << exp_table_idx << "   " << use_recycling << "   "
+						<< exp_table_mom_11[qpt_cs_idx] << "   " << exp_table_mom_21[qpt_cs_idx] << "   " << exp_table_mom_12[qpt_cs_idx] << "   " << exp_table_mom_22[qpt_cs_idx]
+						<< exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) ) << "   "
+						<< exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]) ) << "   "
+						<< exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]) ) << "   "
+						<< exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) ) << endl;*/
+
+				/*if ( current_reso_nbody==3 && test11 && test12 && test21 && test22 )
+					printf( "MOMENTA: %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le\n",
+							current_resonance_particle_id, daughter_resonance_particle_id, current_ipT, current_ipphi, current_ipY,
+							current_is, current_iv, current_izeta, current_tempidx,
+							iqx, iqy, iCS, iRI, ptr, phir, spyr,
+							lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]),
+							lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]),
+							lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]),
+							lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]),
+							log(exp_table_mom_11[qpt_cs_idx]+1.e-100),
+							log(exp_table_mom_21[qpt_cs_idx]+1.e-100),
+							log(exp_table_mom_12[qpt_cs_idx]+1.e-100),
+							log(exp_table_mom_22[qpt_cs_idx]+1.e-100) );*/
+			
+				++qpt_cs_idx;
 			}
-			else
+		}
+		else	//if recycling not applicable here
+		{
+			double * log_f111_arr = log_refined_grids[idx111];
+			double * log_f112_arr = log_refined_grids[idx112];
+			double * log_f121_arr = log_refined_grids[idx121];
+			double * log_f122_arr = log_refined_grids[idx122];
+			double * log_f211_arr = log_refined_grids[idx211];
+			double * log_f212_arr = log_refined_grids[idx212];
+			double * log_f221_arr = log_refined_grids[idx221];
+			double * log_f222_arr = log_refined_grids[idx222];
+
+			for (int iqx = 0; iqx < qxnpts; ++iqx)
+			for (int iqy = 0; iqy < qynpts; ++iqy)
+			for (int iCS = 0; iCS < 2; ++iCS)	//cos/sin
+			for (int iRI = 0; iRI < 2; ++iRI)	//real/imag
 			{
+				double sign_of_f111 = sign_of_f111_arr[qpt_cs_idx];
+				double sign_of_f112 = sign_of_f112_arr[qpt_cs_idx];
+				double sign_of_f121 = sign_of_f121_arr[qpt_cs_idx];
+				double sign_of_f122 = sign_of_f122_arr[qpt_cs_idx];
+				double sign_of_f211 = sign_of_f211_arr[qpt_cs_idx];
+				double sign_of_f212 = sign_of_f212_arr[qpt_cs_idx];
+				double sign_of_f221 = sign_of_f221_arr[qpt_cs_idx];
+				double sign_of_f222 = sign_of_f222_arr[qpt_cs_idx];
+
+				bool test11 = sign_of_f111 * sign_of_f211 > 0 && log_f211_arr[qpt_cs_idx] < log_f111_arr[qpt_cs_idx];
+				bool test21 = sign_of_f121 * sign_of_f221 > 0 && log_f221_arr[qpt_cs_idx] < log_f121_arr[qpt_cs_idx];
+				bool test12 = sign_of_f112 * sign_of_f212 > 0 && log_f212_arr[qpt_cs_idx] < log_f112_arr[qpt_cs_idx];
+				bool test22 = sign_of_f122 * sign_of_f222 > 0 && log_f222_arr[qpt_cs_idx] < log_f122_arr[qpt_cs_idx];
+
 				// set val11
 				if ( test11 )
-					val11_arr[qpt_cs_idx] = sign_of_f111 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) );
+					val11_arr[qpt_cs_idx] = sign_of_f111 * fasterexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) );
+					//val11_arr[qpt_cs_idx] = sign_of_f111 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) );
 				else
 					val11_arr[qpt_cs_idx] = 0.0;
 
 				// set val21
 				if ( test21 )
-					val21_arr[qpt_cs_idx] = sign_of_f121 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]) );
+					val21_arr[qpt_cs_idx] = sign_of_f121 * fasterexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]) );
+					//val21_arr[qpt_cs_idx] = sign_of_f121 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]) );
 				else
 					val21_arr[qpt_cs_idx] = 0.0;
 
 				// set val12
 				if ( test12 )
-					val12_arr[qpt_cs_idx] = sign_of_f112 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]) );
+					val12_arr[qpt_cs_idx] = sign_of_f112 * fasterexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]) );
+					//val12_arr[qpt_cs_idx] = sign_of_f112 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]) );
 				else
 					val12_arr[qpt_cs_idx] = 0.0;
 
 				// set val22
 				if ( test22 )
-					val22_arr[qpt_cs_idx] = sign_of_f122 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
+					val22_arr[qpt_cs_idx] = sign_of_f122 * fasterexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
+					//val22_arr[qpt_cs_idx] = sign_of_f122 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
 				else
 					val22_arr[qpt_cs_idx] = 0.0;
 
@@ -1077,105 +1153,122 @@ void CorrelationFunction::Set_val_arrays(double ptr, double phir, double spyr)
 				exp_table_mom_21[qpt_cs_idx] = sign_of_f121 * val21_arr[qpt_cs_idx];	//store just the exp(...) for now
 				exp_table_mom_12[qpt_cs_idx] = sign_of_f112 * val12_arr[qpt_cs_idx];	//store just the exp(...) for now
 				exp_table_mom_22[qpt_cs_idx] = sign_of_f122 * val22_arr[qpt_cs_idx];	//store just the exp(...) for now
-			}
-/*if (verbose) cout << "Set_val_arrays(), dump: " << exp_table_idx << "   " << use_recycling << "   "
-					<< exp_table_mom_11[qpt_cs_idx] << "   " << exp_table_mom_21[qpt_cs_idx] << "   " << exp_table_mom_12[qpt_cs_idx] << "   " << exp_table_mom_22[qpt_cs_idx]
-					<< exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) ) << "   "
-					<< exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]) ) << "   "
-					<< exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]) ) << "   "
-					<< exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) ) << endl;*/
-
-			if ( current_reso_nbody==3 && test11 && test12 && test21 && test22 )
-				printf( "MOMENTA: %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le\n",
-						current_resonance_particle_id, daughter_resonance_particle_id, current_ipT, current_ipphi, current_ipY,
-						current_is, current_iv, current_izeta, current_tempidx,
-						iqx, iqy, iCS, iRI, ptr, phir, spyr,
-						lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]),
-						lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]),
-						lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]),
-						lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]),
-						log(exp_table_mom_11[qpt_cs_idx]+1.e-100),
-						log(exp_table_mom_21[qpt_cs_idx]+1.e-100),
-						log(exp_table_mom_12[qpt_cs_idx]+1.e-100),
-						log(exp_table_mom_22[qpt_cs_idx]+1.e-100) );
 			
-		    ++qpt_cs_idx;
+				++qpt_cs_idx;
+			}
 		}
 	}
 	else if (ptr > PTCHANGE)                             // if pT interpolation point is larger than PTCHANGE (currently 1.0 GeV)
 	{
-		double * log_f111_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
-		double * log_f112_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npy];
-		double * log_f121_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npym1];
-		double * log_f122_arr = log_refined_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npy];
-		double * log_f211_arr = log_refined_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
-		double * log_f212_arr = log_refined_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npy];
-		double * log_f221_arr = log_refined_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npym1];
-		double * log_f222_arr = log_refined_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npy];
+		double * sign_of_f111_arr = sgn_refined_grids[idx111];
+		double * sign_of_f112_arr = sgn_refined_grids[idx112];
+		double * sign_of_f121_arr = sgn_refined_grids[idx121];
+		double * sign_of_f122_arr = sgn_refined_grids[idx122];
+		double * sign_of_f211_arr = sgn_refined_grids[idx211];
+		double * sign_of_f212_arr = sgn_refined_grids[idx212];
+		double * sign_of_f221_arr = sgn_refined_grids[idx221];
+		double * sign_of_f222_arr = sgn_refined_grids[idx222];
 
-		double * sign_of_f111_arr = sgn_refined_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
-		double * sign_of_f112_arr = sgn_refined_grids[((npt-1)*n_pphi_pts+nphim1)*n_refinement_pts + npy];
-		double * sign_of_f121_arr = sgn_refined_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npym1];
-		double * sign_of_f122_arr = sgn_refined_grids[((npt-1)*n_pphi_pts+nphi)*n_refinement_pts + npy];
-		double * sign_of_f211_arr = sgn_refined_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npym1];
-		double * sign_of_f212_arr = sgn_refined_grids[(npt*n_pphi_pts+nphim1)*n_refinement_pts + npy];
-		double * sign_of_f221_arr = sgn_refined_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npym1];
-		double * sign_of_f222_arr = sgn_refined_grids[(npt*n_pphi_pts+nphi)*n_refinement_pts + npy];
-
-		for (int iqx = 0; iqx < qxnpts; ++iqx)
-		for (int iqy = 0; iqy < qynpts; ++iqy)
-		for (int iCS = 0; iCS < 2; ++iCS)	//cos/sin
-		for (int iRI = 0; iRI < 2; ++iRI)	//real/imag
+		if ( use_recycling && USE_EXP_RECYCLING )	//if recycling applicable here
 		{
-			double sign_of_f111 = sign_of_f111_arr[qpt_cs_idx];
-			double sign_of_f112 = sign_of_f112_arr[qpt_cs_idx];
-			double sign_of_f121 = sign_of_f121_arr[qpt_cs_idx];
-			double sign_of_f122 = sign_of_f122_arr[qpt_cs_idx];
-			double sign_of_f211 = sign_of_f211_arr[qpt_cs_idx];
-			double sign_of_f212 = sign_of_f212_arr[qpt_cs_idx];
-			double sign_of_f221 = sign_of_f221_arr[qpt_cs_idx];
-			double sign_of_f222 = sign_of_f222_arr[qpt_cs_idx];
+			for (int iqx = 0; iqx < qxnpts; ++iqx)
+			for (int iqy = 0; iqy < qynpts; ++iqy)
+			for (int iCS = 0; iCS < 2; ++iCS)	//cos/sin
+			for (int iRI = 0; iRI < 2; ++iRI)	//real/imag
+			{
+				double sign_of_f111 = sign_of_f111_arr[qpt_cs_idx];
+				double sign_of_f112 = sign_of_f112_arr[qpt_cs_idx];
+				double sign_of_f121 = sign_of_f121_arr[qpt_cs_idx];
+				double sign_of_f122 = sign_of_f122_arr[qpt_cs_idx];
+				double sign_of_f211 = sign_of_f211_arr[qpt_cs_idx];
+				double sign_of_f212 = sign_of_f212_arr[qpt_cs_idx];
+				double sign_of_f221 = sign_of_f221_arr[qpt_cs_idx];
+				double sign_of_f222 = sign_of_f222_arr[qpt_cs_idx];
 
-			bool test11 = sign_of_f111 * sign_of_f211 > 0;
-			bool test21 = sign_of_f121 * sign_of_f221 > 0;
-			bool test12 = sign_of_f112 * sign_of_f212 > 0;
-			bool test22 = sign_of_f122 * sign_of_f222 > 0;
+				val11_arr[qpt_cs_idx] = sign_of_f111 * exp_table_mom_11[qpt_cs_idx];
+				val21_arr[qpt_cs_idx] = sign_of_f121 * exp_table_mom_21[qpt_cs_idx];
+				val12_arr[qpt_cs_idx] = sign_of_f112 * exp_table_mom_12[qpt_cs_idx];
+				val22_arr[qpt_cs_idx] = sign_of_f122 * exp_table_mom_22[qpt_cs_idx];
 
-			// set val11
-			if (sign_of_f111 * sign_of_f211 > 0) // if the two points have the same sign in the pT direction, interpolate logs
-				val11_arr[qpt_cs_idx] = sign_of_f111 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) );
-			else                                    // otherwise, just interpolate original vals
-				val11_arr[qpt_cs_idx] = lin_int(del_ptr_pt0, one_by_pTdiff, f111_arr[qpt_cs_idx], f211_arr[qpt_cs_idx]);
+				/*if ( current_reso_nbody==3 && test11 && test12 && test21 && test22 )
+					printf( "MOMENTA: %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le\n",
+							current_resonance_particle_id, daughter_resonance_particle_id, current_ipT, current_ipphi, current_ipY,
+							current_is, current_iv, current_izeta, current_tempidx,
+							iqx, iqy, iCS, iRI, ptr, phir, spyr,
+							lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]),
+							lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]),
+							lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]),
+							lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );*/
 
-			// set val21
-			if (sign_of_f121 * sign_of_f221 > 0) // if the two points have the same sign in the pT direction, interpolate logs
-				val21_arr[qpt_cs_idx] = sign_of_f121 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]) );
-			else                                    // otherwise, just interpolate original vals
-				val21_arr[qpt_cs_idx] = lin_int(del_ptr_pt0, one_by_pTdiff, f121_arr[qpt_cs_idx], f221_arr[qpt_cs_idx]);
+				++qpt_cs_idx;
+			}
+		}
+		else	//if recycling not applicable here
+		{
+			double * log_f111_arr = log_refined_grids[idx111];
+			double * log_f112_arr = log_refined_grids[idx112];
+			double * log_f121_arr = log_refined_grids[idx121];
+			double * log_f122_arr = log_refined_grids[idx122];
+			double * log_f211_arr = log_refined_grids[idx211];
+			double * log_f212_arr = log_refined_grids[idx212];
+			double * log_f221_arr = log_refined_grids[idx221];
+			double * log_f222_arr = log_refined_grids[idx222];
 
-			// set val12
-			if (sign_of_f112 * sign_of_f212 > 0) // if the two points have the same sign in the pT direction, interpolate logs
-				val12_arr[qpt_cs_idx] = sign_of_f112 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]) );
-			else                                    // otherwise, just interpolate original vals
-				val12_arr[qpt_cs_idx] = lin_int(del_ptr_pt0, one_by_pTdiff, f112_arr[qpt_cs_idx], f212_arr[qpt_cs_idx]);
+			for (int iqx = 0; iqx < qxnpts; ++iqx)
+			for (int iqy = 0; iqy < qynpts; ++iqy)
+			for (int iCS = 0; iCS < 2; ++iCS)	//cos/sin
+			for (int iRI = 0; iRI < 2; ++iRI)	//real/imag
+			{
+				double sign_of_f111 = sign_of_f111_arr[qpt_cs_idx];
+				double sign_of_f112 = sign_of_f112_arr[qpt_cs_idx];
+				double sign_of_f121 = sign_of_f121_arr[qpt_cs_idx];
+				double sign_of_f122 = sign_of_f122_arr[qpt_cs_idx];
+				double sign_of_f211 = sign_of_f211_arr[qpt_cs_idx];
+				double sign_of_f212 = sign_of_f212_arr[qpt_cs_idx];
+				double sign_of_f221 = sign_of_f221_arr[qpt_cs_idx];
+				double sign_of_f222 = sign_of_f222_arr[qpt_cs_idx];
 
-			// set val22
-			if (sign_of_f122 * sign_of_f222 > 0) // if the two points have the same sign in the pT direction, interpolate logs
-				val22_arr[qpt_cs_idx] = sign_of_f122 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
-			else                                    // otherwise, just interpolate original vals
-				val22_arr[qpt_cs_idx] = lin_int(del_ptr_pt0, one_by_pTdiff, f122_arr[qpt_cs_idx], f222_arr[qpt_cs_idx]);
+				bool test11 = sign_of_f111 * sign_of_f211 > 0;
+				bool test21 = sign_of_f121 * sign_of_f221 > 0;
+				bool test12 = sign_of_f112 * sign_of_f212 > 0;
+				bool test22 = sign_of_f122 * sign_of_f222 > 0;
 
-			if ( current_reso_nbody==3 && test11 && test12 && test21 && test22 )
-				printf( "MOMENTA: %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le\n",
-						current_resonance_particle_id, daughter_resonance_particle_id, current_ipT, current_ipphi, current_ipY,
-						current_is, current_iv, current_izeta, current_tempidx,
-						iqx, iqy, iCS, iRI, ptr, phir, spyr,
-						lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]),
-						lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]),
-						lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]),
-						lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
+				// set val11
+				if ( test11 ) // if the two points have the same sign in the pT direction, interpolate logs
+					val11_arr[qpt_cs_idx] = sign_of_f111 * fasterexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) );
+					//val11_arr[qpt_cs_idx] = sign_of_f111 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) );
+				else                                    // otherwise, just interpolate original vals
+					val11_arr[qpt_cs_idx] = lin_int(del_ptr_pt0, one_by_pTdiff, f111_arr[qpt_cs_idx], f211_arr[qpt_cs_idx]);
 
-			++qpt_cs_idx;
+				// set val21
+				if ( test21 ) // if the two points have the same sign in the pT direction, interpolate logs
+					val21_arr[qpt_cs_idx] = sign_of_f121 * fasterexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]) );
+					//val21_arr[qpt_cs_idx] = sign_of_f121 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]) );
+				else                                    // otherwise, just interpolate original vals
+					val21_arr[qpt_cs_idx] = lin_int(del_ptr_pt0, one_by_pTdiff, f121_arr[qpt_cs_idx], f221_arr[qpt_cs_idx]);
+
+				// set val12
+				if ( test12 ) // if the two points have the same sign in the pT direction, interpolate logs
+					val12_arr[qpt_cs_idx] = sign_of_f112 * fasterexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]) );
+					//val12_arr[qpt_cs_idx] = sign_of_f112 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]) );
+				else                                    // otherwise, just interpolate original vals
+					val12_arr[qpt_cs_idx] = lin_int(del_ptr_pt0, one_by_pTdiff, f112_arr[qpt_cs_idx], f212_arr[qpt_cs_idx]);
+
+				// set val22
+				if ( test22 ) // if the two points have the same sign in the pT direction, interpolate logs
+					val22_arr[qpt_cs_idx] = sign_of_f122 * fasterexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
+					//val22_arr[qpt_cs_idx] = sign_of_f122 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
+				else                                    // otherwise, just interpolate original vals
+					val22_arr[qpt_cs_idx] = lin_int(del_ptr_pt0, one_by_pTdiff, f122_arr[qpt_cs_idx], f222_arr[qpt_cs_idx]);
+
+				//be sure to store these results!
+				exp_table_mom_11[qpt_cs_idx] = sign_of_f111 * val11_arr[qpt_cs_idx];	//store just the exp(...) for now
+				exp_table_mom_21[qpt_cs_idx] = sign_of_f121 * val21_arr[qpt_cs_idx];	//store just the exp(...) for now
+				exp_table_mom_12[qpt_cs_idx] = sign_of_f112 * val12_arr[qpt_cs_idx];	//store just the exp(...) for now
+				exp_table_mom_22[qpt_cs_idx] = sign_of_f122 * val22_arr[qpt_cs_idx];	//store just the exp(...) for now
+
+				++qpt_cs_idx;
+			}	//end of q-loop
 		}
 	}
 	else                                            // if pT is smaller than PTCHANGE, just use linear interpolation, no matter what
@@ -1193,26 +1286,9 @@ void CorrelationFunction::Set_val_arrays(double ptr, double phir, double spyr)
 		}
 	}
 
-	//store calculated results if necessary
-	/*if ( !use_recycling )
-	{
-		long cf_length = qxnpts * qynpts * ntrig;
-		long icf = 0;
-		while (icf != cf_length)
-		{
-//cout << "Set_val_arrays(): " << icf << "   " << precalc_idx << "   " << exp_table_idx << "   " << exp_table_mom_11[icf] << "   " << exp_table_mom_12[icf] << "   " << exp_table_mom_21[icf] << "   " << exp_table_mom_22[icf] << endl;
-			exp_table_11[exp_table_idx][icf] = exp_table_mom_11[icf];
-			exp_table_21[exp_table_idx][icf] = exp_table_mom_21[icf];
-			exp_table_12[exp_table_idx][icf] = exp_table_mom_12[icf];
-			exp_table_22[exp_table_idx][icf] = exp_table_mom_22[icf];
-			icf++;
-		}
-	}*/
 	grids_calculated[exp_table_idx] = true;
 
 	return;
 }
-
-
 
 //End of file

@@ -294,7 +294,8 @@ class CorrelationFunction
 		void Cal_dN_dypTdpTdphi_with_weights_function_approx(int local_pid, double pT, double pphi, double pY,
 												double qt, double qx, double qy, double qz, double * cosqx_dN_dypTdpTdphi, double * sinqx_dN_dypTdpTdphi);
 		void Do_resonance_integrals(int parent_resonance_particle_id, int daughter_particle_id, int decay_channel, int iqt, int iqz);
-		void Clear_and_set_exp_table(int n_body);
+		void Clear_and_set_exp_table_nb2();
+		void Clear_and_set_exp_table_nb3();
 		void Tabulate_resonance_Chebyshev_coefficients(int parent_resonance_particle_id);
 		void Refine_resonance_grids(int parent_resonance_particle_id);
 		void Set_current_daughter_info(int dc_idx, int daughter_idx);
@@ -310,7 +311,8 @@ class CorrelationFunction
 		void Set_current_resonance_logs_and_signs();
 		void Set_current_daughters_resonance_logs_and_signs(int n_daughters);
 		void Allocate_decay_channel_info();
-		void Load_decay_channel_info(int dc_idx, double K_T_local, double K_phi_local, double K_y_local);
+		void Load_decay_channel_info_nb2(int dc_idx, double K_T_local, double K_phi_local, double K_y_local);
+		void Load_decay_channel_info_nb3(int dc_idx, double K_T_local, double K_phi_local, double K_y_local);
 		void Delete_decay_channel_info();
 		int Set_daughter_list(int parent_resonance_index);
 
