@@ -30,18 +30,6 @@ int local_verbose = 0;
 int daughter_resonance_particle_id = -1;
 int current_is, current_iv, current_izeta, current_tempidx;
 
-/*const int table_size = 65536;
-double * exp_table;
-double table_min = -100.0, table_max = 0.0;
-double table_delta_x = (table_max - table_min) / (double)(table_size - 1);
-
-inline double exp_NN(double x)
-{
-	return (
-		( x < table_min ) ? 0.0 : exp_table[(int)floor( ( x - table_min ) / table_delta_x )]
-	);
-}*/
-
 template < typename T >
 void check_for_NaNs(string variable_name, const T variable_value, ofstream& localout)
 {
@@ -223,9 +211,6 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 
 	int daughter_lookup_idx = distance(daughter_resonance_indices.begin(), daughter_resonance_indices.find(daughter_particle_id));
 
-	//exp_table = new double [table_size];
-	//for (int ix = 0; ix < table_size; ++ix)
-	//	exp_table[ix] = exp(table_min + (double)ix * table_delta_x);
 	long momentum_length = n_pphi_pts * n_v_pts * n_zeta_pts;
 	if (n_body != 2)
 		momentum_length = n_pphi_pts * n_s_pts * n_v_pts * n_zeta_pts;
@@ -622,12 +607,21 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 	double val1, val2;					//store intermediate results of pphi interpolation
 	
 	double pyr = abs(spyr);				//used for checking
+	int qlist_step = 1;
+	int qlist_idx = 0;
+	int reversible_qpt_cs_idx = 0;
+	int rev_qpt_cs_step = 2;
 	double parity_factor = 1.0;
-	if (abs(qt_pts[current_iqt]) < abs(qz_pts[current_iqz]))
+	if (abs(qt_pts[current_iqt]) < abs(qz_pts[current_iqz]) && spyr < 0.0)
+	{
 		parity_factor = -1.0;		//used to get correct sign of imaginary part of spectra
 									//with Del_pY --> -Del_pY for |qt| < |qz|
 									//real part of spectra always symmetric about Del_pY == 0
-	double reflection_factor = 1.0;
+		qlist_step = -1;									//loop backwards
+		qlist_idx = qxnpts * qynpts - 1;					//loop backwards
+		reversible_qpt_cs_idx = 2 * qxnpts * qynpts - 2;	//loop backwards
+		rev_qpt_cs_step = -2;								//loop backwards
+	}
 	
 	bool pY_out_of_range = false;
 
@@ -705,196 +699,70 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 
 	// set index for looping
 	int qpt_cs_idx = 0;
-	int qlist_idx = 0;
 
-	if ( ptr_greater_than_pT1 )                             // if pT interpolation point is outside of grid
+	for (int iqx = 0; iqx < qxnpts; ++iqx)
+	for (int iqy = 0; iqy < qynpts; ++iqy)
 	{
-		for (int iqx = 0; iqx < qxnpts; ++iqx)
-		for (int iqy = 0; iqy < qynpts; ++iqy)
+		double arg = one_by_Gamma_Mres * dot_four_vectors(qlist[qlist_idx], currentPpm);
+		double akr = 1./(1.+arg*arg);
+		double aki = arg/(1.+arg*arg);
+
+		for (int iCS = 0; iCS < 2; ++iCS)	//cosine (rapidity-even), then sine (rapidity-odd)
 		{
-			double arg = one_by_Gamma_Mres * dot_four_vectors(qlist[qlist_idx], currentPpm);
-			double akr = 1./(1.+arg*arg);
-			double aki = arg/(1.+arg*arg);
+			/////////////////////////////////////////////////////////////////
+			// DO REAL PART
+			/////////////////////////////////////////////////////////////////
+			// interpolate over pT values
+			/////////////////////////////////////////////////////////////////
+			val11 = val11_arr[reversible_qpt_cs_idx];
+			val21 = val21_arr[reversible_qpt_cs_idx];
+			val12 = val12_arr[reversible_qpt_cs_idx];
+			val22 = val22_arr[reversible_qpt_cs_idx];
 
-			for (int iCS = 0; iCS < 2; ++iCS)	//cosine (rapidity-even), then sine (rapidity-odd)
-			{
-				/////////////////////////////////////////////////////////////////
-				// DO REAL PART
-				/////////////////////////////////////////////////////////////////
-				// interpolate over pT values
-				/////////////////////////////////////////////////////////////////
-				val11 = val11_arr[qpt_cs_idx];
-				val21 = val21_arr[qpt_cs_idx];
-				val12 = val12_arr[qpt_cs_idx];
-				val22 = val22_arr[qpt_cs_idx];
+			//////////////////////////////////////
+			// interpolate val11 and val12 over the pphi direction to get val1
+			// similarly for val21 and val22 --> val2
+			//////////////////////////////////////
+			val1 = lin_int(del_phir_phi0, one_by_pphidiff, val11, val21);
+			val2 = lin_int(del_phir_phi0, one_by_pphidiff, val12, val22);
 
-				//////////////////////////////////////
-				// interpolate val11 and val12 over the pphi direction to get val1
-				// similarly for val21 and val22 --> val2
-				//////////////////////////////////////
-				val1 = lin_int(del_phir_phi0, one_by_pphidiff, val11, val21);
-				val2 = lin_int(del_phir_phi0, one_by_pphidiff, val12, val22);
+			// finally, get the interpolated value
+			double Zkr = lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
 
-				// finally, get the interpolated value
-				double Zkr = lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
+		    /////////////////////////////////////////////////////////////////
+		    // DO IMAGINARY PART
+		    /////////////////////////////////////////////////////////////////
+		    // interpolate over pT values
+		    /////////////////////////////////////////////////////////////////
+			val11 = val11_arr[reversible_qpt_cs_idx+1];
+			val21 = val21_arr[reversible_qpt_cs_idx+1];
+			val12 = val12_arr[reversible_qpt_cs_idx+1];
+			val22 = val22_arr[reversible_qpt_cs_idx+1];
 
-			    /////////////////////////////////////////////////////////////////
-			    // DO IMAGINARY PART
-			    /////////////////////////////////////////////////////////////////
-			    // interpolate over pT values
-			    /////////////////////////////////////////////////////////////////
-				val11 = val11_arr[qpt_cs_idx+1];
-				val21 = val21_arr[qpt_cs_idx+1];
-				val12 = val12_arr[qpt_cs_idx+1];
-				val22 = val22_arr[qpt_cs_idx+1];
+			//////////////////////////////////////
+			// interpolate val11 and val12 over the pphi direction to get val1
+			// similarly for val21 and val22 --> val2
+			//////////////////////////////////////
+			val1 = lin_int(del_phir_phi0, one_by_pphidiff, val11, val21);
+			val2 = lin_int(del_phir_phi0, one_by_pphidiff, val12, val22);
 
-				//////////////////////////////////////
-				// interpolate val11 and val12 over the pphi direction to get val1
-				// similarly for val21 and val22 --> val2
-				//////////////////////////////////////
-				val1 = lin_int(del_phir_phi0, one_by_pphidiff, val11, val21);
-				val2 = lin_int(del_phir_phi0, one_by_pphidiff, val12, val22);
+			// finally, get the interpolated value
+			double Zki = lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
 
-				// finally, get the interpolated value
-				double Zki = reflection_factor * lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
+		    /////////////////////////////////////////////////////
+		    // Finally, update results vectors appropriately
+		    /////////////////////////////////////////////////////
+		    //--> update the real part of weighted daughter spectra
+		    results[qpt_cs_idx] += akr*Zkr-aki*Zki;
+		    //--> update the imaginary part of weighted daughter spectra
+		    results[qpt_cs_idx+1] += parity_factor * (akr*Zki+aki*Zkr);
 
-			    /////////////////////////////////////////////////////
-			    // Finally, update results vectors appropriately
-			    /////////////////////////////////////////////////////
-			    //--> update the real part of weighted daughter spectra
-			    results[qpt_cs_idx] += akr*Zkr-aki*Zki;
-			    //--> update the imaginary part of weighted daughter spectra
-			    results[qpt_cs_idx+1] += akr*Zki+aki*Zkr;
-
-				//needed to exploit symmetries of sine component
-				reflection_factor *= parity_factor;
-			    qpt_cs_idx += 2;
-			}
-			qlist_idx++;
-		}   //end of all q-loops
-	}
-	else if (ptr > PTCHANGE)                             // if pT interpolation point is larger than PTCHANGE (currently 1.0 GeV)
-	{
-		for (int iqx = 0; iqx < qxnpts; ++iqx)
-		for (int iqy = 0; iqy < qynpts; ++iqy)
-		{
-			double arg = one_by_Gamma_Mres * dot_four_vectors(qlist[qlist_idx], currentPpm);
-			double akr = 1./(1.+arg*arg);
-			double aki = arg/(1.+arg*arg);
-
-			for (int iCS = 0; iCS < 2; ++iCS)	//cosine (rapidity-even), then sine (rapidity-odd)
-			{
-				/////////////////////////////////////////////////////////////////
-				// DO REAL PART
-				/////////////////////////////////////////////////////////////////
-				// interpolate over pT values
-				/////////////////////////////////////////////////////////////////
-				val11 = val11_arr[qpt_cs_idx];
-				val21 = val21_arr[qpt_cs_idx];
-				val12 = val12_arr[qpt_cs_idx];
-				val22 = val22_arr[qpt_cs_idx];
-
-				//////////////////////////////////////
-				// interpolate val11 and val12 over the pphi direction to get val1
-				// similarly for val21 and val22 --> val2
-				//////////////////////////////////////
-				val1 = lin_int(del_phir_phi0, one_by_pphidiff, val11, val21);
-				val2 = lin_int(del_phir_phi0, one_by_pphidiff, val12, val22);
-
-				// finally, get the interpolated value
-				double Zkr = lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
-
-			    /////////////////////////////////////////////////////////////////
-			    // DO IMAGINARY PART
-			    /////////////////////////////////////////////////////////////////
-			    // interpolate over pT values
-			    /////////////////////////////////////////////////////////////////
-				val11 = val11_arr[qpt_cs_idx+1];
-				val21 = val21_arr[qpt_cs_idx+1];
-				val12 = val12_arr[qpt_cs_idx+1];
-				val22 = val22_arr[qpt_cs_idx+1];
-
-				//////////////////////////////////////
-				// interpolate val11 and val12 over the pphi direction to get val1
-				// similarly for val21 and val22 --> val2
-				//////////////////////////////////////
-				val1 = lin_int(del_phir_phi0, one_by_pphidiff, val11, val21);
-				val2 = lin_int(del_phir_phi0, one_by_pphidiff, val12, val22);
-
-				// finally, get the interpolated value
-				double Zki = reflection_factor * lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
-
-			    /////////////////////////////////////////////////////
-			    // Finally, update results vectors appropriately
-			    /////////////////////////////////////////////////////
-			    //--> update the real part of weighted daughter spectra
-			    results[qpt_cs_idx] += akr*Zkr-aki*Zki;
-			    //--> update the imaginary part of weighted daughter spectra
-			    results[qpt_cs_idx+1] += akr*Zki+aki*Zkr;
-
-				//needed to exploit symmetries of sine component
-				reflection_factor *= parity_factor;
-			    qpt_cs_idx += 2;
-			}
-			qlist_idx++;
-		}   //end of all q-loops
-	}
-	else                                            // if pT is smaller than PTCHANGE, just use linear interpolation, no matter what
-	{
-		for (int iqx = 0; iqx < qxnpts; ++iqx)
-		for (int iqy = 0; iqy < qynpts; ++iqy)
-		{
-			double arg = one_by_Gamma_Mres * dot_four_vectors(qlist[qlist_idx], currentPpm);
-			double akr = 1./(1.+arg*arg);
-			double aki = arg/(1.+arg*arg);
-
-			for (int iCS = 0; iCS < 2; ++iCS)
-			{
-				/////////////////////////////////////////////////////////////////
-				// DO REAL PART
-				/////////////////////////////////////////////////////////////////
-				// interpolate over pT values
-				/////////////////////////////////////////////////////////////////
-				val11 = val11_arr[qpt_cs_idx];
-				val21 = val21_arr[qpt_cs_idx];
-				val12 = val12_arr[qpt_cs_idx];
-				val22 = val22_arr[qpt_cs_idx];
-
-				val1 = lin_int(del_phir_phi0, one_by_pphidiff, val11, val21);
-				val2 = lin_int(del_phir_phi0, one_by_pphidiff, val12, val22);
-
-				double Zkr = lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
-
-				/////////////////////////////////////////////////////////////////
-				// DO IMAGINARY PART
-				/////////////////////////////////////////////////////////////////
-				// interpolate over pT values
-				/////////////////////////////////////////////////////////////////
-				val11 = val11_arr[qpt_cs_idx+1];
-				val21 = val21_arr[qpt_cs_idx+1];
-				val12 = val12_arr[qpt_cs_idx+1];
-				val22 = val22_arr[qpt_cs_idx+1];
-
-				val1 = lin_int(del_phir_phi0, one_by_pphidiff, val11, val21);
-				val2 = lin_int(del_phir_phi0, one_by_pphidiff, val12, val22);
-
-				double Zki = reflection_factor * lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
-
-				/////////////////////////////////////////////////////
-				// Finally, update results vectors appropriately
-				/////////////////////////////////////////////////////
-				//--> update the real part of weighted daughter spectra
-				results[qpt_cs_idx] += akr*Zkr-aki*Zki;
-				//--> update the imaginary part of weighted daughter spectra
-				results[qpt_cs_idx+1] += akr*Zki+aki*Zkr;
-
-				//needed to exploit symmetries of sine component
-				reflection_factor *= parity_factor;
-				qpt_cs_idx += 2;
-			}
-			qlist_idx++;
-		}       //end of all q-loops
-	}
+			//needed to exploit symmetries of sine component
+			reversible_qpt_cs_idx += rev_qpt_cs_step;
+		    qpt_cs_idx += 2;
+		}
+		qlist_idx += qlist_step;
+	}   //end of all q-loops
 
 	/*qpt_cs_idx = 0;
 	for (int iqx = 0; iqx < qxnpts; ++iqx)
@@ -1123,28 +991,24 @@ void CorrelationFunction::Set_val_arrays(double ptr, double phir, double spyr)
 				// set val11
 				if ( test11 )
 					val11_arr[qpt_cs_idx] = sign_of_f111 * fastexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) );
-					//val11_arr[qpt_cs_idx] = sign_of_f111 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) );
 				else
 					val11_arr[qpt_cs_idx] = 0.0;
 
 				// set val21
 				if ( test21 )
 					val21_arr[qpt_cs_idx] = sign_of_f121 * fastexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]) );
-					//val21_arr[qpt_cs_idx] = sign_of_f121 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]) );
 				else
 					val21_arr[qpt_cs_idx] = 0.0;
 
 				// set val12
 				if ( test12 )
 					val12_arr[qpt_cs_idx] = sign_of_f112 * fastexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]) );
-					//val12_arr[qpt_cs_idx] = sign_of_f112 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]) );
 				else
 					val12_arr[qpt_cs_idx] = 0.0;
 
 				// set val22
 				if ( test22 )
 					val22_arr[qpt_cs_idx] = sign_of_f122 * fastexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
-					//val22_arr[qpt_cs_idx] = sign_of_f122 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
 				else
 					val22_arr[qpt_cs_idx] = 0.0;
 
@@ -1236,28 +1100,24 @@ void CorrelationFunction::Set_val_arrays(double ptr, double phir, double spyr)
 				// set val11
 				if ( test11 ) // if the two points have the same sign in the pT direction, interpolate logs
 					val11_arr[qpt_cs_idx] = sign_of_f111 * fastexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) );
-					//val11_arr[qpt_cs_idx] = sign_of_f111 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) );
 				else                                    // otherwise, just interpolate original vals
 					val11_arr[qpt_cs_idx] = lin_int(del_ptr_pt0, one_by_pTdiff, f111_arr[qpt_cs_idx], f211_arr[qpt_cs_idx]);
 
 				// set val21
 				if ( test21 ) // if the two points have the same sign in the pT direction, interpolate logs
 					val21_arr[qpt_cs_idx] = sign_of_f121 * fastexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]) );
-					//val21_arr[qpt_cs_idx] = sign_of_f121 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]) );
 				else                                    // otherwise, just interpolate original vals
 					val21_arr[qpt_cs_idx] = lin_int(del_ptr_pt0, one_by_pTdiff, f121_arr[qpt_cs_idx], f221_arr[qpt_cs_idx]);
 
 				// set val12
 				if ( test12 ) // if the two points have the same sign in the pT direction, interpolate logs
 					val12_arr[qpt_cs_idx] = sign_of_f112 * fastexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]) );
-					//val12_arr[qpt_cs_idx] = sign_of_f112 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]) );
 				else                                    // otherwise, just interpolate original vals
 					val12_arr[qpt_cs_idx] = lin_int(del_ptr_pt0, one_by_pTdiff, f112_arr[qpt_cs_idx], f212_arr[qpt_cs_idx]);
 
 				// set val22
 				if ( test22 ) // if the two points have the same sign in the pT direction, interpolate logs
 					val22_arr[qpt_cs_idx] = sign_of_f122 * fastexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
-					//val22_arr[qpt_cs_idx] = sign_of_f122 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
 				else                                    // otherwise, just interpolate original vals
 					val22_arr[qpt_cs_idx] = lin_int(del_ptr_pt0, one_by_pTdiff, f122_arr[qpt_cs_idx], f222_arr[qpt_cs_idx]);
 

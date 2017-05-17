@@ -1266,8 +1266,10 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 				while ( iidx_local < iidx_end )
 				{
 					double sin_qx_S_x_K = short_array_S[iidx_local];
-					ala_SR[iidx_local] += cos_trans_Fourier * sin_qx_S_x_K;
-					ala_SI[iidx_local++] += sin_trans_Fourier * sin_qx_S_x_K;
+					//ala_SR[iidx_local] += cos_trans_Fourier * sin_qx_S_x_K;
+					//ala_SI[iidx_local++] += sin_trans_Fourier * sin_qx_S_x_K;
+					ala_SR[iidx_local] += sin_trans_Fourier * sin_qx_S_x_K;
+					ala_SI[iidx_local++] += cos_trans_Fourier * sin_qx_S_x_K;
 				}
 			}
 		}
@@ -1280,9 +1282,9 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 	{
 		alt_long_array_CR[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] = alt_long_array_CR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
-		alt_long_array_CI[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] = -alt_long_array_CI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];	//N.B. - imag. parts are odd
-		alt_long_array_SR[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] = alt_long_array_SR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
-		alt_long_array_SI[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] = -alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];	//N.B. - imag. parts are odd
+		alt_long_array_CI[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] = -alt_long_array_CI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];	//N.B. - sin_trans* odd
+		alt_long_array_SR[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] = -alt_long_array_SR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];	//N.B. - sin_trans* odd
+		alt_long_array_SI[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] = alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
 	}
 
 	for (int iqx = 0; iqx < qxnpts; ++iqx)
@@ -1541,8 +1543,10 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_p
 				while ( iidx_local < iidx_end )
 				{
 					double sin_qx_S_x_K = short_array_S[iidx_local];
-					ala_SR[iidx_local] += cos_trans_Fourier * sin_qx_S_x_K;
-					ala_SI[iidx_local++] += sin_trans_Fourier * sin_qx_S_x_K;
+					//ala_SR[iidx_local] += cos_trans_Fourier * sin_qx_S_x_K;
+					//ala_SI[iidx_local++] += sin_trans_Fourier * sin_qx_S_x_K;
+					ala_SR[iidx_local] += sin_trans_Fourier * sin_qx_S_x_K;
+					ala_SI[iidx_local++] += cos_trans_Fourier * sin_qx_S_x_K;
 				}
 			}
 		}
@@ -1555,9 +1559,9 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_p
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 	{
 		alt_long_array_CR[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] = alt_long_array_CR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
-		alt_long_array_CI[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] = -alt_long_array_CI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];	//N.B. - imag. parts are odd
-		alt_long_array_SR[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] = alt_long_array_SR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
-		alt_long_array_SI[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] = -alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];	//N.B. - imag. parts are odd
+		alt_long_array_CI[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] = -alt_long_array_CI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];	//N.B. - sin_trans* odd
+		alt_long_array_SR[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] = -alt_long_array_SR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];	//N.B. - sin_trans* odd
+		alt_long_array_SI[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] = alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
 	}
 
 	for (int iqx = 0; iqx < qxnpts; ++iqx)
