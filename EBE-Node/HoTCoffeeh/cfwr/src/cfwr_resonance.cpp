@@ -15,8 +15,6 @@
 #include "fastexp.h"
 #include "gauss_quadrature.h"
 
-#define USE_EXP_RECYCLING	1
-
 using namespace std;
 
 const int n_refinement_pts = 101;
@@ -104,8 +102,7 @@ void CorrelationFunction::Tabulate_resonance_Chebyshev_coefficients(int parent_r
 
 void CorrelationFunction::Refine_resonance_grids(int parent_resonance_particle_id)
 {
-	//Delta_DpY = (SP_Del_pY_max - SP_Del_pY_min) / (double)(n_refinement_pts - 1);
-	Delta_DpY = (SP_Del_pY_max - 0.0) / (double)(n_refinement_pts - 1);
+	Delta_DpY = (SP_Del_pY_max - SP_Del_pY_min) / (double)(n_refinement_pts - 1);
 
 	long cfs_array_length = qxnpts * qynpts * ntrig;
 	refined_resonance_grids = new double * [n_pT_pts * n_pphi_pts * n_refinement_pts];
@@ -612,7 +609,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 	int reversible_qpt_cs_idx = 0;
 	int rev_qpt_cs_step = 2;
 	double parity_factor = 1.0;
-	if (abs(qt_pts[current_iqt]) < abs(qz_pts[current_iqz]) && spyr < 0.0)
+	if (USE_RAPIDITY_SYMMETRY && abs(qt_pts[current_iqt]) < abs(qz_pts[current_iqz]) && spyr < 0.0)
 	{
 		parity_factor = -1.0;		//used to get correct sign of imaginary part of spectra
 									//with Del_pY --> -Del_pY for |qt| < |qz|
@@ -914,7 +911,7 @@ void CorrelationFunction::Set_val_arrays(double ptr, double phir, double spyr)
 		double * sign_of_f221_arr = sgn_refined_grids[idx221];
 		double * sign_of_f222_arr = sgn_refined_grids[idx222];
 
-		if ( use_recycling && USE_EXP_RECYCLING )	//if recycling applicable here
+		if ( USE_EXP_RECYCLING && use_recycling )	//if recycling applicable here
 		{
 			for (int iqx = 0; iqx < qxnpts; ++iqx)
 			for (int iqy = 0; iqy < qynpts; ++iqy)
@@ -1033,7 +1030,7 @@ void CorrelationFunction::Set_val_arrays(double ptr, double phir, double spyr)
 		double * sign_of_f221_arr = sgn_refined_grids[idx221];
 		double * sign_of_f222_arr = sgn_refined_grids[idx222];
 
-		if ( use_recycling && USE_EXP_RECYCLING )	//if recycling applicable here
+		if ( USE_EXP_RECYCLING && use_recycling )	//if recycling applicable here
 		{
 			for (int iqx = 0; iqx < qxnpts; ++iqx)
 			for (int iqy = 0; iqy < qynpts; ++iqy)

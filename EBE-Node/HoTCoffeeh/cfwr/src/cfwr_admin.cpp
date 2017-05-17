@@ -331,10 +331,12 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	SP_Del_pY = new double [n_pY_pts];
 	double znodes[n_pY_pts];
 	double local_scale = 0.5 * (SP_Del_pY_min - SP_Del_pY_max);
+	double local_center = 0.5 * (SP_Del_pY_min + SP_Del_pY_max);
+	
 	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 	{
 		znodes[ipY] = - cos( M_PI*(2.*(ipY+1.) - 1.) / (2.*n_pY_pts) );
-		SP_Del_pY[ipY] = 0.5 * (SP_Del_pY_min + SP_Del_pY_max) + local_scale * cos( M_PI*(2.*(ipY+1.) - 1.) / (2.*n_pY_pts) );
+		SP_Del_pY[ipY] = local_center + local_scale * cos( M_PI*(2.*(ipY+1.) - 1.) / (2.*n_pY_pts) );
 	}
 
 	//also do Chebyshev function evaluations now

@@ -20,13 +20,15 @@
 
 using namespace std;
 
-#define VERBOSE 				3		// specifies level of output - 0 is lowest (no output)
-#define QT_POINTS_SPACING		1		// 0 - uniform from -qmax to +qmax
-										// 1 - Chebyshev nodes from -qmax to +qmax
-#define QX_POINTS_SPACING		0		// same
-#define QY_POINTS_SPACING		0		// same
-#define QZ_POINTS_SPACING		0		// same
-#define MIDRAPIDITY_PIONS_ONLY	1		// obvious
+#define VERBOSE 					3		// specifies level of output - 0 is lowest (no output)
+#define QT_POINTS_SPACING			1		// 0 - uniform from -qmax to +qmax
+											// 1 - Chebyshev nodes from -qmax to +qmax
+#define QX_POINTS_SPACING			0		// same
+#define QY_POINTS_SPACING			0		// same
+#define QZ_POINTS_SPACING			0		// same
+#define MIDRAPIDITY_PIONS_ONLY		1		// obvious
+#define USE_EXP_RECYCLING			0
+#define USE_RAPIDITY_SYMMETRY		0
 
 #ifndef H5_NO_NAMESPACE
     using namespace H5;
@@ -54,12 +56,12 @@ const double delta_qz = 0.015;
 const int new_nqpts = 51;	//for fleshing out
 
 // Single particle spectra info
-const double SP_pT_min = 0.0;
-const double SP_pphi_min = 0.0;
-const double SP_Del_pY_min = 0.0;	//do this to make sure we include the symmetry point
 const double SP_pT_max = 4.0;
 const double SP_pphi_max = 2.0*M_PI;
 const double SP_Del_pY_max = 6.0;
+const double SP_pT_min = 0.0;
+const double SP_pphi_min = 0.0;
+const double SP_Del_pY_min = (USE_RAPIDITY_SYMMETRY-1)*SP_Del_pY_max;	//do this to make sure we include the symmetry point
 
 // Pair momentum info
 const double Kphi_min = 0.0;
