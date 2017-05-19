@@ -42,23 +42,6 @@ typedef struct
 	bool include_channel;
 }decay_info;
 
-/*struct Correlationfunction3D_data
-{
-	size_t data_length;
-	double * q_o;
-	double * q_s;
-	double * q_l;
-	double * y;
-	double * sigma;
-};
-
-int Fittarget_correlfun3D_f (const gsl_vector *xvec_ptr, void *params_ptr, gsl_vector *f_ptr);
-int Fittarget_correlfun3D_df (const gsl_vector *xvec_ptr, void *params_ptr,  gsl_matrix *Jacobian_ptr);
-int Fittarget_correlfun3D_fdf (const gsl_vector* xvec_ptr, void *params_ptr, gsl_vector* f_ptr, gsl_matrix* Jacobian_ptr);
-int Fittarget_correlfun3D_f_withlambda (const gsl_vector *xvec_ptr, void *params_ptr, gsl_vector *f_ptr);
-int Fittarget_correlfun3D_df_withlambda (const gsl_vector *xvec_ptr, void *params_ptr,  gsl_matrix *Jacobian_ptr);
-int Fittarget_correlfun3D_fdf_withlambda (const gsl_vector* xvec_ptr, void *params_ptr, gsl_vector* f_ptr, gsl_matrix* Jacobian_ptr);*/
-
 class CorrelationFunction
 {
 	private:
@@ -284,13 +267,13 @@ class CorrelationFunction
 		void Set_all_Bessel_grids(int iqt, int iqz);
 		void Set_thermal_target_moments();
 		void Set_full_target_moments();
-		void form_trig_sign_z(int isurf, int ieta, int iqt, int iqx, int iqy, int iqz, int ii, double * results);
+		//void form_trig_sign_z(int isurf, int ieta, int iqt, int iqx, int iqy, int iqz, int ii, double * results);
 		void Set_giant_arrays(int iqt, int iqx, int iqy, int iqz);
-		void Cal_dN_dypTdpTdphi(double** SP_p0, double** SP_px, double** SP_py, double** SP_pz);
+		//void Cal_dN_dypTdpTdphi(double** SP_p0, double** SP_px, double** SP_py, double** SP_pz);
 		void Cal_dN_dypTdpTdphi_no_weights(int local_pid);
 		void Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY, int iqt, int iqz, double * BC_chunk);
 		void Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_pid, int ipY, int iqt, int iqz, double * BC_chunk, int max_n_terms_to_compute);
-		double Cal_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi);
+		//double Cal_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi);
 		void Cal_dN_dypTdpTdphi_with_weights_function_approx(int local_pid, double pT, double pphi, double pY,
 												double qt, double qx, double qy, double qz, double * cosqx_dN_dypTdpTdphi, double * sinqx_dN_dypTdpTdphi);
 		void Do_resonance_integrals(int parent_resonance_particle_id, int daughter_particle_id, int decay_channel, int iqt, int iqz);
@@ -334,10 +317,6 @@ class CorrelationFunction
 		int lookup_resonance_idx_from_particle_id(int particle_id);
 		int list_daughters(int parent_resonance_index, set<int> * daughter_resonance_indices_ptr, particle_info * particle, int Nparticle);
 		void eiqxEdndp3(double ptr, double phir, double pyr, double * results, int loc_verb = 0);
-		//void eiqxEdndp3_at_pY(double ptr, double pphir, double pyr, double pT0, double pT1, double phi0, double phi1,
-		//						double * sign_of_f11_arr, double * sign_of_f12_arr, double * sign_of_f21_arr, double * sign_of_f22_arr,
-		//						double * log_f11_arr, double * log_f12_arr, double * log_f21_arr, double * log_f22_arr,
-		//						double * f11_arr, double * f12_arr, double * f21_arr, double * f22_arr, double * results);
 		void Set_val_arrays(double ptr, double phir, double spyr);
 		void Edndp3(double ptr, double phir, double * result, int loc_verb = 0);
 		void Set_correlation_function_q_pts();
@@ -354,7 +333,6 @@ class CorrelationFunction
 		void Cleanup_current_daughters_dN_dypTdpTdphi_moments(int n_daughter);
 		void Allocate_osc_arrays(int FOarray_length);
 		void Delete_osc_arrays();
-		//void test_interpolator();
 		void R2_Fourier_transform(int ipt, double plane_psi, int mode);
 
 		// Gaussian fit / correlation function routines
