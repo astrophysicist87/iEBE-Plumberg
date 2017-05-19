@@ -617,17 +617,39 @@ void CorrelationFunction::Set_Y_eq_0_target_moments()
 
 void CorrelationFunction::Set_Y_eq_0_thermal_target_moments()
 {
-	double * BC_chunk = new double [4 * FO_length * n_alpha_points];
-
-	for (int iqt = 0; iqt < qtnpts; ++iqt)
-	for (int iqz = 0; iqz < qznpts; ++iqz)
+	if (MIDRAPIDITY_PIONS_ONLY)
 	{
-		Set_Y_eq_0_Bessel_grids(iqt, iqz, BC_chunk);
-		Cal_dN_dypTdpTdphi_with_weights_Yeq0_adjustable(iqt, iqz, BC_chunk, 10);
+		//calculate them exactly at
+		double * BC_chunk = new double [4 * FO_length * n_alpha_points];
+
+		for (int iqt = 0; iqt < qtnpts; ++iqt)
+		for (int iqz = 0; iqz < qznpts; ++iqz)
+		{
+			Set_Y_eq_0_Bessel_grids(iqt, iqz, BC_chunk);
+			Cal_dN_dypTdpTdphi_with_weights_Yeq0_adjustable(iqt, iqz, BC_chunk, 10);
+		}
+	}
+	else
+	{
+		//just interpolate to Y==0
+		//...
+
+		//handle this differently depending on whether we're using rapidity symmetry or not
 	}
 
-
+	return;
 }
+
+void CorrelationFunction::Set_Y_eq_0_thermal_target_moments()
+{
+	//interpolate resonance contributions and add them in as well
+	//...
+
+	//also handle this differently depending on whether we're using rapidity symmetry or not
+
+	return;
+}
+
 
 void CorrelationFunction::Set_Y_eq_0_Bessel_grids(int iqt, int iqz, double * BC_chunk)
 {
