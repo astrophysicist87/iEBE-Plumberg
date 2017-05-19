@@ -42,7 +42,7 @@ typedef struct
 	bool include_channel;
 }decay_info;
 
-struct Correlationfunction3D_data
+/*struct Correlationfunction3D_data
 {
 	size_t data_length;
 	double * q_o;
@@ -57,7 +57,7 @@ int Fittarget_correlfun3D_df (const gsl_vector *xvec_ptr, void *params_ptr,  gsl
 int Fittarget_correlfun3D_fdf (const gsl_vector* xvec_ptr, void *params_ptr, gsl_vector* f_ptr, gsl_matrix* Jacobian_ptr);
 int Fittarget_correlfun3D_f_withlambda (const gsl_vector *xvec_ptr, void *params_ptr, gsl_vector *f_ptr);
 int Fittarget_correlfun3D_df_withlambda (const gsl_vector *xvec_ptr, void *params_ptr,  gsl_matrix *Jacobian_ptr);
-int Fittarget_correlfun3D_fdf_withlambda (const gsl_vector* xvec_ptr, void *params_ptr, gsl_vector* f_ptr, gsl_matrix* Jacobian_ptr);
+int Fittarget_correlfun3D_fdf_withlambda (const gsl_vector* xvec_ptr, void *params_ptr, gsl_vector* f_ptr, gsl_matrix* Jacobian_ptr);*/
 
 class CorrelationFunction
 {
@@ -68,8 +68,8 @@ class CorrelationFunction
 		int INCLUDE_DELTA_F;
 		int GROUPING_PARTICLES;
 		double PARTICLE_DIFF_TOLERANCE;
-		int USE_LAMBDA;
-		int USE_LOG_FIT;
+		//int USE_LAMBDA;
+		//int USE_LOG_FIT;
 		int CALCULATE_CF_MODE;
 		int USE_EXTRAPOLATION;
 		int IGNORE_LONG_LIVED_RESONANCES;
@@ -372,13 +372,7 @@ class CorrelationFunction
 		void Compute_correlationfunction(double * totalresult, double * thermalresult, double * crosstermresult, double * resonanceresult,
 										int ipt, int ipphi, int iqx, int iqy, int iqz, double qt_interp, int interp_flag = 0);
 		void Cal_correlationfunction();
-		void Fit_Correlationfunction3D(double *** Correl_3D, int ipt, int ipphi, bool fleshing_out_CF = true);
-		int print_fit_state_3D (size_t iteration, gsl_multifit_fdfsolver * solver_ptr);
-		void Fit_Correlationfunction3D_withlambda(double *** Correl_3D, int ipt, int ipphi, bool fleshing_out_CF = true);
 		void find_minimum_chisq_correlationfunction_full(double *** Correl_3D, int ipt, int ipphi, bool fleshing_out_CF = true);
-		int print_fit_state_3D_withlambda (size_t iteration, gsl_multifit_fdfsolver * solver_ptr);
-		inline double get_fit_results(int i, gsl_multifit_fdfsolver * solver_ptr);
-		inline double get_fit_err (int i, gsl_matrix * covariance_ptr);
 		void gsl_polynomial_fit(const vector<double> &data_x, const vector<double> &data_y, double * results, const int order, double * chisq, const int n);
 
 		// input and output function prototypes

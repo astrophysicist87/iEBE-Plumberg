@@ -38,8 +38,8 @@ void initialize_PRfile(ParameterReader* paraRdr, string currentworkingdirectory,
 	output << "   - PARTICLE_DIFF_TOLERANCE: " << paraRdr->getVal("particle_diff_tolerance") << endl;
 	output << "   - INCLUDE_DELTA_F: " << return_boolean_string(paraRdr->getVal("include_delta_f")) << endl;
 	output << "   - INCLUDE_BULK_PI: " << return_boolean_string(paraRdr->getVal("include_bulk_pi")) << endl;
-	output << "   - USE_LAMBDA: " << return_boolean_string(paraRdr->getVal("use_lambda")) << endl;
-	output << "   - USE_LOG_FIT: " << return_boolean_string(paraRdr->getVal("use_log_fit")) << endl;
+	//output << "   - USE_LAMBDA: " << return_boolean_string(paraRdr->getVal("use_lambda")) << endl;
+	//output << "   - USE_LOG_FIT: " << return_boolean_string(paraRdr->getVal("use_log_fit")) << endl;
 	output << "   - USE_EXTRAPOLATION: " << return_boolean_string(paraRdr->getVal("use_extrapolation")) << endl;
 	output << "   - IGNORE_LONG_LIVED_RESONANCES: " << return_boolean_string(paraRdr->getVal("ignore_long_lived_resonances")) << endl;
 	output << "   - FIT_WITH_PROJECTED_CFVALS: " << return_boolean_string(paraRdr->getVal("fit_with_projected_cfvals")) << endl;

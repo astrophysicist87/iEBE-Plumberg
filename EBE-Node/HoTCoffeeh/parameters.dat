@@ -49,8 +49,6 @@ CF_npY = 15				# size of pY grid for interpolation of (Fourier-transformed) sing
 CF_resonanceThreshold = 0.60		# (approximate) fraction of all resonance contributions to do
 					# code sums over all resonances in (approximately) decreasing order until this threshhold
 					# is reached, only skipping resonances with lifetimes > max_lifetime
-use_lambda = 1				# fit correlation function with adjustable intercept parameter
-use_log_fit = 1				# fits log of C-1 instead of C-1
 calculate_CF_mode = 0			# 0 (default) - compute resonance decays, correlation function, and fit
 					# 1 - read in resonance decays, compute correlation function, and fit
 					# 2 - read in correlation function and fit
