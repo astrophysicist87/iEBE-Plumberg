@@ -240,6 +240,9 @@ int main(int argc, char *argv[])
 				if (iqt > 0 || iqz > 0) exit(8);
 				correlation_function.Fourier_transform_emission_function(iqt, iqz);
 				correlation_function.Compute_phase_space_integrals(iqt, iqz);
+				correlation_function.Output_total_eiqx_dN_dypTdpTdphi(9, iqt, iqz);			//look at rho^+
+				correlation_function.Output_total_eiqx_dN_dypTdpTdphi(1, iqt, iqz);			//look at pion^+
+				correlation_function.Output_thermal_target_eiqx_dN_dypTdpTdphi(iqt, iqz);	//look at thermal pion^+
 //if (1) exit(8);
 			}
 		}

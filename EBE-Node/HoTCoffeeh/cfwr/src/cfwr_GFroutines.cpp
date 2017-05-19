@@ -18,10 +18,7 @@ using namespace std;
 
 void CorrelationFunction::Get_GF_HBTradii()
 {
-	//if (!VARY_ALPHA)
-		*global_out_stream_ptr << "--> Getting HBT radii by Gaussian fit method" << endl;
-	//else
-	//	*global_out_stream_ptr << "--> Getting HBT radii by Levy-stable fit method" << endl;
+	*global_out_stream_ptr << "--> Getting HBT radii by Gaussian fit method" << endl;
 
 	if (FLESH_OUT_CF)
 		Allocate_fleshed_out_CF();

@@ -277,7 +277,7 @@ int CorrelationFunction::Access_resonance_in_HDF_array(int local_pid, int iqt, i
     {
 		Exception::dontPrint();
 		hsize_t offset[RANK2D] = {HDF_indexer(local_icr, iqt, iqz), 0};
-if (verbose) cout << "In Access_resonance_in_HDF_array(...): called with/using arguments " << local_pid << "   " << iqt << "   " << iqz << "   " << access_mode << "   " << local_icr << "   " << HDF_indexer(local_icr, iqt, iqz) << endl;
+		if (verbose) cout << "In Access_resonance_in_HDF_array(...): called with/using arguments " << local_pid << "   " << iqt << "   " << iqz << "   " << access_mode << "   " << local_icr << "   " << HDF_indexer(local_icr, iqt, iqz) << endl;
 		hsize_t count[RANK2D] = {1, chunk_size};				// == chunk_dims
 		resonance_dataspace->selectHyperslab(H5S_SELECT_SET, count, offset);
 		if (verbose) debugger(__LINE__, __FILE__);

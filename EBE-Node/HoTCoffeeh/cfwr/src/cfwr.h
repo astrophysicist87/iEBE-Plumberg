@@ -382,13 +382,12 @@ class CorrelationFunction
 		void gsl_polynomial_fit(const vector<double> &data_x, const vector<double> &data_y, double * results, const int order, double * chisq, const int n);
 
 		// input and output function prototypes
-		void Output_dN_dypTdpTdphi();
-		void Output_dN_dypTdpT();
-		void Output_all_dN_dypTdpTdphi();
 		void Output_total_target_dN_dypTdpTdphi();
 		void Output_total_target_eiqx_dN_dypTdpTdphi(double current_fraction = -1.0);
 		void Readin_total_target_eiqx_dN_dypTdpTdphi();
 		void Output_total_eiqx_dN_dypTdpTdphi(int local_pid);
+		void Output_total_eiqx_dN_dypTdpTdphi(int local_pid, int iqt, int iqz);
+		void Output_thermal_target_eiqx_dN_dypTdpTdphi(int iqt, int iqz);
 		void Output_results(int mode);
 		void Readin_results(int mode);
 		void Read_in_all_dN_dypTdpTdphi();

@@ -26,9 +26,9 @@ using namespace std;
 #define QX_POINTS_SPACING			0		// same
 #define QY_POINTS_SPACING			0		// same
 #define QZ_POINTS_SPACING			0		// same
-#define MIDRAPIDITY_PIONS_ONLY		1		// obvious
-#define USE_EXP_RECYCLING			0
-#define USE_RAPIDITY_SYMMETRY		0
+#define MIDRAPIDITY_PIONS_ONLY		0		// obvious
+#define USE_EXP_RECYCLING			1
+#define USE_RAPIDITY_SYMMETRY		1
 
 #ifndef H5_NO_NAMESPACE
     using namespace H5;

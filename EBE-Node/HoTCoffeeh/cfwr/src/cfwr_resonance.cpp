@@ -334,7 +334,7 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 				}
 
 				//update daughter spectra separately
-				if ( doing_spectra && ipY == (n_pY_pts+1)/2 )	//only need spectra at Y == 0
+				if ( doing_spectra && ipY == (n_pY_pts-1)/2 )	//only need spectra at Y == 0
 				{
 					spectra[daughter_particle_id][ipT][ipphi] += ssum;
 					log_spectra[daughter_particle_id][ipT][ipphi] = log(abs(spectra[daughter_particle_id][ipT][ipphi])+1.e-100);
@@ -434,7 +434,7 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 					}
 				}
 
-				if ( doing_spectra && ipY == (n_pY_pts+1)/2 )	//only need spectra at Y == 0
+				if ( doing_spectra && ipY == (n_pY_pts-1)/2 )	//only need spectra at Y == 0
 				{
 					//update daughter spectra separately
 					spectra[daughter_particle_id][ipT][ipphi] += ssum;
@@ -603,21 +603,25 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 	double val11, val12, val21, val22;	//store intermediate results of pT interpolation
 	double val1, val2;					//store intermediate results of pphi interpolation
 	
-	double pyr = abs(spyr);				//used for checking
+	double pyr = spyr;				//used for checking
 	int qlist_step = 1;
 	int qlist_idx = 0;
 	int reversible_qpt_cs_idx = 0;
 	int rev_qpt_cs_step = 2;
 	double parity_factor = 1.0;
-	if (USE_RAPIDITY_SYMMETRY && abs(qt_pts[current_iqt]) < abs(qz_pts[current_iqz]) && spyr < 0.0)
+	if (USE_RAPIDITY_SYMMETRY && spyr < 0.0)
 	{
-		parity_factor = -1.0;		//used to get correct sign of imaginary part of spectra
-									//with Del_pY --> -Del_pY for |qt| < |qz|
-									//real part of spectra always symmetric about Del_pY == 0
-		qlist_step = -1;									//loop backwards
-		qlist_idx = qxnpts * qynpts - 1;					//loop backwards
-		reversible_qpt_cs_idx = 2 * qxnpts * qynpts - 2;	//loop backwards
-		rev_qpt_cs_step = -2;								//loop backwards
+		if (abs(qt_pts[current_iqt]) < abs(qz_pts[current_iqz]))
+		{
+			parity_factor = -1.0;		//used to get correct sign of imaginary part of spectra
+										//with Del_pY --> -Del_pY for |qt| < |qz|
+										//real part of spectra always symmetric about Del_pY == 0
+			qlist_step = -1;									//loop backwards
+			qlist_idx = qxnpts * qynpts - 1;					//loop backwards
+			reversible_qpt_cs_idx = 2 * qxnpts * qynpts - 2;	//loop backwards
+			rev_qpt_cs_step = -2;								//loop backwards
+		}
+		pyr = abs(spyr);
 	}
 	
 	bool pY_out_of_range = false;
@@ -640,7 +644,6 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 		phi1 = SP_pphi[0];
 		nphi = 0;
 		nphim1 = npphi_max;
-		pY_out_of_range = true;
 	}
 	else if(phir > SP_pphi[npphi_max])      //if angle is greater than maximum angle grid point
 	{
@@ -648,7 +651,6 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 		phi1 = SP_pphi[0] + 2. * M_PI;
 		nphi = 0;
 		nphim1 = npphi_max;
-		pY_out_of_range = true;
 	}
 	else                                            //if angle is within grid range
 	{
@@ -667,13 +669,15 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 		py1 = SP_Del_pY_max;
 		npy = n_refinement_pts - 1;	//this just guarantees nearest neighbor if pY > pY_max
 		npym1 = n_refinement_pts - 1;
+		pY_out_of_range = true;
 	}
 	else if(pyr < SP_Del_pY_min)	//else if rapidity is less than minimum rapidity grid point
-	{
+	{								//this can't happen when USE_RAPIDITY_SYMMETRY is true, since pyr = abs(spyr) >= 0
 		py0 = SP_Del_pY_min;
 		py1 = SP_Del_pY_min;
 		npy = 0;	//this just guarantees nearest neighbor if pY > pY_max
 		npym1 = 0;
+		pY_out_of_range = true;
 	}
 	else						//if rapidity is within grid range
 	{
@@ -780,8 +784,10 @@ void CorrelationFunction::Set_val_arrays(double ptr, double phir, double spyr)
 	double val11, val12, val21, val22;	//store intermediate results of pT interpolation
 	double val1, val2;					//store intermediate results of pphi interpolation
 	
-	double pyr = abs(spyr);				//used for checking
-	
+	double pyr = spyr;					//used for checking
+	if (USE_RAPIDITY_SYMMETRY && spyr < 0.0)
+		pyr = abs(spyr);
+
 	bool pY_out_of_range = false;
 
 	int npphi_max = n_pphi_pts - 1;
@@ -802,7 +808,6 @@ void CorrelationFunction::Set_val_arrays(double ptr, double phir, double spyr)
 		phi1 = SP_pphi[0];
 		nphi = 0;
 		nphim1 = npphi_max;
-		pY_out_of_range = true;
 	}
 	else if(phir > SP_pphi[npphi_max])      //if angle is greater than maximum angle grid point
 	{
@@ -810,7 +815,6 @@ void CorrelationFunction::Set_val_arrays(double ptr, double phir, double spyr)
 		phi1 = SP_pphi[0] + 2. * M_PI;
 		nphi = 0;
 		nphim1 = npphi_max;
-		pY_out_of_range = true;
 	}
 	else                                            //if angle is within grid range
 	{
@@ -829,6 +833,7 @@ void CorrelationFunction::Set_val_arrays(double ptr, double phir, double spyr)
 		py1 = SP_Del_pY_max;
 		npy = n_refinement_pts - 1;	//this just guarantees nearest neighbor if pY > pY_max
 		npym1 = n_refinement_pts - 1;
+		pY_out_of_range = true;
 	}
 	else if(pyr < SP_Del_pY_min)	//else if rapidity is less than minimum rapidity grid point
 	{
@@ -836,6 +841,7 @@ void CorrelationFunction::Set_val_arrays(double ptr, double phir, double spyr)
 		py1 = SP_Del_pY_min;
 		npy = 0;	//this just guarantees nearest neighbor if pY > pY_max
 		npym1 = 0;
+		pY_out_of_range = true;
 	}
 	else						//if rapidity is within grid range
 	{

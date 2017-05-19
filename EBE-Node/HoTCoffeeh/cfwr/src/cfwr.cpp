@@ -111,9 +111,6 @@ inline void Iint3(double alpha, double beta, double gamma, vector<complex<double
 		complex<double> zqi = zsq*zcu;
 		double ea = exp(-k * alpha);
 
-		//complex<double> Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p;
-		//int errorCode = bessf::cbessik01(z, Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p);
-
 		complex<double> ck0(	ea * gsl_cheb_eval (cs_accel_expK0re, alpha),
 								ea * gsl_cheb_eval (cs_accel_expK0im, alpha) );
 		complex<double> ck1(	ea * gsl_cheb_eval (cs_accel_expK1re, alpha),
@@ -129,6 +126,39 @@ inline void Iint3(double alpha, double beta, double gamma, vector<complex<double
 				2.0*z0*( ( z0sq*z0sq - 2.0* z0sq*gsq - 3.0 * gsq*gsq ) * ck0 / z
 				+ (-6.0*gsq + z0sq*(2.0 + z0sq + gsq)) * ck1 ) / zqi
 				);
+	}
+
+	return;
+}
+
+inline void Iint3b(double alpha, double beta, double gamma, complex<double> * I0, complex<double> * I1, complex<double> * I2, complex<double> * I3, int max_n_terms_to_compute)
+{
+	double gsq = gamma*gamma;
+	for (int k = 1; k <= max_n_terms_to_compute; ++k)
+	{
+		complex<double> z0 = k*alpha - i*beta;
+		complex<double> z0sq = z0*z0;
+		complex<double> zsq = z0sq + gsq;
+		complex<double> z = sqrt(zsq);
+		complex<double> zcu = zsq*z;
+		complex<double> zqi = zsq*zcu;
+		double ea = exp(-k * alpha);
+
+		complex<double> ck0(	ea * gsl_cheb_eval (cs_accel_expK0re, alpha),
+								ea * gsl_cheb_eval (cs_accel_expK0im, alpha) );
+		complex<double> ck1(	ea * gsl_cheb_eval (cs_accel_expK1re, alpha),
+								ea * gsl_cheb_eval (cs_accel_expK1im, alpha) );
+
+		I0[k-1] = 2.0*ck0;
+		I1[k-1] = 2.0*z0*ck1 / z;
+		I2[k-1] = 
+				2.0*z0sq*ck0 / zsq
+				+ 2.0*(z0sq - gsq)*ck1 / zcu
+				;
+		I3[k-1] = 
+				2.0*z0*( ( z0sq*z0sq - 2.0* z0sq*gsq - 3.0 * gsq*gsq ) * ck0 / z
+				+ (-6.0*gsq + z0sq*(2.0 + z0sq + gsq)) * ck1 ) / zqi
+				;
 	}
 
 	return;
@@ -1329,9 +1359,17 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_p
 	Stopwatch sw, sw_FOsurf;
 	sw.Start();
 
+	if (local_pid != target_particle_id)
+		exit(0);
+
 	//for the timebeing, let's skip pions not at Y==0
-	if (MIDRAPIDITY_PIONS_ONLY && local_pid == target_particle_id && ipY > 0)
-		return;
+	if (MIDRAPIDITY_PIONS_ONLY)
+	{
+		if (USE_RAPIDITY_SYMMETRY && ipY > 0)					//Y==0 <--> ipY==0 (approximately)
+			return;
+		if (!USE_RAPIDITY_SYMMETRY && ipY != (n_pY_pts-1)/2)	//Y==0 <--> ipY==(n_pY_pts-1)/2
+			return;
+	}
 
 	// set particle information
 	double sign = all_particles[local_pid].sign;
@@ -1461,8 +1499,13 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_p
 			double mT = sqrt(pT*pT+localmass*localmass);
 			double alpha = one_by_Tdec*gammaT*mT;
 
-			vector<complex<double> > I0, I1, I2, I3;
-			Iint3(alpha, beta, gamma, &I0, &I1, &I2, &I3, max_n_terms_to_compute);
+			//vector<complex<double> > I0, I1, I2, I3;
+			complex<double> I0[max_n_terms_to_compute];
+			complex<double> I1[max_n_terms_to_compute];
+			complex<double> I2[max_n_terms_to_compute];
+			complex<double> I3[max_n_terms_to_compute];
+			//Iint3(alpha, beta, gamma, &I0, &I1, &I2, &I3, max_n_terms_to_compute);
+			Iint3b(alpha, beta, gamma, I0, I1, I2, I3, max_n_terms_to_compute);
 
 			double A = tau*prefactor*mT*da0;
 			double a = mT*mT*(pi00 + pi33);
