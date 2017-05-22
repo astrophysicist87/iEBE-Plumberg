@@ -216,8 +216,18 @@ void CorrelationFunction::Fourier_transform_emission_function(int iqt, int iqz)
 
 		//get thermal target moments here
 		int accessHDFresonanceSpectra = Access_resonance_in_HDF_array(target_particle_id, iqt, iqz, 1, thermal_target_dN_dypTdpTdphi_moments, true);
+		if (accessHDFresonanceSpectra < 0)
+		{
+			cerr << "Failed to get this resonance(local_pid = " << target_particle_id << ") in HDF array!  Exiting..." << endl;
+			exit(1);
+		}			
 		//make sure they are written to separate file here
 		accessHDFresonanceSpectra = Access_target_thermal_in_HDF_array(iqt, iqz, 0, thermal_target_dN_dypTdpTdphi_moments);
+		if (accessHDFresonanceSpectra < 0)
+		{
+			cerr << "Failed to set this resonance(local_pid = " << target_particle_id << ") in HDF array!  Exiting..." << endl;
+			exit(1);
+		}			
 
 		//save thermal moments (without resonance decay feeddown) separately
 		int closeHDFresonanceSpectra = Administrate_resonance_HDF_array(2);
@@ -789,23 +799,28 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 	}
 
 	//HDF5 block
+	if (local_pid == target_particle_id && MIDRAPIDITY_PIONS_ONLY)	//nothing to store
+		;
+	else
 	{
 		// store in HDF5 file
 		int setHDFresonanceSpectra = Access_resonance_in_HDF_array(local_pid, iqt, iqz, 0, current_dN_dypTdpTdphi_moments);
 		if (setHDFresonanceSpectra < 0)
 		{
-			cerr << "Failed to set this resonance(local_pid = " << local_pid << ") in HDF array!  Exiting..." << endl;
+			cerr << "Failed to set this resonance(local_pid = " << local_pid << ") in HDF resonance array!  Exiting..." << endl;
 			exit(1);
 		}
 
 		if (local_pid == target_particle_id)
 		{
-			int setHDFtargetSpectra = Access_target_thermal_in_HDF_array(iqt, iqz, 0, current_dN_dypTdpTdphi_moments);
-			if (setHDFresonanceSpectra < 0)
+			int HDFInitializationSuccess = Administrate_target_thermal_HDF_array(1);	//open
+			int setHDFtargetSpectra = Access_target_thermal_in_HDF_array(iqt, iqz, 0, current_dN_dypTdpTdphi_moments, true);
+			if (setHDFtargetSpectra < 0)
 			{
-				cerr << "Failed to set this resonance(local_pid = " << local_pid << ") in HDF array!  Exiting..." << endl;
+				cerr << "Failed to set this resonance(local_pid = " << local_pid << ") in HDF thermal target array!  Exiting..." << endl;
 				exit(1);
-			}			
+			}
+			HDFInitializationSuccess = Administrate_target_thermal_HDF_array(2);	//close
 		}
 
 		HDFcode = Administrate_besselcoeffs_HDF_array(2);

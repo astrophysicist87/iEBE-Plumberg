@@ -227,29 +227,13 @@ int main(int argc, char *argv[])
 		int local_qznpts = (int)(paraRdr->getVal("qznpts"));
 
 		//looping in this way keeps *h5 files and total loaded memory of program small at any one time
-		for (int iqt = 0; iqt < local_qtnpts; ++iqt)
+		for (int iqt = 0; iqt < (local_qtnpts+1)/2; ++iqt)
+		for (int iqz = 0; iqz < (local_qznpts+1)/2; ++iqz)
 		{
-//if (iqt > 0) exit(8);
-			if (iqt > (local_qtnpts - 1) / 2)
-			{
-				//correlation_function.Reflect_in_qt(iqt);	//no need to reflect in qt and store in *.h5 files, since they don't need to store it anyway
-				continue;
-			}
-			for (int iqz = 0; iqz < local_qznpts; ++iqz)
-			{
-				if (iqt > 0 || iqz > 0) exit(8);
-				correlation_function.Fourier_transform_emission_function(iqt, iqz);
-				correlation_function.Compute_phase_space_integrals(iqt, iqz);
-				correlation_function.Set_target_moments(iqt, iqz);
-				correlation_function.Output_total_eiqx_dN_dypTdpTdphi(9, iqt, iqz);			//look at rho^+
-				correlation_function.Output_total_eiqx_dN_dypTdpTdphi(1, iqt, iqz);			//look at pion^+
-				correlation_function.Output_thermal_target_eiqx_dN_dypTdpTdphi(iqt, iqz);	//look at thermal pion^+
-//if (1) exit(8);
-			}
+			correlation_function.Fourier_transform_emission_function(iqt, iqz);
+			correlation_function.Compute_phase_space_integrals(iqt, iqz);
+			correlation_function.Set_target_moments(iqt, iqz);
 		}
-		correlation_function.Output_total_eiqx_dN_dypTdpTdphi(9);	//look at rho^+ for now...
-cout << "Made it to the end!" << endl;
-if (1) exit(8);
 	}
 
 	//decide whether to compute correlation function or read it in

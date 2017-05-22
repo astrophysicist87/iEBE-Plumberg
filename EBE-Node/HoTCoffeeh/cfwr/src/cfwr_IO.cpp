@@ -368,36 +368,11 @@ void CorrelationFunction::Output_total_target_dN_dypTdpTdphi()
 void CorrelationFunction::Output_total_target_eiqx_dN_dypTdpTdphi(double current_fraction /*==-1.0*/)
 {
 	string local_name = all_particles[target_particle_id].name;
-	//string current_fraction_string = (current_fraction >= 0.0) ? "_" + patch::to_string(current_fraction) : "";
 	string current_fraction_string = "";
 	replace_parentheses(local_name);
 	ostringstream filename_stream_target_dN_dypTdpTdphi;
 	filename_stream_target_dN_dypTdpTdphi << path << "/total_" << local_name << current_fraction_string << "_eiqx_dN_dypTdpTdphi" << no_df_stem << ".dat";
 	ofstream output_target_dN_dypTdpTdphi(filename_stream_target_dN_dypTdpTdphi.str().c_str());
-
-	if (1)
-	{
-		cerr << "Need to fix things at this point!" << endl;
-		debugger(__LINE__, __FILE__);
-		exit (1);
-		//int HDFloadTargetSuccess = Get_resonance_from_HDF_array(target_particle_id, current_dN_dypTdpTdphi_moments);
-		//Set_full_target_moments();
-	}
-
-	// addresses NaN issue in sin component when all q^{\mu} == 0
-	if (qtnpts%2==1 && qxnpts%2==1 && qynpts%2==1 && qznpts%2==1)
-	{	//if all q-ranges are odd and centered on q=0 ==> q=0 is included!
-		int iqt0 = (qtnpts-1)/2;
-		int iqx0 = (qxnpts-1)/2;
-		int iqy0 = (qynpts-1)/2;
-		int iqz0 = (qznpts-1)/2;
-		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
-		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-		{
-			current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,iqt0,iqx0,iqy0,iqz0,1)] = 0.0;
-			thermal_target_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,iqt0,iqx0,iqy0,iqz0,1)] = 0.0;
-		}
-	}
 
 	for (int iqt = 0; iqt < qtnpts; ++iqt)
 	for (int iqx = 0; iqx < qxnpts; ++iqx)
@@ -413,21 +388,27 @@ void CorrelationFunction::Output_total_target_eiqx_dN_dypTdpTdphi(double current
 		double projected_CF = get_CF(ipT, ipphi, iqt, iqx, iqy, iqz, true && !thermal_pions_only);	//true means do return projected value
 
 		double nonFTd_spectra = spectra[target_particle_id][ipT][ipphi];
-		double cos_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,0)];
-		double sin_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,1)];
+		double cos_transf_spectra = full_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,0)]
+										+ full_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,2)];
+		double sin_transf_spectra = full_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,1)]
+										+ full_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,3)];
+		double cos_transf_tspectra = thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,0)]
+										+ thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,2)];
+		double sin_transf_tspectra = thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,1)]
+										+ thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,3)];
 
 		output_target_dN_dypTdpTdphi << scientific << setprecision(8) << setw(12)
 			<< qt_pts[iqt] << "   " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[iqz] << "   "
 			<< SP_pT[ipT] << "   " << SP_pphi[ipphi] << "   "
-			<< nonFTd_spectra << "   "																								//non-thermal + thermal
-			<< cos_transf_spectra << "   "																							//non-thermal + thermal (cos)
-			<< sin_transf_spectra << "   "																							//non-thermal + thermal (sin)
-			<< thermal_spectra[target_particle_id][ipT][ipphi] << "   "																//thermal only
-			<< thermal_target_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,0)] << "   "									//thermal only (cos)
-			<< thermal_target_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,1)] << "   "									//thermal only (sin)
-			<< nonFTd_spectra - thermal_spectra[target_particle_id][ipT][ipphi] << "   "											//non-thermal only
-			<< cos_transf_spectra - thermal_target_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,0)] << "   "				//non-thermal only (cos)
-			<< sin_transf_spectra - thermal_target_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,1)] << "   "				//non-thermal only (sin)
+			<< nonFTd_spectra << "   "														//non-thermal + thermal
+			<< cos_transf_spectra << "   "													//non-thermal + thermal (cos)
+			<< sin_transf_spectra << "   "													//non-thermal + thermal (sin)
+			<< thermal_spectra[target_particle_id][ipT][ipphi] << "   "						//thermal only
+			<< cos_transf_tspectra << "   "													//thermal only (cos)
+			<< sin_transf_tspectra << "   "													//thermal only (sin)
+			<< nonFTd_spectra - thermal_spectra[target_particle_id][ipT][ipphi] << "   "	//non-thermal only
+			<< cos_transf_spectra - cos_transf_tspectra << "   "							//non-thermal only (cos)
+			<< sin_transf_spectra - sin_transf_tspectra << "   "							//non-thermal only (sin)
 			<< CF << "   " << projected_CF << endl;
 	}
 
@@ -474,71 +455,6 @@ void CorrelationFunction::Output_thermal_target_eiqx_dN_dypTdpTdphi(int iqt, int
 	return;
 }
 
-void CorrelationFunction::Output_total_eiqx_dN_dypTdpTdphi(int local_pid)
-{
-	string local_name = all_particles[local_pid].name;
-	replace_parentheses(local_name);
-	ostringstream filename_stream_dN_dypTdpTdphi;
-	filename_stream_dN_dypTdpTdphi << path << "/total_" << local_name << "_eiqx_dN_dypTdpTdphi.dat";
-	ofstream output_dN_dypTdpTdphi(filename_stream_dN_dypTdpTdphi.str().c_str());
-
-	int HDFOpenSuccess = Administrate_resonance_HDF_array(1);	// 1 - open
-	/*if (0)
-	{
-		cerr << "Need to fix things at this point!" << endl;
-		debugger(__LINE__, __FILE__);
-		exit (1);
-		int HDFloadTargetSuccess = Access_resonance_from_HDF_array(local_pid, (n_pY_pts - 1)/2, current_dN_dypTdpTdphi_moments);	//again, just pions at Y=0 for now
-	}*/
-
-	// addresses NaN issue in sin component when all q^{\mu} == 0
-	/*if (qtnpts%2==1 && qxnpts%2==1 && qynpts%2==1 && qznpts%2==1)
-	{
-		int iqt0 = (qtnpts-1)/2;
-		int iqx0 = (qxnpts-1)/2;
-		int iqy0 = (qynpts-1)/2;
-		int iqz0 = (qznpts-1)/2;
-		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
-		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
-			current_dN_dypTdpTdphi_moments[indexer(ipT,ipphi,ipY,iqt0,iqx0,iqy0,iqz0,1)] = 0.0;
-	}*/
-
-	for (int iqt = 0; iqt < qtnpts; ++iqt)
-	for (int iqz = 0; iqz < qznpts; ++iqz)
-	{
-		int accessHDFresonanceSpectra = Access_resonance_in_HDF_array(local_pid, iqt, iqz, 1, current_dN_dypTdpTdphi_moments);		//get
-
-		for (int iqx = 0; iqx < qxnpts; ++iqx)
-		for (int iqy = 0; iqy < qynpts; ++iqy)
-		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
-		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
-		{
-			double loc_qt = qt_pts[iqt];
-			double loc_qz = qz_pts[iqz];
-			current_pY_shift = 0.5 * log(abs((loc_qt+loc_qz + 1.e-100)/(loc_qt-loc_qz + 1.e-100)));
-
-			double nonFTd_spectra = spectra[local_pid][ipT][ipphi];
-			double cos_transf_spectra = current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,0)];
-			double sin_transf_spectra = current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,1)];
-
-			output_dN_dypTdpTdphi << scientific << setprecision(8) << setw(12)
-				<< qt_pts[iqt] << "   " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[iqz] << "   "
-				<< SP_pT[ipT] << "   " << SP_pphi[ipphi] << "   " << current_pY_shift + SP_Del_pY[ipY] << "   " << SP_Del_pY[ipY] << "   "
-				<< nonFTd_spectra << "   "																								//non-thermal + thermal
-				<< cos_transf_spectra << "   "																							//non-thermal + thermal (cos)
-				<< sin_transf_spectra << endl;
-		}
-	}
-
-	int HDFCloseSuccess = Administrate_resonance_HDF_array(2);	// 2 - close
-
-	output_dN_dypTdpTdphi.close();
-
-	return;
-}
-
 void CorrelationFunction::Output_total_eiqx_dN_dypTdpTdphi(int local_pid, int iqt, int iqz)
 {
 	string local_name = all_particles[local_pid].name;
@@ -570,13 +486,10 @@ void CorrelationFunction::Output_total_eiqx_dN_dypTdpTdphi(int local_pid, int iq
 		output_dN_dypTdpTdphi << scientific << setprecision(8) << setw(12)
 			<< qt_pts[iqt] << "   " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[iqz] << "   "
 			<< SP_pT[ipT] << "   " << SP_pphi[ipphi] << "   " << current_pY_shift + SP_Del_pY[ipY] << "   " << SP_Del_pY[ipY] << "   "
-			//<< nonFTd_spectra << "   "																								//non-thermal + thermal
-			//<< cos_transf_spectra << "   "																							//non-thermal + thermal (cos)
-			//<< sin_transf_spectra << endl;
 			<< current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,0)] << "   "
 			<< current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,1)] << "   "
-			<< current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,3)] << "   "
-			<< current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,2)] << endl;
+			<< current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,2)] << "   "
+			<< current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,3)] << endl;
 	}
 
 	int HDFCloseSuccess = Administrate_resonance_HDF_array(2);	// 2 - close

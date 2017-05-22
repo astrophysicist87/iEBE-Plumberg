@@ -330,7 +330,7 @@ if (verbose) debugger(__LINE__, __FILE__);
 
 /////////////////////////////////////////////
 
-int CorrelationFunction::Access_target_thermal_in_HDF_array(int iqt, int iqz, int access_mode, double * tta_array_to_use)
+int CorrelationFunction::Access_target_thermal_in_HDF_array(int iqt, int iqz, int access_mode, double * tta_array_to_use, bool verbose)
 {
 	// access_mode:
 	//	0 - set array chunk
@@ -344,11 +344,13 @@ int CorrelationFunction::Access_target_thermal_in_HDF_array(int iqt, int iqz, in
 		hsize_t offset[RANK2D] = {HDF_indexer(0, iqt, iqz), 0};
 		hsize_t count[RANK2D] = {1, chunk_size};				// == chunk_dims
 		tta_dataspace->selectHyperslab(H5S_SELECT_SET, count, offset);
+		if (verbose) cout << "In Access_target_thermal_in_HDF_array(...): called with/using arguments " << iqt << "   " << iqz << "   " << access_mode << "   " << 0 << "   "
+							<< chunk_size << "   " << n_pT_pts * n_pphi_pts * n_pY_pts * qxnpts * qynpts * ntrig << "   " << HDF_indexer(0, iqt, iqz) << endl;
 
 		switch(access_mode)
 		{
 			case 0:
-				debugger(__LINE__, __FILE__);
+				//debugger(__LINE__, __FILE__);
 				tta_dataset->write(tta_array_to_use, PredType::NATIVE_DOUBLE, *tta_memspace, *tta_dataspace);
 				break;
 			case 1:

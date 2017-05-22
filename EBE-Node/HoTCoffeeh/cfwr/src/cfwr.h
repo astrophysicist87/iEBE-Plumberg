@@ -257,7 +257,7 @@ class CorrelationFunction
 		int Administrate_besselcoeffs_HDF_array(int administration_mode);
 		// target thermal moments...
 		int Administrate_target_thermal_HDF_array(int administration_mode);
-		int Access_target_thermal_in_HDF_array(int iqt, int iqz, int access_mode, double * target_thermal_array_to_fill);
+		int Access_target_thermal_in_HDF_array(int iqt, int iqz, int access_mode, double * target_thermal_array_to_fill, bool verbose = false);
 
 		void Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int iqz);
 		void Set_all_Bessel_grids(int iqt, int iqz);
