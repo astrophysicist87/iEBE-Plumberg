@@ -230,14 +230,10 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	const int giant_flat_array_size = n_pT_pts * n_pphi_pts * n_pY_pts * qxnpts * qynpts * ntrig;
 	thermal_target_dN_dypTdpTdphi_moments = new double [giant_flat_array_size];
 	current_dN_dypTdpTdphi_moments = new double [giant_flat_array_size];
-	current_ln_dN_dypTdpTdphi_moments = new double [giant_flat_array_size];
-	current_sign_of_dN_dypTdpTdphi_moments = new double [giant_flat_array_size];
 	for (int i = 0; i < giant_flat_array_size; ++i)
 	{
 		thermal_target_dN_dypTdpTdphi_moments[i] = 0.0;
 		current_dN_dypTdpTdphi_moments[i] = 0.0;
-		current_ln_dN_dypTdpTdphi_moments[i] = 0.0;
-		current_sign_of_dN_dypTdpTdphi_moments[i] = 0.0;
 	}
 	const int full_size = n_pT_pts * n_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig;
 	thermal_target_Yeq0_moments = new double [full_size];
@@ -1089,19 +1085,11 @@ void CorrelationFunction::Setup_current_daughters_dN_dypTdpTdphi_moments(int n_d
 {
 	const int giant_flat_array_size = n_pT_pts * n_pphi_pts * n_pY_pts * qxnpts * qynpts * ntrig;
 	current_daughters_dN_dypTdpTdphi_moments = new double * [n_daughter];
-	current_daughters_ln_dN_dypTdpTdphi_moments = new double * [n_daughter];
-	current_daughters_sign_of_dN_dypTdpTdphi_moments = new double * [n_daughter];
 	for (int id = 0; id < n_daughter; ++id)
 	{
 		current_daughters_dN_dypTdpTdphi_moments[id] = new double [giant_flat_array_size];
-		current_daughters_ln_dN_dypTdpTdphi_moments[id] = new double [giant_flat_array_size];
-		current_daughters_sign_of_dN_dypTdpTdphi_moments[id] = new double [giant_flat_array_size];
 		for (int i = 0; i < giant_flat_array_size; ++i)
-		{
 			current_daughters_dN_dypTdpTdphi_moments[id][i] = 0.0;
-			current_daughters_ln_dN_dypTdpTdphi_moments[id][i] = 0.0;
-			current_daughters_sign_of_dN_dypTdpTdphi_moments[id][i] = 0.0;
-		}
 	}
 	return;
 }
@@ -1109,14 +1097,8 @@ void CorrelationFunction::Setup_current_daughters_dN_dypTdpTdphi_moments(int n_d
 void CorrelationFunction::Cleanup_current_daughters_dN_dypTdpTdphi_moments(int n_daughter)
 {
 	for (int id = 0; id < n_daughter; ++id)
-	{
 		delete [] current_daughters_dN_dypTdpTdphi_moments[id];
-		delete [] current_daughters_ln_dN_dypTdpTdphi_moments[id];
-		delete [] current_daughters_sign_of_dN_dypTdpTdphi_moments[id];
-	}
 	delete [] current_daughters_dN_dypTdpTdphi_moments;
-	delete [] current_daughters_ln_dN_dypTdpTdphi_moments;
-	delete [] current_daughters_sign_of_dN_dypTdpTdphi_moments;
 
 	return;
 }
@@ -1348,6 +1330,139 @@ void CorrelationFunction::Delete_fleshed_out_CF()
 
 	return;
 }
+
+void CorrelationFunction::Set_Y_eq_0_Bessel_grids(int iqt, int iqz, double * BC_chunk)
+{
+	const std::complex<double> i(0, 1);
+	int n_coeffs = n_alpha_points;
+	double alpha_min = 4.0, alpha_max = 75.0;
+	double coeffs_array[n_alpha_points];
+	double * alpha_pts = new double [n_alpha_points];
+	double * x_pts = new double [n_alpha_points];
+
+	for (int k = 0; k < n_alpha_points; ++k)
+	{
+		x_pts[k] = - cos( M_PI*(2.*(k+1.) - 1.) / (2.*n_alpha_points) );
+		alpha_pts[k] = 0.5*(x_pts[k] + 1.0)*(alpha_max - alpha_min) + alpha_min;
+	}
+	double nums[n_alpha_points*n_alpha_points];
+	double dens[n_alpha_points];
+	int na = n_alpha_points;
+	for (int j = 0; j < na; ++j)
+	{
+		dens[j] = 0.0;
+		for (int k = 0; k < na; ++k)
+		{
+			double Tjk = csf::Tfun(j, x_pts[k]);
+			dens[j] += Tjk*Tjk;
+			nums[j*na+k] = Tjk;
+		}
+	}
+
+	double expBesselK0re[n_alpha_points];
+	double expBesselK0im[n_alpha_points];
+	double expBesselK1re[n_alpha_points];
+	double expBesselK1im[n_alpha_points];
+
+	double loc_qt = qt_pts[iqt];
+	double loc_qz = qz_pts[iqz];
+	current_pY_shift = 0.5 * log(abs((loc_qt+loc_qz + 1.e-100)/(loc_qt-loc_qz + 1.e-100)));
+
+	Stopwatch sw_loop;
+
+	int iBC = 0;
+	for (int isurf = 0; isurf < FO_length; ++isurf)
+	{
+		double tau = (&FOsurf_ptr[isurf])->tau;
+
+		double beta = tau * hbarCm1 * loc_qt;
+		double gamma = tau * hbarCm1 * loc_qz;
+		double gsq = gamma*gamma;
+
+		for (int ia = 0; ia < na; ++ia)
+		{
+			double loc_alpha = alpha_pts[ia];
+			complex<double> ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p;
+			complex<double> z0 = loc_alpha - i*beta;
+			complex<double> z0sq = z0 * z0;
+			complex<double> z = sqrt(z0sq + gsq);
+			int errorCode = bessf::cbessik01(z, ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p);
+			double ea = exp(loc_alpha);
+
+			expBesselK0re[ia] = ea * ck0.real();
+			expBesselK0im[ia] = ea * ck0.imag();
+			expBesselK1re[ia] = ea * ck1.real();
+			expBesselK1im[ia] = ea * ck1.imag();
+		}
+
+		//////////////////////////////////
+		//exp(x) * K_0(x), real part
+		//separate out 0th coefficient for additional factor of 2.0
+		coeffs_array[0] = 0.0;
+		for (int k = 0; k < na; ++k)
+			coeffs_array[0] += 2.0*expBesselK0re[k] * nums[0*na+k];
+		BC_chunk[iBC++] = coeffs_array[0] / dens[0];
+		for (int j = 1; j < na; ++j)
+		{
+			coeffs_array[j] = 0.0;
+			for (int k = 0; k < na; ++k)
+				coeffs_array[j] += expBesselK0re[k] * nums[j*na+k];
+			BC_chunk[iBC++] = coeffs_array[j] / dens[j];
+		}
+
+		//////////////////////////////////
+		//exp(x) * K_0(x), imaginary part
+		//separate out 0th coefficient for additional factor of 2.0
+		coeffs_array[0] = 0.0;
+		for (int k = 0; k < na; ++k)
+			coeffs_array[0] += 2.0*expBesselK0im[k] * nums[0*na+k];
+		BC_chunk[iBC++] = coeffs_array[0] / dens[0];
+		for (int j = 1; j < na; ++j)
+		{
+			coeffs_array[j] = 0.0;
+			for (int k = 0; k < na; ++k)
+				coeffs_array[j] += expBesselK0im[k] * nums[j*na+k];
+			BC_chunk[iBC++] = coeffs_array[j] / dens[j];
+		}
+
+		//////////////////////////////////
+		//exp(x) * K_1(x), real part
+		//separate out 0th coefficient for additional factor of 2.0
+		coeffs_array[0] = 0.0;
+		for (int k = 0; k < na; ++k)
+			coeffs_array[0] += 2.0*expBesselK1re[k] * nums[0*na+k];
+		BC_chunk[iBC++] = coeffs_array[0] / dens[0];
+		for (int j = 1; j < na; ++j)
+		{
+			coeffs_array[j] = 0.0;
+			for (int k = 0; k < na; ++k)
+				coeffs_array[j] += expBesselK1re[k] * nums[j*na+k];
+			BC_chunk[iBC++] = coeffs_array[j] / dens[j];
+		}
+
+		//////////////////////////////////
+		//exp(x) * K_1(x), imaginary part
+		//separate out 0th coefficient for additional factor of 2.0
+		coeffs_array[0] = 0.0;
+		for (int k = 0; k < na; ++k)
+			coeffs_array[0] += 2.0*expBesselK1im[k] * nums[0*na+k];
+		BC_chunk[iBC++] = coeffs_array[0] / dens[0];
+		for (int j = 1; j < na; ++j)
+		{
+			coeffs_array[j] = 0.0;
+			for (int k = 0; k < na; ++k)
+				coeffs_array[j] += expBesselK1im[k] * nums[j*na+k];
+			BC_chunk[iBC++] = coeffs_array[j] / dens[j];
+		}
+	}
+
+	delete [] alpha_pts;
+	delete [] x_pts;
+
+	cout << "Finished setting Bessel grids successfully." << endl;
+	return;
+}
+
 
 void CorrelationFunction::Set_all_Bessel_grids(int iqt, int iqz)
 {

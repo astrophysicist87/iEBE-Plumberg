@@ -261,6 +261,7 @@ class CorrelationFunction
 
 		void Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int iqz);
 		void Set_all_Bessel_grids(int iqt, int iqz);
+		void Set_Y_eq_0_Bessel_grids(int iqt, int iqz, double * BC_chunk);
 		void Set_target_moments(int iqt, int iqz);
 		void Set_thermal_target_moments(int iqt, int iqz);
 		void Set_full_target_moments(int iqt, int iqz);
@@ -268,6 +269,7 @@ class CorrelationFunction
 		void Cal_dN_dypTdpTdphi_no_weights(int local_pid);
 		void Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY, int iqt, int iqz, double * BC_chunk);
 		void Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_pid, int ipY, int iqt, int iqz, double * BC_chunk, int max_n_terms_to_compute);
+		void Cal_dN_dypTdpTdphi_with_weights_Yeq0_adjustable(int iqt, int iqz, double * BC_chunk, int max_n_terms_to_compute);
 		void Cal_dN_dypTdpTdphi_with_weights_function_approx(int local_pid, double pT, double pphi, double pY,
 												double qt, double qx, double qy, double qz, double * cosqx_dN_dypTdpTdphi, double * sinqx_dN_dypTdpTdphi);
 		void Do_resonance_integrals(int parent_resonance_particle_id, int daughter_particle_id, int decay_channel, int iqt, int iqz);

@@ -659,7 +659,6 @@ void CorrelationFunction::Set_thermal_target_moments(int iqt, int iqz)
 			cs_accel_expEdNd3p->c = chebyshev_a_cfs;
 			double tmp_pY = 0.0;	//interpolating to this point
 			thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)] = exp(-tmp_pY) * gsl_cheb_eval (cs_accel_expEdNd3p, tmp_pY);
-			++idx;
 		}
 
 		delete [] chebyshev_a_cfs;
@@ -694,140 +693,10 @@ void CorrelationFunction::Set_full_target_moments(int iqt, int iqz)
 		cs_accel_expEdNd3p->c = chebyshev_a_cfs;
 		double tmp_pY = 0.0;	//interpolating to this point
 		full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)] = exp(-tmp_pY) * gsl_cheb_eval (cs_accel_expEdNd3p, tmp_pY);
-		++idx;
 	}
 
 	delete [] chebyshev_a_cfs;
 
-	return;
-}
-
-
-void CorrelationFunction::Set_Y_eq_0_Bessel_grids(int iqt, int iqz, double * BC_chunk)
-{
-	const std::complex<double> i(0, 1);
-	int n_coeffs = n_alpha_points;
-	double alpha_min = 4.0, alpha_max = 75.0;
-	double coeffs_array[n_alpha_points];
-	double * alpha_pts = new double [n_alpha_points];
-	double * x_pts = new double [n_alpha_points];
-
-	for (int k = 0; k < n_alpha_points; ++k)
-	{
-		x_pts[k] = - cos( M_PI*(2.*(k+1.) - 1.) / (2.*n_alpha_points) );
-		alpha_pts[k] = 0.5*(x_pts[k] + 1.0)*(alpha_max - alpha_min) + alpha_min;
-	}
-	double nums[n_alpha_points*n_alpha_points];
-	double dens[n_alpha_points];
-	int na = n_alpha_points;
-	for (int j = 0; j < na; ++j)
-	{
-		dens[j] = 0.0;
-		for (int k = 0; k < na; ++k)
-		{
-			double Tjk = csf::Tfun(j, x_pts[k]);
-			dens[j] += Tjk*Tjk;
-			nums[j*na+k] = Tjk;
-		}
-	}
-
-	double expBesselK0re[n_alpha_points];
-	double expBesselK0im[n_alpha_points];
-	double expBesselK1re[n_alpha_points];
-	double expBesselK1im[n_alpha_points];
-
-	Stopwatch sw_loop;
-
-	int iBC = 0;
-	for (int isurf = 0; isurf < FO_length; ++isurf)
-	{
-		double tau = (&FOsurf_ptr[isurf])->tau;
-
-		double beta = tau * hbarCm1 * loc_qt;
-		double gamma = tau * hbarCm1 * loc_qz;
-		double gsq = gamma*gamma;
-
-		for (int ia = 0; ia < na; ++ia)
-		{
-			double loc_alpha = alpha_pts[ia];
-			complex<double> ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p;
-			complex<double> z0 = loc_alpha - i*beta;
-			complex<double> z0sq = z0 * z0;
-			complex<double> z = sqrt(z0sq + gsq);
-			int errorCode = bessf::cbessik01(z, ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p);
-			double ea = exp(loc_alpha);
-
-			expBesselK0re[ia] = ea * ck0.real();
-			expBesselK0im[ia] = ea * ck0.imag();
-			expBesselK1re[ia] = ea * ck1.real();
-			expBesselK1im[ia] = ea * ck1.imag();
-		}
-
-		//////////////////////////////////
-		//exp(x) * K_0(x), real part
-		//separate out 0th coefficient for additional factor of 2.0
-		coeffs_array[0] = 0.0;
-		for (int k = 0; k < na; ++k)
-			coeffs_array[0] += 2.0*expBesselK0re[k] * nums[0*na+k];
-		BC_chunk[iBC++] = coeffs_array[0] / dens[0];
-		for (int j = 1; j < na; ++j)
-		{
-			coeffs_array[j] = 0.0;
-			for (int k = 0; k < na; ++k)
-				coeffs_array[j] += expBesselK0re[k] * nums[j*na+k];
-			BC_chunk[iBC++] = coeffs_array[j] / dens[j];
-		}
-
-		//////////////////////////////////
-		//exp(x) * K_0(x), imaginary part
-		//separate out 0th coefficient for additional factor of 2.0
-		coeffs_array[0] = 0.0;
-		for (int k = 0; k < na; ++k)
-			coeffs_array[0] += 2.0*expBesselK0im[k] * nums[0*na+k];
-		BC_chunk[iBC++] = coeffs_array[0] / dens[0];
-		for (int j = 1; j < na; ++j)
-		{
-			coeffs_array[j] = 0.0;
-			for (int k = 0; k < na; ++k)
-				coeffs_array[j] += expBesselK0im[k] * nums[j*na+k];
-			BC_chunk[iBC++] = coeffs_array[j] / dens[j];
-		}
-
-		//////////////////////////////////
-		//exp(x) * K_1(x), real part
-		//separate out 0th coefficient for additional factor of 2.0
-		coeffs_array[0] = 0.0;
-		for (int k = 0; k < na; ++k)
-			coeffs_array[0] += 2.0*expBesselK1re[k] * nums[0*na+k];
-		BC_chunk[iBC++] = coeffs_array[0] / dens[0];
-		for (int j = 1; j < na; ++j)
-		{
-			coeffs_array[j] = 0.0;
-			for (int k = 0; k < na; ++k)
-				coeffs_array[j] += expBesselK1re[k] * nums[j*na+k];
-			BC_chunk[iBC++] = coeffs_array[j] / dens[j];
-		}
-
-		//////////////////////////////////
-		//exp(x) * K_1(x), imaginary part
-		//separate out 0th coefficient for additional factor of 2.0
-		coeffs_array[0] = 0.0;
-		for (int k = 0; k < na; ++k)
-			coeffs_array[0] += 2.0*expBesselK1im[k] * nums[0*na+k];
-		BC_chunk[iBC++] = coeffs_array[0] / dens[0];
-		for (int j = 1; j < na; ++j)
-		{
-			coeffs_array[j] = 0.0;
-			for (int k = 0; k < na; ++k)
-				coeffs_array[j] += expBesselK1im[k] * nums[j*na+k];
-			BC_chunk[iBC++] = coeffs_array[j] / dens[j];
-		}
-	}
-
-	delete [] alpha_pts;
-	delete [] x_pts;
-
-	cout << "Finished setting Bessel grids successfully." << endl;
 	return;
 }
 
