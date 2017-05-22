@@ -109,11 +109,7 @@ class CorrelationFunction
 		
 		//arrays to hold results of resonance phase-space integrations
 		double * current_dN_dypTdpTdphi_moments;
-		double * current_ln_dN_dypTdpTdphi_moments;
-		double * current_sign_of_dN_dypTdpTdphi_moments;
 		double ** current_daughters_dN_dypTdpTdphi_moments;
-		double ** current_daughters_ln_dN_dypTdpTdphi_moments;
-		double ** current_daughters_sign_of_dN_dypTdpTdphi_moments;
 		double * thermal_target_dN_dypTdpTdphi_moments;
 		double * full_target_dN_dypTdpTdphi_moments;
 		double * thermal_target_Yeq0_moments;
@@ -265,15 +261,13 @@ class CorrelationFunction
 
 		void Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int iqz);
 		void Set_all_Bessel_grids(int iqt, int iqz);
-		void Set_thermal_target_moments();
-		void Set_full_target_moments();
-		//void form_trig_sign_z(int isurf, int ieta, int iqt, int iqx, int iqy, int iqz, int ii, double * results);
+		void Set_target_moments(int iqt, int iqz);
+		void Set_thermal_target_moments(int iqt, int iqz);
+		void Set_full_target_moments(int iqt, int iqz);
 		void Set_giant_arrays(int iqt, int iqx, int iqy, int iqz);
-		//void Cal_dN_dypTdpTdphi(double** SP_p0, double** SP_px, double** SP_py, double** SP_pz);
 		void Cal_dN_dypTdpTdphi_no_weights(int local_pid);
 		void Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY, int iqt, int iqz, double * BC_chunk);
 		void Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_pid, int ipY, int iqt, int iqz, double * BC_chunk, int max_n_terms_to_compute);
-		//double Cal_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi);
 		void Cal_dN_dypTdpTdphi_with_weights_function_approx(int local_pid, double pT, double pphi, double pY,
 												double qt, double qx, double qy, double qz, double * cosqx_dN_dypTdpTdphi, double * sinqx_dN_dypTdpTdphi);
 		void Do_resonance_integrals(int parent_resonance_particle_id, int daughter_particle_id, int decay_channel, int iqt, int iqz);
@@ -291,8 +285,6 @@ class CorrelationFunction
 		void Load_resonance_and_daughter_spectra(int local_pid, int iqt, int iqz);
 		void Update_daughter_spectra(int local_pid, int iqt, int iqz);
 		void Set_spectra_logs_and_signs(int local_pid);
-		void Set_current_resonance_logs_and_signs();
-		void Set_current_daughters_resonance_logs_and_signs(int n_daughters);
 		void Allocate_decay_channel_info();
 		void Load_decay_channel_info_nb2(int dc_idx, double K_T_local, double K_phi_local, double K_y_local);
 		void Load_decay_channel_info_nb3(int dc_idx, double K_T_local, double K_phi_local, double K_y_local);
@@ -301,8 +293,7 @@ class CorrelationFunction
 
 		void Fill_out_pts(double * pointsarray, int numpoints, double max_val, int spacing_type);
 
-		void Reflect_in_qt(int iqt);
-		void Reflect_in_qz(int local_pid, int iqt, int iqz);
+		void Reflect_in_qz_and_qt();
 
 		//miscellaneous
 		void Set_path(string path_in);
@@ -345,7 +336,7 @@ class CorrelationFunction
 		double interpolate_qi(double q0, double qi0, double qi1, double f1, double f2, bool use_linear);
 		void Get_GF_HBTradii();
 		double get_CF(int ipt, int ipphi, int iqt, int iqx, int iqy, int iqz, bool return_projected_value);
-		void get_CF(double * totalresult, double * thermalresult, double * crosstermresult, double * resonanceresult,
+		void get_CF_terms(double * totalresult, double * thermalresult, double * crosstermresult, double * resonanceresult,
 									int ipt, int ipphi, int iqt, int iqx, int iqy, int iqz, bool return_projected_value);
 		void Compute_correlationfunction(double * totalresult, double * thermalresult, double * crosstermresult, double * resonanceresult,
 										int ipt, int ipphi, int iqx, int iqy, int iqz, double qt_interp, int interp_flag = 0);

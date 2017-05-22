@@ -56,17 +56,9 @@ void CorrelationFunction::Cal_correlationfunction()
 	if (qtnpts == 1)
 		return;
 
-	if (1)
-	{
-		cerr << "Need to fix things at this point!" << endl;
-		debugger(__LINE__, __FILE__);
-		exit (1);
-		//load thermal information
-		//Set_thermal_target_moments();	//thermal pion moments at Y=0
-
-		//load full resonance calculation information
-		//Set_full_target_moments();		//full pion moments at Y=0
-	}
+	//exploits convenient symmetries to get full correlation function
+	//as need for remainder of calculation
+	Reflect_in_qz_and_qt();
 
 	// chooses the qo, qs, ql (or qx, qy, ql) points at which to evaluate correlation function,
 	// and allocates the array to hold correlation function values
@@ -123,7 +115,7 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 		for (int iqtidx = 0; iqtidx < qtnpts; ++iqtidx)
 		{
 			//return C - 1!!!
-			get_CF(&tmpC, &tmpCt, &tmpCct, &tmpCr, ipt, ipphi, iqtidx, iqx, iqy, iqz, FIT_WITH_PROJECTED_CFVALS && !thermal_pions_only);
+			get_CF_terms(&tmpC, &tmpCt, &tmpCct, &tmpCr, ipt, ipphi, iqtidx, iqx, iqy, iqz, FIT_WITH_PROJECTED_CFVALS && !thermal_pions_only);
 			C_at_q[iqtidx] = tmpC;
 			Ct_at_q[iqtidx] = tmpCt;
 			Cct_at_q[iqtidx] = tmpCct;
@@ -306,15 +298,23 @@ double CorrelationFunction::interpolate_qi(double q0, double qi0, double qi1, do
 double CorrelationFunction::get_CF(int ipt, int ipphi, int iqt, int iqx, int iqy, int iqz, bool return_projected_value)
 {	//pY==0
 	double nonFTd_spectra = spectra[target_particle_id][ipt][ipphi];
-	double cos_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,(n_pY_pts - 1)/2,iqt,iqx,iqy,iqz,0)];
-	double sin_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,(n_pY_pts - 1)/2,iqt,iqx,iqy,iqz,1)];
+	//double cos_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,(n_pY_pts - 1)/2,iqt,iqx,iqy,iqz,0)];
+	//double sin_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,(n_pY_pts - 1)/2,iqt,iqx,iqy,iqz,1)];
+	double cos_transf_spectra = full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,0)]
+									+ full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,2)];		//add real components
+	double sin_transf_spectra = full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,1)]
+									+ full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,3)];		//add imaginary components
 
 	if (return_projected_value)
 	{
 		//with no resonances
 		double nonFTd_tspectra = thermal_spectra[target_particle_id][ipt][ipphi];
-		double cos_transf_tspectra = thermal_target_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,(n_pY_pts - 1)/2,iqt,iqx,iqy,iqz,0)];
-		double sin_transf_tspectra = thermal_target_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,(n_pY_pts - 1)/2,iqt,iqx,iqy,iqz,1)];
+		//double cos_transf_tspectra = thermal_target_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,(n_pY_pts - 1)/2,iqt,iqx,iqy,iqz,0)];
+		//double sin_transf_tspectra = thermal_target_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,(n_pY_pts - 1)/2,iqt,iqx,iqy,iqz,1)];
+		double cos_transf_tspectra = thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,0)]
+										+ thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,2)];	//add real components
+		double sin_transf_tspectra = thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,1)]
+										+ thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,3)];	//add imaginary components
 
 		double projected_nonFTd_spectra = nonFTd_tspectra + (nonFTd_spectra - nonFTd_tspectra) / fraction_of_resonances;
 		double projected_cos_transf_spectra = cos_transf_tspectra + (cos_transf_spectra - cos_transf_tspectra) / fraction_of_resonances;
@@ -333,17 +333,21 @@ double CorrelationFunction::get_CF(int ipt, int ipphi, int iqt, int iqx, int iqy
 	}
 }
 
-void CorrelationFunction::get_CF(double * totalresult, double * thermalresult, double * crosstermresult, double * resonanceresult,
+void CorrelationFunction::get_CF_terms(double * totalresult, double * thermalresult, double * crosstermresult, double * resonanceresult,
 									int ipt, int ipphi, int iqt, int iqx, int iqy, int iqz, bool return_projected_value)
 {
 	//thermal
 	double nonFTd_tspectra = thermal_spectra[target_particle_id][ipt][ipphi];
-	double cos_transf_tspectra = thermal_target_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,(n_pY_pts - 1)/2,iqt,iqx,iqy,iqz,0)];
-	double sin_transf_tspectra = thermal_target_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,(n_pY_pts - 1)/2,iqt,iqx,iqy,iqz,1)];
+	double cos_transf_tspectra = thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,0)]
+									+ thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,2)];	//add real components
+	double sin_transf_tspectra = thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,1)]
+									+ thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,3)];	//add imaginary components
 	//total
 	double nonFTd_spectra = spectra[target_particle_id][ipt][ipphi];
-	double cos_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,(n_pY_pts - 1)/2,iqt,iqx,iqy,iqz,0)];
-	double sin_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,(n_pY_pts - 1)/2,iqt,iqx,iqy,iqz,1)];
+	double cos_transf_spectra = full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,0)]
+									+ full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,2)];		//add real components
+	double sin_transf_spectra = full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,1)]
+									+ full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,3)];		//add imaginary components
 
 	if (return_projected_value)
 	{
@@ -630,34 +634,34 @@ void CorrelationFunction::Set_thermal_target_moments(int iqt, int iqz)
 	else
 	{
 		//just interpolate to Y==0 (assuming they've already been calculated)
-		int getHDFresonanceSpectra = Access_resonance_in_HDF_array(target_particle_id, iqt, iqz, 1, current_dN_dypTdpTdphi_moments);
+		int getHDFresonanceSpectra = Access_target_thermal_in_HDF_array(iqt, iqz, 1, current_dN_dypTdpTdphi_moments);
+
 		gsl_cheb_series *cs_accel_expEdNd3p = gsl_cheb_alloc (n_pY_pts - 1);
 		cs_accel_expEdNd3p->a = SP_Del_pY_min;
 		cs_accel_expEdNd3p->b = SP_Del_pY_max;
 
-		long cfs_array_length = n_pT_pts * n_pphi_pts * qxnpts * qynpts * ntrig;
-		double ** chebyshev_a_cfs = new double * [cfs_array_length];
-		for (int icf = 0; icf < cfs_array_length; ++icf)
-			chebyshev_a_cfs[icf] = new double [n_pY_pts];
+		double * chebyshev_a_cfs = new double[n_pY_pts];
 
-		int idx = 0;
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		for (int iqx = 0; iqx < qxnpts; ++iqx)
 		for (int iqy = 0; iqy < qynpts; ++iqy)
 		for (int itrig = 0; itrig < ntrig; ++itrig)
 		{
+		
 			for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 			{
-				chebyshev_a_cfs[idx][ipY] = 0.0;
+				chebyshev_a_cfs[ipY] = 0.0;
 				for (int kpY = 0; kpY < n_pY_pts; ++kpY)
-					chebyshev_a_cfs[idx][ipY] += exp(SP_Del_pY[kpY]) * chebTcfs[ipY * n_pY_pts + kpY] * current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)];
+					chebyshev_a_cfs[ipY] += exp(SP_Del_pY[kpY]) * chebTcfs[ipY * n_pY_pts + kpY] * current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)];
 			}
+
+			cs_accel_expEdNd3p->c = chebyshev_a_cfs;
+			double tmp_pY = 0.0;	//interpolating to this point
+			thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)] = exp(-tmp_pY) * gsl_cheb_eval (cs_accel_expEdNd3p, tmp_pY);
 			++idx;
 		}
 
-		for (int icf = 0; icf < cfs_array_length; ++icf)
-			delete [] chebyshev_a_cfs[icf];
 		delete [] chebyshev_a_cfs;
 	}
 
@@ -666,10 +670,34 @@ void CorrelationFunction::Set_thermal_target_moments(int iqt, int iqz)
 
 void CorrelationFunction::Set_full_target_moments(int iqt, int iqz)
 {
-	//interpolate resonance contributions and add them in as well
-	//...
+	int getHDFresonanceSpectra = Access_resonance_in_HDF_array(target_particle_id, iqt, iqz, 1, current_dN_dypTdpTdphi_moments);	//this one includes resonance decay contributions
 
-	//also handle this differently depending on whether we're using rapidity symmetry or not
+	gsl_cheb_series *cs_accel_expEdNd3p = gsl_cheb_alloc (n_pY_pts - 1);
+	cs_accel_expEdNd3p->a = SP_Del_pY_min;
+	cs_accel_expEdNd3p->b = SP_Del_pY_max;
+
+	double * chebyshev_a_cfs = new double[n_pY_pts];
+
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+	for (int iqx = 0; iqx < qxnpts; ++iqx)
+	for (int iqy = 0; iqy < qynpts; ++iqy)
+	for (int itrig = 0; itrig < ntrig; ++itrig)
+	{
+		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
+		{
+			chebyshev_a_cfs[ipY] = 0.0;
+			for (int kpY = 0; kpY < n_pY_pts; ++kpY)
+				chebyshev_a_cfs[ipY] += exp(SP_Del_pY[kpY]) * chebTcfs[ipY * n_pY_pts + kpY] * current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)];
+		}
+
+		cs_accel_expEdNd3p->c = chebyshev_a_cfs;
+		double tmp_pY = 0.0;	//interpolating to this point
+		full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)] = exp(-tmp_pY) * gsl_cheb_eval (cs_accel_expEdNd3p, tmp_pY);
+		++idx;
+	}
+
+	delete [] chebyshev_a_cfs;
 
 	return;
 }
