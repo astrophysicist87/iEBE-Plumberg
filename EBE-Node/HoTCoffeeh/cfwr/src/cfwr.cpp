@@ -274,8 +274,6 @@ void CorrelationFunction::Compute_phase_space_integrals(int iqt, int iqz)
 		// if so, set decay channel info
 		// ************************************************************
 		Set_current_particle_info(idc);
-//if (decay_channels[idc-1].resonance_particle_id != 21 && decay_channels[idc-1].resonance_particle_id != 8)
-//	continue;
 		Allocate_decay_channel_info();				// allocate needed memory
 
 		// ************************************************************
@@ -321,83 +319,6 @@ void CorrelationFunction::Compute_phase_space_integrals(int iqt, int iqz)
 }
 //////////////////////////////////////////////////////////////////////////////////
 // End of main routines for setting up computation of correlation function
-
-/*
-//this function is only called in cfwr.GFroutines.cpp
-void CorrelationFunction::Set_thermal_target_moments()
-{
-	//load just thermal spectra (not just target)
-	Load_spectra_array("thermal_spectra.dat", thermal_spectra);
-
-	//load target thermal moments from HDF5 file
-	int HDFOpenSuccess = Open_target_thermal_HDF_array();
-	if (HDFOpenSuccess < 0)
-	{
-		cerr << "Failed to open resonance_thermal_moments.h5!  Exiting..." << endl;
-		exit(1);
-	}
-
-	//everything currently in resonance*h5 file
-	for (int iqt = 0; iqt < qtnpts; ++iqt)
-	for (int iqz = 0; iqz < qznpts; ++iqz)
-	{
-		Get_target_thermal_in_HDF_array(iqt, iqz, thermal_target_dN_dypTdpTdphi_moments);
-
-		for (int iqx = 0; iqx < qxnpts; ++iqx)
-		for (int iqy = 0; iqy < qynpts; ++iqy)
-		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
-		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-		for (int itrig = 0; itrig < ntrig; ++itrig)
-			 thermal_target_Yeq0_moments = fixQTQZ_indexer(ipT, ipphi, (n_pY_pts - 1) / 2, iqx, iqy, itrig);
-	}
-	int getHDFresonanceSpectra = Get_target_thermal_from_HDF_array((n_pY_pts - 1) / 2, thermal_target_dN_dypTdpTdphi_moments);
-	if (getHDFresonanceSpectra < 0)
-	{
-		cerr << "Failed to get this resonance from HDF array!  Exiting..." << endl;
-		exit;
-	}
-
-	int HDFCloseSuccess = Close_target_thermal_HDF_array();
-	if (HDFCloseSuccess < 0)
-	{
-		cerr << "Failed to close HDF array of resonances (resonance_spectra.h5)!  Exiting..." << endl;
-		exit(1);
-	}
-
-	return;
-}
-
-//this function is only called in cfwr.GFroutines.cpp and cfwr_IO.cpp
-void CorrelationFunction::Set_full_target_moments()
-{
-	//load just spectra with resonances (not just target)
-	Load_spectra_array("full_spectra.dat", spectra);
-
-	//load full target moments with resonances from HDF5 file
-	int HDFOpenSuccess = Open_resonance_HDF_array("resonance_spectra.h5");
-	if (HDFOpenSuccess < 0)
-	{
-		cerr << "Failed to open HDF array of resonances (resonance_spectra.h5)!  Exiting..." << endl;
-		exit(1);
-	}
-
-	int getHDFresonanceSpectra = Get_resonance_from_HDF_array(target_particle_id, (n_pY_pts - 1) / 2, current_dN_dypTdpTdphi_moments);
-	if (getHDFresonanceSpectra < 0)
-	{
-		cerr << "Failed to get this resonance from HDF array!  Exiting..." << endl;
-		exit;
-	}
-
-	int HDFCloseSuccess = Close_resonance_HDF_array();
-	if (HDFCloseSuccess < 0)
-	{
-		cerr << "Failed to close HDF array of resonances (resonance_spectra.h5)!  Exiting..." << endl;
-		exit(1);
-	}
-
-	return;
-}
-*/
 
 bool CorrelationFunction::Do_this_decay_channel(int dc_idx)
 {
@@ -910,9 +831,9 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 		//load appropriate Bessel coefficients
 		HDFcode = Access_besselcoeffs_in_HDF_array(ipY, 1, BC_chunk);
 		//do the calculations
-		if (local_pid == 1)																			//pion^+; eventually generalize this to include other options for light particles, too
-			Cal_dN_dypTdpTdphi_with_weights_adjustable(local_pid, ipY, iqt, iqz, BC_chunk, 10);		//use 10-term Boltzmann-like expansion
-		else
+		//if (local_pid == target_particle_id)																			//pion^+; eventually generalize this to include other options for light particles, too
+		//	Cal_dN_dypTdpTdphi_with_weights_adjustable(local_pid, ipY, iqt, iqz, BC_chunk, 10);		//use 10-term Boltzmann-like expansion
+		//else
 			Cal_dN_dypTdpTdphi_with_weights(local_pid, ipY, iqt, iqz, BC_chunk);					//otherwise, for heavier particles, only need first term in Boltzmann approximation
 		sw_qtqzpY.Stop();
 		if (VERBOSE > 1) *global_out_stream_ptr << "Finished loop with ( iqt, iqz, ipY ) = ( " << iqt << ", " << iqz << ", " << ipY << " ) in " << sw_qtqzpY.printTime() << " seconds." << endl;
@@ -1842,10 +1763,10 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_adjustable(int iq
 	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 	{
-		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,0)] = alt_long_array_CR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
-		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,1)] = alt_long_array_CI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
-		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,2)] = alt_long_array_SR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
-		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,3)] = alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 0)] = alt_long_array_CR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 1)] = alt_long_array_CI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 2)] = alt_long_array_SR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 3)] = alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
 	}
 	//////////
 	//////////

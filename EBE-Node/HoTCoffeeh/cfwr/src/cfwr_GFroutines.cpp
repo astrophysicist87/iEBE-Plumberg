@@ -606,41 +606,65 @@ void CorrelationFunction::R2_Fourier_transform(int iKT, double plane_psi, int mo
 	return;
 }
 
-void CorrelationFunction::Set_Y_eq_0_target_moments()
+void CorrelationFunction::Set_target_moments(int iqt, int iqz)
 {
-	Set_Y_eq_0_thermal_target_moments();
+	Set_thermal_target_moments(iqt, iqz);
 
-	Set_Y_eq_0_full_target_moments();
+	Set_full_target_moments(iqt, iqz);
 
 	return;
 }
 
-void CorrelationFunction::Set_Y_eq_0_thermal_target_moments()
+void CorrelationFunction::Set_thermal_target_moments(int iqt, int iqz)
 {
 	if (MIDRAPIDITY_PIONS_ONLY)
 	{
-		//calculate them exactly at
+		//calculate them exactly at Y==0
 		double * BC_chunk = new double [4 * FO_length * n_alpha_points];
 
-		for (int iqt = 0; iqt < qtnpts; ++iqt)
-		for (int iqz = 0; iqz < qznpts; ++iqz)
-		{
-			Set_Y_eq_0_Bessel_grids(iqt, iqz, BC_chunk);
-			Cal_dN_dypTdpTdphi_with_weights_Yeq0_adjustable(iqt, iqz, BC_chunk, 10);
-		}
+		Set_Y_eq_0_Bessel_grids(iqt, iqz, BC_chunk);
+		Cal_dN_dypTdpTdphi_with_weights_Yeq0_adjustable(iqt, iqz, BC_chunk, 10);
+
+		delete [] BC_chunk;
 	}
 	else
 	{
-		//just interpolate to Y==0
-		//...
+		//just interpolate to Y==0 (assuming they've already been calculated)
+		int getHDFresonanceSpectra = Access_resonance_in_HDF_array(target_particle_id, iqt, iqz, 1, current_dN_dypTdpTdphi_moments);
+		gsl_cheb_series *cs_accel_expEdNd3p = gsl_cheb_alloc (n_pY_pts - 1);
+		cs_accel_expEdNd3p->a = SP_Del_pY_min;
+		cs_accel_expEdNd3p->b = SP_Del_pY_max;
 
-		//handle this differently depending on whether we're using rapidity symmetry or not
+		long cfs_array_length = n_pT_pts * n_pphi_pts * qxnpts * qynpts * ntrig;
+		double ** chebyshev_a_cfs = new double * [cfs_array_length];
+		for (int icf = 0; icf < cfs_array_length; ++icf)
+			chebyshev_a_cfs[icf] = new double [n_pY_pts];
+
+		int idx = 0;
+		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+		for (int iqx = 0; iqx < qxnpts; ++iqx)
+		for (int iqy = 0; iqy < qynpts; ++iqy)
+		for (int itrig = 0; itrig < ntrig; ++itrig)
+		{
+			for (int ipY = 0; ipY < n_pY_pts; ++ipY)
+			{
+				chebyshev_a_cfs[idx][ipY] = 0.0;
+				for (int kpY = 0; kpY < n_pY_pts; ++kpY)
+					chebyshev_a_cfs[idx][ipY] += exp(SP_Del_pY[kpY]) * chebTcfs[ipY * n_pY_pts + kpY] * current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)];
+			}
+			++idx;
+		}
+
+		for (int icf = 0; icf < cfs_array_length; ++icf)
+			delete [] chebyshev_a_cfs[icf];
+		delete [] chebyshev_a_cfs;
 	}
 
 	return;
 }
 
-void CorrelationFunction::Set_Y_eq_0_thermal_target_moments()
+void CorrelationFunction::Set_full_target_moments(int iqt, int iqz)
 {
 	//interpolate resonance contributions and add them in as well
 	//...
