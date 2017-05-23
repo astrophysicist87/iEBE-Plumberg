@@ -1500,6 +1500,8 @@ void CorrelationFunction::Set_all_Bessel_grids(int iqt, int iqz)
 	double expBesselK1im[n_alpha_points];
 
 	int HDFcode = Administrate_besselcoeffs_HDF_array(0);	//initialize
+	if (HDFcode < 0)
+		exit(1);
 
 	///////////////////////////////////
 	// Loop over pY points
@@ -1622,6 +1624,8 @@ void CorrelationFunction::Set_all_Bessel_grids(int iqt, int iqz)
 	}
 
 	HDFcode = Administrate_besselcoeffs_HDF_array(2);	// 2 - close
+	if (HDFcode < 0)
+		exit(2);
 
 	delete [] BC_chunk;
 	delete [] alpha_pts;

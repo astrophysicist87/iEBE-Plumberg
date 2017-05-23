@@ -822,9 +822,9 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 			}
 			HDFInitializationSuccess = Administrate_target_thermal_HDF_array(2);	//close
 		}
-
-		HDFcode = Administrate_besselcoeffs_HDF_array(2);
 	}
+
+	HDFcode = Administrate_besselcoeffs_HDF_array(2);
 
 	sw.Stop();
 	*global_out_stream_ptr << "Took " << sw.printTime() << " seconds to set dN/dypTdpTdphi moments." << endl;
