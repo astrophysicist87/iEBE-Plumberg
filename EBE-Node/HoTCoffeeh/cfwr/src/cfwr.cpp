@@ -1107,6 +1107,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights_adjustable(int local_pid
 
 			double FOcell_density = term1.real() + term2.real() + term3.real();
 
+//cout << "FO: " << ipT << "   " << ipphi << "   " << isurf << "   " << FOcell_density << endl;
 
 			/*double term1 = transverse_f0 * (A*I1_a_b_g.real() + B*I0_a_b_g.real());
 			double term2 = C * transverse_f0
@@ -1121,14 +1122,11 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights_adjustable(int local_pid
 			//////////////////////////////////
 			// Now decide what to do with this FO cell
 			//ignore points where delta f is large or emission function goes negative from pdsigma
-			if ( (term2.real() + term3.real() < 0.0) || (flagneg == 1 && FOcell_density < tol) )
-			{
+			if (flagneg == 1 && FOcell_density < tol )
 				FOcell_density = 0.0;
-				//continue;
-			}
 
 			// add FOdensity into full spectra at this pT, pphi
-			spectra_at_pTpphi += eta_s_symmetry_factor * FOcell_density;
+			spectra_at_pTpphi += FOcell_density;
 		}		//end of isurf loop
 
 		//update spectra
@@ -1136,6 +1134,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights_adjustable(int local_pid
 		thermal_spectra[local_pid][ipT][ipphi] = spectra_at_pTpphi;
 		log_spectra[local_pid][ipT][ipphi] = log(abs(spectra_at_pTpphi) + 1.e-100);
 		sign_spectra[local_pid][ipT][ipphi] = sgn(spectra_at_pTpphi);
+//cout << "FT: " << SP_pT[ipT] << "   " << SP_pphi[ipphi] << "   " << spectra_at_pTpphi << endl;
 	}		// end of pT, pphi loop
 
 	sw_ThermalResonanceSpectra.Stop();

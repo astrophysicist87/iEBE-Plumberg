@@ -345,7 +345,7 @@ void CorrelationFunction::Output_total_target_dN_dypTdpTdphi()
 	string local_name = all_particles[target_particle_id].name;
 	replace_parentheses(local_name);
 	ostringstream filename_stream_target_dN_dypTdpTdphi;
-	filename_stream_target_dN_dypTdpTdphi << path << "/total_" << local_name << "_dN_dypTdpTdphi_" << no_df_stem << ".dat";
+	filename_stream_target_dN_dypTdpTdphi << path << "/total_" << local_name << "_dN_dypTdpTdphi.dat";
 	ofstream output_target_dN_dypTdpTdphi(filename_stream_target_dN_dypTdpTdphi.str().c_str());
 
 	for(int ipphi = 0; ipphi < n_pphi_pts; ipphi++)
