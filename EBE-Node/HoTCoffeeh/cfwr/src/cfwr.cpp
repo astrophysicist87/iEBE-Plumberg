@@ -54,6 +54,37 @@ inline void I(double alpha, double beta, double gamma, complex<double> & I0, com
 	return;
 }
 
+inline void Ifunc2(double alpha, vector<complex<double> > * I0, vector<complex<double> > * I1, vector<complex<double> > * I2, vector<complex<double> > * I3, int max_n_terms_to_compute)
+{
+	double beta = 0.0, gamma = 0.0;
+	double gsq = gamma*gamma;
+	for (int k = 1; k <= max_n_terms_to_compute; ++k)
+	{
+		complex<double> ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p;
+		complex<double> z0 = k*alpha - i*beta;
+		complex<double> z0sq = z0*z0;
+		complex<double> zsq = z0sq + gsq;
+		complex<double> z = sqrt(zsq);
+		complex<double> zcu = zsq*z;
+		complex<double> zqi = zsq*zcu;
+
+		int errorCode = bessf::cbessik01(z, ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p);
+	
+		(*I0).push_back(2.0*ck0);
+		(*I1).push_back(2.0*z0*ck1 / z);
+		(*I2).push_back(
+				2.0*z0sq*ck0 / zsq
+				+ 2.0*(z0sq - gsq)*ck1 / zcu
+				);
+		(*I3).push_back(
+				2.0*z0*( ( z0sq*z0sq - 2.0* z0sq*gsq - 3.0 * gsq*gsq ) * ck0 / z
+				+ (-6.0*gsq + z0sq*(2.0 + z0sq + gsq)) * ck1 ) / zqi
+				);
+	}
+
+	return;
+}
+
 inline void Iint2(double alpha, double beta, double gamma, double & I0r, double & I1r, double & I2r, double & I3r, double & I0i, double & I1i, double & I2i, double & I3i)
 {
 	complex<double> z0 = alpha - i*beta;
@@ -759,7 +790,10 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 	if ( iqt == (qtnpts - 1)/2 && iqz == (qznpts - 1)/2 )
 	{
 		*global_out_stream_ptr << "Computing un-weighted thermal spectra..." << endl;
-		Cal_dN_dypTdpTdphi_no_weights(local_pid);
+		if (local_pid == target_particle_id)
+			Cal_dN_dypTdpTdphi_no_weights_adjustable(local_pid, 10);
+		else
+			Cal_dN_dypTdpTdphi_no_weights(local_pid);
 	}
 
 	// get weighted spectra with only most important fluid cells, up to given threshhold
@@ -935,6 +969,159 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights(int local_pid)
 			// Now decide what to do with this FO cell
 			//ignore points where delta f is large or emission function goes negative from pdsigma
 			if ( (term2 + term3 < 0.0) || (flagneg == 1 && FOcell_density < tol) )
+			{
+				FOcell_density = 0.0;
+				//continue;
+			}
+
+			// add FOdensity into full spectra at this pT, pphi
+			spectra_at_pTpphi += eta_s_symmetry_factor * FOcell_density;
+		}		//end of isurf loop
+
+		//update spectra
+		spectra[local_pid][ipT][ipphi] = spectra_at_pTpphi;
+		thermal_spectra[local_pid][ipT][ipphi] = spectra_at_pTpphi;
+		log_spectra[local_pid][ipT][ipphi] = log(abs(spectra_at_pTpphi) + 1.e-100);
+		sign_spectra[local_pid][ipT][ipphi] = sgn(spectra_at_pTpphi);
+	}		// end of pT, pphi loop
+
+	sw_ThermalResonanceSpectra.Stop();
+	*global_out_stream_ptr << "\t\t\t*** Took " << sw_ThermalResonanceSpectra.printTime() << " seconds for whole function." << endl;
+
+	return;
+}
+
+void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights_adjustable(int local_pid, int max_n_terms_to_compute)
+{
+	// set particle information
+	double sign = all_particles[local_pid].sign;
+	double degen = all_particles[local_pid].gspin;
+	double localmass = all_particles[local_pid].mass;
+	double mu = all_particles[local_pid].mu;
+
+	// set some freeze-out surface information that's constant the whole time
+	double prefactor = 1.0*degen/(8.0*M_PI*M_PI*M_PI)/(hbarC*hbarC*hbarC);
+	double loc_Tdec = (&FOsurf_ptr[0])->Tdec;
+	double loc_Pdec = (&FOsurf_ptr[0])->Pdec;
+	double loc_Edec = (&FOsurf_ptr[0])->Edec;
+	double one_by_Tdec = 1./loc_Tdec;
+
+	double deltaf_prefactor = 0.;
+	if (use_delta_f)
+		deltaf_prefactor = 1./(2.0*loc_Tdec*loc_Tdec*(loc_Edec+loc_Pdec));
+
+	double eta_s_symmetry_factor = 2.0;
+
+	Stopwatch sw_ThermalResonanceSpectra;
+
+	//Time full calculation of thermal spectra for this resonance
+	sw_ThermalResonanceSpectra.Start();
+
+	//////////////////////////////////////////////////
+	// Organize calculation of boost-invariant spectra
+	// by looping over pT and pphi
+	//////////////////////////////////////////////////
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+	{
+		double loc_pT = SP_pT[ipT];
+		int pTpphi_index = ipT * n_pphi_pts + ipphi;
+		double sin_pphi = sin_SP_pphi[ipphi];
+		double cos_pphi = cos_SP_pphi[ipphi];
+
+		double px = loc_pT*cos_pphi;
+		double py = loc_pT*sin_pphi;
+		double loc_mT = sqrt(loc_pT*loc_pT+localmass*localmass);
+
+		double spectra_at_pTpphi = 0.0;
+
+		////////////////////////////////////////////////
+		// Loop over freeze-out surface fluid cells
+		////////////////////////////////////////////////
+		for (int isurf = 0; isurf < FO_length; ++isurf)
+		{
+			//////////////////////////////////
+			//////////////////////////////////
+			FO_surf * surf = &FOsurf_ptr[isurf];
+
+			double tau = surf->tau;
+
+			double vx = surf->vx;
+			double vy = surf->vy;
+			double gammaT = surf->gammaT;
+
+			double da0 = surf->da0;
+			double da1 = surf->da1;
+			double da2 = surf->da2;
+
+			double pi00 = surf->pi00;
+			double pi01 = surf->pi01;
+			double pi02 = surf->pi02;
+			double pi11 = surf->pi11;
+			double pi12 = surf->pi12;
+			double pi22 = surf->pi22;
+			double pi33 = surf->pi33;
+
+			double A = tau*prefactor*loc_mT*da0;
+			double B = tau*prefactor*(px*da1 + py*da2);
+			double C = deltaf_prefactor;
+
+			double a = loc_mT*loc_mT*(pi00 + pi33);
+			double b = -2.0*loc_mT*(px*pi01 + py*pi02);
+			double c = px*px*pi11 + 2.0*px*py*pi12 + py*py*pi22 - loc_mT*loc_mT*pi33;
+
+			double alpha = one_by_Tdec*gammaT*loc_mT;
+			double transverse_f0 = exp( one_by_Tdec*(gammaT*(px*vx + py*vy) + mu) );
+
+			vector<complex<double> > I0, I1, I2, I3;
+			Ifunc2(alpha, &I0, &I1, &I2, &I3, max_n_terms_to_compute);
+
+			complex<double> I0_f(0,0), I1_f(0,0), I2_f(0,0), I3_f(0,0);
+			complex<double> I0_f2(0,0), I1_f2(0,0), I2_f2(0,0), I3_f2(0,0);
+			int sign_of_kth_term = 1.0;
+			double tf0_factor = 1.0;
+			for (int k = 1; k <= max_n_terms_to_compute - 1; ++k)
+			{
+				double tf0_factor_k = sign_of_kth_term * tf0_factor * transverse_f0;
+				I0_f += tf0_factor_k * I0[k-1];
+				I1_f += tf0_factor_k * I1[k-1];
+				I2_f += tf0_factor_k * I2[k-1];
+				I3_f += tf0_factor_k * I3[k-1];
+				int sign_of_lth_term = 1.0;
+				for (int l = 1; l <= max_n_terms_to_compute - k; ++l)
+				{
+					tf0_factor_k *= transverse_f0;
+					I0_f2 += sign_of_lth_term * tf0_factor_k * I0[k+l-1];
+					I1_f2 += sign_of_lth_term * tf0_factor_k * I1[k+l-1];
+					I2_f2 += sign_of_lth_term * tf0_factor_k * I2[k+l-1];
+					I3_f2 += sign_of_lth_term * tf0_factor_k * I3[k+l-1];
+					sign_of_lth_term *= -sign;
+				}
+				sign_of_kth_term *= -sign;
+				tf0_factor *= transverse_f0;
+			}
+
+			complex<double> term1 = A*I1_f + B*I0_f;
+			complex<double> term2 = C * ( A*a*I3_f + (B*a+b*A)*I2_f + (B*b+c*A)*I1_f + B*c*I0_f );
+			complex<double> term3 = -sign * C * ( A*a*I3_f2 + (B*a+b*A)*I2_f2 + (B*b+c*A)*I1_f2 + B*c*I0_f2 );
+
+			double FOcell_density = term1.real() + term2.real() + term3.real();
+
+
+			/*double term1 = transverse_f0 * (A*I1_a_b_g.real() + B*I0_a_b_g.real());
+			double term2 = C * transverse_f0
+							* ( A*a*I3_a_b_g.real() + (B*a+b*A)*I2_a_b_g.real() + (B*b+c*A)*I1_a_b_g.real() + B*c*I0_a_b_g.real() );
+			double term3 = -sign * C * transverse_f0 * transverse_f0
+							* ( A*a*I3_2a_b_g.real() + (B*a+b*A)*I2_2a_b_g.real() + (B*b+c*A)*I1_2a_b_g.real() + B*c*I0_2a_b_g.real() );
+
+			double FOcell_density = term1 + term2 + term3;*/
+			//////////////////////////////////
+			//////////////////////////////////
+
+			//////////////////////////////////
+			// Now decide what to do with this FO cell
+			//ignore points where delta f is large or emission function goes negative from pdsigma
+			if ( (term2.real() + term3.real() < 0.0) || (flagneg == 1 && FOcell_density < tol) )
 			{
 				FOcell_density = 0.0;
 				//continue;

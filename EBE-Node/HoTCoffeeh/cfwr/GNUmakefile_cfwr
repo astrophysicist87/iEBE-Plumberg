@@ -10,12 +10,20 @@
 ##			distclean	remove all objectsfiles and binaries
 ##  
 
+#running with icpc
 export HDF5_CXX=$(shell ../../crank/configure_compiler_C++.sh)
 export HDF5_CXXLINKER=$(shell ../../crank/configure_compiler_C++.sh)
 export HDF5_CLINKER=$(shell ../../crank/configure_compiler_C++.sh)
+#running with g++
+#export HDF5_CXX= g++
+#export HDF5_CXXLINKER= g++
+#export HDF5_CLINKER= g++
 
 CC := h5c++
+#running with icpc
 CFLAGS= $(shell ../../crank/configure_compiler_C++_Flags.sh)
+#running with g++
+#CFLAGS= -O3 -Wall
 #CFLAGS += -lgsl -lgslcblas -g -Wall -Warray-bounds -Wchar-subscripts -Wcomment \
 #						-Wenum-compare -Wformat -Wuninitialized -Wmaybe-uninitialized \
 #						-Wmain -Wnarrowing -Wnonnull -Wparentheses -Wpointer-sign \

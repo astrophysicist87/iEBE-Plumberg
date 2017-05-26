@@ -49,6 +49,7 @@ int CorrelationFunction::Administrate_resonance_HDF_array(int administration_mod
 		switch (administration_mode)
 		{
 			case 0:	//Initialization
+			{
 				//bool file_does_not_already_exist = !fexists(filename_stream_ra.str().c_str());
 				bool file_does_not_already_exist = true;	//force full initialization for timebeing...
 
@@ -89,13 +90,17 @@ int CorrelationFunction::Administrate_resonance_HDF_array(int administration_mod
 					}
 				}
 				break;
+			}
 			case 1:
+			{
 				resonance_dataspace = new H5::DataSpace (RANK2D, dims);
 				resonance_file = new H5::H5File(RESONANCE_FILE_NAME, H5F_ACC_RDWR);
 				resonance_dataset = new H5::DataSet( resonance_file->openDataSet( RESONANCE_DATASET_NAME ) );
 				resonance_memspace = new H5::DataSpace (RANK2D, dimsm, NULL);
 				break;
+			}
 			case 2:
+			{
 				resonance_memspace->close();
 				resonance_dataset->close();
 				resonance_file->close();
@@ -103,10 +108,13 @@ int CorrelationFunction::Administrate_resonance_HDF_array(int administration_mod
 				delete resonance_file;
 				delete resonance_dataset;
 				break;
+			}
 			default:
+			{
 				cerr << "administration_mode = " << administration_mode << " not supported!  Exiting..." << endl;
 				exit(1);
 				break;
+			}
 		}
     }
 
@@ -169,6 +177,7 @@ int CorrelationFunction::Administrate_target_thermal_HDF_array(int administratio
 		switch (administration_mode)
 		{
 			case 0:	//Initialization
+			{
 				//bool file_does_not_already_exist = !fexists(filename_stream_ra.str().c_str());
 				bool file_does_not_already_exist = true;	//force full initialization for timebeing...
 				tta_file = new H5::H5File(TARGET_THERMAL_FILE_NAME, H5F_ACC_TRUNC);
@@ -205,7 +214,9 @@ int CorrelationFunction::Administrate_target_thermal_HDF_array(int administratio
 					}
 				}
 				break;
+			}
 			case 1:
+			{
 				//hsize_t dimsm[RANK2D] = {1, chunk_size};
 				//hsize_t dims[RANK2D] = {((qtnpts+1)/2) * ((qznpts+1)/2), chunk_size};
 
@@ -214,7 +225,9 @@ int CorrelationFunction::Administrate_target_thermal_HDF_array(int administratio
 				tta_dataset = new H5::DataSet( tta_file->openDataSet( TARGET_THERMAL_DATASET_NAME ) );
 				tta_memspace = new H5::DataSpace (RANK2D, dimsm, NULL);
 				break;
+			}
 			case 2:
+			{
 				tta_memspace->close();
 				tta_dataset->close();
 				tta_file->close();
@@ -222,10 +235,13 @@ int CorrelationFunction::Administrate_target_thermal_HDF_array(int administratio
 				delete tta_file;
 				delete tta_dataset;
 				break;
+			}
 			default:
+			{
 				cerr << "administration_mode = " << administration_mode << " not supported!  Exiting..." << endl;
 				exit(1);
 				break;
+			}
 		}
     }
 
@@ -285,17 +301,23 @@ int CorrelationFunction::Access_resonance_in_HDF_array(int local_pid, int iqt, i
 		switch(access_mode)
 		{
 			case 0:
+			{
 				if (verbose) debugger(__LINE__, __FILE__);
 				resonance_dataset->write(resonance_array_to_use, PredType::NATIVE_DOUBLE, *resonance_memspace, *resonance_dataspace);
 				break;
+			}
 			case 1:
+			{
 				if (verbose) debugger(__LINE__, __FILE__);
 				resonance_dataset->read(resonance_array_to_use, PredType::NATIVE_DOUBLE, *resonance_memspace, *resonance_dataspace);
 				break;
+			}
 			default:
+			{
 				cerr << "access_mode = " << access_mode << " not supported!  Exiting..." << endl;
 				exit(1);
 				break;
+			}
 		}
    }
 
@@ -350,16 +372,22 @@ int CorrelationFunction::Access_target_thermal_in_HDF_array(int iqt, int iqz, in
 		switch(access_mode)
 		{
 			case 0:
+			{
 				//debugger(__LINE__, __FILE__);
 				tta_dataset->write(tta_array_to_use, PredType::NATIVE_DOUBLE, *tta_memspace, *tta_dataspace);
 				break;
+			}
 			case 1:
+			{
 				tta_dataset->read(tta_array_to_use, PredType::NATIVE_DOUBLE, *tta_memspace, *tta_dataspace);
 				break;
+			}
 			default:
+			{
 				cerr << "access_mode = " << access_mode << " not supported!  Exiting..." << endl;
 				exit(1);
 				break;
+			}
 		}
 
    }
@@ -491,6 +519,7 @@ int CorrelationFunction::Administrate_besselcoeffs_HDF_array(int administration_
 		switch (administration_mode)
 		{
 			case 0:	//Initialization
+			{
 				bool file_does_not_already_exist = !fexists(filename_stream_ra.str().c_str());
 				//bool file_does_not_already_exist = true;	//force full initialization for timebeing...
 				besselcoeffs_file = new H5::H5File(BC_FILE_NAME, H5F_ACC_TRUNC);
@@ -526,7 +555,9 @@ int CorrelationFunction::Administrate_besselcoeffs_HDF_array(int administration_
 					}
 				}
 				break;
+			}
 			case 1:	//Open
+			{
 				//hsize_t dimsm[RANK2D] = {1, chunk_size};
 				//hsize_t dims[RANK2D] = { n_chunks, chunk_size};
 
@@ -535,7 +566,9 @@ int CorrelationFunction::Administrate_besselcoeffs_HDF_array(int administration_
 				besselcoeffs_dataset = new H5::DataSet( besselcoeffs_file->openDataSet( BC_DATASET_NAME ) );
 				besselcoeffs_memspace = new H5::DataSpace (RANK2D, dimsm, NULL);
 				break;
+			}
 			case 2:	//Close
+			{
 				besselcoeffs_memspace->close();
 				besselcoeffs_dataset->close();
 				besselcoeffs_file->close();
@@ -543,10 +576,13 @@ int CorrelationFunction::Administrate_besselcoeffs_HDF_array(int administration_
 				delete besselcoeffs_file;
 				delete besselcoeffs_dataset;
 				break;
+			}
 			default:
+			{
 				cerr << "administration_mode = " << administration_mode << " not supported!  Exiting..." << endl;
 				exit(1);
 				break;
+			}
 		}
     }
 
@@ -601,15 +637,21 @@ int CorrelationFunction::Access_besselcoeffs_in_HDF_array(int ipY, int access_mo
 		switch(access_mode)
 		{
 			case 0:
+			{
 				besselcoeffs_dataset->write(besselcoeffs_array_to_use, PredType::NATIVE_DOUBLE, *besselcoeffs_memspace, *besselcoeffs_dataspace);
 				break;
+			}
 			case 1:
+			{
 				besselcoeffs_dataset->read(besselcoeffs_array_to_use, PredType::NATIVE_DOUBLE, *besselcoeffs_memspace, *besselcoeffs_dataspace);
 				break;
+			}
 			default:
+			{
 				cerr << "access_mode = " << access_mode << " not supported!  Exiting..." << endl;
 				exit(1);
 				break;
+			}
 		}
    }
 

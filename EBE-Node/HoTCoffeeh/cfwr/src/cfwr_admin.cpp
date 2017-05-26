@@ -867,8 +867,8 @@ void CorrelationFunction::Set_q_points()
 	double xi2 = mtarget*mtarget + SP_pT_max*SP_pT_max + 0.25*qxymax*qxymax;	//pretend that Kphi == 0, qx == qo and qs == ql == 0, to maximize qtmax
 	double qtmax = sqrt(xi2 + SP_pT_max*qxymax) - sqrt(xi2 - SP_pT_max*qxymax) + 1.e-10;
 
-	//Fill_out_pts(qt_pts, qtnpts, qtmax, QT_POINTS_SPACING);
-	Fill_out_pts(qt_pts, qtnpts, sqrt(1.1*init_qz*init_qz), 0);
+	Fill_out_pts(qt_pts, qtnpts, qtmax, QT_POINTS_SPACING);
+	//Fill_out_pts(qt_pts, qtnpts, sqrt(1.1*init_qz*init_qz), 0);
 	Fill_out_pts(qx_pts, qxnpts, abs(init_qx), QX_POINTS_SPACING);
 	Fill_out_pts(qy_pts, qynpts, abs(init_qy), QY_POINTS_SPACING);
 	Fill_out_pts(qz_pts, qznpts, abs(init_qz), QZ_POINTS_SPACING);

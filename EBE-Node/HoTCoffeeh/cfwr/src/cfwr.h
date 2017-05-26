@@ -267,6 +267,7 @@ class CorrelationFunction
 		void Set_full_target_moments(int iqt, int iqz);
 		void Set_giant_arrays(int iqt, int iqx, int iqy, int iqz);
 		void Cal_dN_dypTdpTdphi_no_weights(int local_pid);
+		void Cal_dN_dypTdpTdphi_no_weights_adjustable(int local_pid, int max_n_terms_to_compute);
 		void Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY, int iqt, int iqz, double * BC_chunk);
 		void Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_pid, int ipY, int iqt, int iqz, double * BC_chunk, int max_n_terms_to_compute);
 		void Cal_dN_dypTdpTdphi_with_weights_Yeq0_adjustable(int iqt, int iqz, double * BC_chunk, int max_n_terms_to_compute);

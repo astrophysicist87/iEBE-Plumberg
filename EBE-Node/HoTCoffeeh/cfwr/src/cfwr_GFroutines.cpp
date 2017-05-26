@@ -616,9 +616,21 @@ void CorrelationFunction::Set_target_moments(int iqt, int iqz)
 	Set_thermal_target_moments(iqt, iqz);
 	cout << "done." << endl;
 
-	cout << "Setting full target moments...";
-	Set_full_target_moments(iqt, iqz);
-	cout << "done." << endl;
+	if (!thermal_pions_only)
+	{
+		cout << "Setting full target moments...";
+		Set_full_target_moments(iqt, iqz);
+		cout << "done." << endl;
+	}
+	else
+	{
+		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+		for (int iqx = 0; iqx < qxnpts; ++iqx)
+		for (int iqy = 0; iqy < qynpts; ++iqy)
+		for (int itrig = 0; itrig < ntrig; ++itrig)
+			full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)] = thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)];
+	}
 
 	return;
 }
@@ -674,7 +686,7 @@ void CorrelationFunction::Set_thermal_target_moments(int iqt, int iqz)
 
 void CorrelationFunction::Set_full_target_moments(int iqt, int iqz)
 {
-	int getHDFresonanceSpectra = Access_resonance_in_HDF_array(target_particle_id, iqt, iqz, 1, current_dN_dypTdpTdphi_moments);	//this one includes resonance decay contributions
+	int getHDFresonanceSpectra = Access_resonance_in_HDF_array(target_particle_id, iqt, iqz, 1, current_dN_dypTdpTdphi_moments, true);	//this one includes resonance decay contributions
 
 	gsl_cheb_series *cs_accel_expEdNd3p = gsl_cheb_alloc (n_pY_pts - 1);
 	cs_accel_expEdNd3p->a = SP_Del_pY_min;
