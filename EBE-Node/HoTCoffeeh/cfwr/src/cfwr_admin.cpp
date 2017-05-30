@@ -66,7 +66,8 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	init_qy = -0.5*double(qynpts-1)*delta_qy;
 	init_qz = -0.5*double(qznpts-1)*delta_qz;
 
-	n_alpha_points = 21;	//19 okay, too
+	n_alpha_points = 31;
+	n_alpha_points_PIONS = 101;
 
 	//set ofstream for output file
 	global_out_stream_ptr = &myout;
@@ -971,6 +972,11 @@ void CorrelationFunction::Set_FOsurf_ptr(FO_surf* FOsurf_ptr_in, int FO_length_i
 	FO_length = FO_length_in;
 
 	Set_eiqx_matrices();
+
+	// 3D vector to keep track of which FOcells to include
+	FOcells_to_include.resize(FO_length*n_pT_pts, vector<int>(n_pphi_pts));
+	Reset_FOcells_array();	//set everything to -1; ensures that all cells get set correctly
+
 	return;
 }
 
@@ -1334,20 +1340,20 @@ void CorrelationFunction::Delete_fleshed_out_CF()
 void CorrelationFunction::Set_Y_eq_0_Bessel_grids(int iqt, int iqz, double * BC_chunk)
 {
 	const std::complex<double> i(0, 1);
-	int n_coeffs = n_alpha_points;
-	double alpha_min = 4.0, alpha_max = 75.0;
-	double coeffs_array[n_alpha_points];
-	double * alpha_pts = new double [n_alpha_points];
-	double * x_pts = new double [n_alpha_points];
+	int n_coeffs = n_alpha_points_PIONS;
+	double alpha_min = 0.5, alpha_max = 400.0;
+	double coeffs_array[n_alpha_points_PIONS];
+	double * alpha_pts = new double [n_alpha_points_PIONS];
+	double * x_pts = new double [n_alpha_points_PIONS];
 
 	for (int k = 0; k < n_alpha_points; ++k)
 	{
-		x_pts[k] = - cos( M_PI*(2.*(k+1.) - 1.) / (2.*n_alpha_points) );
+		x_pts[k] = - cos( M_PI*(2.*(k+1.) - 1.) / (2.*n_alpha_points_PIONS) );
 		alpha_pts[k] = 0.5*(x_pts[k] + 1.0)*(alpha_max - alpha_min) + alpha_min;
 	}
-	double nums[n_alpha_points*n_alpha_points];
-	double dens[n_alpha_points];
-	int na = n_alpha_points;
+	double nums[n_alpha_points_PIONS*n_alpha_points_PIONS];
+	double dens[n_alpha_points_PIONS];
+	int na = n_alpha_points_PIONS;
 	for (int j = 0; j < na; ++j)
 	{
 		dens[j] = 0.0;
@@ -1359,10 +1365,10 @@ void CorrelationFunction::Set_Y_eq_0_Bessel_grids(int iqt, int iqz, double * BC_
 		}
 	}
 
-	double expBesselK0re[n_alpha_points];
-	double expBesselK0im[n_alpha_points];
-	double expBesselK1re[n_alpha_points];
-	double expBesselK1im[n_alpha_points];
+	double expBesselK0re[na];
+	double expBesselK0im[na];
+	double expBesselK1re[na];
+	double expBesselK1im[na];
 
 	double loc_qt = qt_pts[iqt];
 	double loc_qz = qz_pts[iqz];
@@ -1464,25 +1470,33 @@ void CorrelationFunction::Set_Y_eq_0_Bessel_grids(int iqt, int iqz, double * BC_
 }
 
 
-void CorrelationFunction::Set_all_Bessel_grids(int iqt, int iqz)
+void CorrelationFunction::Set_all_Bessel_grids(int iqt, int iqz, int particle_mode /*==0*/)
 {
 	const std::complex<double> i(0, 1);
-	int n_coeffs = n_alpha_points;
+	int na = n_alpha_points;
 	double alpha_min = 4.0;
 	double alpha_max = 75.0;
-	double coeffs_array[n_alpha_points];
-	double * dummy = new double [n_alpha_points];
-	double * alpha_pts = new double [n_alpha_points];
-	double * x_pts = new double [n_alpha_points];
-
-	for (int k = 0; k < n_alpha_points; ++k)
+	if (particle_mode)
 	{
-		x_pts[k] = - cos( M_PI*(2.*(k+1.) - 1.) / (2.*n_alpha_points) );
+		na = n_alpha_points_PIONS;
+		alpha_min = 0.5;
+		alpha_max = 400.0;
+	}
+
+	int n_coeffs = na;
+	double coeffs_array[na];
+	double * dummy = new double [na];
+	double * alpha_pts = new double [na];
+	double * x_pts = new double [na];
+
+	for (int k = 0; k < na; ++k)
+	{
+		x_pts[k] = - cos( M_PI*(2.*(k+1.) - 1.) / (2.*na) );
 		alpha_pts[k] = 0.5*(x_pts[k] + 1.0)*(alpha_max - alpha_min) + alpha_min;
 	}
-	double nums[n_alpha_points*n_alpha_points];
-	double dens[n_alpha_points];
-	int na = n_alpha_points;
+	double nums[na*na];
+	double dens[na];
+
 	for (int j = 0; j < na; ++j)
 	{
 		dens[j] = 0.0;
@@ -1494,12 +1508,12 @@ void CorrelationFunction::Set_all_Bessel_grids(int iqt, int iqz)
 		}
 	}
 
-	double expBesselK0re[n_alpha_points];
-	double expBesselK0im[n_alpha_points];
-	double expBesselK1re[n_alpha_points];
-	double expBesselK1im[n_alpha_points];
+	double expBesselK0re[na];
+	double expBesselK0im[na];
+	double expBesselK1re[na];
+	double expBesselK1im[na];
 
-	int HDFcode = Administrate_besselcoeffs_HDF_array(0);	//initialize
+	int HDFcode = Administrate_besselcoeffs_HDF_array(0, particle_mode);	//initialize
 	if (HDFcode < 0)
 		exit(1);
 
@@ -1513,7 +1527,7 @@ void CorrelationFunction::Set_all_Bessel_grids(int iqt, int iqz)
 	current_pY_shift = 0.5 * log(abs((loc_qt+loc_qz + 1.e-100)/(loc_qt-loc_qz + 1.e-100)));
 	//current_pY_shift = 0.0;
 
-	double * BC_chunk = new double [4 * FO_length * n_alpha_points];
+	double * BC_chunk = new double [4 * FO_length * na];
 	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 	{
 		sw_loop.Reset();
@@ -1617,13 +1631,13 @@ void CorrelationFunction::Set_all_Bessel_grids(int iqt, int iqz)
 		}
 
 		//finally, store the results
-		HDFcode = Access_besselcoeffs_in_HDF_array(ipY, 0, BC_chunk);	// 0 - set
+		HDFcode = Access_besselcoeffs_in_HDF_array(ipY, 0, BC_chunk, particle_mode);	// 0 - set
 
 		sw_loop.Stop();
 		cout << "Finished in " << sw_loop.printTime() << " seconds." << endl;
 	}
 
-	HDFcode = Administrate_besselcoeffs_HDF_array(2);	// 2 - close
+	HDFcode = Administrate_besselcoeffs_HDF_array(2, particle_mode);	// 2 - close
 	if (HDFcode < 0)
 		exit(2);
 

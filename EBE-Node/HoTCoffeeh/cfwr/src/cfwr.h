@@ -88,7 +88,7 @@ class CorrelationFunction
 		int qspace_cs_slice_length;
 		int full_FO_length;
 		int FO_length;
-		int n_alpha_points;
+		int n_alpha_points, n_alpha_points_PIONS;
 		//int nFO_cutoff;
 		//int number_of_percentage_markers;
 		double q_space_CF_cutoff;		// when correlator falls below this value,
@@ -117,6 +117,9 @@ class CorrelationFunction
 
 		// needed these to avoid too many trigonometric evaluations
 		double ** oscx, ** oscy;
+
+		// skip cells with negative FOcell_density
+		vector<vector<int> > FOcells_to_include;
 	
 		//needed for resonance calculations
 		//	kinematic info
@@ -246,6 +249,10 @@ class CorrelationFunction
 		void Compute_phase_space_integrals(int iqt, int iqz);
 		void Update_sourcefunction(particle_info* particle, int FOarray_length, int particle_idx);
 		bool fexists(const char *filename);
+
+		void Reset_FOcells_array();
+		void Dump_FOcells(int local_pid);
+		void Load_FOcells(int local_pid);
 
 		// HDF routines
 		// resonances

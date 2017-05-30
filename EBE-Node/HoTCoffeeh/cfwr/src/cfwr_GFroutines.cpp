@@ -349,6 +349,13 @@ void CorrelationFunction::get_CF_terms(double * totalresult, double * thermalres
 	double sin_transf_spectra = full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,1)]
 									+ full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,3)];		//add imaginary components
 
+if (ipt==0 && ipphi==0 && iqx==0 && iqy==0)
+	cout << "CFterms: " << iqt << "  " << iqz << "   "
+			<< thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,0)] << "   "
+			<< thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,1)] << "   "
+			<< thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,2)] << "   "
+			<< thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,3)] << endl;
+
 	if (return_projected_value)
 	{
 		nonFTd_spectra = nonFTd_tspectra + (nonFTd_spectra - nonFTd_tspectra) / fraction_of_resonances;
@@ -640,7 +647,7 @@ void CorrelationFunction::Set_thermal_target_moments(int iqt, int iqz)
 	if (MIDRAPIDITY_PIONS_ONLY)
 	{
 		//calculate them exactly at Y==0
-		double * BC_chunk = new double [4 * FO_length * n_alpha_points];
+		double * BC_chunk = new double [4 * FO_length * n_alpha_points_PIONS];
 
 		Set_Y_eq_0_Bessel_grids(iqt, iqz, BC_chunk);
 		Cal_dN_dypTdpTdphi_with_weights_Yeq0_adjustable(iqt, iqz, BC_chunk, 10);

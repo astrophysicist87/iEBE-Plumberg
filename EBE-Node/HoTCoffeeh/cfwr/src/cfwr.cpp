@@ -142,10 +142,18 @@ inline void Iint3(double alpha, double beta, double gamma, vector<complex<double
 		complex<double> zqi = zsq*zcu;
 		double ea = exp(-k * alpha);
 
-		complex<double> ck0(	ea * gsl_cheb_eval (cs_accel_expK0re, alpha),
-								ea * gsl_cheb_eval (cs_accel_expK0im, alpha) );
-		complex<double> ck1(	ea * gsl_cheb_eval (cs_accel_expK1re, alpha),
-								ea * gsl_cheb_eval (cs_accel_expK1im, alpha) );
+complex<double> Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p;
+int errorCode = bessf::cbessik01(z, Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p);
+
+		complex<double> ck0(	ea * gsl_cheb_eval (cs_accel_expK0re, k*alpha),
+								ea * gsl_cheb_eval (cs_accel_expK0im, k*alpha) );
+		complex<double> ck1(	ea * gsl_cheb_eval (cs_accel_expK1re, k*alpha),
+								ea * gsl_cheb_eval (cs_accel_expK1im, k*alpha) );
+
+cout << "Sanity Check1: " << ck0.real() << "   " << ck0.imag() << "   " << ck1.real() << "   " << ck1.imag() << "   "/*endl;
+cout << "Sanity Check2: " */<< Cck0.real() << "   " << Cck0.imag() << "   " << Cck1.real() << "   " << Cck1.imag() << endl;
+cout << "Sanity Check2: " << setw(18) << setprecision(16) << alpha << "   " << beta << "   " << gamma << endl;
+//if (1) exit(8);
 
 		(*I0).push_back(2.0*ck0);
 		(*I1).push_back(2.0*z0*ck1 / z);
@@ -777,35 +785,56 @@ void CorrelationFunction::Get_spacetime_moments(int dc_idx, int iqt, int iqz)
 	return;
 }
 
+void CorrelationFunction::Reset_FOcells_array()
+{
+	for (int iFOipT = 0; iFOipT < FO_length * n_pT_pts; ++iFOipT)
+	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+		FOcells_to_include[iFOipT][ipphi] = -1;
+	return;
+}
+
 void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int iqz)
 {
 	double localmass = all_particles[local_pid].mass;
+	int local_particle_mode = 1;
+	int local_na = n_alpha_points_PIONS;
 	string local_name = "Thermal pion(+)";
 	if (local_pid != target_particle_id)
+	{
 		local_name = all_particles[local_pid].name;
+		local_particle_mode = 0;
+		local_na = n_alpha_points;
+	}
 	
 	// get spectra at each fluid cell, sort by importance
 	Stopwatch sw, sw_qtqzpY;
 	sw.Start();
-	if ( iqt == (qtnpts - 1)/2 && iqz == (qznpts - 1)/2 )
+	//if ( iqt == (qtnpts - 1)/2 && iqz == (qznpts - 1)/2 )
+	if ( iqt == 0 && iqz == 0 )	//do it right away, so we know which FOcells to skip hereafter
 	{
 		*global_out_stream_ptr << "Computing un-weighted thermal spectra..." << endl;
 		if (local_pid == target_particle_id)
-			Cal_dN_dypTdpTdphi_no_weights_adjustable(local_pid, 10);
+			Cal_dN_dypTdpTdphi_no_weights_adjustable(local_pid, 10, local_particle_mode);
 		else
-			Cal_dN_dypTdpTdphi_no_weights(local_pid);
+			Cal_dN_dypTdpTdphi_no_weights(local_pid, local_particle_mode);
+	}
+	else						//otherwise, be sure to load the important FOcells from files!
+	{
+		*global_out_stream_ptr << "Loading important FOcells from file...";
+		Load_FOcells(local_pid);
+		*global_out_stream_ptr << "done." << endl;
 	}
 
 	// get weighted spectra with only most important fluid cells, up to given threshhold
 	*global_out_stream_ptr << "Computing weighted thermal spectra..." << endl;
 
 	//prepare for reading...
-	int HDFcode = Administrate_besselcoeffs_HDF_array(1);	//open
-	double * BC_chunk = new double [4 * FO_length * n_alpha_points];
-	cs_accel_expK0re = gsl_cheb_alloc (n_alpha_points - 1);
-	cs_accel_expK0im = gsl_cheb_alloc (n_alpha_points - 1);
-	cs_accel_expK1re = gsl_cheb_alloc (n_alpha_points - 1);
-	cs_accel_expK1im = gsl_cheb_alloc (n_alpha_points - 1);
+	int HDFcode = Administrate_besselcoeffs_HDF_array(1, local_particle_mode);	//open
+	double * BC_chunk = new double [4 * FO_length * local_na];
+	cs_accel_expK0re = gsl_cheb_alloc (local_na - 1);
+	cs_accel_expK0im = gsl_cheb_alloc (local_na - 1);
+	cs_accel_expK1re = gsl_cheb_alloc (local_na - 1);
+	cs_accel_expK1im = gsl_cheb_alloc (local_na - 1);
 
 	///////////////////////////////////
 	// Loop over pY points
@@ -818,16 +847,16 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 		sh_SP_pY[ipY] = sinh(SP_Del_pY[ipY] + current_pY_shift);
 
 		//load appropriate Bessel coefficients
-		HDFcode = Access_besselcoeffs_in_HDF_array(ipY, 1, BC_chunk);
+		HDFcode = Access_besselcoeffs_in_HDF_array(ipY, 1, BC_chunk, local_particle_mode);
 		//do the calculations
-		if (local_pid == target_particle_id)																			//pion^+; eventually generalize this to include other options for light particles, too
+		if (local_pid == target_particle_id)															//pion^+; eventually generalize this to include other options for light particles, too
 		{
 			if (!MIDRAPIDITY_PIONS_ONLY)
-				Cal_dN_dypTdpTdphi_with_weights_adjustable(local_pid, ipY, iqt, iqz, BC_chunk, 10);		//use 10-term Boltzmann-like expansion
+				Cal_dN_dypTdpTdphi_with_weights_adjustable(local_pid, ipY, iqt, iqz, BC_chunk, 10, local_particle_mode);		//use 10-term Boltzmann-like expansion
 			//if MIDRAPIDITY_PIONS_ONLY == true, calculate separately, not on entire p_Y grid
 		}
 		else
-			Cal_dN_dypTdpTdphi_with_weights(local_pid, ipY, iqt, iqz, BC_chunk);					//otherwise, for heavier particles, only need first term in Boltzmann approximation
+			Cal_dN_dypTdpTdphi_with_weights(local_pid, ipY, iqt, iqz, BC_chunk, local_particle_mode
 		sw_qtqzpY.Stop();
 		if (VERBOSE > 1) *global_out_stream_ptr << "Finished loop with ( iqt, iqz, ipY ) = ( " << iqt << ", " << iqz << ", " << ipY << " ) in " << sw_qtqzpY.printTime() << " seconds." << endl;
 	}
@@ -858,7 +887,12 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 		}
 	}
 
-	HDFcode = Administrate_besselcoeffs_HDF_array(2);
+	HDFcode = Administrate_besselcoeffs_HDF_array(2, particle_mode);
+
+	if ( iqt == 0 && iqz == 0 )	//if the FOcells were computed this loop, be sure to dump them to files!
+		Dump_FOcells(local_pid);
+	else						//otherwise, just clear everything
+		Reset_FOcells_array();
 
 	sw.Stop();
 	*global_out_stream_ptr << "Took " << sw.printTime() << " seconds to set dN/dypTdpTdphi moments." << endl;
@@ -968,14 +1002,11 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights(int local_pid)
 			//////////////////////////////////
 			// Now decide what to do with this FO cell
 			//ignore points where delta f is large or emission function goes negative from pdsigma
-			if ( (term2 + term3 < 0.0) || (flagneg == 1 && FOcell_density < tol) )
-			{
+			if (flagneg == 1 && FOcell_density < tol )
 				FOcell_density = 0.0;
-				//continue;
-			}
 
 			// add FOdensity into full spectra at this pT, pphi
-			spectra_at_pTpphi += eta_s_symmetry_factor * FOcell_density;
+			spectra_at_pTpphi += FOcell_density;
 		}		//end of isurf loop
 
 		//update spectra
@@ -1109,24 +1140,25 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights_adjustable(int local_pid
 
 //cout << "FO: " << ipT << "   " << ipphi << "   " << isurf << "   " << FOcell_density << endl;
 
-			/*double term1 = transverse_f0 * (A*I1_a_b_g.real() + B*I0_a_b_g.real());
-			double term2 = C * transverse_f0
-							* ( A*a*I3_a_b_g.real() + (B*a+b*A)*I2_a_b_g.real() + (B*b+c*A)*I1_a_b_g.real() + B*c*I0_a_b_g.real() );
-			double term3 = -sign * C * transverse_f0 * transverse_f0
-							* ( A*a*I3_2a_b_g.real() + (B*a+b*A)*I2_2a_b_g.real() + (B*b+c*A)*I1_2a_b_g.real() + B*c*I0_2a_b_g.real() );
-
-			double FOcell_density = term1 + term2 + term3;*/
 			//////////////////////////////////
 			//////////////////////////////////
 
 			//////////////////////////////////
 			// Now decide what to do with this FO cell
 			//ignore points where delta f is large or emission function goes negative from pdsigma
-			if (flagneg == 1 && FOcell_density < tol )
+			/*if ( ( flagneg == 1 && FOcell_density < tol ) || ( abs(term2.real() + term3.real()) > abs(term1.real()) ) )
+			{
 				FOcell_density = 0.0;
+				FOcells_to_include[isurf * n_pT_pts + ipT][ipphi] = 0;
+//cout << "Out of curiosity: " << ipT << "   " << ipphi << "   " << isurf << "   " << FOcells_to_include[isurf * n_pT_pts + ipT][ipphi] << endl;
+				continue;
+			}*/
 
 			// add FOdensity into full spectra at this pT, pphi
 			spectra_at_pTpphi += FOcell_density;
+
+			FOcells_to_include[isurf * n_pT_pts + ipT][ipphi] = 1;
+//cout << "Out of curiosity: " << ipT << "   " << ipphi << "   " << isurf << "   " << FOcells_to_include[isurf * n_pT_pts + ipT][ipphi] << endl;
 		}		//end of isurf loop
 
 		//update spectra
@@ -1144,7 +1176,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights_adjustable(int local_pid
 }
 
 //////////////////////////////////////////
-void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY, int iqt, int iqz, double * BC_chunk)
+void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY, int iqt, int iqz, double * BC_chunk, int local_part_mode)
 {
 	Stopwatch sw, sw_FOsurf;
 	sw.Start();
@@ -1154,6 +1186,15 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 	double degen = all_particles[local_pid].gspin;
 	double localmass = all_particles[local_pid].mass;
 	double mu = all_particles[local_pid].mu;
+
+	int local_na = n_alpha_points;
+	double alpha_min = 4.0, alpha_max = 75.0;
+	if (local_part_mode == 1)
+	{
+		local_na = n_alpha_points_PIONS;
+		alpha_min = 0.5;
+		alpha_max = 400.0;
+	}
 
 	// set some freeze-out surface information that's constant the whole time
 	double prefactor = 1.0*degen/(8.0*M_PI*M_PI*M_PI)/(hbarC*hbarC*hbarC);
@@ -1166,12 +1207,10 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 	if (use_delta_f)
 		deltaf_prefactor = 1./(2.0*Tdec*Tdec*(Edec+Pdec));
 
-	double alpha_min = 4.0, alpha_max = 75.0;
-
-	double * expK0_Bessel_re = new double [n_alpha_points];
-	double * expK0_Bessel_im = new double [n_alpha_points];
-	double * expK1_Bessel_re = new double [n_alpha_points];
-	double * expK1_Bessel_im = new double [n_alpha_points];
+	double * expK0_Bessel_re = new double [local_na];
+	double * expK0_Bessel_im = new double [local_na];
+	double * expK1_Bessel_re = new double [local_na];
+	double * expK1_Bessel_im = new double [local_na];
 	cs_accel_expK0re->a = alpha_min;
 	cs_accel_expK0re->b = alpha_max;
 	cs_accel_expK0im->a = alpha_min;
@@ -1181,7 +1220,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 	cs_accel_expK1im->a = alpha_min;
 	cs_accel_expK1im->b = alpha_max;
 
-	for (int ia = 0; ia < n_alpha_points; ++ia)
+	for (int ia = 0; ia < local_na; ++ia)
 	{
 		expK0_Bessel_re[ia] = 0.0;
 		expK0_Bessel_im[ia] = 0.0;
@@ -1249,13 +1288,13 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 		double gamma = tau * hbarCm1 * ( qz*ch_pY - qt*sh_pY );
 
 		// Load Bessel Chebyshev coefficients
-		for (int ia = 0; ia < n_alpha_points; ++ia)
+		for (int ia = 0; ia < local_na; ++ia)
 			expK0_Bessel_re[ia] = BC_chunk[iBC++];
-		for (int ia = 0; ia < n_alpha_points; ++ia)
+		for (int ia = 0; ia < local_na; ++ia)
 			expK0_Bessel_im[ia] = BC_chunk[iBC++];
-		for (int ia = 0; ia < n_alpha_points; ++ia)
+		for (int ia = 0; ia < local_na; ++ia)
 			expK1_Bessel_re[ia] = BC_chunk[iBC++];
-		for (int ia = 0; ia < n_alpha_points; ++ia)
+		for (int ia = 0; ia < local_na; ++ia)
 			expK1_Bessel_im[ia] = BC_chunk[iBC++];
 
 		cs_accel_expK0re->c = expK0_Bessel_re;
@@ -1402,7 +1441,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 }
 
 //////////////////////////////////////////
-void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_pid, int ipY, int iqt, int iqz, double * BC_chunk, int max_n_terms_to_compute)
+void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_pid, int ipY, int iqt, int iqz, double * BC_chunk, int max_n_terms_to_compute, int local_part_mode)
 {
 	Stopwatch sw, sw_FOsurf;
 	sw.Start();
@@ -1423,6 +1462,15 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_p
 	double localmass = all_particles[local_pid].mass;
 	double mu = all_particles[local_pid].mu;
 
+	int local_na = n_alpha_points;
+	double alpha_min = 4.0, alpha_max = 75.0;
+	if (local_part_mode == 1)
+	{
+		local_na = n_alpha_points_PIONS;
+		alpha_min = 0.5;
+		alpha_max = 400.0;
+	}
+
 	// set some freeze-out surface information that's constant the whole time
 	double prefactor = 1.0*degen/(8.0*M_PI*M_PI*M_PI)/(hbarC*hbarC*hbarC);
 	double eta_s_symmetry_factor = 2.0;
@@ -1434,12 +1482,10 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_p
 	if (use_delta_f)
 		deltaf_prefactor = 1./(2.0*Tdec*Tdec*(Edec+Pdec));
 
-	double alpha_min = 4.0, alpha_max = 75.0;
-
-	double * expK0_Bessel_re = new double [n_alpha_points];
-	double * expK0_Bessel_im = new double [n_alpha_points];
-	double * expK1_Bessel_re = new double [n_alpha_points];
-	double * expK1_Bessel_im = new double [n_alpha_points];
+	double * expK0_Bessel_re = new double [local_na];
+	double * expK0_Bessel_im = new double [local_na];
+	double * expK1_Bessel_re = new double [local_na];
+	double * expK1_Bessel_im = new double [local_na];
 	cs_accel_expK0re->a = alpha_min;
 	cs_accel_expK0re->b = alpha_max;
 	cs_accel_expK0im->a = alpha_min;
@@ -1449,7 +1495,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_p
 	cs_accel_expK1im->a = alpha_min;
 	cs_accel_expK1im->b = alpha_max;
 
-	for (int ia = 0; ia < n_alpha_points; ++ia)
+	for (int ia = 0; ia < local_na; ++ia)
 	{
 		expK0_Bessel_re[ia] = 0.0;
 		expK0_Bessel_im[ia] = 0.0;
@@ -1512,13 +1558,13 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_p
 		double gamma = tau * hbarCm1 * ( qz*ch_pY - qt*sh_pY );
 
 		// Load Bessel Chebyshev coefficients
-		for (int ia = 0; ia < n_alpha_points; ++ia)
+		for (int ia = 0; ia < local_na; ++ia)
 			expK0_Bessel_re[ia] = BC_chunk[iBC++];
-		for (int ia = 0; ia < n_alpha_points; ++ia)
+		for (int ia = 0; ia < local_na; ++ia)
 			expK0_Bessel_im[ia] = BC_chunk[iBC++];
-		for (int ia = 0; ia < n_alpha_points; ++ia)
+		for (int ia = 0; ia < local_na; ++ia)
 			expK1_Bessel_re[ia] = BC_chunk[iBC++];
-		for (int ia = 0; ia < n_alpha_points; ++ia)
+		for (int ia = 0; ia < local_na; ++ia)
 			expK1_Bessel_im[ia] = BC_chunk[iBC++];
 
 		cs_accel_expK0re->c = expK0_Bessel_re;
@@ -1541,6 +1587,8 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_p
 		long iidx = 0;
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		{
+			vector<int> FOcells_to_do = FOcells_to_include[isurf * n_pT_pts + ipT];
+
 			double pT = SP_pT[ipT];
 			double mT = sqrt(pT*pT+localmass*localmass);
 			double alpha = one_by_Tdec*gammaT*mT;
@@ -1552,7 +1600,10 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_p
 			double a = mT*mT*(pi00 + pi33);
 
 			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+			//int nCells = FOcells_to_do.size();
+			//for (int iFO = 0; iFO < nCells; ++iFO)
 			{
+				//int ipphi = FOcells_to_do[iFO];
 				// initialize transverse momentum information
 				double px = pT*cos_SP_pphi[ipphi];
 				double py = pT*sin_SP_pphi[ipphi];
@@ -1594,8 +1645,8 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_p
 
 				complex<double> eiqx_S_x_K = term1 + term2 + term3;
 
-				short_array_C[iidx] = eiqx_S_x_K.real();
-				short_array_S[iidx++] = eiqx_S_x_K.imag();
+				short_array_C[iidx] = FOcells_to_do[ipphi] * eiqx_S_x_K.real();
+				short_array_S[iidx++] = FOcells_to_do[ipphi] * eiqx_S_x_K.imag();
 			}
 		}
 
@@ -1708,12 +1759,12 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_adjustable(int iq
 	if (use_delta_f)
 		deltaf_prefactor = 1./(2.0*Tdec*Tdec*(Edec+Pdec));
 
-	double alpha_min = 4.0, alpha_max = 75.0;
+	double alpha_min = 0.5, alpha_max = 400.0;
 
-	double * expK0_Bessel_re = new double [n_alpha_points];
-	double * expK0_Bessel_im = new double [n_alpha_points];
-	double * expK1_Bessel_re = new double [n_alpha_points];
-	double * expK1_Bessel_im = new double [n_alpha_points];
+	double * expK0_Bessel_re = new double [n_alpha_points_PIONS];
+	double * expK0_Bessel_im = new double [n_alpha_points_PIONS];
+	double * expK1_Bessel_re = new double [n_alpha_points_PIONS];
+	double * expK1_Bessel_im = new double [n_alpha_points_PIONS];
 	cs_accel_expK0re->a = alpha_min;
 	cs_accel_expK0re->b = alpha_max;
 	cs_accel_expK0im->a = alpha_min;
@@ -1723,7 +1774,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_adjustable(int iq
 	cs_accel_expK1im->a = alpha_min;
 	cs_accel_expK1im->b = alpha_max;
 
-	for (int ia = 0; ia < n_alpha_points; ++ia)
+	for (int ia = 0; ia < n_alpha_points_PIONS; ++ia)
 	{
 		expK0_Bessel_re[ia] = 0.0;
 		expK0_Bessel_im[ia] = 0.0;
@@ -1751,6 +1802,10 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_adjustable(int iq
 			alt_long_array_SI[isa][isa2] = 0.0;
 		}
 	}
+
+bool talky_loop = false;
+if (iqt == 0 && iqz == 0)
+	talky_loop = true;
 
 	/////////////////////////////////////////////////////////////
 	// Loop over all freeze-out surface fluid cells (for now)
@@ -1784,13 +1839,13 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_adjustable(int iq
 		double gamma = tau * hbarCm1 * qz;
 
 		// Load Bessel Chebyshev coefficients
-		for (int ia = 0; ia < n_alpha_points; ++ia)
+		for (int ia = 0; ia < n_alpha_points_PIONS; ++ia)
 			expK0_Bessel_re[ia] = BC_chunk[iBC++];
-		for (int ia = 0; ia < n_alpha_points; ++ia)
+		for (int ia = 0; ia < n_alpha_points_PIONS; ++ia)
 			expK0_Bessel_im[ia] = BC_chunk[iBC++];
-		for (int ia = 0; ia < n_alpha_points; ++ia)
+		for (int ia = 0; ia < n_alpha_points_PIONS; ++ia)
 			expK1_Bessel_re[ia] = BC_chunk[iBC++];
-		for (int ia = 0; ia < n_alpha_points; ++ia)
+		for (int ia = 0; ia < n_alpha_points_PIONS; ++ia)
 			expK1_Bessel_im[ia] = BC_chunk[iBC++];
 
 		cs_accel_expK0re->c = expK0_Bessel_re;
@@ -1813,6 +1868,8 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_adjustable(int iq
 		long iidx = 0;
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		{
+			vector<int> FOcells_to_do = FOcells_to_include[isurf * n_pT_pts + ipT];
+
 			double pT = SP_pT[ipT];
 			double mT = sqrt(pT*pT+localmass*localmass);
 			double alpha = one_by_Tdec*gammaT*mT;
@@ -1824,7 +1881,10 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_adjustable(int iq
 			double a = mT*mT*(pi00 + pi33);
 
 			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+			//int nCells = FOcells_to_do.size();
+			//for (int iFO = 0; iFO < nCells; ++iFO)
 			{
+				//int ipphi = FOcells_to_do[iFO];
 				// initialize transverse momentum information
 				double px = pT*cos_SP_pphi[ipphi];
 				double py = pT*sin_SP_pphi[ipphi];
@@ -1865,9 +1925,13 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_adjustable(int iq
 				complex<double> term3 = -sign * C * ( A*a*I3_f2 + (B*a+b*A)*I2_f2 + (B*b+c*A)*I1_f2 + B*c*I0_f2 );
 
 				complex<double> eiqx_S_x_K = term1 + term2 + term3;
+//if (talky_loop)
+//	cout << "fullFOcells: " << isurf << "   " << ipT << "   " << ipphi << "   "
+//						<< iqt << "   " << iqz << "   "
+//						<< eiqx_S_x_K.real() << "   " << eiqx_S_x_K.imag() << endl;
 
-				short_array_C[iidx] = eiqx_S_x_K.real();
-				short_array_S[iidx++] = eiqx_S_x_K.imag();
+				short_array_C[iidx] = FOcells_to_do[ipphi] * eiqx_S_x_K.real();
+				short_array_S[iidx++] = FOcells_to_do[ipphi] * eiqx_S_x_K.imag();
 			}
 		}
 
@@ -1906,8 +1970,11 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_adjustable(int iq
 		}
 	}
 
+//if (1) exit(8);
+
 	//use reflection symmetry in transverse plane to get speed-up
-	for (int iqx = 0; iqx < (qxnpts-1)/2; ++iqx)
+	//for (int iqx = 0; iqx < (qxnpts-1)/2; ++iqx)
+	for (int iqx = 0; iqx < (qxnpts+1)/2; ++iqx)
 	for (int iqy = 0; iqy < qynpts; ++iqy)
 	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
@@ -1957,10 +2024,13 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_adjustable(int iq
 //only works at Y==0!!!
 void CorrelationFunction::Reflect_in_qz_and_qt()
 {
-	for (int iqt = 0; iqt < (qtnpts-3)/2; ++iqt)		//no need to reflect qt==0 to itself
+cout << "Currently reflecting in qz and qt!" << endl;
+	//for (int iqt = 0; iqt < (qtnpts-1)/2; ++iqt)
+	for (int iqt = 0; iqt < (qtnpts+1)/2; ++iqt)
 	{
 		//reflect in qz first
-		for (int iqz = 0; iqz < (qznpts-3)/2; ++iqz)	//no need to reflect qz==0 to itself
+		//for (int iqz = 0; iqz < (qznpts-1)/2; ++iqz)
+		for (int iqz = 0; iqz < (qznpts+1)/2; ++iqz)
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		for (int iqx = 0; iqx < qxnpts; ++iqx)
@@ -1971,8 +2041,16 @@ void CorrelationFunction::Reflect_in_qz_and_qt()
 				= thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)];			//alternating prefactor still consistent with ntrig == 4
 			full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, qznpts - iqz - 1, itrig)]
 				= full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)];				//alternating prefactor still consistent with ntrig == 4
+			//cout << "Reflection(qz): " << thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, qznpts - iqz - 1, itrig)] << "   "
+			//		<< thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)] << "   "
+			//		<< full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, qznpts - iqz - 1, itrig)] << "   "
+			//		<< full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)] << endl;
 		}
+	}
 
+	//for (int iqt = 0; iqt < (qtnpts-1)/2; ++iqt)
+	for (int iqt = 0; iqt < (qtnpts+1)/2; ++iqt)
+	{
 		//then reflect everything in qt
 		for (int iqz = 0; iqz < qznpts; ++iqz)
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
@@ -1985,8 +2063,14 @@ void CorrelationFunction::Reflect_in_qz_and_qt()
 				= pow(-1.0, (double)itrig) * thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)];					//alternating prefactor still consistent with ntrig == 4
 			full_target_Yeq0_moments[indexer(ipT, ipphi, qtnpts - iqt - 1, qxnpts - iqx - 1, qynpts - iqy - 1, qznpts - iqz - 1, itrig)]
 				= pow(-1.0, (double)itrig) * full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)];						//alternating prefactor still consistent with ntrig == 4
+			//cout << "Reflection(qt): " << thermal_target_Yeq0_moments[indexer(ipT, ipphi, qtnpts - iqt - 1, qxnpts - iqx - 1, qynpts - iqy - 1, qznpts - iqz - 1, itrig)] << "   "
+			//		<< pow(-1.0, (double)itrig) * thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)] << "   "
+			//		<< full_target_Yeq0_moments[indexer(ipT, ipphi, qtnpts - iqt - 1, qxnpts - iqx - 1, qynpts - iqy - 1, qznpts - iqz - 1, itrig)] << "   "
+			//		<< pow(-1.0, (double)itrig) * full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)] << endl;
 		}
 	}
+
+cout << "Finished reflection in qz and qt!" << endl;
 
 	return;
 }

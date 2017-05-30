@@ -31,6 +31,39 @@ void replace_parentheses(std::string & tempstring)
 }
 
 //allows possibility of dumping thermal_spectra, spectra, log_spectra, etc...
+void CorrelationFunction::Dump_FOcells(int local_pid)
+{
+	ostringstream filename_stream;
+	filename_stream << path << "/" << "__res_pid_" << local_pid << "_FOcells.tmp";
+	ofstream out(filename_stream.str().c_str(), ios::binary);
+
+	for (int iFOipT = 0; iFOipT < FO_length * n_pT_pts; ++iFOipT)
+	{
+		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+			out << FOcells_to_include[iFOipT][ipphi] << "   ";
+		out << endl;
+	}
+
+	out.close();
+	return;
+}
+
+//allows possibility of dumping thermal_spectra, spectra, log_spectra, etc...
+void CorrelationFunction::Load_FOcells(int local_pid)
+{
+	ostringstream filename_stream;
+	filename_stream << path << "/" << "__res_pid_" << local_pid << "_FOcells.tmp";
+	ifstream in(filename_stream.str().c_str(), ios::binary);
+
+	for (int iFOipT = 0; iFOipT < FO_length * n_pT_pts; ++iFOipT)
+	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+		in >> FOcells_to_include[iFOipT][ipphi];
+
+	in.close();
+	return;
+}
+
+//allows possibility of dumping thermal_spectra, spectra, log_spectra, etc...
 void CorrelationFunction::Dump_spectra_array(string output_filename, double *** array_to_dump)
 {
 	ostringstream filename_stream;

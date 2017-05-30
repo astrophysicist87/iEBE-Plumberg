@@ -492,19 +492,29 @@ debugger(__LINE__, __FILE__);
 //////////////////////////////////////////////////////////
 // Functions to read and write Bessel coefficient arrays
 
-int CorrelationFunction::Administrate_besselcoeffs_HDF_array(int administration_mode)
+int CorrelationFunction::Administrate_besselcoeffs_HDF_array(int administration_mode, int particle_mode /*==0*/)
 {
 	// administration_mode:
 	//	0 - Initialize
 	//	1 - Open (already initialized)
 	//	2 - Close
+	// particle_mode:
+	//	0 - Heavy resonances (default)
+	//	1 - Light particles (pions) --> need different range and n_alpha_points
 	const int n_chunks = n_pY_pts;
-	const int chunk_size = 4 * FO_length * n_alpha_points;
+	//const int chunk_size = 4 * FO_length * n_alpha_points;
+	int chunk_size = 4 * FO_length * n_alpha_points;
+	if (particle_mode)
+		chunk_size = 4 * FO_length * n_alpha_points_PIONS;
 
 	double * besselcoeffs_chunk = new double [chunk_size];
 
+	string pions_stem = "";
+	if (particle_mode)
+		pions_stem = "_PIONS";
+
 	ostringstream filename_stream_ra;
-	filename_stream_ra << path << "/Bessel_coefficients.h5";
+	filename_stream_ra << path << "/Bessel_coefficients" << pions_stem << ".h5";
 	H5std_string BC_FILE_NAME(filename_stream_ra.str().c_str());
 	H5std_string BC_DATASET_NAME("bc");
 
@@ -575,6 +585,7 @@ int CorrelationFunction::Administrate_besselcoeffs_HDF_array(int administration_
 				delete besselcoeffs_memspace;
 				delete besselcoeffs_file;
 				delete besselcoeffs_dataset;
+				//delete besselcoeffs_dataspace;
 				break;
 			}
 			default:
@@ -617,13 +628,19 @@ debugger(__LINE__, __FILE__);
 
 /////////////////////////////////////////////
 
-int CorrelationFunction::Access_besselcoeffs_in_HDF_array(int ipY, int access_mode, double * besselcoeffs_array_to_use)
+int CorrelationFunction::Access_besselcoeffs_in_HDF_array(int ipY, int access_mode, double * besselcoeffs_array_to_use, int particle_mode /*==0*/)
 {
 	// access_mode:
 	//	0 - set array chunk
 	//	1 - get array chunk
+	// particle_mode:
+	//	0 - Heavy resonances (default)
+	//	1 - Light particles (pions) --> need different range and n_alpha_points
 	const int n_chunks = n_pY_pts;
-	const int chunk_size = 4 * FO_length * n_alpha_points;
+	//const int chunk_size = 4 * FO_length * n_alpha_points;
+	int chunk_size = 4 * FO_length * n_alpha_points;
+	if (particle_mode)
+		chunk_size = 4 * FO_length * n_alpha_points_PIONS;
 
 	double * besselcoeffs_chunk = new double [chunk_size];
 
