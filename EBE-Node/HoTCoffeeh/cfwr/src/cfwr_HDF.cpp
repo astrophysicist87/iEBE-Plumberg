@@ -107,6 +107,7 @@ int CorrelationFunction::Administrate_resonance_HDF_array(int administration_mod
 				delete resonance_memspace;
 				delete resonance_file;
 				delete resonance_dataset;
+				delete resonance_dataspace;
 				break;
 			}
 			default:
@@ -234,6 +235,7 @@ int CorrelationFunction::Administrate_target_thermal_HDF_array(int administratio
 				delete tta_memspace;
 				delete tta_file;
 				delete tta_dataset;
+				delete tta_dataspace;
 				break;
 			}
 			default:
@@ -585,7 +587,7 @@ int CorrelationFunction::Administrate_besselcoeffs_HDF_array(int administration_
 				delete besselcoeffs_memspace;
 				delete besselcoeffs_file;
 				delete besselcoeffs_dataset;
-				//delete besselcoeffs_dataspace;
+				delete besselcoeffs_dataspace;
 				break;
 			}
 			default:

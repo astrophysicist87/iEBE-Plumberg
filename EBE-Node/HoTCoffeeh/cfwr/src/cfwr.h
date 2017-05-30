@@ -260,14 +260,14 @@ class CorrelationFunction
 		int Administrate_resonance_HDF_array(int administration_mode);
 		int Copy_chunk(int current_resonance_index, int reso_idx_to_be_copied);
 		// Bessel coefficients
-		int Access_besselcoeffs_in_HDF_array(int ipY, int access_mode, double * besselcoeffs_array_to_fill);
-		int Administrate_besselcoeffs_HDF_array(int administration_mode);
+		int Access_besselcoeffs_in_HDF_array(int ipY, int access_mode, double * besselcoeffs_array_to_fill, int particle_mode = 0);
+		int Administrate_besselcoeffs_HDF_array(int administration_mode, int particle_mode = 0);
 		// target thermal moments...
 		int Administrate_target_thermal_HDF_array(int administration_mode);
 		int Access_target_thermal_in_HDF_array(int iqt, int iqz, int access_mode, double * target_thermal_array_to_fill, bool verbose = false);
 
 		void Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int iqz);
-		void Set_all_Bessel_grids(int iqt, int iqz);
+		void Set_all_Bessel_grids(int iqt, int iqz, int particle_mode = 0);
 		void Set_Y_eq_0_Bessel_grids(int iqt, int iqz, double * BC_chunk);
 		void Set_target_moments(int iqt, int iqz);
 		void Set_thermal_target_moments(int iqt, int iqz);
@@ -275,8 +275,9 @@ class CorrelationFunction
 		void Set_giant_arrays(int iqt, int iqx, int iqy, int iqz);
 		void Cal_dN_dypTdpTdphi_no_weights(int local_pid);
 		void Cal_dN_dypTdpTdphi_no_weights_adjustable(int local_pid, int max_n_terms_to_compute);
-		void Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY, int iqt, int iqz, double * BC_chunk);
-		void Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_pid, int ipY, int iqt, int iqz, double * BC_chunk, int max_n_terms_to_compute);
+		void Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY, int iqt, int iqz, double * BC_chunk, int local_part_mode);
+		void Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_pid, int ipY, int iqt, int iqz,
+															double * BC_chunk, int max_n_terms_to_compute, int local_part_mode);
 		void Cal_dN_dypTdpTdphi_with_weights_Yeq0_adjustable(int iqt, int iqz, double * BC_chunk, int max_n_terms_to_compute);
 		void Cal_dN_dypTdpTdphi_with_weights_function_approx(int local_pid, double pT, double pphi, double pY,
 												double qt, double qx, double qy, double qz, double * cosqx_dN_dypTdpTdphi, double * sinqx_dN_dypTdpTdphi);

@@ -142,17 +142,17 @@ inline void Iint3(double alpha, double beta, double gamma, vector<complex<double
 		complex<double> zqi = zsq*zcu;
 		double ea = exp(-k * alpha);
 
-complex<double> Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p;
-int errorCode = bessf::cbessik01(z, Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p);
+//complex<double> Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p;
+//int errorCode = bessf::cbessik01(z, Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p);
 
 		complex<double> ck0(	ea * gsl_cheb_eval (cs_accel_expK0re, k*alpha),
 								ea * gsl_cheb_eval (cs_accel_expK0im, k*alpha) );
 		complex<double> ck1(	ea * gsl_cheb_eval (cs_accel_expK1re, k*alpha),
 								ea * gsl_cheb_eval (cs_accel_expK1im, k*alpha) );
 
-cout << "Sanity Check1: " << ck0.real() << "   " << ck0.imag() << "   " << ck1.real() << "   " << ck1.imag() << "   "/*endl;
-cout << "Sanity Check2: " */<< Cck0.real() << "   " << Cck0.imag() << "   " << Cck1.real() << "   " << Cck1.imag() << endl;
-cout << "Sanity Check2: " << setw(18) << setprecision(16) << alpha << "   " << beta << "   " << gamma << endl;
+//cout << "Sanity Check1: " << ck0.real() << "   " << ck0.imag() << "   " << ck1.real() << "   " << ck1.imag() << endl;
+//cout << "Sanity Check2: " << Cck0.real() << "   " << Cck0.imag() << "   " << Cck1.real() << "   " << Cck1.imag() << endl;
+//cout << "Sanity Check2: " << setw(18) << setprecision(16) << alpha << "   " << beta << "   " << gamma << endl;
 //if (1) exit(8);
 
 		(*I0).push_back(2.0*ck0);
@@ -205,6 +205,7 @@ void CorrelationFunction::Fourier_transform_emission_function(int iqt, int iqz)
 		int HDFInitializationSuccess = Administrate_resonance_HDF_array(0);
 		HDFInitializationSuccess = Administrate_target_thermal_HDF_array(0);
 		Set_all_Bessel_grids(iqt, iqz);
+		Set_all_Bessel_grids(iqt, iqz, 1);
 		*global_out_stream_ptr << "done." << endl << endl;
 	}
 	else
@@ -213,6 +214,7 @@ void CorrelationFunction::Fourier_transform_emission_function(int iqt, int iqz)
 		int HDFInitializationSuccess = Administrate_resonance_HDF_array(1);		//open
 		HDFInitializationSuccess = Administrate_target_thermal_HDF_array(1);	//open
 		Set_all_Bessel_grids(iqt, iqz);
+		Set_all_Bessel_grids(iqt, iqz, 1);
 		*global_out_stream_ptr << "done." << endl << endl;
 	}
 	///////
@@ -814,9 +816,9 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 	{
 		*global_out_stream_ptr << "Computing un-weighted thermal spectra..." << endl;
 		if (local_pid == target_particle_id)
-			Cal_dN_dypTdpTdphi_no_weights_adjustable(local_pid, 10, local_particle_mode);
+			Cal_dN_dypTdpTdphi_no_weights_adjustable(local_pid, 10);
 		else
-			Cal_dN_dypTdpTdphi_no_weights(local_pid, local_particle_mode);
+			Cal_dN_dypTdpTdphi_no_weights(local_pid);
 	}
 	else						//otherwise, be sure to load the important FOcells from files!
 	{
@@ -856,7 +858,7 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 			//if MIDRAPIDITY_PIONS_ONLY == true, calculate separately, not on entire p_Y grid
 		}
 		else
-			Cal_dN_dypTdpTdphi_with_weights(local_pid, ipY, iqt, iqz, BC_chunk, local_particle_mode
+			Cal_dN_dypTdpTdphi_with_weights(local_pid, ipY, iqt, iqz, BC_chunk, local_particle_mode);
 		sw_qtqzpY.Stop();
 		if (VERBOSE > 1) *global_out_stream_ptr << "Finished loop with ( iqt, iqz, ipY ) = ( " << iqt << ", " << iqz << ", " << ipY << " ) in " << sw_qtqzpY.printTime() << " seconds." << endl;
 	}
@@ -887,7 +889,7 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 		}
 	}
 
-	HDFcode = Administrate_besselcoeffs_HDF_array(2, particle_mode);
+	HDFcode = Administrate_besselcoeffs_HDF_array(2, local_particle_mode);
 
 	if ( iqt == 0 && iqz == 0 )	//if the FOcells were computed this loop, be sure to dump them to files!
 		Dump_FOcells(local_pid);

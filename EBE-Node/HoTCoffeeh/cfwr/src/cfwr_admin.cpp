@@ -1346,7 +1346,7 @@ void CorrelationFunction::Set_Y_eq_0_Bessel_grids(int iqt, int iqz, double * BC_
 	double * alpha_pts = new double [n_alpha_points_PIONS];
 	double * x_pts = new double [n_alpha_points_PIONS];
 
-	for (int k = 0; k < n_alpha_points; ++k)
+	for (int k = 0; k < n_alpha_points_PIONS; ++k)
 	{
 		x_pts[k] = - cos( M_PI*(2.*(k+1.) - 1.) / (2.*n_alpha_points_PIONS) );
 		alpha_pts[k] = 0.5*(x_pts[k] + 1.0)*(alpha_max - alpha_min) + alpha_min;
