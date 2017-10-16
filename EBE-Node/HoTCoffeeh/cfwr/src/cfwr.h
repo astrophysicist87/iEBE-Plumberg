@@ -281,6 +281,10 @@ class CorrelationFunction
 		void Cal_dN_dypTdpTdphi_with_weights_Yeq0_adjustable(int iqt, int iqz, double * BC_chunk, int max_n_terms_to_compute);
 		void Cal_dN_dypTdpTdphi_with_weights_function_approx(int local_pid, double pT, double pphi, double pY,
 												double qt, double qx, double qy, double qz, double * cosqx_dN_dypTdpTdphi, double * sinqx_dN_dypTdpTdphi);
+		void Cal_dN_dypTdpTdphi_with_weights_function_approx(int local_pid, double pT, double pphi, double p_Y,
+					double qt, double qx, double qy, double qz,
+					double * cosLcosT_dN_dypTdpTdphi, double * cosLsinT_dN_dypTdpTdphi,
+					double * sinLcosT_dN_dypTdpTdphi, double * sinLsinT_dN_dypTdpTdphi);
 		void Do_resonance_integrals(int parent_resonance_particle_id, int daughter_particle_id, int decay_channel, int iqt, int iqz);
 		void Clear_and_set_exp_table_nb2();
 		void Clear_and_set_exp_table_nb3();

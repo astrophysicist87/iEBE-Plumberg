@@ -427,6 +427,20 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 					int qpt_cs_idx = 0;
 					for (int iqx = 0; iqx < qxnpts; ++iqx)
 					for (int iqy = 0; iqy < qynpts; ++iqy)
+					/*{
+						current_daughters_dN_dypTdpTdphi_moments[daughter_lookup_idx][fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,0)] += ssum_vec[qpt_cs_idx];
+						current_daughters_dN_dypTdpTdphi_moments[daughter_lookup_idx][fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,1)] += ssum_vec[qpt_cs_idx+1];
+						if (true)
+						{
+							double tempCos = 0.0, tempSin = 0.0;
+							Cal_dN_dypTdpTdphi_with_weights_function_approx(daughter_particle_id, local_pT, local_pphi, local_pY,
+																			qt_pts[iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[iqz], &tempCos, &tempSin);
+							cout << "cfwr_resonance(" << all_particles[daughter_particle_id].name << "): "
+									<< ipT << "   " << ipphi << "   " << ipY << "   " << iqx << "   " << iqy << "   " << itrig << "   "
+									<< ssum_vec[qpt_cs_idx] << "   " << ssum_vec[qpt_cs_idx+1] << "   " << tempCos << "   " << tempSin << endl;
+						}
+						qpt_cs_idx += 2;
+					}*/
 					for (int itrig = 0; itrig < ntrig; ++itrig)
 					{
 						current_daughters_dN_dypTdpTdphi_moments[daughter_lookup_idx][fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,itrig)] += ssum_vec[qpt_cs_idx];
@@ -765,13 +779,27 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 		qlist_idx += qlist_step;
 	}   //end of all q-loops
 
-	/*qpt_cs_idx = 0;
-	for (int iqx = 0; iqx < qxnpts; ++iqx)
-	for (int iqy = 0; iqy < qynpts; ++iqy)
-		cout << "SANITY CHECK: " << qt_pts[current_iqt] << "   " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[current_iqz] << "   "
-				<< results[qpt_cs_idx++] << "   " << results[qpt_cs_idx++] << "   " << results[qpt_cs_idx++] << "   " << results[qpt_cs_idx++] << endl;
+	qpt_cs_idx = 0;
+	if (current_tempidx==0)
+	{
+		for (int iqx = 0; iqx < qxnpts; ++iqx)
+		for (int iqy = 0; iqy < qynpts; ++iqy)
+		{
+			if (true)
+			{
+				double tempCosCos = 0.0, tempSinCos = 0.0, tempCosSin = 0.0, tempSinSin = 0.0;
+				Cal_dN_dypTdpTdphi_with_weights_function_approx(current_parent_resonance, ptr, phir, spyr,
+																qt_pts[current_iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[current_iqz],
+																&tempCosCos, &tempCosSin, &tempSinCos, &tempSinSin);
+				cout << "cfwr_resonance(): "
+						<< ptr << "   " << phir << "   " << spyr+current_pY_shift << "   " << qt_pts[current_iqt] << "   " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[current_iqz] << "   "
+						<< results[qpt_cs_idx++] << "   " << results[qpt_cs_idx++] << "   " << results[qpt_cs_idx++] << "   " << results[qpt_cs_idx++] << "   "
+						<< tempCosCos << "   " << tempCosSin << "   " << tempSinCos << "   " << tempSinSin << endl;
+			}
+		}
+	}
 
-if (1) exit(8);*/
+if (1) exit (8);
 
 	return;
 }

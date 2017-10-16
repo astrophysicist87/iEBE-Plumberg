@@ -47,11 +47,8 @@ int main(int argc, char *argv[])
 	sw.Start();
 
 	bool generatedcorrfuncs = false;
-	//string workingDirectory = get_selfpath();
-    //string workingDirectory = "./results";
     string workingDirectory = "./results";
 
-	//int folderindex = get_folder_index(workingDirectory);
 	initialize_PRfile(paraRdr, workingDirectory);
 
 	ostringstream filename_stream;

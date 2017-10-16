@@ -1004,8 +1004,9 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights(int local_pid)
 			//////////////////////////////////
 			// Now decide what to do with this FO cell
 			//ignore points where delta f is large or emission function goes negative from pdsigma
-			if (flagneg == 1 && FOcell_density < tol )
-				FOcell_density = 0.0;
+			//if ( (flagneg == 1 && FOcell_density < tol ) || abs(term2 + term3) > abs(term1) )
+			//if ( (flagneg == 1 && FOcell_density < tol ) || term1 < 0.0 )
+			//	FOcell_density = 0.0;
 
 			// add FOdensity into full spectra at this pT, pphi
 			spectra_at_pTpphi += FOcell_density;
@@ -1148,7 +1149,8 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights_adjustable(int local_pid
 			//////////////////////////////////
 			// Now decide what to do with this FO cell
 			//ignore points where delta f is large or emission function goes negative from pdsigma
-			/*if ( ( flagneg == 1 && FOcell_density < tol ) || ( abs(term2.real() + term3.real()) > abs(term1.real()) ) )
+			//if ( ( flagneg == 1 && FOcell_density < tol ) || ( abs(term2.real() + term3.real()) > abs(term1.real()) ) )
+			/*if ( ( flagneg == 1 && FOcell_density < tol ) || ( term1.real() < 0.0 ) )
 			{
 				FOcell_density = 0.0;
 				FOcells_to_include[isurf * n_pT_pts + ipT][ipphi] = 0;

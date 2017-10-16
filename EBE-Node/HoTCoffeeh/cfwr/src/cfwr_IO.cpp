@@ -276,11 +276,13 @@ void CorrelationFunction::Output_correlationfunction()
 	{
 		double ckp = cos_SP_pphi[ipphi], skp = sin_SP_pphi[ipphi];
 		oCorrFunc << scientific << setprecision(8) << setw(12)
-			<< SP_pT[ipT] << "   " << SP_pphi[ipphi] << "   " << qx_pts[iqx] << "   "
+			<< SP_pT[ipT] << "   " << SP_pphi[ipphi] << "   "
+			<< setprecision(4) << setw(8) << qx_pts[iqx] << "   "
 			<< qy_pts[iqy] << "   " << qz_pts[iqz] << "   "
 			//<< qx_pts[iqx] * ckp + qy_pts[iqy] * skp << "   "
 			//<< -qx_pts[iqx] * skp + qy_pts[iqy] * ckp << "   "
 			//<< qz_pts[iqz] << "   "
+			<< setprecision(8) << setw(12)
 			<< spectra[target_particle_id][ipT][ipphi] << "   "
 			<< thermalCFvals[ipT][ipphi][iqx][iqy][iqz] << "   "
 			<< crosstermCFvals[ipT][ipphi][iqx][iqy][iqz] << "   "
