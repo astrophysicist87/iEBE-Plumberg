@@ -46,6 +46,9 @@ int main(int argc, char *argv[])
 	sw_total.Start();
 	sw.Start();
 
+	//flags NaNs when they crop up
+	//feenableexcept(FE_INVALID | FE_OVERFLOW);
+
 	bool generatedcorrfuncs = false;
     string workingDirectory = "./results";
 

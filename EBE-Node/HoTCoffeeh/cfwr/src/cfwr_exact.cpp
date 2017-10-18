@@ -147,7 +147,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_function_approx(int lo
 
 
 
-void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_function_approx(int local_pid, double pT, double pphi, double p_Y,
+void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_function_approx(int local_pid, double pT, double pphi, double Del_p_Y,
 					double qt, double qx, double qy, double qz,
 					double * cosLcosT_dN_dypTdpTdphi, double * cosLsinT_dN_dypTdpTdphi,
 					double * sinLcosT_dN_dypTdpTdphi, double * sinLsinT_dN_dypTdpTdphi)
@@ -223,8 +223,8 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_function_approx(int lo
 		double alpha = one_by_Tdec*gammaT*mT;
 		double transverse_f0 = exp( one_by_Tdec*(gammaT*(px*vx + py*vy) + mu) );
 
-		double ch_pY = cosh(p_Y+pY_shift);
-		double sh_pY = sinh(p_Y+pY_shift);
+		double ch_pY = cosh(Del_p_Y+pY_shift);
+		double sh_pY = sinh(Del_p_Y+pY_shift);
 		double beta = (tau / hbarC) * ( qt*ch_pY - qz*sh_pY );
 		double gamma = (tau / hbarC) * ( qz*ch_pY - qt*sh_pY );
 
@@ -243,7 +243,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_function_approx(int lo
 		double sin_qx_S_x_K = eiqx_S_x_K.imag();
 
 		*cosLcosT_dN_dypTdpTdphi += cos_ta * cos_qx_S_x_K;
-		*cosLsinT_dN_dypTdpTdphi += sin_ta * cos_qx_S_x_K;
+		*cosLsinT_dN_dypTdpTdphi -= sin_ta * cos_qx_S_x_K;	//for consistency with thermal calculation
 		*sinLcosT_dN_dypTdpTdphi += cos_ta * sin_qx_S_x_K;
 		*sinLsinT_dN_dypTdpTdphi += sin_ta * sin_qx_S_x_K;
 	}

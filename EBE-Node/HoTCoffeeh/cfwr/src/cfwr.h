@@ -11,6 +11,7 @@
 #include<vector>
 #include<set>
 #include<queue>
+#include <fenv.h>
 
 #include "H5Cpp.h"
 

@@ -27,7 +27,7 @@ using namespace std;
 #define QY_POINTS_SPACING			0		// same
 #define QZ_POINTS_SPACING			0		// same
 #define MIDRAPIDITY_PIONS_ONLY		1		// obvious
-#define USE_EXP_RECYCLING			0
+#define USE_EXP_RECYCLING			1
 #define USE_RAPIDITY_SYMMETRY		1
 
 #ifndef H5_NO_NAMESPACE
@@ -58,7 +58,7 @@ const int new_nqpts = 51;	//for fleshing out
 // Single particle spectra info
 const double SP_pT_max = 4.0;
 const double SP_pphi_max = 2.0*M_PI;
-const double SP_Del_pY_max = 10.0;
+const double SP_Del_pY_max = 6.0;
 const double SP_pT_min = 0.0;
 const double SP_pphi_min = 0.0;
 const double SP_Del_pY_min = (USE_RAPIDITY_SYMMETRY-1)*SP_Del_pY_max;	//do this to make sure we include the symmetry point

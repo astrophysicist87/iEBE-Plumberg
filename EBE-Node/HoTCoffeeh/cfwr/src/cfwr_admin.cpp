@@ -1557,6 +1557,13 @@ void CorrelationFunction::Set_all_Bessel_grids(int iqt, int iqz, int particle_mo
 				complex<double> z0sq = z0 * z0;
 				complex<double> z = sqrt(z0sq + gsq);
 				int errorCode = bessf::cbessik01(z, ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p);
+				if ( isnan(ck0.real())
+						|| isnan(ck0.imag())
+						|| isnan(ck1.real())
+						|| isnan(ck1.imag()) )
+				{
+					cout << loc_alpha << "   " << beta << "   " << gamma << "   " << z << "   " << ck0 << "   " << ck1 << endl;
+				}
 				double ea = exp(loc_alpha);
 
 				expBesselK0re[ia] = ea * ck0.real();

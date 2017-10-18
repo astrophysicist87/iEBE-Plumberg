@@ -1413,10 +1413,12 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 	{
-		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,0)] = alt_long_array_CR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
-		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,1)] = alt_long_array_CI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
-		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,2)] = alt_long_array_SR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
-		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,3)] = alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,0)] = alt_long_array_CR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];		//CL,CT
+		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,1)] = alt_long_array_CI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];		//CL,ST
+		//current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,2)] = alt_long_array_SR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		//current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,3)] = alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,2)] = alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];		//SL,CT
+		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,3)] = alt_long_array_SR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];		//SL,ST
 	}
 	//////////
 	//////////
@@ -1710,8 +1712,10 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_p
 	{
 		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,0)] = alt_long_array_CR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
 		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,1)] = alt_long_array_CI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
-		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,2)] = alt_long_array_SR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
-		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,3)] = alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		//current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,2)] = alt_long_array_SR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		//current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,3)] = alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,2)] = alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,3)] = alt_long_array_SR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
 	}
 	//////////
 	//////////
@@ -1996,8 +2000,10 @@ if (iqt == 0 && iqz == 0)
 	{
 		thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 0)] = alt_long_array_CR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
 		thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 1)] = alt_long_array_CI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
-		thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 2)] = alt_long_array_SR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
-		thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 3)] = alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		//thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 2)] = alt_long_array_SR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		//thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 3)] = alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 2)] = alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 3)] = alt_long_array_SR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
 	}
 	//////////
 	//////////
