@@ -1381,7 +1381,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 				{
 					double cos_qx_S_x_K = short_array_C[iidx_local];
 					ala_CR[iidx_local] += cos_trans_Fourier * cos_qx_S_x_K;
-					ala_CI[iidx_local++] -= sin_trans_Fourier * cos_qx_S_x_K;
+					ala_CI[iidx_local++] -= sin_trans_Fourier * cos_qx_S_x_K;	//phi_T comes with extra minus sign
 				}
 				iidx_local = 0;
 				while ( iidx_local < iidx_end )
@@ -1389,7 +1389,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 					double sin_qx_S_x_K = short_array_S[iidx_local];
 					//ala_SR[iidx_local] += cos_trans_Fourier * sin_qx_S_x_K;
 					//ala_SI[iidx_local++] += sin_trans_Fourier * sin_qx_S_x_K;
-					ala_SR[iidx_local] += sin_trans_Fourier * sin_qx_S_x_K;
+					ala_SR[iidx_local] += sin_trans_Fourier * sin_qx_S_x_K;		//phi_T comes with extra minus sign which cancels with minus sign on sin*sin
 					ala_SI[iidx_local++] += cos_trans_Fourier * sin_qx_S_x_K;
 				}
 			}
@@ -2058,6 +2058,8 @@ cout << "Currently reflecting in qz and qt!" << endl;
 		}
 	}
 
+	double trig_parities[4] = {1.0, -1.0, -1.0, 1.0};
+
 	//for (int iqt = 0; iqt < (qtnpts-1)/2; ++iqt)
 	for (int iqt = 0; iqt < (qtnpts+1)/2; ++iqt)
 	{
@@ -2070,13 +2072,13 @@ cout << "Currently reflecting in qz and qt!" << endl;
 		for (int itrig = 0; itrig < ntrig; ++itrig)
 		{
 			thermal_target_Yeq0_moments[indexer(ipT, ipphi, qtnpts - iqt - 1, qxnpts - iqx - 1, qynpts - iqy - 1, qznpts - iqz - 1, itrig)]
-				= pow(-1.0, (double)itrig) * thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)];					//alternating prefactor still consistent with ntrig == 4
+				= trig_parities[itrig] * thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)];					//alternating prefactor still consistent with ntrig == 4
 			full_target_Yeq0_moments[indexer(ipT, ipphi, qtnpts - iqt - 1, qxnpts - iqx - 1, qynpts - iqy - 1, qznpts - iqz - 1, itrig)]
-				= pow(-1.0, (double)itrig) * full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)];						//alternating prefactor still consistent with ntrig == 4
+				= trig_parities[itrig] * full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)];						//alternating prefactor still consistent with ntrig == 4
 			//cout << "Reflection(qt): " << thermal_target_Yeq0_moments[indexer(ipT, ipphi, qtnpts - iqt - 1, qxnpts - iqx - 1, qynpts - iqy - 1, qznpts - iqz - 1, itrig)] << "   "
-			//		<< pow(-1.0, (double)itrig) * thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)] << "   "
+			//		<< trig_parities[itrig] * thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)] << "   "
 			//		<< full_target_Yeq0_moments[indexer(ipT, ipphi, qtnpts - iqt - 1, qxnpts - iqx - 1, qynpts - iqy - 1, qznpts - iqz - 1, itrig)] << "   "
-			//		<< pow(-1.0, (double)itrig) * full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)] << endl;
+			//		<< trig_parities[itrig] * full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)] << endl;
 		}
 	}
 

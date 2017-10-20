@@ -424,13 +424,17 @@ void CorrelationFunction::Output_total_target_eiqx_dN_dypTdpTdphi(double current
 
 		double nonFTd_spectra = spectra[target_particle_id][ipT][ipphi];
 		double cos_transf_spectra = full_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,0)]
-										+ full_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,2)];
-		double sin_transf_spectra = full_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,1)]
+										//+ full_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,2)];
 										+ full_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,3)];
+		double sin_transf_spectra = full_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,1)]
+										//+ full_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,3)];
+										+ full_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,2)];
 		double cos_transf_tspectra = thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,0)]
-										+ thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,2)];
-		double sin_transf_tspectra = thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,1)]
+										//+ thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,2)];
 										+ thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,3)];
+		double sin_transf_tspectra = thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,1)]
+										//+ thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,3)];
+										+ thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,2)];
 
 		output_target_dN_dypTdpTdphi << scientific << setprecision(8) << setw(12)
 			<< qt_pts[iqt] << "   " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[iqz] << "   "
@@ -479,8 +483,10 @@ void CorrelationFunction::Output_thermal_target_eiqx_dN_dypTdpTdphi(int iqt, int
 			<< SP_pT[ipT] << "   " << SP_pphi[ipphi] << "   " << current_pY_shift + SP_Del_pY[ipY] << "   " << SP_Del_pY[ipY] << "   "
 			<< current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,0)] << "   "
 			<< current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,1)] << "   "
-			<< current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,3)] << "   "
-			<< current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,2)] << endl;
+			//<< current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,3)] << "   "
+			//<< current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,2)] << endl;
+			<< current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,2)] << "   "
+			<< current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,3)] << endl;
 	}
 
 	int HDFCloseSuccess = Administrate_target_thermal_HDF_array(2);	// 2 - close
@@ -514,9 +520,11 @@ void CorrelationFunction::Output_total_eiqx_dN_dypTdpTdphi(int local_pid, int iq
 
 		double nonFTd_spectra = spectra[local_pid][ipT][ipphi];
 		double cos_transf_spectra = current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,0)]
-									+ current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,2)];
-		double sin_transf_spectra = current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,1)]
+									//+ current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,2)];
 									+ current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,3)];
+		double sin_transf_spectra = current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,1)]
+									//+ current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,3)];
+									+ current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,2)];
 
 		output_dN_dypTdpTdphi << scientific << setprecision(8) << setw(12)
 			<< qt_pts[iqt] << "   " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[iqz] << "   "
@@ -536,6 +544,12 @@ void CorrelationFunction::Output_total_eiqx_dN_dypTdpTdphi(int local_pid, int iq
 
 void CorrelationFunction::Readin_total_target_eiqx_dN_dypTdpTdphi()
 {
+	if (1)
+	{
+		cerr << "This function needs to be re-written!  Exiting..." << endl;
+		exit(8);
+	}
+
 	string local_name = all_particles[target_particle_id].name;
 	replace_parentheses(local_name);
 	ostringstream filename_stream_target_dN_dypTdpTdphi;

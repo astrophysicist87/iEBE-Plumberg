@@ -59,9 +59,9 @@ qtnpts = 13
 qxnpts = 7
 qynpts = 7
 qznpts = 7
-delta_qx = 0.02
-delta_qy = 0.02
-delta_qz = 0.02
+delta_qx = 0.0125
+delta_qy = 0.0125
+delta_qz = 0.015
 ############################################################################
 #################
 ## End of file ##

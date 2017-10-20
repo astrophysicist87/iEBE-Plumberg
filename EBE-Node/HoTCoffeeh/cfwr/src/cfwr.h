@@ -242,6 +242,7 @@ class CorrelationFunction
 		inline int HDF_indexer(const int ir, const int iqt, const int iqz);
 		inline int NB2_indexer(const int iv, const int izeta);
 		inline int NB3_indexer(const int is, const int iv, const int izeta);
+		inline int qT_trig_indexer(const int iqx, const int iqy, const int iCSlong, const int iCStrans);
 		inline void addElementToQueue(priority_queue<pair<double, size_t> >& p, pair<double, size_t> elem, size_t max_size);
 		inline void set_to_zero(double * array, size_t arraylength);
 		inline double dot_four_vectors(double * a, double * b);

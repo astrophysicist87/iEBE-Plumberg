@@ -619,7 +619,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 	double val11, val12, val21, val22;	//store intermediate results of pT interpolation
 	double val1, val2;					//store intermediate results of pphi interpolation
 	
-	double pyr = spyr;				//used for checking
+	double pyr = spyr;
 	int qlist_step = 1;
 	int qlist_idx = 0;
 	int reversible_qpt_cs_idx = 0;
@@ -633,8 +633,10 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 			parity_factor = -1.0;		//used to get correct sign of imaginary part of spectra
 										//with Del_pY --> -Del_pY for |qt| < |qz|
 										//real part of spectra always symmetric about Del_pY == 0
-			qlist_step = -1;									//loop backwards
-			qlist_idx = qxnpts * qynpts - 1;					//loop backwards
+			//pretty sure these two lines don't belong...
+			//qlist_step = -1;									//loop backwards
+			//qlist_idx = qxnpts * qynpts - 1;					//loop backwards
+
 			reversible_qpt_cs_idx = qspace_cs_slice_length - ntrig;	//loop backwards (not final element)
 			rev_qpt_cs_step = -ntrig;								//loop backwards
 		}
@@ -723,9 +725,13 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 	for (int iqx = 0; iqx < qxnpts; ++iqx)
 	for (int iqy = 0; iqy < qynpts; ++iqy)
 	{
-		double arg = one_by_Gamma_Mres * dot_four_vectors(qlist[qlist_idx], currentPpm);
-		double akr = 1./(1.+arg*arg);
-		double aki = arg/(1.+arg*arg);
+		double alpha_pm = parity_factor * one_by_Gamma_Mres * dot_four_vectors(qlist[qlist_idx], currentPpm);
+			//this is alpha^k in my notes
+			//can be evaluated at +q_perp and spyr
+			//but must include parity_factor to compensate
+			//thus, qlist_idx should loop FORWARD
+		double akr = 1./(1.+alpha_pm*alpha_pm);
+		double aki = alpha_pm/(1.+alpha_pm*alpha_pm);
 
 		for (int iCS = 0; iCS < 2; ++iCS)	//cosine (rapidity-even), then sine (rapidity-odd)
 		{
@@ -773,7 +779,20 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 			val2 = lin_int(del_phir_phi0, one_by_pphidiff, val12, val22);
 
 			// finally, get the interpolated value
-			double Zkr = lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
+			double SXCpm = lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
+			/////////////////////////////////////////////
+			//SXCpm: X is C (rapidity-even) or S (rapidity-odd)
+			//source transverse-even (C) moments evaluated in the following way:
+			// (a) - spyr > 0.0 (Yr > Yr_sym)
+			//		evaluated at +q_T and spyr
+			// (b) - spyr < 0.0 && |q^0| >= |q_z|
+			//		evaluated at +q_T and pyr = abs(spyr)
+			// (c) - spyr < 0.0 && |q^0| < |q_z|
+			//		evaluated at -q_T and pyr = abs(spyr);
+			//		moments are transverse-even, so no
+			//		extra minus sign with inversion
+			/////////////////////////////////////////////
+
 
 		    /////////////////////////////////////////////////////////////////
 		    // DO IMAGINARY PART
@@ -818,18 +837,30 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 			val2 = lin_int(del_phir_phi0, one_by_pphidiff, val12, val22);
 
 			// finally, get the interpolated value
-			double Zki = lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
+			double SXSpm = lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
+			/////////////////////////////////////////////
+			//SXSpm: X is C (rapidity-even) or S (rapidity-odd)
+			//source transverse-odd (S) moments evaluated in the following way:
+			// (a) - spyr > 0.0 (Yr > Yr_sym)
+			//		evaluated at +q_T and spyr
+			// (b) - spyr < 0.0 && |q^0| >= |q_z|
+			//		evaluated at +q_T and pyr = abs(spyr)
+			// (c) - spyr < 0.0 && |q^0| < |q_z|
+			//		evaluated at -q_T and pyr = abs(spyr);
+			//		moments are transverse-odd, so get an
+			//		extra minus sign with inversion
+			/////////////////////////////////////////////
+
 
 		    /////////////////////////////////////////////////////
 		    // Finally, update results vectors appropriately
 		    /////////////////////////////////////////////////////
 		    //--> update the real part of weighted daughter spectra
-		    results[qpt_cs_idx] += akr*Zkr-aki*Zki;
+		    results[qpt_cs_idx] += akr*SXCpm-aki*SXSpm;						//multiply checked
 		    //--> update the imaginary part of weighted daughter spectra
-		    results[qpt_cs_idx+1] += parity_factor * (akr*Zki+aki*Zkr);
+		    results[qpt_cs_idx+1] += parity_factor * (akr*SXSpm+aki*SXCpm);	//multiply checked
 
-
-			double tempCS[4];
+			/*double tempCS[4];
 			tempCS[0] = 0.0, tempCS[1] = 0.0, tempCS[2] = 0.0, tempCS[3] = 0.0;
 			Cal_dN_dypTdpTdphi_with_weights_function_approx(current_parent_resonance, ptr, phir, spyr,
 															qt_pts[current_iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[current_iqz],
@@ -839,10 +870,15 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 					<< qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[current_iqz] << endl
 					<< "\t\t" << Zkr << "   " << Zki << endl
 					<< "\t\t" << tempCS[2*iCS] << "   " << tempCS[2*iCS+1] << endl;
+			Cal_dN_dypTdpTdphi_with_weights_function_approx(current_parent_resonance, ptr, phir, pyr,
+															qt_pts[current_iqt], qx_pts[qxnpts-1-iqx], qy_pts[qynpts-1-iqy], qz_pts[current_iqz],
+															&tempCS[0], &tempCS[1], &tempCS[2], &tempCS[3]);
+			cout << "\t\t" << tempCS[2*iCS] << "   " << tempCS[2*iCS+1] << endl;
+			*/
 
-			//needed to exploit symmetries of sine component
 		    qpt_cs_idx += 2;
 		}
+		//needed to exploit symmetries of sine component
 		reversible_qpt_cs_idx += rev_qpt_cs_step;
 		qlist_idx += qlist_step;
 	}   //end of all q-loops

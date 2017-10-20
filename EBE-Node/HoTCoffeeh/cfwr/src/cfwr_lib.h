@@ -96,6 +96,13 @@ inline int CorrelationFunction::NB3_indexer(const int is, const int iv, const in
 	);
 }
 
+inline int CorrelationFunction::qT_trig_indexer(const int iqx, const int iqy, const int iCSlong, const int iCStrans)
+{
+	return (
+		( ( iqx * qynpts + iqy ) * 2 + iCSlong ) * + iCStrans
+	);
+}
+
 /*inline int CorrelationFunction::arb_indexer(const vector<int> indices, const vector<int> sizes)
 {
 	int n = sizes.size();
