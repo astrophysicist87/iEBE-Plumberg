@@ -364,7 +364,8 @@ long binarySearch(double * A, int length, double value, bool skip_out_of_range /
    if(value > A[idx_f])
    {
       if (verbose) cerr << "binarySearch: desired value is too large, exceeding the end of the table: value = " << value << " and A[idx_f] = " << A[idx_f] << endl;
-      if (skip_out_of_range) return -1;
+      //if (skip_out_of_range) return -1;
+      if (skip_out_of_range) return length;
       exit(1);
    }
    if(value < A[idx_i])

@@ -298,26 +298,18 @@ double CorrelationFunction::interpolate_qi(double q0, double qi0, double qi1, do
 double CorrelationFunction::get_CF(int ipt, int ipphi, int iqt, int iqx, int iqy, int iqz, bool return_projected_value)
 {	//pY==0
 	double nonFTd_spectra = spectra[target_particle_id][ipt][ipphi];
-	//double cos_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,(n_pY_pts - 1)/2,iqt,iqx,iqy,iqz,0)];
-	//double sin_transf_spectra = current_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,(n_pY_pts - 1)/2,iqt,iqx,iqy,iqz,1)];
 	double cos_transf_spectra = full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,0)]
-									//+ full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,2)];		//add real components
 									+ full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,3)];		//add real components
 	double sin_transf_spectra = full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,1)]
-									//+ full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,3)];		//add imaginary components
 									+ full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,2)];		//add imaginary components
 
 	if (return_projected_value)
 	{
 		//with no resonances
 		double nonFTd_tspectra = thermal_spectra[target_particle_id][ipt][ipphi];
-		//double cos_transf_tspectra = thermal_target_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,(n_pY_pts - 1)/2,iqt,iqx,iqy,iqz,0)];
-		//double sin_transf_tspectra = thermal_target_dN_dypTdpTdphi_moments[indexer(ipt,ipphi,(n_pY_pts - 1)/2,iqt,iqx,iqy,iqz,1)];
 		double cos_transf_tspectra = thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,0)]
-										//+ thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,2)];	//add real components
 										+ thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,3)];	//add real components
 		double sin_transf_tspectra = thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,1)]
-										//+ thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,3)];	//add imaginary components
 										+ thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,2)];	//add imaginary components
 
 		double projected_nonFTd_spectra = nonFTd_tspectra + (nonFTd_spectra - nonFTd_tspectra) / fraction_of_resonances;
@@ -343,26 +335,22 @@ void CorrelationFunction::get_CF_terms(double * totalresult, double * thermalres
 	//thermal
 	double nonFTd_tspectra = thermal_spectra[target_particle_id][ipt][ipphi];
 	double cos_transf_tspectra = thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,0)]
-									//+ thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,2)];	//add real components
 									+ thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,3)];	//add real components
 	double sin_transf_tspectra = thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,1)]
-									//+ thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,3)];	//add imaginary components
 									+ thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,2)];	//add imaginary components
 	//total
 	double nonFTd_spectra = spectra[target_particle_id][ipt][ipphi];
 	double cos_transf_spectra = full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,0)]
-									//+ full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,2)];		//add real components
 									+ full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,3)];		//add real components
 	double sin_transf_spectra = full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,1)]
-									//+ full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,3)];		//add imaginary components
 									+ full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,2)];		//add imaginary components
 
-if (ipt==0 && ipphi==0 && iqx==0 && iqy==0)
+/*if (ipt==0 && ipphi==0 && iqx==0 && iqy==0)
 	cout << "CFterms: " << iqt << "  " << iqz << "   "
 			<< thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,0)] << "   "
 			<< thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,1)] << "   "
 			<< thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,2)] << "   "
-			<< thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,3)] << endl;
+			<< thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,3)] << endl;*/
 
 	if (return_projected_value)
 	{

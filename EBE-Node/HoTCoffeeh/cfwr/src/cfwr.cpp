@@ -1954,8 +1954,8 @@ if (iqt == 0 && iqz == 0)
 			for (int iqy = 0; iqy < qynpts; ++iqy)
 			{
 				double cosAy = tmpY[iqy * 2 + 0], sinAy = tmpY[iqy * 2 + 1];
-				double cos_trans_Fourier = cosAx*cosAy - sinAx*sinAy;
-				double sin_trans_Fourier = sinAx*cosAy + cosAx*sinAy;
+				double cos_trans_Fourier = cosAx*cosAy - sinAx*sinAy;	//==cos(qx x + qy y)
+				double sin_trans_Fourier = sinAx*cosAy + cosAx*sinAy;	//==sin(qx x + qy y)
 				double * ala_CR = alt_long_array_CR[idx];
 				double * ala_CI = alt_long_array_CI[idx];
 				double * ala_SR = alt_long_array_SR[idx];
