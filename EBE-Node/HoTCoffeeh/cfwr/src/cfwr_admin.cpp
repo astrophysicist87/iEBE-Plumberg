@@ -325,14 +325,18 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	//using this set of SP_Del_pY points to use Chebyshev interpolation for resonance feeddown
 	SP_Del_pY = new double [n_pY_pts];
 	double znodes[n_pY_pts];
-	double local_scale = 0.5 * (SP_Del_pY_min - SP_Del_pY_max);
-	double local_center = 0.5 * (SP_Del_pY_min + SP_Del_pY_max);
+	double tmp_tan = tan(M_PI / (4.0*n_pY_pts));
+	adjusted_SP_Del_pY_minimum = (USE_RAPIDITY_SYMMETRY and USE_ADJUSTED_MINIMUM) ? -SP_Del_pY_max*tmp_tan*tmp_tan : SP_Del_pY_min;
+	double local_scale = 0.5 * (adjusted_SP_Del_pY_minimum - SP_Del_pY_max);
+	double local_center = 0.5 * (adjusted_SP_Del_pY_minimum + SP_Del_pY_max);
 	
 	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 	{
 		znodes[ipY] = - cos( M_PI*(2.*(ipY+1.) - 1.) / (2.*n_pY_pts) );
 		SP_Del_pY[ipY] = local_center + local_scale * cos( M_PI*(2.*(ipY+1.) - 1.) / (2.*n_pY_pts) );
+		cout << ipY << "   " << SP_Del_pY[ipY] << endl;
 	}
+	//if (1) exit (8);
 
 	//also do Chebyshev function evaluations now
 	double chebTnorm[n_pY_pts];
@@ -879,7 +883,7 @@ void CorrelationFunction::Set_q_points()
 	iqy0 = (qynpts - 1) / 2;
 	iqz0 = (qznpts - 1) / 2;
 
-	cout << "Output iq*0 = " << iqt0 << "   " << iqx0 << "   " << iqy0 << "   " << iqz0 << endl;
+	//cout << "Output iq*0 = " << iqt0 << "   " << iqx0 << "   " << iqy0 << "   " << iqz0 << endl;
 
 	return;
 }
@@ -909,7 +913,7 @@ void CorrelationFunction::Set_sorted_q_pts_list()
 
 	sort(sorted_q_pts_list.begin(), sorted_q_pts_list.end(), qpt_comparator);
 
-	cout << "Checking sorting of q-points: " << endl;
+	//cout << "Checking sorting of q-points: " << endl;
 	for (size_t iq = 0; iq < sorted_q_pts_list.size(); ++iq)
 	{
 		sorted_q_pts_list[iq][0] += iqt0;
@@ -1030,7 +1034,7 @@ for (int i = 0; i < (int)chosen_resonances.size(); ++i)
 //cout << endl << "Ended up with n_daughter = " << daughter_resonance_indices.size() << " for " << all_particles[parent_pid].name << " (" << parent_pid << ")" << endl;
 int i = 0;
 for (set<int>::iterator it = daughter_resonance_indices.begin(); it != daughter_resonance_indices.end(); ++it)
-	cout << i++ << "   " << *it << "   " << all_particles[*it].name << "   " << all_particles[*it].effective_branchratio << endl;
+	cout << "parent = " << all_particles[parent_pid].name << ": " << i++ << "   " << *it << "   " << all_particles[*it].name << "   " << all_particles[*it].effective_branchratio << endl;
 
 	// return value is total number of daughters found
 	return (daughter_resonance_indices.size());

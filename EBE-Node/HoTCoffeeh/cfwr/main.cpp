@@ -254,7 +254,8 @@ int main(int argc, char *argv[])
 	//decide what to output
 	if ((int)(paraRdr->getVal("calculate_CF_mode")) < 2)
 	{
-		correlation_function.Output_correlationfunction();
+		if ( (int)(paraRdr->getVal("qtnpts")) > 1 )
+			correlation_function.Output_correlationfunction();
 		if ((int)(paraRdr->getVal("calculate_CF_mode")) == 0)
 		{
 			correlation_function.Output_total_target_dN_dypTdpTdphi();

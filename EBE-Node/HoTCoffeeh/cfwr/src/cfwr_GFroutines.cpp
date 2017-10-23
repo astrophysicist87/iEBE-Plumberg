@@ -619,21 +619,19 @@ void CorrelationFunction::Set_target_moments(int iqt, int iqz)
 	Set_thermal_target_moments(iqt, iqz);
 	cout << "done." << endl;
 
+	cout << "Setting full target moments...";
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+        for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+        for (int iqx = 0; iqx < qxnpts; ++iqx)
+        for (int iqy = 0; iqy < qynpts; ++iqy)
+        for (int itrig = 0; itrig < ntrig; ++itrig)
+        	full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)]
+			= thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)];
+
+	//if not just doing thermal pions, includ resonance contributions, too
 	if (!thermal_pions_only)
-	{
-		cout << "Setting full target moments...";
 		Set_full_target_moments(iqt, iqz);
-		cout << "done." << endl;
-	}
-	else
-	{
-		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
-		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-		for (int iqx = 0; iqx < qxnpts; ++iqx)
-		for (int iqy = 0; iqy < qynpts; ++iqy)
-		for (int itrig = 0; itrig < ntrig; ++itrig)
-			full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)] = thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)];
-	}
+	cout << "done." << endl;
 
 	return;
 }
@@ -692,7 +690,7 @@ void CorrelationFunction::Set_full_target_moments(int iqt, int iqz)
 	int getHDFresonanceSpectra = Access_resonance_in_HDF_array(target_particle_id, iqt, iqz, 1, current_dN_dypTdpTdphi_moments, true);	//this one includes resonance decay contributions
 
 	gsl_cheb_series *cs_accel_expEdNd3p = gsl_cheb_alloc (n_pY_pts - 1);
-	cs_accel_expEdNd3p->a = SP_Del_pY_min;
+	cs_accel_expEdNd3p->a = adjusted_SP_Del_pY_minimum;
 	cs_accel_expEdNd3p->b = SP_Del_pY_max;
 
 	double * chebyshev_a_cfs = new double[n_pY_pts];
@@ -707,12 +705,16 @@ void CorrelationFunction::Set_full_target_moments(int iqt, int iqz)
 		{
 			chebyshev_a_cfs[ipY] = 0.0;
 			for (int kpY = 0; kpY < n_pY_pts; ++kpY)
+			{
 				chebyshev_a_cfs[ipY] += exp(SP_Del_pY[kpY]) * chebTcfs[ipY * n_pY_pts + kpY] * current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)];
+				if (ipY==0) cout << "CHECKinterp: " << ipT << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << SP_Del_pY[kpY] << "   " << current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,0)] << endl;
+			}
 		}
 
 		cs_accel_expEdNd3p->c = chebyshev_a_cfs;
 		double tmp_pY = 0.0;	//interpolating to this point
-		full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)] = exp(-tmp_pY) * gsl_cheb_eval (cs_accel_expEdNd3p, tmp_pY);
+		full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)] += exp(-tmp_pY) * gsl_cheb_eval (cs_accel_expEdNd3p, tmp_pY);
+		if (itrig==0) cout << "CHECKinterp2: " << ipT << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << exp(-tmp_pY) * gsl_cheb_eval (cs_accel_expEdNd3p, tmp_pY) << endl;
 	}
 
 	delete [] chebyshev_a_cfs;

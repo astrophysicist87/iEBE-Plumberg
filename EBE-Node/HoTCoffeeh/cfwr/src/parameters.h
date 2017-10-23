@@ -29,6 +29,7 @@ using namespace std;
 #define MIDRAPIDITY_PIONS_ONLY		1		// obvious
 #define USE_EXP_RECYCLING			1
 #define USE_RAPIDITY_SYMMETRY		1
+#define USE_ADJUSTED_MINIMUM		1
 
 #ifndef H5_NO_NAMESPACE
     using namespace H5;

@@ -25,6 +25,8 @@ using namespace std;
 
 const std::complex<double> i(0, 1);
 gsl_cheb_series *cs_accel_expK0re, *cs_accel_expK0im, *cs_accel_expK1re, *cs_accel_expK1im;
+gsl_cheb_series *cs_accel_expK0rePIONS, *cs_accel_expK0imPIONS, *cs_accel_expK1rePIONS, *cs_accel_expK1imPIONS;
+//bool cheb_set = false;
 
 // only need to calculated interpolation grid of spacetime moments for each resonance, NOT each decay channel!
 bool recycle_previous_moments = false;
@@ -145,10 +147,10 @@ inline void Iint3(double alpha, double beta, double gamma, vector<complex<double
 //complex<double> Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p;
 //int errorCode = bessf::cbessik01(z, Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p);
 
-		complex<double> ck0(	ea * gsl_cheb_eval (cs_accel_expK0re, k*alpha),
-								ea * gsl_cheb_eval (cs_accel_expK0im, k*alpha) );
-		complex<double> ck1(	ea * gsl_cheb_eval (cs_accel_expK1re, k*alpha),
-								ea * gsl_cheb_eval (cs_accel_expK1im, k*alpha) );
+		complex<double> ck0(	ea * gsl_cheb_eval (cs_accel_expK0rePIONS, k*alpha),
+								ea * gsl_cheb_eval (cs_accel_expK0imPIONS, k*alpha) );
+		complex<double> ck1(	ea * gsl_cheb_eval (cs_accel_expK1rePIONS, k*alpha),
+								ea * gsl_cheb_eval (cs_accel_expK1imPIONS, k*alpha) );
 
 //cout << "Sanity Check1: " << ck0.real() << "   " << ck0.imag() << "   " << ck1.real() << "   " << ck1.imag() << endl;
 //cout << "Sanity Check2: " << Cck0.real() << "   " << Cck0.imag() << "   " << Cck1.real() << "   " << Cck1.imag() << endl;
@@ -257,6 +259,14 @@ void CorrelationFunction::Fourier_transform_emission_function(int iqt, int iqz)
 
 		//get thermal target moments here
 		int accessHDFresonanceSpectra = Access_resonance_in_HDF_array(target_particle_id, iqt, iqz, 1, thermal_target_dN_dypTdpTdphi_moments, true);
+
+		/*for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
+		for (int iqx = 0; iqx < qxnpts; ++iqx)
+		for (int iqy = 0; iqy < qynpts; ++iqy)
+			cout << "THERMALDUMP: " << ipT << "   " << ipphi << "   " << ipY << "   " << iqx << "   " << iqy << "   " << current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,0)] << "   " << thermal_target_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,0)] << endl;*/
+
 		if (accessHDFresonanceSpectra < 0)
 		{
 			cerr << "Failed to get this resonance(local_pid = " << target_particle_id << ") in HDF array!  Exiting..." << endl;
@@ -683,6 +693,13 @@ void CorrelationFunction::Load_resonance_and_daughter_spectra(int local_pid, int
 			getHDFresonanceSpectra = Access_resonance_in_HDF_array(daughter_pid, iqt, iqz, 1, current_daughters_dN_dypTdpTdphi_moments[d_idx]);
 			++d_idx;
 		}
+		/*for (int id = 0; id < n_daughters; ++id)
+		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+                for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+                for (int ipY = 0; ipY < n_pY_pts; ++ipY)
+                for (int iqx = 0; iqx < qxnpts; ++iqx)
+                for (int iqy = 0; iqy < qynpts; ++iqy)
+			cout << "CHECKDUMP: " << id << "   " << ipT << "   " << ipphi << "   " << ipY << "   " << iqx << "   " << iqy << "   " << current_daughters_dN_dypTdpTdphi_moments[id][fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,0)] << "   " << current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,0)] << "   " << thermal_target_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,0)] << endl;*/
 	}
 	else
 	{
@@ -837,6 +854,7 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 	cs_accel_expK0im = gsl_cheb_alloc (local_na - 1);
 	cs_accel_expK1re = gsl_cheb_alloc (local_na - 1);
 	cs_accel_expK1im = gsl_cheb_alloc (local_na - 1);
+	//cheb_set = true;
 
 	///////////////////////////////////
 	// Loop over pY points
@@ -898,6 +916,15 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 
 	sw.Stop();
 	*global_out_stream_ptr << "Took " << sw.printTime() << " seconds to set dN/dypTdpTdphi moments." << endl;
+
+	/*if (cheb_set)
+	{
+        	gsl_cheb_free(cs_accel_expK0re);
+        	gsl_cheb_free(cs_accel_expK0im);
+        	gsl_cheb_free(cs_accel_expK1re);
+        	gsl_cheb_free(cs_accel_expK1im);
+		cheb_set = false;
+	}*/
 
 	delete [] BC_chunk;
 
@@ -1750,6 +1777,12 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_adjustable(int iq
 
 	int local_pid = target_particle_id;
 
+	cs_accel_expK0rePIONS = gsl_cheb_alloc (n_alpha_points_PIONS - 1);
+        cs_accel_expK0imPIONS = gsl_cheb_alloc (n_alpha_points_PIONS - 1);
+        cs_accel_expK1rePIONS = gsl_cheb_alloc (n_alpha_points_PIONS - 1);
+        cs_accel_expK1imPIONS = gsl_cheb_alloc (n_alpha_points_PIONS - 1);
+	//cheb_set = true;
+
 	// set particle information
 	double sign = all_particles[local_pid].sign;
 	double degen = all_particles[local_pid].gspin;
@@ -1773,14 +1806,14 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_adjustable(int iq
 	double * expK0_Bessel_im = new double [n_alpha_points_PIONS];
 	double * expK1_Bessel_re = new double [n_alpha_points_PIONS];
 	double * expK1_Bessel_im = new double [n_alpha_points_PIONS];
-	cs_accel_expK0re->a = alpha_min;
-	cs_accel_expK0re->b = alpha_max;
-	cs_accel_expK0im->a = alpha_min;
-	cs_accel_expK0im->b = alpha_max;
-	cs_accel_expK1re->a = alpha_min;
-	cs_accel_expK1re->b = alpha_max;
-	cs_accel_expK1im->a = alpha_min;
-	cs_accel_expK1im->b = alpha_max;
+	cs_accel_expK0rePIONS->a = alpha_min;
+	cs_accel_expK0rePIONS->b = alpha_max;
+	cs_accel_expK0imPIONS->a = alpha_min;
+	cs_accel_expK0imPIONS->b = alpha_max;
+	cs_accel_expK1rePIONS->a = alpha_min;
+	cs_accel_expK1rePIONS->b = alpha_max;
+	cs_accel_expK1imPIONS->a = alpha_min;
+	cs_accel_expK1imPIONS->b = alpha_max;
 
 	for (int ia = 0; ia < n_alpha_points_PIONS; ++ia)
 	{
@@ -1856,10 +1889,10 @@ if (iqt == 0 && iqz == 0)
 		for (int ia = 0; ia < n_alpha_points_PIONS; ++ia)
 			expK1_Bessel_im[ia] = BC_chunk[iBC++];
 
-		cs_accel_expK0re->c = expK0_Bessel_re;
-		cs_accel_expK0im->c = expK0_Bessel_im;
-		cs_accel_expK1re->c = expK1_Bessel_re;
-		cs_accel_expK1im->c = expK1_Bessel_im;
+		cs_accel_expK0rePIONS->c = expK0_Bessel_re;
+		cs_accel_expK0imPIONS->c = expK0_Bessel_im;
+		cs_accel_expK1rePIONS->c = expK1_Bessel_re;
+		cs_accel_expK1imPIONS->c = expK1_Bessel_im;
 
 		double * tmpX = oscx[isurf];
 		double * tmpY = oscy[isurf];
@@ -1933,11 +1966,15 @@ if (iqt == 0 && iqz == 0)
 				complex<double> term3 = -sign * C * ( A*a*I3_f2 + (B*a+b*A)*I2_f2 + (B*b+c*A)*I1_f2 + B*c*I0_f2 );
 
 				complex<double> eiqx_S_x_K = term1 + term2 + term3;
-//if (talky_loop)
-//	cout << "fullFOcells: " << isurf << "   " << ipT << "   " << ipphi << "   "
-//						<< iqt << "   " << iqz << "   "
-//						<< eiqx_S_x_K.real() << "   " << eiqx_S_x_K.imag() << endl;
-
+/*if (talky_loop && ipT==0 && ipphi==0)
+{
+	cout << "fullFOcells: " << isurf << "   :::   ";
+	for (int k = 0; k < I0.size(); ++k)
+		cout << " : " << I0[k] << "   " << I1[k] << "   " << I2[k] << "   " << I3[k] << " : ";
+					cout	<< ":::   " << transverse_f0 << "   " 
+                                                << alpha << "   " << beta << "   "<< gamma << "   "
+						<< eiqx_S_x_K.real() << "   " << eiqx_S_x_K.imag() << endl;
+}*/
 				short_array_C[iidx] = FOcells_to_do[ipphi] * eiqx_S_x_K.real();
 				short_array_S[iidx++] = FOcells_to_do[ipphi] * eiqx_S_x_K.imag();
 			}
@@ -2004,6 +2041,12 @@ if (iqt == 0 && iqz == 0)
 		//thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 3)] = alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
 		thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 2)] = alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
 		thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 3)] = alt_long_array_SR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+	/*cout << "CALCcheck: " << qt_pts[iqt] << "   " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[iqz] << "   "
+                        << SP_pT[ipT] << "   " << SP_pphi[ipphi] << "   "
+                        << thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,0)] << "   "
+                        << thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,1)] << "   "
+                        << thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,2)] << "   "
+                        << thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,3)] << endl;*/
 	}
 	//////////
 	//////////

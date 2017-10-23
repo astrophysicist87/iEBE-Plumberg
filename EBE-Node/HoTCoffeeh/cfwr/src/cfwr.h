@@ -137,6 +137,7 @@ class CorrelationFunction
 		double * sin_SP_pphi, * cos_SP_pphi;
 		double ** SP_p0, ** SP_pz;
 		double * plane_angle;
+		double adjusted_SP_Del_pY_minimum;
 
 		//Freeze-out surface information
 		FO_surf* FOsurf_ptr;

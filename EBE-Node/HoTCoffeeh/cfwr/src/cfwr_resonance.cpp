@@ -73,7 +73,7 @@ double CorrelationFunction::g(double s)
 void CorrelationFunction::Tabulate_resonance_Chebyshev_coefficients(int parent_resonance_particle_id)
 {
 	cs_accel_expEdNd3p = gsl_cheb_alloc (n_pY_pts - 1);
-	cs_accel_expEdNd3p->a = SP_Del_pY_min;
+	cs_accel_expEdNd3p->a = adjusted_SP_Del_pY_minimum;
 	cs_accel_expEdNd3p->b = SP_Del_pY_max;
 
 	long cfs_array_length = n_pT_pts * n_pphi_pts * qxnpts * qynpts * ntrig;
@@ -336,6 +336,9 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 						ssum_vec[qpt_cs_idx] += Mres*VEC_n2_s_factor*vsum_vec[qpt_cs_idx];
 				double ssum = Mres*VEC_n2_s_factor*vsum;
 
+if (ipY==0 && daughter_particle_id==1)
+	cout << "CHECK(nb=2): " << ssum << "   " << ssum_vec[0] << endl;
+
 				//update all gridpoints for all daughter moments
 				if ( doing_moments )
 				{
@@ -344,17 +347,21 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 					for (int iqy = 0; iqy < qynpts; ++iqy)
 					for (int itrig = 0; itrig < ntrig; ++itrig)
 					{
+//cout << "DUMP: " << daughter_lookup_idx << "   " << ipT << "   " << ipphi << "   " << ipY << "   " << iqx << "   " << iqy << "   " << itrig << "   " << current_daughters_dN_dypTdpTdphi_moments[daughter_lookup_idx][fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,itrig)] << endl;
 						current_daughters_dN_dypTdpTdphi_moments[daughter_lookup_idx][fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,itrig)] += ssum_vec[qpt_cs_idx];
 						++qpt_cs_idx;
 					}
 				}
 
 				//update daughter spectra separately
-				if ( doing_spectra && ipY == (n_pY_pts-1)/2 )	//only need spectra at Y == 0
+				if ( doing_spectra && ipY == 0 )	//only need spectra at Y == 0
 				{
 					spectra[daughter_particle_id][ipT][ipphi] += ssum;
 					log_spectra[daughter_particle_id][ipT][ipphi] = log(abs(spectra[daughter_particle_id][ipT][ipphi])+1.e-100);
 					sign_spectra[daughter_particle_id][ipT][ipphi] = sgn(spectra[daughter_particle_id][ipT][ipphi]);
+//if (daughter_particle_id==1)
+//	cout << "CHECK2: " << thermal_spectra[daughter_particle_id][ipT][ipphi] << "   " << spectra[daughter_particle_id][ipT][ipphi] << "   "
+//			<< current_daughters_dN_dypTdpTdphi_moments[daughter_lookup_idx][fixQTQZ_indexer(ipT,ipphi,ipY,0,0,0)] << endl;
 				}
 			}
 		}											// end of pT, pphi, pY loops
@@ -627,7 +634,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 	double parity_factor = 1.0;
 	if (USE_RAPIDITY_SYMMETRY && spyr < 0.0)
 	{
-		cout << "Using rapidity symmetry and have spyr = " << spyr << " < 0!" << endl;
+		//cout << "Using rapidity symmetry and have spyr = " << spyr << " < 0!" << endl;
 		if (abs(qt_pts[current_iqt]) < abs(qz_pts[current_iqz]))
 		{
 			parity_factor = -1.0;		//used to get correct sign of imaginary part of spectra
