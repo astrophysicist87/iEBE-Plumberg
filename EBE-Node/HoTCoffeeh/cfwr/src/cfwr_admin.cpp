@@ -98,6 +98,8 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	//qspace_cs_slice_length = qnpts*qnpts*qnpts*qnpts*ntrig;		//factor of 4 for sin or cos
 	qspace_cs_slice_length = qxnpts*qynpts*ntrig;		//factor of 4 for sin or cos, real or imaginary
 
+	ipY0 = ( USE_RAPIDITY_SYMMETRY ) ? 0 : (n_pY_pts - 1) / 2;	//define the point where pY==0
+
 	//gsl_set_error_handler_off();
 
 	//set arrays containing q points
@@ -326,7 +328,8 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	SP_Del_pY = new double [n_pY_pts];
 	double znodes[n_pY_pts];
 	double tmp_tan = tan(M_PI / (4.0*n_pY_pts));
-	adjusted_SP_Del_pY_minimum = (USE_RAPIDITY_SYMMETRY and USE_ADJUSTED_MINIMUM) ? -SP_Del_pY_max*tmp_tan*tmp_tan : SP_Del_pY_min;
+	adjusted_SP_Del_pY_minimum = ( USE_RAPIDITY_SYMMETRY and USE_ADJUSTED_MINIMUM ) ?
+									-SP_Del_pY_max*tmp_tan*tmp_tan : SP_Del_pY_min;
 	double local_scale = 0.5 * (adjusted_SP_Del_pY_minimum - SP_Del_pY_max);
 	double local_center = 0.5 * (adjusted_SP_Del_pY_minimum + SP_Del_pY_max);
 	

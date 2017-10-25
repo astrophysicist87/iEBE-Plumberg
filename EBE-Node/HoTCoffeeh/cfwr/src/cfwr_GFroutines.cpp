@@ -52,13 +52,13 @@ void CorrelationFunction::Cal_correlationfunction()
 {
 	*global_out_stream_ptr << "Calculating the correlation function..." << endl;
 
-	// Can't interpolate if there's only one point in qt-direction!
-	if (qtnpts == 1)
-		return;
-
 	//exploits convenient symmetries to get full correlation function
 	//as need for remainder of calculation
 	Reflect_in_qz_and_qt();
+
+	// Can't interpolate if there's only one point in qt-direction!
+	if (qtnpts == 1)
+		return;
 
 	// chooses the qo, qs, ql (or qx, qy, ql) points at which to evaluate correlation function,
 	// and allocates the array to hold correlation function values
@@ -621,12 +621,12 @@ void CorrelationFunction::Set_target_moments(int iqt, int iqz)
 
 	cout << "Setting full target moments...";
 	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
-        for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-        for (int iqx = 0; iqx < qxnpts; ++iqx)
-        for (int iqy = 0; iqy < qynpts; ++iqy)
-        for (int itrig = 0; itrig < ntrig; ++itrig)
-        	full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)]
-			= thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)];
+    for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+    for (int iqx = 0; iqx < qxnpts; ++iqx)
+    for (int iqy = 0; iqy < qynpts; ++iqy)
+    for (int itrig = 0; itrig < ntrig; ++itrig)
+    	full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)]
+		= thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)];
 
 	//if not just doing thermal pions, includ resonance contributions, too
 	if (!thermal_pions_only)
@@ -642,6 +642,10 @@ void CorrelationFunction::Set_thermal_target_moments(int iqt, int iqz)
 	{
 		//calculate them exactly at Y==0
 		double * BC_chunk = new double [4 * FO_length * n_alpha_points_PIONS];
+
+		*global_out_stream_ptr << "Loading important FOcells from file...";
+		Load_FOcells(target_particle_id);
+		*global_out_stream_ptr << "done." << endl;
 
 		Set_Y_eq_0_Bessel_grids(iqt, iqz, BC_chunk);
 		Cal_dN_dypTdpTdphi_with_weights_Yeq0_adjustable(iqt, iqz, BC_chunk, 10);
@@ -706,15 +710,18 @@ void CorrelationFunction::Set_full_target_moments(int iqt, int iqz)
 			chebyshev_a_cfs[ipY] = 0.0;
 			for (int kpY = 0; kpY < n_pY_pts; ++kpY)
 			{
-				chebyshev_a_cfs[ipY] += exp(SP_Del_pY[kpY]) * chebTcfs[ipY * n_pY_pts + kpY] * current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)];
-				if (ipY==0) cout << "CHECKinterp: " << ipT << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << SP_Del_pY[kpY] << "   " << current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,0)] << endl;
+				chebyshev_a_cfs[ipY] += exp(abs(SP_Del_pY[kpY])) * chebTcfs[ipY * n_pY_pts + kpY] * current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)];
+				if (ipY==0 && ipT==0 && ipphi==0) cout << "CHECKinterp: " << iqz << "   " << itrig << "   " << SP_Del_pY[kpY]
+									<< "   " << thermal_target_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)]
+									<< "   " << current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)] << endl;
 			}
 		}
 
 		cs_accel_expEdNd3p->c = chebyshev_a_cfs;
 		double tmp_pY = 0.0;	//interpolating to this point
 		full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)] += exp(-tmp_pY) * gsl_cheb_eval (cs_accel_expEdNd3p, tmp_pY);
-		if (itrig==0) cout << "CHECKinterp2: " << ipT << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << exp(-tmp_pY) * gsl_cheb_eval (cs_accel_expEdNd3p, tmp_pY) << endl;
+		if (ipT==0 && ipphi==0) cout << "CHECKinterp2: " << iqz << "   " << itrig << "   "
+							<< exp(-tmp_pY) * gsl_cheb_eval (cs_accel_expEdNd3p, tmp_pY) << endl;
 	}
 
 	delete [] chebyshev_a_cfs;

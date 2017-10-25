@@ -94,12 +94,12 @@ void CorrelationFunction::Tabulate_resonance_Chebyshev_coefficients(int parent_r
 			for (int kpY = 0; kpY < n_pY_pts; ++kpY)
 			{
 				chebyshev_a_cfs[idx][ipY] += exp(abs(SP_Del_pY[kpY])) * chebTcfs[ipY * n_pY_pts + kpY] * current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)];
-if (ipT==1 && ipphi==1 && ipY==0 && iqx==0 && iqy==0)
-{
-	double tmpcos = 0.0, tmpsin = 0.0;
+//if (ipT==1 && ipphi==1 && ipY==0 && iqx==0 && iqy==0)
+//{
+//	double tmpcos = 0.0, tmpsin = 0.0;
 	//Cal_dN_dypTdpTdphi_with_weights_function_approx(parent_resonance_particle_id, SP_pT[ipT], SP_pphi[ipphi], SP_Del_pY[kpY], qt_pts[current_iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[current_iqz], &tmpcos, &tmpsin);
 	//cout << "GRID: " << ipT << "   " << ipphi << "   " << kpY << "   " << SP_Del_pY[kpY] << "   " << iqx << "   " << iqy << "   " << itrig << "   " << tmpcos << "   " << tmpsin << "   " << current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)] << endl;
-}
+//}
 			}
 		}
 		++idx;
@@ -336,8 +336,8 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 						ssum_vec[qpt_cs_idx] += Mres*VEC_n2_s_factor*vsum_vec[qpt_cs_idx];
 				double ssum = Mres*VEC_n2_s_factor*vsum;
 
-if (ipY==0 && daughter_particle_id==1)
-	cout << "CHECK(nb=2): " << ssum << "   " << ssum_vec[0] << endl;
+if (ipT==0 && ipphi==0 && daughter_particle_id==1)
+	cout << "CHECK(nb=2): " << ipY << "   " << iqz << "   " << ssum << "   " << ssum_vec[0] << endl;
 
 				//update all gridpoints for all daughter moments
 				if ( doing_moments )
@@ -733,10 +733,10 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 	for (int iqy = 0; iqy < qynpts; ++iqy)
 	{
 		double alpha_pm = parity_factor * one_by_Gamma_Mres * dot_four_vectors(qlist[qlist_idx], currentPpm);
-			//this is alpha^k in my notes
-			//can be evaluated at +q_perp and spyr
-			//but must include parity_factor to compensate
-			//thus, qlist_idx should loop FORWARD
+		//this is alpha^k in my notes
+		//can be evaluated at +q_perp and spyr
+		//but must include parity_factor to compensate
+		//thus, qlist_idx should loop FORWARD
 		double akr = 1./(1.+alpha_pm*alpha_pm);
 		double aki = alpha_pm/(1.+alpha_pm*alpha_pm);
 
@@ -811,7 +811,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 			val12 = val12_arr[reversible_qpt_cs_idx+2*iCS+1];
 			val22 = val22_arr[reversible_qpt_cs_idx+2*iCS+1];
 
-			/*if (current_tempidx==0)
+			/*if (current_ipT==0 && current_ipphi==0 && current_tempidx==0)
 			{
 				double tempCS[4];
 				tempCS[0] = 0.0, tempCS[1] = 0.0, tempCS[2] = 0.0, tempCS[3] = 0.0;
@@ -867,21 +867,24 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 		    //--> update the imaginary part of weighted daughter spectra
 		    results[qpt_cs_idx+1] += parity_factor * (akr*SXSpm+aki*SXCpm);	//multiply checked
 
-			/*double tempCS[4];
-			tempCS[0] = 0.0, tempCS[1] = 0.0, tempCS[2] = 0.0, tempCS[3] = 0.0;
-			Cal_dN_dypTdpTdphi_with_weights_function_approx(current_parent_resonance, ptr, phir, spyr,
-															qt_pts[current_iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[current_iqz],
-															&tempCS[0], &tempCS[1], &tempCS[2], &tempCS[3]);
-			cout << "cfwr_resonance(): "
-					<< ptr << "   " << phir << "   " << spyr << "   " << spyr+current_pY_shift << "   " << qt_pts[current_iqt] << "   "
-					<< qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[current_iqz] << endl
-					<< "\t\t" << Zkr << "   " << Zki << endl
-					<< "\t\t" << tempCS[2*iCS] << "   " << tempCS[2*iCS+1] << endl;
-			Cal_dN_dypTdpTdphi_with_weights_function_approx(current_parent_resonance, ptr, phir, pyr,
-															qt_pts[current_iqt], qx_pts[qxnpts-1-iqx], qy_pts[qynpts-1-iqy], qz_pts[current_iqz],
-															&tempCS[0], &tempCS[1], &tempCS[2], &tempCS[3]);
-			cout << "\t\t" << tempCS[2*iCS] << "   " << tempCS[2*iCS+1] << endl;
-			*/
+			/*if (current_ipT==0 && current_ipphi==0 && current_ipY==0 && current_tempidx==0)
+			{
+				double tempCS[4];
+				tempCS[0] = 0.0, tempCS[1] = 0.0, tempCS[2] = 0.0, tempCS[3] = 0.0;
+				Cal_dN_dypTdpTdphi_with_weights_function_approx(current_parent_resonance, ptr, phir, spyr,
+																qt_pts[current_iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[current_iqz],
+																&tempCS[0], &tempCS[1], &tempCS[2], &tempCS[3]);
+				cout << "cfwr_resonance(): "
+						<< ptr << "   " << phir << "   " << spyr << "   " << spyr+current_pY_shift << "   " << qt_pts[current_iqt] << "   "
+						<< qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[current_iqz] << endl
+						<< "\t\t" << akr << "   " << aki << endl
+						<< "\t\t" << SXCpm << "   " << SXSpm << endl
+						<< "\t\t" << tempCS[2*iCS] << "   " << tempCS[2*iCS+1] << endl;
+				Cal_dN_dypTdpTdphi_with_weights_function_approx(current_parent_resonance, ptr, phir, pyr,
+																qt_pts[current_iqt], qx_pts[qxnpts-1-iqx], qy_pts[qynpts-1-iqy], qz_pts[current_iqz],
+																&tempCS[0], &tempCS[1], &tempCS[2], &tempCS[3]);
+				cout << "\t\t" << tempCS[2*iCS] << "   " << tempCS[2*iCS+1] << endl;
+			}*/
 
 		    qpt_cs_idx += 2;
 		}
@@ -1135,29 +1138,45 @@ void CorrelationFunction::Set_val_arrays(double ptr, double phir, double spyr)
 
 				// set val11
 				if ( test11 )
-					val11_arr[qpt_cs_idx] = sign_of_f111 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) );
-					//val11_arr[qpt_cs_idx] = sign_of_f111 * fastexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) );
+				{
+					if (USE_FAST_EXP)
+						val11_arr[qpt_cs_idx] = sign_of_f111 * fastexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) );
+					else
+						val11_arr[qpt_cs_idx] = sign_of_f111 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) );
+				}
 				else
 					val11_arr[qpt_cs_idx] = 0.0;
 
 				// set val21
 				if ( test21 )
-					val21_arr[qpt_cs_idx] = sign_of_f121 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]) );
-					//val21_arr[qpt_cs_idx] = sign_of_f121 * fastexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]) );
+				{
+					if (USE_FAST_EXP)
+						val21_arr[qpt_cs_idx] = sign_of_f121 * fastexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]) );
+					else
+						val21_arr[qpt_cs_idx] = sign_of_f121 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]) );
+				}
 				else
 					val21_arr[qpt_cs_idx] = 0.0;
 
 				// set val12
 				if ( test12 )
-					val12_arr[qpt_cs_idx] = sign_of_f112 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]) );
-					//val12_arr[qpt_cs_idx] = sign_of_f112 * fastexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]) );
+				{
+					if (USE_FAST_EXP)
+						val12_arr[qpt_cs_idx] = sign_of_f112 * fastexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]) );
+					else
+						val12_arr[qpt_cs_idx] = sign_of_f112 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]) );
+				}
 				else
 					val12_arr[qpt_cs_idx] = 0.0;
 
 				// set val22
 				if ( test22 )
-					val22_arr[qpt_cs_idx] = sign_of_f122 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
-					//val22_arr[qpt_cs_idx] = sign_of_f122 * fastexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
+				{
+					if (USE_FAST_EXP)
+						val22_arr[qpt_cs_idx] = sign_of_f122 * fastexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
+					else
+						val22_arr[qpt_cs_idx] = sign_of_f122 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
+				}
 				else
 					val22_arr[qpt_cs_idx] = 0.0;
 
@@ -1248,29 +1267,45 @@ void CorrelationFunction::Set_val_arrays(double ptr, double phir, double spyr)
 
 				// set val11
 				if ( test11 ) // if the two points have the same sign in the pT direction, interpolate logs
-					val11_arr[qpt_cs_idx] = sign_of_f111 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) );
-					//val11_arr[qpt_cs_idx] = sign_of_f111 * fastexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) );
+				{
+					if (USE_FAST_EXP)
+						val11_arr[qpt_cs_idx] = sign_of_f111 * fastexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) );
+					else
+						val11_arr[qpt_cs_idx] = sign_of_f111 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) );
+				}
 				else                                    // otherwise, just interpolate original vals
 					val11_arr[qpt_cs_idx] = lin_int(del_ptr_pt0, one_by_pTdiff, f111_arr[qpt_cs_idx], f211_arr[qpt_cs_idx]);
 
 				// set val21
 				if ( test21 ) // if the two points have the same sign in the pT direction, interpolate logs
-					val21_arr[qpt_cs_idx] = sign_of_f121 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]) );
-					//val21_arr[qpt_cs_idx] = sign_of_f121 * fastexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]) );
+				{
+					if (USE_FAST_EXP)
+						val21_arr[qpt_cs_idx] = sign_of_f121 * fastexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]) );
+					else
+						val21_arr[qpt_cs_idx] = sign_of_f121 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]) );
+				}
 				else                                    // otherwise, just interpolate original vals
 					val21_arr[qpt_cs_idx] = lin_int(del_ptr_pt0, one_by_pTdiff, f121_arr[qpt_cs_idx], f221_arr[qpt_cs_idx]);
 
 				// set val12
 				if ( test12 ) // if the two points have the same sign in the pT direction, interpolate logs
-					val12_arr[qpt_cs_idx] = sign_of_f112 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]) );
-					//val12_arr[qpt_cs_idx] = sign_of_f112 * fastexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]) );
+				{
+					if (USE_FAST_EXP)
+						val12_arr[qpt_cs_idx] = sign_of_f112 * fastexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]) );
+					else
+						val12_arr[qpt_cs_idx] = sign_of_f112 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]) );
+				}
 				else                                    // otherwise, just interpolate original vals
 					val12_arr[qpt_cs_idx] = lin_int(del_ptr_pt0, one_by_pTdiff, f112_arr[qpt_cs_idx], f212_arr[qpt_cs_idx]);
 
 				// set val22
 				if ( test22 ) // if the two points have the same sign in the pT direction, interpolate logs
-					val22_arr[qpt_cs_idx] = sign_of_f122 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
-					//val22_arr[qpt_cs_idx] = sign_of_f122 * fastexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
+				{
+					if (USE_FAST_EXP)
+						val22_arr[qpt_cs_idx] = sign_of_f122 * fastexp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
+					else
+						val22_arr[qpt_cs_idx] = sign_of_f122 * exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );
+				}
 				else                                    // otherwise, just interpolate original vals
 					val22_arr[qpt_cs_idx] = lin_int(del_ptr_pt0, one_by_pTdiff, f122_arr[qpt_cs_idx], f222_arr[qpt_cs_idx]);
 

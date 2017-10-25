@@ -57,7 +57,14 @@ void CorrelationFunction::Load_FOcells(int local_pid)
 
 	for (int iFOipT = 0; iFOipT < FO_length * n_pT_pts; ++iFOipT)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+	{
 		in >> FOcells_to_include[iFOipT][ipphi];
+		/*if (FOcells_to_include[iFOipT][ipphi] < 0)
+		{
+			cerr << "Shouldn't have stored a negative value: " << iFOipT << "   " << ipphi << "   " << FOcells_to_include[iFOipT][ipphi] << endl;
+			exit(1);
+		}*/
+	}
 
 	in.close();
 	return;
@@ -277,12 +284,12 @@ void CorrelationFunction::Output_correlationfunction()
 		double ckp = cos_SP_pphi[ipphi], skp = sin_SP_pphi[ipphi];
 		oCorrFunc << scientific << setprecision(8) << setw(12)
 			<< SP_pT[ipT] << "   " << SP_pphi[ipphi] << "   "
-			<< setprecision(4) << setw(8) << qx_pts[iqx] << "   "
+			<< setprecision(3) << setw(5) << qx_pts[iqx] << "   "
 			<< qy_pts[iqy] << "   " << qz_pts[iqz] << "   "
 			//<< qx_pts[iqx] * ckp + qy_pts[iqy] * skp << "   "
 			//<< -qx_pts[iqx] * skp + qy_pts[iqy] * ckp << "   "
 			//<< qz_pts[iqz] << "   "
-			<< setprecision(8) << setw(12)
+			<< setprecision(6) << setw(10)
 			<< spectra[target_particle_id][ipT][ipphi] << "   "
 			<< thermalCFvals[ipT][ipphi][iqx][iqy][iqz] << "   "
 			<< crosstermCFvals[ipT][ipphi][iqx][iqy][iqz] << "   "
@@ -436,12 +443,16 @@ void CorrelationFunction::Output_total_target_eiqx_dN_dypTdpTdphi(double current
 		double sin_transf_tspectra = thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,1)]
 										+ thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,2)];
 		//
-		//cout << "IOcheck: " << qt_pts[iqt] << "   " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[iqz] << "   "
-                //        << SP_pT[ipT] << "   " << SP_pphi[ipphi] << "   "
-		//	<< thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,0)] << "   "
-                //        << thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,1)] << "   "
-                //        << thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,2)] << "   "
-                //        << thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,3)] << endl;
+		cout << "IOcheck: " << qt_pts[iqt] << "   " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[iqz] << "   "
+                        << SP_pT[ipT] << "   " << SP_pphi[ipphi] << endl
+						<< "\t\t" << thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,0)] << "   "
+                        << thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,1)] << "   "
+                        << thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,2)] << "   "
+                        << thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,3)] << endl
+						<< "\t\t" << full_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,0)] << "   "
+                        << full_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,1)] << "   "
+                        << full_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,2)] << "   "
+                        << full_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,3)] << endl;
 
 		output_target_dN_dypTdpTdphi << scientific << setprecision(8) << setw(12)
 			<< qt_pts[iqt] << "   " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[iqz] << "   "

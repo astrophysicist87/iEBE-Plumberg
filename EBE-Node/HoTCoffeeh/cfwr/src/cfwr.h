@@ -186,7 +186,7 @@ class CorrelationFunction
 		double * q_out, * q_side, * q_long;
 		int q1npts, q2npts, q3npts;		//123 indexing allows these to refer to either q[osl]npts or q[xyz]npts
 		double * q1_pts, * q2_pts, * q3_pts;
-		int iqt0, iqx0, iqy0, iqz0;
+		int iqt0, iqx0, iqy0, iqz0, ipY0;
 		vector<vector<int> > sorted_q_pts_list;
 		double ** qlist, * current_qlist_slice;
 		vector<vector<int> > q_axes_and_rays;

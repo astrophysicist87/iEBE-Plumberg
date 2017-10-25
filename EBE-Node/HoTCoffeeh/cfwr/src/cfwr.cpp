@@ -809,6 +809,7 @@ void CorrelationFunction::Reset_FOcells_array()
 	for (int iFOipT = 0; iFOipT < FO_length * n_pT_pts; ++iFOipT)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		FOcells_to_include[iFOipT][ipphi] = -1;
+		//FOcells_to_include[iFOipT][ipphi] = 1;	//default to including all cells
 	return;
 }
 
@@ -1778,9 +1779,9 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_adjustable(int iq
 	int local_pid = target_particle_id;
 
 	cs_accel_expK0rePIONS = gsl_cheb_alloc (n_alpha_points_PIONS - 1);
-        cs_accel_expK0imPIONS = gsl_cheb_alloc (n_alpha_points_PIONS - 1);
-        cs_accel_expK1rePIONS = gsl_cheb_alloc (n_alpha_points_PIONS - 1);
-        cs_accel_expK1imPIONS = gsl_cheb_alloc (n_alpha_points_PIONS - 1);
+	cs_accel_expK0imPIONS = gsl_cheb_alloc (n_alpha_points_PIONS - 1);
+	cs_accel_expK1rePIONS = gsl_cheb_alloc (n_alpha_points_PIONS - 1);
+	cs_accel_expK1imPIONS = gsl_cheb_alloc (n_alpha_points_PIONS - 1);
 	//cheb_set = true;
 
 	// set particle information
@@ -1845,7 +1846,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_adjustable(int iq
 	}
 
 bool talky_loop = false;
-if (iqt == 0 && iqz == 0)
+if (iqt == (qtnpts-1)/2 && iqz == (qznpts-1)/2)
 	talky_loop = true;
 
 	/////////////////////////////////////////////////////////////
@@ -1922,11 +1923,7 @@ if (iqt == 0 && iqz == 0)
 			double a = mT*mT*(pi00 + pi33);
 
 			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-			//int nCells = FOcells_to_do.size();
-			//for (int iFO = 0; iFO < nCells; ++iFO)
 			{
-				//int ipphi = FOcells_to_do[iFO];
-				// initialize transverse momentum information
 				double px = pT*cos_SP_pphi[ipphi];
 				double py = pT*sin_SP_pphi[ipphi];
 
@@ -1968,12 +1965,12 @@ if (iqt == 0 && iqz == 0)
 				complex<double> eiqx_S_x_K = term1 + term2 + term3;
 /*if (talky_loop && ipT==0 && ipphi==0)
 {
-	cout << "fullFOcells: " << isurf << "   :::   ";
+	cout << "fullFOcells: " << isurf << "   " << transverse_f0 << "   " << FOcells_to_do[ipphi] << endl;
 	for (int k = 0; k < I0.size(); ++k)
-		cout << " : " << I0[k] << "   " << I1[k] << "   " << I2[k] << "   " << I3[k] << " : ";
-					cout	<< ":::   " << transverse_f0 << "   " 
-                                                << alpha << "   " << beta << "   "<< gamma << "   "
-						<< eiqx_S_x_K.real() << "   " << eiqx_S_x_K.imag() << endl;
+		cout << "\t\t" << I0[k] << "   " << I1[k] << "   " << I2[k] << "   " << I3[k] << endl;
+	cout << "\t\t"
+			<< alpha << "   " << beta << "   "<< gamma << "   "
+			<< eiqx_S_x_K.real() << "   " << eiqx_S_x_K.imag() << endl;
 }*/
 				short_array_C[iidx] = FOcells_to_do[ipphi] * eiqx_S_x_K.real();
 				short_array_S[iidx++] = FOcells_to_do[ipphi] * eiqx_S_x_K.imag();
@@ -1998,6 +1995,7 @@ if (iqt == 0 && iqz == 0)
 				double * ala_SR = alt_long_array_SR[idx];
 				double * ala_SI = alt_long_array_SI[idx++];
 				long iidx_local = 0;
+				if (talky_loop) cout << "TEST HERE: " << cosAx << "   " << sinAx << "   " << cosAy << "   " << sinAy << "   " << cos_trans_Fourier << "   " << short_array_C[0] << endl;
 				while ( iidx_local < iidx_end )
 				{
 					double cos_qx_S_x_K = short_array_C[iidx_local];
@@ -2028,6 +2026,15 @@ if (iqt == 0 && iqz == 0)
 		alt_long_array_CI[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] = -alt_long_array_CI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];	//N.B. - sin_trans* odd
 		alt_long_array_SR[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] = -alt_long_array_SR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];	//N.B. - sin_trans* odd
 		alt_long_array_SI[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] = alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		/*if (talky_loop) cout << "ALSO TEST HERE: " << iqx << "   " << iqy << "   " << qxnpts-iqx-1 << "   " << qynpts-iqy-1 << endl
+				<< "\t\t" << alt_long_array_CR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi] << "   "
+				<< alt_long_array_CI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi] << "   "
+				<< alt_long_array_SR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi] << "   "
+				<< alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi] << endl
+				<< "\t\t" << alt_long_array_CR[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] << "   "
+				<< alt_long_array_CI[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] << "   "
+				<< alt_long_array_SR[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] << "   "
+				<< alt_long_array_SI[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] << endl;*/
 	}
 
 	for (int iqx = 0; iqx < qxnpts; ++iqx)
@@ -2037,16 +2044,14 @@ if (iqt == 0 && iqz == 0)
 	{
 		thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 0)] = alt_long_array_CR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
 		thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 1)] = alt_long_array_CI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
-		//thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 2)] = alt_long_array_SR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
-		//thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 3)] = alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
 		thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 2)] = alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
 		thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 3)] = alt_long_array_SR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
-	/*cout << "CALCcheck: " << qt_pts[iqt] << "   " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[iqz] << "   "
+	if (ipT==0 && ipphi==0) cout << "CALCcheck: " << qt_pts[iqt] << "   " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[iqz] << "   "
                         << SP_pT[ipT] << "   " << SP_pphi[ipphi] << "   "
                         << thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,0)] << "   "
                         << thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,1)] << "   "
                         << thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,2)] << "   "
-                        << thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,3)] << endl;*/
+                        << thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,3)] << endl;
 	}
 	//////////
 	//////////

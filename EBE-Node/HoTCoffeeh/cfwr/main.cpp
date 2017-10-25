@@ -221,6 +221,8 @@ int main(int argc, char *argv[])
 	//decide whether to compute resonances or read them in
 	if ((int)(paraRdr->getVal("calculate_CF_mode")) == 0)
 	{
+		sw.Stop();
+		sw.Reset();
 		output << "Calculating correlation function with all resonance decays (looping over qt and qz)..." << endl;
 
 		int local_qtnpts = (int)(paraRdr->getVal("qtnpts"));
@@ -230,11 +232,17 @@ int main(int argc, char *argv[])
 		for (int iqt = 0; iqt < (local_qtnpts+1)/2; ++iqt)
 		for (int iqz = 0; iqz < (local_qznpts+1)/2; ++iqz)
 		{
+			sw.Start();
 			correlation_function.Fourier_transform_emission_function(iqt, iqz);
 			correlation_function.Compute_phase_space_integrals(iqt, iqz);
 			correlation_function.Set_target_moments(iqt, iqz);
+			sw.Stop();
+			output << "Completed this (iqt=" << iqt << ",iqz=" << iqz << ")-loop in " << sw.printTime() << " seconds." << endl;
+			sw.Reset();
 		}
 	}
+
+	//do the reflections here
 
 	//decide whether to compute correlation function or read it in
 	if ((int)(paraRdr->getVal("calculate_CF_mode")) < 2)
