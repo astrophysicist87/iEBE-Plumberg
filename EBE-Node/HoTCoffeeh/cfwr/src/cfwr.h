@@ -277,11 +277,7 @@ class CorrelationFunction
 		void Set_full_target_moments(int iqt, int iqz);
 		void Set_giant_arrays(int iqt, int iqx, int iqy, int iqz);
 		void Cal_dN_dypTdpTdphi_no_weights(int local_pid);
-		void Cal_dN_dypTdpTdphi_no_weights_adjustable(int local_pid, int max_n_terms_to_compute);
 		void Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY, int iqt, int iqz, double * BC_chunk, int local_part_mode);
-		void Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_pid, int ipY, int iqt, int iqz,
-															double * BC_chunk, int max_n_terms_to_compute, int local_part_mode);
-		void Cal_dN_dypTdpTdphi_with_weights_Yeq0_adjustable(int iqt, int iqz, double * BC_chunk, int max_n_terms_to_compute);
 		void Cal_dN_dypTdpTdphi_with_weights_Yeq0_alternate(int iqt, int iqz);
 		void Cal_dN_dypTdpTdphi_no_weights_Yeq0_alternate();
 		void Cal_dN_dypTdpTdphi_with_weights_function_approx(int local_pid, double pT, double pphi, double pY,
@@ -377,7 +373,7 @@ class CorrelationFunction
 		void Output_chosen_resonances();
 		void Output_resonance_fraction();
 		void Read_in_correlationfunction();
-		void Output_correlationfunction();
+		void Output_correlationfunction(bool projected_CF = true);
 		void Output_lambdas();
 		void Output_fleshed_out_correlationfunction(int ipt, int ipphi);
 		void Dump_spectra_array(string output_filename, double *** array_to_dump);

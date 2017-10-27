@@ -232,7 +232,7 @@ int main(int argc, char *argv[])
 		for (int iqt = 0; iqt < (local_qtnpts+1)/2; ++iqt)
 		for (int iqz = 0; iqz < (local_qznpts+1)/2; ++iqz)
 		{
-			if (iqt + iqz > 0) continue;
+			//if (iqt + iqz > 0) continue;
 			sw.Start();
 			correlation_function.Fourier_transform_emission_function(iqt, iqz);
 			correlation_function.Compute_phase_space_integrals(iqt, iqz);
@@ -262,7 +262,10 @@ int main(int argc, char *argv[])
 	if ((int)(paraRdr->getVal("calculate_CF_mode")) < 2)
 	{
 		if ( (int)(paraRdr->getVal("qtnpts")) > 1 )
+		{
 			correlation_function.Output_correlationfunction();
+			correlation_function.Output_correlationfunction(false);
+		}
 		if ((int)(paraRdr->getVal("calculate_CF_mode")) == 0)
 		{
 			correlation_function.Output_total_target_dN_dypTdpTdphi();

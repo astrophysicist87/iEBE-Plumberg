@@ -636,61 +636,10 @@ void CorrelationFunction::Set_target_moments(int iqt, int iqz)
 	return;
 }
 
+//assume only want midrapidity (Y=0) pions for the timebeing
 void CorrelationFunction::Set_thermal_target_moments(int iqt, int iqz)
 {
-	if (1)	//just use alternate version from now on...
-	{
-		Cal_dN_dypTdpTdphi_with_weights_Yeq0_alternate(iqt, iqz);
-
-		//return;
-	}
-	else if (MIDRAPIDITY_PIONS_ONLY)
-	{
-		//calculate them exactly at Y==0
-		double * BC_chunk = new double [4 * FO_length * n_alpha_points_PIONS];
-
-		*global_out_stream_ptr << "Loading important FOcells from file...";
-		Load_FOcells(target_particle_id);
-		*global_out_stream_ptr << "done." << endl;
-
-		Set_Y_eq_0_Bessel_grids(iqt, iqz, BC_chunk);
-		Cal_dN_dypTdpTdphi_with_weights_Yeq0_adjustable(iqt, iqz, BC_chunk, 10);
-
-		delete [] BC_chunk;
-	}
-	else
-	{
-		//just interpolate to Y==0 (assuming they've already been calculated)
-		int HDFInitializationSuccess = Administrate_target_thermal_HDF_array(1);	//open
-		int getHDFresonanceSpectra = Access_target_thermal_in_HDF_array(iqt, iqz, 1, thermal_target_dN_dypTdpTdphi_moments);
-
-		gsl_cheb_series *cs_accel_expEdNd3p = gsl_cheb_alloc (n_pY_pts - 1);
-		cs_accel_expEdNd3p->a = SP_Del_pY_min;
-		cs_accel_expEdNd3p->b = SP_Del_pY_max;
-
-		double * chebyshev_a_cfs = new double [n_pY_pts];
-
-		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
-		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-		for (int iqx = 0; iqx < qxnpts; ++iqx)
-		for (int iqy = 0; iqy < qynpts; ++iqy)
-		for (int itrig = 0; itrig < ntrig; ++itrig)
-		{
-			for (int ipY = 0; ipY < n_pY_pts; ++ipY)
-			{
-				chebyshev_a_cfs[ipY] = 0.0;
-				for (int kpY = 0; kpY < n_pY_pts; ++kpY)
-					chebyshev_a_cfs[ipY] += exp(SP_Del_pY[kpY]) * chebTcfs[ipY * n_pY_pts + kpY] * thermal_target_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)];
-			}
-
-			cs_accel_expEdNd3p->c = chebyshev_a_cfs;
-			double tmp_pY = 0.0;	//interpolating to this point
-			thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)] = exp(-tmp_pY) * gsl_cheb_eval (cs_accel_expEdNd3p, tmp_pY);
-		}
-
-		delete [] chebyshev_a_cfs;
-		HDFInitializationSuccess = Administrate_target_thermal_HDF_array(2);	//close
-	}
+	Cal_dN_dypTdpTdphi_with_weights_Yeq0_alternate(iqt, iqz);
 
 	return;
 }

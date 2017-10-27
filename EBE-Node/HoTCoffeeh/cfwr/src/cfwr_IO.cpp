@@ -261,14 +261,14 @@ void CorrelationFunction::Output_lambdas()
 	return;
 }
 
-void CorrelationFunction::Output_correlationfunction()
+void CorrelationFunction::Output_correlationfunction(bool projected_CF /*==true*/)
 {
 	ostringstream oCorrFunc_stream;
 	string temp_particle_name = particle_name;
 	replace_parentheses(temp_particle_name);
 
 	string CF_proj_string = "";
-	if (!FIT_WITH_PROJECTED_CFVALS)
+	if (!projected_CF)
 		CF_proj_string = "unprojected_";
 
 	oCorrFunc_stream << path << "/correlfunct3D_" << CF_proj_string << temp_particle_name << ".dat";
