@@ -232,6 +232,7 @@ int main(int argc, char *argv[])
 		for (int iqt = 0; iqt < (local_qtnpts+1)/2; ++iqt)
 		for (int iqz = 0; iqz < (local_qznpts+1)/2; ++iqz)
 		{
+			if (iqt + iqz > 0) continue;
 			sw.Start();
 			correlation_function.Fourier_transform_emission_function(iqt, iqz);
 			correlation_function.Compute_phase_space_integrals(iqt, iqz);

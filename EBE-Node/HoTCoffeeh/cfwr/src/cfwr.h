@@ -282,6 +282,8 @@ class CorrelationFunction
 		void Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_pid, int ipY, int iqt, int iqz,
 															double * BC_chunk, int max_n_terms_to_compute, int local_part_mode);
 		void Cal_dN_dypTdpTdphi_with_weights_Yeq0_adjustable(int iqt, int iqz, double * BC_chunk, int max_n_terms_to_compute);
+		void Cal_dN_dypTdpTdphi_with_weights_Yeq0_alternate(int iqt, int iqz);
+		void Cal_dN_dypTdpTdphi_no_weights_Yeq0_alternate();
 		void Cal_dN_dypTdpTdphi_with_weights_function_approx(int local_pid, double pT, double pphi, double pY,
 												double qt, double qx, double qy, double qz, double * cosqx_dN_dypTdpTdphi, double * sinqx_dN_dypTdpTdphi);
 		void Cal_dN_dypTdpTdphi_with_weights_function_approx(int local_pid, double pT, double pphi, double p_Y,

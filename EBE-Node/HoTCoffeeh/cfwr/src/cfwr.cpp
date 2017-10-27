@@ -207,7 +207,7 @@ void CorrelationFunction::Fourier_transform_emission_function(int iqt, int iqz)
 		int HDFInitializationSuccess = Administrate_resonance_HDF_array(0);
 		HDFInitializationSuccess = Administrate_target_thermal_HDF_array(0);
 		Set_all_Bessel_grids(iqt, iqz);
-		Set_all_Bessel_grids(iqt, iqz, 1);
+		//Set_all_Bessel_grids(iqt, iqz, 1);
 		*global_out_stream_ptr << "done." << endl << endl;
 	}
 	else
@@ -216,7 +216,7 @@ void CorrelationFunction::Fourier_transform_emission_function(int iqt, int iqz)
 		int HDFInitializationSuccess = Administrate_resonance_HDF_array(1);		//open
 		HDFInitializationSuccess = Administrate_target_thermal_HDF_array(1);	//open
 		Set_all_Bessel_grids(iqt, iqz);
-		Set_all_Bessel_grids(iqt, iqz, 1);
+		//Set_all_Bessel_grids(iqt, iqz, 1);
 		*global_out_stream_ptr << "done." << endl << endl;
 	}
 	///////
@@ -809,7 +809,6 @@ void CorrelationFunction::Reset_FOcells_array()
 	for (int iFOipT = 0; iFOipT < FO_length * n_pT_pts; ++iFOipT)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		FOcells_to_include[iFOipT][ipphi] = -1;
-		//FOcells_to_include[iFOipT][ipphi] = 1;	//default to including all cells
 	return;
 }
 
@@ -834,7 +833,10 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 	{
 		*global_out_stream_ptr << "Computing un-weighted thermal spectra..." << endl;
 		if (local_pid == target_particle_id)
-			Cal_dN_dypTdpTdphi_no_weights_adjustable(local_pid, 10);
+		{
+			//Cal_dN_dypTdpTdphi_no_weights_adjustable(local_pid, 10);
+			Cal_dN_dypTdpTdphi_no_weights_Yeq0_alternate();
+		}
 		else
 			Cal_dN_dypTdpTdphi_no_weights(local_pid);
 	}
@@ -844,6 +846,9 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 		Load_FOcells(local_pid);
 		*global_out_stream_ptr << "done." << endl;
 	}
+
+	if (local_particle_mode == 1)	//do pions at the end
+		return;
 
 	// get weighted spectra with only most important fluid cells, up to given threshhold
 	*global_out_stream_ptr << "Computing weighted thermal spectra..." << endl;
@@ -2095,20 +2100,18 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_alternate(int iqt
 		deltaf_prefactor = 1./(2.0*Tdec*Tdec*(Edec+Pdec));
 
 	//spatial rapidity grid
-	const int eta_s_npts = 15;
-	eta_s = new double [eta_s_npts];
-	eta_s_weight = new double [eta_s_npts];
+	const int eta_s_npts = 101;
+	double * eta_s = new double [eta_s_npts];
+	double * eta_s_weight = new double [eta_s_npts];
 	double eta_s_i = 0.0, eta_s_f = 4.0;
 	gauss_quadrature(eta_s_npts, 1, 0.0, 0.0, eta_s_i, eta_s_f, eta_s, eta_s_weight);
-	ch_eta_s = new double [eta_s_npts];
-	sh_eta_s = new double [eta_s_npts];
+	double * ch_eta_s = new double [eta_s_npts];
+	double * sh_eta_s = new double [eta_s_npts];
 	for (int ieta = 0; ieta < eta_s_npts; ieta++)
 	{
 		ch_eta_s[ieta] = cosh(eta_s[ieta]);
 		sh_eta_s[ieta] = sinh(eta_s[ieta]);
 	}
-	// set the rapidity-integration symmetry factor
-	double eta_odd_factor = 0.0, eta_even_factor = 2.0;
 
 	for (int isurf = 0; isurf < FO_length; ++isurf)
 	{
@@ -2164,7 +2167,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_alternate(int iqt
 								* (p0*p0*pi00 - 2.0*p0*px*pi01 - 2.0*p0*py*pi02 + px*px*pi11 + 2.0*px*py*pi12 + py*py*pi22 + pz*pz*pi33);
 
 				//p^mu d^3sigma_mu factor: The plus sign is due to the fact that the DA# variables are for the covariant surface integration
-				double S_p = prefactor*(p0*da0 + px*da1 + py*da2)*f0*(1.+deltaf);
+				double S_p_with_weight = eta_s_weight[ieta]*tau*prefactor*(p0*da0 + px*da1 + py*da2)*f0*(1.+deltaf);
 
 				//ignore points where delta f is large or emission function goes negative from pdsigma
 				/*if ( (1. + deltaf < 0.0) || (flagneg == 1 && S_p < tol) )
@@ -2180,15 +2183,133 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_alternate(int iqt
 					double cosAy = tmpY[iqy * 2 + 0], sinAy = tmpY[iqy * 2 + 1];
 					double cos_trans_Fourier = cosAx*cosAy - sinAx*sinAy;	//==cos(qx x + qy y)
 					double sin_trans_Fourier = sinAx*cosAy + cosAx*sinAy;	//==sin(qx x + qy y)
-					thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 0)] += cos_phi_L * cos_trans_Fourier;
-					thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 1)] -= cos_phi_L * sin_trans_Fourier;
-					thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 2)] += sin_phi_L * cos_trans_Fourier;
-					thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 3)] += sin_phi_L * sin_trans_Fourier;
+					thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 0)] += S_p_with_weight * cos_phi_L * cos_trans_Fourier;
+					thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 1)] -= S_p_with_weight * cos_phi_L * sin_trans_Fourier;
+					thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 2)] += S_p_with_weight * sin_phi_L * cos_trans_Fourier;
+					thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 3)] += S_p_with_weight * sin_phi_L * sin_trans_Fourier;
 				}
-	 
 			}
 		}
 	}
+
+	//clean up
+	delete [] eta_s;
+	delete [] eta_s_weight;
+	delete [] ch_eta_s;
+	delete [] sh_eta_s;
+
+	return;
+}
+
+void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights_Yeq0_alternate()
+{
+	//pions
+	int local_pid = target_particle_id;
+
+	// set particle information
+	double sign = all_particles[local_pid].sign;
+	double degen = all_particles[local_pid].gspin;
+	double localmass = all_particles[local_pid].mass;
+	double mu = all_particles[local_pid].mu;
+
+	// set some freeze-out surface information that's constant the whole time
+	double prefactor = 1.0*degen/(8.0*M_PI*M_PI*M_PI)/(hbarC*hbarC*hbarC);
+	double Tdec = (&FOsurf_ptr[0])->Tdec;
+	double Pdec = (&FOsurf_ptr[0])->Pdec;
+	double Edec = (&FOsurf_ptr[0])->Edec;
+	double one_by_Tdec = 1./Tdec;
+	double deltaf_prefactor = 0.;
+	if (use_delta_f)
+		deltaf_prefactor = 1./(2.0*Tdec*Tdec*(Edec+Pdec));
+
+	//spatial rapidity grid
+	const int eta_s_npts = 31;
+	double * eta_s = new double [eta_s_npts];
+	double * eta_s_weight = new double [eta_s_npts];
+	double eta_s_i = 0.0, eta_s_f = 4.0;
+	gauss_quadrature(eta_s_npts, 1, 0.0, 0.0, eta_s_i, eta_s_f, eta_s, eta_s_weight);
+	double * ch_eta_s = new double [eta_s_npts];
+	double * sh_eta_s = new double [eta_s_npts];
+	for (int ieta = 0; ieta < eta_s_npts; ieta++)
+	{
+		ch_eta_s[ieta] = cosh(eta_s[ieta]);
+		sh_eta_s[ieta] = sinh(eta_s[ieta]);
+	}
+	// set the rapidity-integration symmetry factor
+	double eta_even_factor = 2.0;
+
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+	{
+		double pT = SP_pT[ipT];
+		double px = pT*cos_SP_pphi[ipphi];
+		double py = pT*sin_SP_pphi[ipphi];
+		double mT = sqrt(pT*pT+localmass*localmass);
+
+		double spectra_at_pTpphi = 0.0;
+
+		for (int isurf = 0; isurf < FO_length; ++isurf)
+		{
+			FO_surf*surf = &FOsurf_ptr[isurf];
+
+			double tau = surf->tau;
+			double xpt = surf->xpt;
+			double ypt = surf->ypt;
+
+			double vx = surf->vx;
+			double vy = surf->vy;
+			double gammaT = surf->gammaT;
+
+			double da0 = surf->da0;
+			double da1 = surf->da1;
+			double da2 = surf->da2;
+
+			double pi00 = surf->pi00;
+			double pi01 = surf->pi01;
+			double pi02 = surf->pi02;
+			double pi11 = surf->pi11;
+			double pi12 = surf->pi12;
+			double pi22 = surf->pi22;
+			double pi33 = surf->pi33;
+
+			for (int ieta = 0; ieta < eta_s_npts; ++ieta)
+			{
+				double p0 = mT*ch_eta_s[ieta];
+				double pz = mT*sh_eta_s[ieta];
+
+				double f0 = 1./(exp( one_by_Tdec*(gammaT*(p0*1. - px*vx - py*vy) - mu) )+sign);	//thermal equilibrium distributions
+				//viscous corrections
+				double deltaf = 0.;
+				if (use_delta_f)
+					deltaf = deltaf_prefactor * (1. - sign*f0)
+								* (p0*p0*pi00 - 2.0*p0*px*pi01 - 2.0*p0*py*pi02 + px*px*pi11 + 2.0*px*py*pi12 + py*py*pi22 + pz*pz*pi33);
+
+				//p^mu d^3sigma_mu factor: The plus sign is due to the fact that the DA# variables are for the covariant surface integration
+				double S_p_with_weight = eta_s_weight[ieta]*tau*prefactor*(p0*da0 + px*da1 + py*da2)*f0*(1.+deltaf);
+
+				//ignore points where delta f is large or emission function goes negative from pdsigma
+				/*if ( (1. + deltaf < 0.0) || (flagneg == 1 && S_p < tol) )
+				{
+					S_p = 0.0;
+					continue;
+				}*/
+
+				spectra_at_pTpphi += eta_even_factor * S_p_with_weight;
+			}
+		}
+
+		//update spectra
+		spectra[local_pid][ipT][ipphi] = spectra_at_pTpphi;
+		thermal_spectra[local_pid][ipT][ipphi] = spectra_at_pTpphi;
+		log_spectra[local_pid][ipT][ipphi] = log(abs(spectra_at_pTpphi) + 1.e-100);
+		sign_spectra[local_pid][ipT][ipphi] = sgn(spectra_at_pTpphi);
+	}
+
+	//clean up
+	delete [] eta_s;
+	delete [] eta_s_weight;
+	delete [] ch_eta_s;
+	delete [] sh_eta_s;
 
 	return;
 }

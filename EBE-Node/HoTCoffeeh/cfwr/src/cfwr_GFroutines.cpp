@@ -638,7 +638,13 @@ void CorrelationFunction::Set_target_moments(int iqt, int iqz)
 
 void CorrelationFunction::Set_thermal_target_moments(int iqt, int iqz)
 {
-	if (MIDRAPIDITY_PIONS_ONLY)
+	if (1)	//just use alternate version from now on...
+	{
+		Cal_dN_dypTdpTdphi_with_weights_Yeq0_alternate(iqt, iqz);
+
+		//return;
+	}
+	else if (MIDRAPIDITY_PIONS_ONLY)
 	{
 		//calculate them exactly at Y==0
 		double * BC_chunk = new double [4 * FO_length * n_alpha_points_PIONS];
