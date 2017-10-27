@@ -317,7 +317,7 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	SP_pphi_wts = new double [n_pphi_pts];
 	sin_SP_pphi = new double [n_pphi_pts];
 	cos_SP_pphi = new double [n_pphi_pts];
-	gauss_quadrature(n_pT_pts, 5, 0.0, 0.0, 0.0, 13.0, SP_pT, SP_pT_wts);
+	gauss_quadrature(n_pT_pts, 5, 0.0, 0.0, 0.0, 13.0*n_pT_pts/15.0, SP_pT, SP_pT_wts);
 	gauss_quadrature(n_pphi_pts, 1, 0.0, 0.0, Kphi_min, Kphi_max, SP_pphi, SP_pphi_wts);
 	for(int ipphi=0; ipphi<n_pphi_pts; ipphi++)
 	{

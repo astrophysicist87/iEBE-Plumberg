@@ -242,8 +242,6 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	//do the reflections here
-
 	//decide whether to compute correlation function or read it in
 	if ((int)(paraRdr->getVal("calculate_CF_mode")) < 2)
 	{

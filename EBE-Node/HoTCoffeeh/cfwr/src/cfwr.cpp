@@ -918,15 +918,6 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 	sw.Stop();
 	*global_out_stream_ptr << "Took " << sw.printTime() << " seconds to set dN/dypTdpTdphi moments." << endl;
 
-	/*if (cheb_set)
-	{
-        	gsl_cheb_free(cs_accel_expK0re);
-        	gsl_cheb_free(cs_accel_expK0im);
-        	gsl_cheb_free(cs_accel_expK1re);
-        	gsl_cheb_free(cs_accel_expK1im);
-		cheb_set = false;
-	}*/
-
 	delete [] BC_chunk;
 
 	return;
@@ -2076,6 +2067,129 @@ if (iqt == (qtnpts-1)/2 && iqz == (qznpts-1)/2)
 	sw.Stop();
 	*global_out_stream_ptr << "Total function call took " << sw.printTime() << " seconds." << endl;
 	
+	return;
+}
+
+void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_alternate(int iqt, int iqz)
+{
+	//pions
+	int local_pid = target_particle_id;
+
+	//q-point info
+	double qt = qt_pts[iqt], qz = qz_pts[iqz];
+
+	// set particle information
+	double sign = all_particles[local_pid].sign;
+	double degen = all_particles[local_pid].gspin;
+	double localmass = all_particles[local_pid].mass;
+	double mu = all_particles[local_pid].mu;
+
+	// set some freeze-out surface information that's constant the whole time
+	double prefactor = 1.0*degen/(8.0*M_PI*M_PI*M_PI)/(hbarC*hbarC*hbarC);
+	double Tdec = (&FOsurf_ptr[0])->Tdec;
+	double Pdec = (&FOsurf_ptr[0])->Pdec;
+	double Edec = (&FOsurf_ptr[0])->Edec;
+	double one_by_Tdec = 1./Tdec;
+	double deltaf_prefactor = 0.;
+	if (use_delta_f)
+		deltaf_prefactor = 1./(2.0*Tdec*Tdec*(Edec+Pdec));
+
+	//spatial rapidity grid
+	const int eta_s_npts = 15;
+	eta_s = new double [eta_s_npts];
+	eta_s_weight = new double [eta_s_npts];
+	double eta_s_i = 0.0, eta_s_f = 4.0;
+	gauss_quadrature(eta_s_npts, 1, 0.0, 0.0, eta_s_i, eta_s_f, eta_s, eta_s_weight);
+	ch_eta_s = new double [eta_s_npts];
+	sh_eta_s = new double [eta_s_npts];
+	for (int ieta = 0; ieta < eta_s_npts; ieta++)
+	{
+		ch_eta_s[ieta] = cosh(eta_s[ieta]);
+		sh_eta_s[ieta] = sinh(eta_s[ieta]);
+	}
+	// set the rapidity-integration symmetry factor
+	double eta_odd_factor = 0.0, eta_even_factor = 2.0;
+
+	for (int isurf = 0; isurf < FO_length; ++isurf)
+	{
+		FO_surf*surf = &FOsurf_ptr[isurf];
+
+		double tau = surf->tau;
+		double xpt = surf->xpt;
+		double ypt = surf->ypt;
+
+		double vx = surf->vx;
+		double vy = surf->vy;
+		double gammaT = surf->gammaT;
+
+		double da0 = surf->da0;
+		double da1 = surf->da1;
+		double da2 = surf->da2;
+
+		double pi00 = surf->pi00;
+		double pi01 = surf->pi01;
+		double pi02 = surf->pi02;
+		double pi11 = surf->pi11;
+		double pi12 = surf->pi12;
+		double pi22 = surf->pi22;
+		double pi33 = surf->pi33;
+
+		double * tmpX = oscx[isurf];
+		double * tmpY = oscy[isurf];
+
+		for (int ieta = 0; ieta < eta_s_npts; ++ieta)
+		{
+			double tpt = tau*ch_eta_s[ieta];
+			double zpt = tau*sh_eta_s[ieta];
+			double phi_L = (tpt*qt-zpt*qz)/hbarC;
+			double phi_L_mz = (tpt*qt+zpt*qz)/hbarC;
+			double cos_phi_L = cos(phi_L) + cos(phi_L_mz);	//shortcut for eta_s-integral
+			double sin_phi_L = sin(phi_L) + sin(phi_L_mz);	//shortcut for eta_s-integral
+
+			for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+			{
+				double pT = SP_pT[ipT];
+				double px = pT*cos_SP_pphi[ipphi];
+				double py = pT*sin_SP_pphi[ipphi];
+				double mT = sqrt(pT*pT+localmass*localmass);
+				double p0 = mT*ch_eta_s[ieta];
+				double pz = mT*sh_eta_s[ieta];
+
+				double f0 = 1./(exp( one_by_Tdec*(gammaT*(p0*1. - px*vx - py*vy) - mu) )+sign);	//thermal equilibrium distributions
+				//viscous corrections
+				double deltaf = 0.;
+				if (use_delta_f)
+					deltaf = deltaf_prefactor * (1. - sign*f0)
+								* (p0*p0*pi00 - 2.0*p0*px*pi01 - 2.0*p0*py*pi02 + px*px*pi11 + 2.0*px*py*pi12 + py*py*pi22 + pz*pz*pi33);
+
+				//p^mu d^3sigma_mu factor: The plus sign is due to the fact that the DA# variables are for the covariant surface integration
+				double S_p = prefactor*(p0*da0 + px*da1 + py*da2)*f0*(1.+deltaf);
+
+				//ignore points where delta f is large or emission function goes negative from pdsigma
+				/*if ( (1. + deltaf < 0.0) || (flagneg == 1 && S_p < tol) )
+				{
+					S_p = 0.0;
+					continue;
+				}*/
+
+				for (int iqx = 0; iqx < qxnpts; ++iqx)
+				for (int iqy = 0; iqy < qynpts; ++iqy)
+				{
+					double cosAx = tmpX[iqx * 2 + 0], sinAx = tmpX[iqx * 2 + 1];
+					double cosAy = tmpY[iqy * 2 + 0], sinAy = tmpY[iqy * 2 + 1];
+					double cos_trans_Fourier = cosAx*cosAy - sinAx*sinAy;	//==cos(qx x + qy y)
+					double sin_trans_Fourier = sinAx*cosAy + cosAx*sinAy;	//==sin(qx x + qy y)
+					thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 0)] += cos_phi_L * cos_trans_Fourier;
+					thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 1)] -= cos_phi_L * sin_trans_Fourier;
+					thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 2)] += sin_phi_L * cos_trans_Fourier;
+					thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 3)] += sin_phi_L * sin_trans_Fourier;
+				}
+	 
+			}
+		}
+	}
+
 	return;
 }
 
