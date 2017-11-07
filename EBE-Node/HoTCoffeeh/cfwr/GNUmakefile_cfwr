@@ -135,7 +135,7 @@ $(SRCDIR)/cfwr_HDF.cpp: $(SRCDIR)/cfwr.h $(SRCDIR)/cfwr_lib.h $(SRCDIR)/lib.h
 $(SRCDIR)/cfwr_admin.cpp: $(SRCDIR)/cfwr.h $(SRCDIR)/Arsenal.h $(SRCDIR)/gauss_quadrature.h $(SRCDIR)/cfwr_lib.h $(SRCDIR)/lib.h $(SRCDIR)/parameters.h
 $(SRCDIR)/cfwr_IO.cpp: $(SRCDIR)/cfwr.h $(SRCDIR)/Arsenal.h $(SRCDIR)/gauss_quadrature.h $(SRCDIR)/lib.h
 $(SRCDIR)/cfwr_GFroutines.cpp: $(SRCDIR)/cfwr.h $(SRCDIR)/Arsenal.h $(SRCDIR)/gauss_quadrature.h $(SRCDIR)/Stopwatch.h $(SRCDIR)/cfwr_lib.h $(SRCDIR)/lib.h
-$(SRCDIR)/cfwr_resonance.cpp: $(SRCDIR)/cfwr.h $(SRCDIR)/Arsenal.h $(SRCDIR)/gauss_quadrature.h $(SRCDIR)/cfwr_lib.h $(SRCDIR)/lib.h $(SRCDIR)/Stopwatch.h $(SRCDIR)/fastexp.h
+$(SRCDIR)/cfwr_resonance.cpp: $(SRCDIR)/cfwr.h $(SRCDIR)/Arsenal.h $(SRCDIR)/gauss_quadrature.h $(SRCDIR)/cfwr_lib.h $(SRCDIR)/lib.h $(SRCDIR)/Stopwatch.h
 $(SRCDIR)/cfwr.cpp: $(SRCDIR)/cfwr.h $(SRCDIR)/Arsenal.h $(SRCDIR)/gauss_quadrature.h $(SRCDIR)/Stopwatch.h $(SRCDIR)/cfwr_lib.h $(SRCDIR)/lib.h
 ./main.cpp: $(SRCDIR)/Stopwatch.h $(SRCDIR)/parameters.h $(SRCDIR)/readindata.h $(SRCDIR)/cfwr.h \
 				$(SRCDIR)/ParameterReader.h $(SRCDIR)/generate_processing_record.h $(SRCDIR)/lib.h main.h $(SRCDIR)/chebyshev.h
