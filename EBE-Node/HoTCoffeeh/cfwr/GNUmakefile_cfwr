@@ -79,8 +79,7 @@ INC		= 	main.h \
 			$(SRCDIR)/bessel.h \
 			$(SRCDIR)/ParameterReader.h \
 			$(SRCDIR)/chebyshev.h \
-			$(SRCDIR)/chebyshev_library.h \
-			$(SRCDIR)/fastexp.h
+			$(SRCDIR)/chebyshev_library.h
 
 # -------------------------------------------------
 
