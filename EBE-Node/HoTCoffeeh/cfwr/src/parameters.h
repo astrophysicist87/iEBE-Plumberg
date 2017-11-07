@@ -20,7 +20,7 @@
 
 using namespace std;
 
-#define VERBOSE 					3		// specifies level of output - 0 is lowest (no output)
+#define VERBOSE 					0		// specifies level of output - 0 is lowest (no output)
 #define QT_POINTS_SPACING			1		// 0 - uniform from -qmax to +qmax
 											// 1 - Chebyshev nodes from -qmax to +qmax
 #define QX_POINTS_SPACING			0		// same
