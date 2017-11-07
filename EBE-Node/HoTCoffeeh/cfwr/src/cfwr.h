@@ -355,8 +355,8 @@ class CorrelationFunction
 		void get_CF_terms(double * totalresult, double * thermalresult, double * crosstermresult, double * resonanceresult,
 									int ipt, int ipphi, int iqt, int iqx, int iqy, int iqz, bool return_projected_value);
 		void Compute_correlationfunction(double * totalresult, double * thermalresult, double * crosstermresult, double * resonanceresult,
-										int ipt, int ipphi, int iqx, int iqy, int iqz, double qt_interp, int interp_flag = 0);
-		void Cal_correlationfunction();
+										int ipt, int ipphi, int iqx, int iqy, int iqz, double qt_interp, int interp_flag = 0, bool project_CF = true);
+		void Cal_correlationfunction(bool project_CF = true);
 		void find_minimum_chisq_correlationfunction_full(double *** Correl_3D, int ipt, int ipphi, bool fleshing_out_CF = true);
 		void gsl_polynomial_fit(const vector<double> &data_x, const vector<double> &data_y, double * results, const int order, double * chisq, const int n);
 
@@ -373,7 +373,7 @@ class CorrelationFunction
 		void Output_chosen_resonances();
 		void Output_resonance_fraction();
 		void Read_in_correlationfunction();
-		void Output_correlationfunction(bool projected_CF = true);
+		void Output_correlationfunction(bool project_CF = true);
 		void Output_lambdas();
 		void Output_fleshed_out_correlationfunction(int ipt, int ipphi);
 		void Dump_spectra_array(string output_filename, double *** array_to_dump);

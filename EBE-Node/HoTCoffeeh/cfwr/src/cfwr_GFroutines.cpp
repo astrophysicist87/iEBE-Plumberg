@@ -48,7 +48,7 @@ void CorrelationFunction::Get_GF_HBTradii()
 
 //to save time, don't bother making grid large enough to interpolate to OSL
 //this function leaves open the option of just interpolating over the qt-direction
-void CorrelationFunction::Cal_correlationfunction()
+void CorrelationFunction::Cal_correlationfunction(bool project_CF /*==true*/)
 {
 	*global_out_stream_ptr << "Calculating the correlation function..." << endl;
 
@@ -81,7 +81,7 @@ void CorrelationFunction::Cal_correlationfunction()
 
 		//returns only projected value automatically if appropriate options are specified!
 		double tmp1 = 0.0, tmp2 = 0.0, tmp2a = 0.0, tmp3 = 0.0;
-		Compute_correlationfunction(&tmp1, &tmp2, &tmp2a, &tmp3, ipt, ipphi, iqx, iqy, iqz, q_interp[0], 0);
+		Compute_correlationfunction(&tmp1, &tmp2, &tmp2a, &tmp3, ipt, ipphi, iqx, iqy, iqz, q_interp[0], 0, project_CF);
 		CFvals[ipt][ipphi][iqx][iqy][iqz] = 1.0 + tmp1;		//C == Ct + Cct + Cr + 1
 		thermalCFvals[ipt][ipphi][iqx][iqy][iqz] = tmp2;	//Ct
 		crosstermCFvals[ipt][ipphi][iqx][iqy][iqz] = tmp2a;	//Cct
@@ -91,7 +91,7 @@ void CorrelationFunction::Cal_correlationfunction()
 	*global_out_stream_ptr << "Finished computing correlator in " << sw.printTime() << " seconds." << endl;
 
 	//output the un-regulated correlation function to separate file for debugging purposes
-	Output_correlationfunction();
+	Output_correlationfunction(project_CF);
 
 	delete [] q_interp;
 
@@ -99,7 +99,7 @@ void CorrelationFunction::Cal_correlationfunction()
 }
 
 void CorrelationFunction::Compute_correlationfunction(double * totalresult, double * thermalresult, double * CTresult, double * resonanceresult,
-										int ipt, int ipphi, int iqx, int iqy, int iqz, double qt_interp, int interp_flag /*==0*/)
+										int ipt, int ipphi, int iqx, int iqy, int iqz, double qt_interp, int interp_flag /*==0*/, bool project_CF /*==true*/)
 {
 	int qidx = binarySearch(qt_pts, qtnpts, qt_interp);
 	double q_min = qt_pts[0] / cos(M_PI / (2.*qtnpts)), q_max = qt_pts[qtnpts-1]/ cos(M_PI / (2.*qtnpts));
@@ -115,7 +115,7 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 		for (int iqtidx = 0; iqtidx < qtnpts; ++iqtidx)
 		{
 			//return C - 1!!!
-			get_CF_terms(&tmpC, &tmpCt, &tmpCct, &tmpCr, ipt, ipphi, iqtidx, iqx, iqy, iqz, FIT_WITH_PROJECTED_CFVALS && !thermal_pions_only);
+			get_CF_terms(&tmpC, &tmpCt, &tmpCct, &tmpCr, ipt, ipphi, iqtidx, iqx, iqy, iqz, project_CF && !thermal_pions_only);
 			C_at_q[iqtidx] = tmpC;
 			Ct_at_q[iqtidx] = tmpCt;
 			Cct_at_q[iqtidx] = tmpCct;
@@ -646,6 +646,16 @@ void CorrelationFunction::Set_thermal_target_moments(int iqt, int iqz)
 
 void CorrelationFunction::Set_full_target_moments(int iqt, int iqz)
 {
+	double loc_qz = qz_pts[iqz];
+	double loc_qt = qt_pts[iqt];
+	current_pY_shift = 0.5 * log(abs((loc_qt+loc_qz + 1.e-100)/(loc_qt-loc_qz + 1.e-100)));
+	if (abs(current_pY_shift) > SP_Del_pY_max)	//if resonances decays basically contribute nothing at this (qt, qz)-pair
+	{
+		cout << "Set_full_target_moments(" << loc_qt << ", " << loc_qz << "): y_{sym} = " << current_pY_shift << " > SP_Del_pY_max = " << SP_Del_pY_max <<
+				" ==>> No contributions to full target moments." << endl;
+		return;	//don't do anything
+	}
+
 	int getHDFresonanceSpectra = Access_resonance_in_HDF_array(target_particle_id, iqt, iqz, 1, current_dN_dypTdpTdphi_moments, true);	//this one includes resonance decay contributions
 
 	gsl_cheb_series *cs_accel_expEdNd3p = gsl_cheb_alloc (n_pY_pts - 1);
@@ -653,6 +663,8 @@ void CorrelationFunction::Set_full_target_moments(int iqt, int iqz)
 	cs_accel_expEdNd3p->b = SP_Del_pY_max;
 
 	double * chebyshev_a_cfs = new double[n_pY_pts];
+
+	double trig_parity_factors[4] = {1.0, -1.0, -1.0, 1.0};
 
 	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
@@ -666,17 +678,23 @@ void CorrelationFunction::Set_full_target_moments(int iqt, int iqz)
 			for (int kpY = 0; kpY < n_pY_pts; ++kpY)
 			{
 				chebyshev_a_cfs[ipY] += exp(abs(SP_Del_pY[kpY])) * chebTcfs[ipY * n_pY_pts + kpY] * current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)];
+
 				if (ipY==0 && ipT==0 && ipphi==0) cout << "CHECKinterp: " << iqz << "   " << itrig << "   " << SP_Del_pY[kpY]
-									<< "   " << thermal_target_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)]
-									<< "   " << current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)] << endl;
+					<< "   " << thermal_target_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)]
+					<< "   " << current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)] << endl;
 			}
 		}
 
 		cs_accel_expEdNd3p->c = chebyshev_a_cfs;
-		double tmp_pY = 0.0;	//interpolating to this point
-		full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)] += exp(-tmp_pY) * gsl_cheb_eval (cs_accel_expEdNd3p, tmp_pY);
+		double tmp_Del_pY = -current_pY_shift;	//interpolating to this point
+		double current_trig_parity_factor = ( ( tmp_Del_pY < 0.0 )
+											&& ( abs(loc_qt) < abs(loc_qz) )
+											) ? trig_parity_factors[itrig] : 1.0;
+		full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)] += exp(-abs(tmp_Del_pY)) * current_trig_parity_factor
+																					* gsl_cheb_eval (cs_accel_expEdNd3p, abs(tmp_Del_pY));
 		if (ipT==0 && ipphi==0) cout << "CHECKinterp2: " << iqz << "   " << itrig << "   "
-							<< exp(-tmp_pY) * gsl_cheb_eval (cs_accel_expEdNd3p, tmp_pY) << endl;
+							<< exp(-abs(tmp_Del_pY)) * current_trig_parity_factor
+									* gsl_cheb_eval (cs_accel_expEdNd3p, abs(tmp_Del_pY)) << endl;
 	}
 
 	delete [] chebyshev_a_cfs;

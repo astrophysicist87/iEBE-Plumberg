@@ -246,7 +246,8 @@ int main(int argc, char *argv[])
 	//decide whether to compute correlation function or read it in
 	if ((int)(paraRdr->getVal("calculate_CF_mode")) < 2)
 	{
-		correlation_function.Cal_correlationfunction();		//if we didn't compute resonance decays, must read them in from files
+		correlation_function.Cal_correlationfunction(true);		//if we didn't compute resonance decays, must read them in from files
+		correlation_function.Cal_correlationfunction(false);		//if we didn't compute resonance decays, must read them in from files
 		output << "Finished calculating correlation function with all resonance decays..." << endl;
 	}
 	else
@@ -261,11 +262,12 @@ int main(int argc, char *argv[])
 	//decide what to output
 	if ((int)(paraRdr->getVal("calculate_CF_mode")) < 2)
 	{
-		if ( (int)(paraRdr->getVal("qtnpts")) > 1 )
+		//included in Cal_correlationfunction() above...
+		/*if ( (int)(paraRdr->getVal("qtnpts")) > 1 )
 		{
 			correlation_function.Output_correlationfunction();
 			correlation_function.Output_correlationfunction(false);
-		}
+		}*/
 		if ((int)(paraRdr->getVal("calculate_CF_mode")) == 0)
 		{
 			correlation_function.Output_total_target_dN_dypTdpTdphi();
