@@ -27,6 +27,7 @@ using namespace std;
 #define QY_POINTS_SPACING			0		// same
 #define QZ_POINTS_SPACING			0		// same
 #define MIDRAPIDITY_PIONS_ONLY		1		// obvious
+#define USE_FAST_EXP				1
 #define USE_EXP_RECYCLING			1
 #define USE_RAPIDITY_SYMMETRY		1
 #define USE_ADJUSTED_MINIMUM		1
@@ -69,9 +70,9 @@ const double Kphi_min = 0.0;
 const double Kphi_max = 2.0*M_PI;
 
 // Phase-space integral information
-const int n_zeta_pts = 12;
-const int n_v_pts = 12;
-const int n_s_pts = 12;
+const int n_zeta_pts = 51;
+const int n_v_pts = 51;
+const int n_s_pts = 51;
 
 // Fitting information
 const size_t fit_max_iterations = 1000;  // stop at this point if not converged 

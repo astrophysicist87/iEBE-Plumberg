@@ -4,21 +4,21 @@ baseDirectory=/home/plumberg.1/Plumberg_iEBE/iEBE-stable/EBE-Node
 homeDirectory=$baseDirectory/code_checks
 outfilename=$homeDirectory/"submit_code_checks_pbs_jobs_record_`date +%F`.out"
 outfile=`get_filename $outfilename`
-srcDirec=$baseDirectory/HoTCoffeeh_code_checks
+srcDirec=$baseDirectory/HoTCoffeeh
 
 i=1
 workingDirectory='/home/plumberg.1/Plumberg_iEBE/iEBE-stable/RESULTS_Edec300/results/results-'`echo $i`
 
 npt0=21
 npphi0=36
-npy0=15
-nqt0=17
+npy0=21
+nqt0=31
 
 #create directories
 for axis in X Y Z
 do
 	mkdir $homeDirectory/AXIS_`echo $axis`
-	for resfrac in 0.00 0.10 0.20 0.25 0.50 0.60 0.75 1.00
+	for resfrac in 0.00 0.10 0.20 0.60 1.00
 	do
 		mkdir $homeDirectory/AXIS_`echo $axis`/RESFRAC_`echo $resfrac`
 	done
@@ -30,7 +30,7 @@ do
 	nqx0=11
 	nqy0=1
 	nqz0=1
-	for resfrac in 0.00 0.10 0.20 0.25 0.50 0.60 0.75 1.00
+	for resfrac in 0.00 0.10 0.20 0.60 1.00
 	do
 		lwd=$homeDirectory/AXIS_`echo $axis`/RESFRAC_`echo $resfrac`
 		mkdir $lwd/results
@@ -57,7 +57,7 @@ do
 	nqx0=1
 	nqy0=11
 	nqz0=1
-	for resfrac in 0.00 0.10 0.20 0.25 0.50 0.60 0.75 1.00
+	for resfrac in 0.00 0.10 0.20 0.60 1.00
 	do
 		lwd=$homeDirectory/AXIS_`echo $axis`/RESFRAC_`echo $resfrac`
 		mkdir $lwd/results
@@ -84,7 +84,7 @@ do
 	nqx0=1
 	nqy0=1
 	nqz0=11
-	for resfrac in 0.00 0.10 0.20 0.25 0.50 0.60 0.75 1.00
+	for resfrac in 0.00 0.10 0.20 0.60 1.00
 	do
 		lwd=$homeDirectory/AXIS_`echo $axis`/RESFRAC_`echo $resfrac`
 		mkdir $lwd/results
