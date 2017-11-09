@@ -371,6 +371,25 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 		sh_SP_pY[ipY] = 0.0;
 	}
 
+	cout << "********************" << endl;
+	for (int iqt = 0; iqt < qtnpts; iqt++)
+		cout << "qt_pts[" << iqt << "] = " << qt_pts[iqt] << endl;
+	cout << "********************" << endl;
+	/*double * q_point = new double [4];
+	for(int ipt=0; ipt<n_pT_pts; ipt++)
+	for(int ipphi=0; ipphi<n_pphi_pts; ipphi++)
+	for (int iqx = 0; iqx < qxnpts; ++iqx)
+	for (int iqy = 0; iqy < qynpts; ++iqy)
+	for (int iqz = 0; iqz < qznpts; ++iqz)
+	{
+		Get_q_points(qx_pts[iqx], qy_pts[iqy], qz_pts[iqz], SP_pT[ipt], SP_pphi[ipphi], q_point);
+		cout << "SANITY CHECK OF QT_INTERP: " << SP_pT[ipt] << "   " << SP_pphi[ipphi] << "   "
+				<< q_point[0] << "   " << q_point[1] << "   " << q_point[2] << "   " << q_point[3] << endl;
+	}*/
+
+	//delete [] q_point;
+	//if (1) exit(8);
+
 	plane_angle = new double [n_order];
 
 	//pair momentum
@@ -886,6 +905,28 @@ void CorrelationFunction::Fill_out_pts(double * pointsarray, int numpoints, doub
 			double local_scale = -max_val;
 			for (int iqd = 0; iqd < numpoints; ++iqd)
 				pointsarray[iqd] = local_scale * cos( M_PI*(2.*(iqd+1.) - 1.) / (2.*numpoints) );
+		}
+		else if (spacing_type == 2)
+		{
+			//break range of points into two sections (+ve and -ve)
+			const int n = (numpoints + 1) / 2;
+
+			double z1[n], z2[n-1];
+			double tmptan = tan(M_PI / (4.0*n));
+			double a1 = -max_val, b1 = max_val*tmptan*tmptan;	//guarantee that middle point is 0
+			double a2 = -max_val*tmptan*tmptan, b2 = max_val;	//guarantee that middle point is 0
+			double hw1 = 0.5 * (b1 - a1), hw2 = 0.5 * (b2 - a2);
+			
+			for (int iqd = 0; iqd < n; ++iqd)
+			{
+				z1[iqd] = -cos( M_PI*(2.*(iqd+1.) - 1.) / (2.*n) );
+				pointsarray[iqd] = (1.0 + z1[iqd]) * hw1 + a1;
+			}
+			for (int iqd = 0; iqd < n; ++iqd)
+			{
+				z2[iqd] = -cos( M_PI*(2.*(iqd+1.) - 1.) / (2.*n) );
+				pointsarray[n + iqd - 1] = (1.0 + z2[iqd]) * hw2 + a2;
+			}
 		}
 	}
 	return;

@@ -102,7 +102,7 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 										int ipt, int ipphi, int iqx, int iqy, int iqz, double qt_interp, int interp_flag /*==0*/, bool project_CF /*==true*/)
 {
 	int qidx = binarySearch(qt_pts, qtnpts, qt_interp);
-	double q_min = qt_pts[0] / cos(M_PI / (2.*qtnpts)), q_max = qt_pts[qtnpts-1]/ cos(M_PI / (2.*qtnpts));
+	double q_min = qt_pts[0] / cos(M_PI / (2.*qtnpts)), q_max = qt_pts[qtnpts-1] / cos(M_PI / (2.*qtnpts));
 
 	bool q_point_is_outside_grid = ( qidx == -1 && ( qt_interp < q_min || qt_interp > q_max ) );
 
@@ -151,15 +151,56 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 						<< *totalresult << "   " << *thermalresult << "   " << *CTresult << "   " << *resonanceresult << endl;
 				for (int iqtidx = 0; iqtidx < qtnpts; ++iqtidx)
 				{
-                        		get_CF_terms(&tmpC, &tmpCt, &tmpCct, &tmpCr, ipt, ipphi, iqtidx, iqx, iqy, iqz, project_CF && !thermal_pions_only);
-                        		C_at_q[iqtidx] = tmpC;
+					get_CF_terms(&tmpC, &tmpCt, &tmpCct, &tmpCr, ipt, ipphi, iqtidx, iqx, iqy, iqz, project_CF && !thermal_pions_only);
+					C_at_q[iqtidx] = tmpC;
 					Ct_at_q[iqtidx] = tmpCt;
 					Cct_at_q[iqtidx] = tmpCct;
 					Cr_at_q[iqtidx] = tmpCr;
 					cerr << "Check CF terms: " << qt_pts[iqtidx] << "   " << ipt << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << iqz << "   "
-					<< tmpC << "   " << tmpCt << "   " << tmpCct << "   " << tmpCr << endl;
+							<< tmpC << "   " << tmpCt << "   " << tmpCct << "   " << tmpCr << endl;
 				}
 			}
+		}
+		else if (QT_POINTS_SPACING == 2 && interp_flag == 0)	//use a different distribution of qt points for better accuracy
+		{
+			const int n = (qtnpts + 1) / 2;
+			double tmptan = tan(M_PI / (4.0*n));
+			double q_min_local = ( qt_interp <= 0.0 ) ? q_min : q_max*tmptan*tmptan ;	//note min and max swapped
+			double q_max_local = ( qt_interp <= 0.0 ) ? q_min*tmptan*tmptan : q_max ;	//note min and max swapped
+
+			//set up Chebyshev calculation
+			int npts_loc[1] = { n };
+			int os[1] = { n - 1 };
+			double lls[1] = { q_min_local };
+			double uls[1] = { q_max_local };
+			double point[1] = { qt_interp };
+			int dim_loc = 1;
+
+			Chebyshev cf(C_at_q, npts_loc, os, lls, uls, dim_loc);
+			Chebyshev cft(Ct_at_q, npts_loc, os, lls, uls, dim_loc);
+			Chebyshev cfct(Cct_at_q, npts_loc, os, lls, uls, dim_loc);
+			Chebyshev cfr(Cr_at_q, npts_loc, os, lls, uls, dim_loc);
+	
+			*totalresult = cf.eval(point);
+			*thermalresult = cft.eval(point);
+			*CTresult = cfct.eval(point);
+			*resonanceresult = cfr.eval(point);
+
+			//if (*thermalresult < 0.0 || *resonanceresult < 0.0 )
+			//{
+				cerr << "WARNING(OKAY): " << qt_interp << "   " << ipt << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << iqz << "   "
+						<< *totalresult << "   " << *thermalresult << "   " << *CTresult << "   " << *resonanceresult << endl;
+				for (int iqtidx = 0; iqtidx < qtnpts; ++iqtidx)
+				{
+					get_CF_terms(&tmpC, &tmpCt, &tmpCct, &tmpCr, ipt, ipphi, iqtidx, iqx, iqy, iqz, project_CF && !thermal_pions_only);
+					C_at_q[iqtidx] = tmpC;
+					Ct_at_q[iqtidx] = tmpCt;
+					Cct_at_q[iqtidx] = tmpCct;
+					Cr_at_q[iqtidx] = tmpCr;
+					cerr << "Check CF terms: " << qt_pts[iqtidx] << "   " << ipt << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << iqz << "   "
+							<< tmpC << "   " << tmpCt << "   " << tmpCct << "   " << tmpCr << endl;
+				}
+			//}
 		}
 		else	//if not using Chebyshev nodes in qt-direction, just use straight-up linear(0) or cubic(1) interpolation
 		{
