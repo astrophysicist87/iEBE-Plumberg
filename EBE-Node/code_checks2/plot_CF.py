@@ -19,7 +19,7 @@ qAxesLC = ['x', 'y', 'z']
 projectionOpts = ['', '_unprojected']
 #resFracsOpts = ['0.00', '0.10', '0.20', '0.60', '1.00']
 resFracsOpts = ['0.10', '0.20']
-PTOpts = ['15', '21', '25', '31']
+PTOpts = ['15', '21', '25', '31', '41']
 #PTOpts = ['31']
 PYOpts = ['15']
 #QTOpts = ['13', '15', '17', '19', '21', '23', '25', '27', '29', '31']
@@ -148,7 +148,7 @@ def generate_comparison_plot(ipT, ipphi, ires, iprojection):
 
 
 def generate_all_plots():
-	chosenpT, chosenpphi = 4, 0
+	chosenpT, chosenpphi = 0, 0
 	#for i in xrange(7):
 	#	generate_plot(chosenpT, chosenpphi, 3, i, 1, 1)
 	#
@@ -159,7 +159,7 @@ def generate_all_plots():
 	#generate_comparison_plot(chosenpT, chosenpphi, 3, 1, 1)
 	#generate_plot(4, 0, 0, 0, 1, 1)
 	#generate_plot(6, 0, 1, 0, 1, 1)
-	generate_comparison_plot(chosenpT, chosenpphi, 1, 1)
+	#generate_comparison_plot(chosenpT, chosenpphi, 1, 1)
 	pause()
 
 #############################################################################

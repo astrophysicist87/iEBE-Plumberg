@@ -779,9 +779,13 @@ void CorrelationFunction::Get_spacetime_moments(int dc_idx, int iqt, int iqz)
 		}
 		else			//if it's a later resonance
 		{
-			if (VERBOSE > 0 && !recycle_previous_moments && !recycle_similar_moments) *global_out_stream_ptr << local_name
-				<< ": new parent resonance (" << decay_channels[current_decay_channel_idx-1].resonance_name << ", dc_idx = " << current_decay_channel_idx
-				<< " of " << n_decay_channels << ") dissimilar from all preceding decay_channels \n\t\t--> calculating new dN_dypTdpTdphi_moments!" << endl;
+			if (!recycle_previous_moments && !recycle_similar_moments) 
+			{
+				if (VERBOSE > 0)
+					*global_out_stream_ptr << local_name
+						<< ": new parent resonance (" << decay_channels[current_decay_channel_idx-1].resonance_name << ", dc_idx = " << current_decay_channel_idx
+						<< " of " << n_decay_channels << ") dissimilar from all preceding decay_channels \n\t\t--> calculating new dN_dypTdpTdphi_moments!" << endl;
+			}
 			else
 			{
 				cerr << "You shouldn't have ended up here!" << endl;

@@ -120,6 +120,8 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 			Ct_at_q[iqtidx] = tmpCt;
 			Cct_at_q[iqtidx] = tmpCct;
 			Cr_at_q[iqtidx] = tmpCr;
+//cerr << "Check CF terms: " << qt_pts[iqtidx] << "   " << ipt << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << iqz << "   "
+//		<< tmpC << "   " << tmpCt << "   " << tmpCct << "   " << tmpCr << endl;
 		}
 
 		//assumes qt-grid has already been computed at (adjusted) Chebyshev nodes!!!
@@ -143,7 +145,21 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 			*CTresult = cfct.eval(point);
 			*resonanceresult = cfr.eval(point);
 
-			//*global_out_stream_ptr << "CHECK: " << *totalresult << "   " << *thermalresult << "   " << *CTresult << "   " << *resonanceresult << endl;
+			if (*thermalresult < 0.0 || *resonanceresult < 0.0 )
+			{
+				cerr << "WARNING: " << qt_interp << "   " << ipt << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << iqz << "   "
+						<< *totalresult << "   " << *thermalresult << "   " << *CTresult << "   " << *resonanceresult << endl;
+				for (int iqtidx = 0; iqtidx < qtnpts; ++iqtidx)
+				{
+                        		get_CF_terms(&tmpC, &tmpCt, &tmpCct, &tmpCr, ipt, ipphi, iqtidx, iqx, iqy, iqz, project_CF && !thermal_pions_only);
+                        		C_at_q[iqtidx] = tmpC;
+					Ct_at_q[iqtidx] = tmpCt;
+					Cct_at_q[iqtidx] = tmpCct;
+					Cr_at_q[iqtidx] = tmpCr;
+					cerr << "Check CF terms: " << qt_pts[iqtidx] << "   " << ipt << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << iqz << "   "
+					<< tmpC << "   " << tmpCt << "   " << tmpCct << "   " << tmpCr << endl;
+				}
+			}
 		}
 		else	//if not using Chebyshev nodes in qt-direction, just use straight-up linear(0) or cubic(1) interpolation
 		{
@@ -156,7 +172,8 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 	else
 	{
 		*global_out_stream_ptr << "Warning: qt_interp point was outside of computed grid!" << endl
-								<< "\t qt_interp = " << qt_interp << " out of {q_min, q_max} = {" << q_min << ", " << q_max << "}" << endl;
+								<< "\t qt_interp = " << qt_interp << " out of {q_min, q_max} = {" << q_min << ", " << q_max << "};" << endl
+								<< "\t " << ipt << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << iqz << endl;
 		*totalresult = 0.0;
 	}
 	return;

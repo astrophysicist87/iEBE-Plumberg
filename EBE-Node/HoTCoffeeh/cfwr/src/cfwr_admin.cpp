@@ -608,32 +608,6 @@ void CorrelationFunction::Set_eiqx_matrices()
 	return;
 }
 
-void CorrelationFunction::Fill_out_pts(double * pointsarray, int numpoints, double max_val, int spacing_type)
-{
-	// spacing_type:		0 - uniform spacing
-	//						1 - Chebyshev-node based spacing
-	if (numpoints == 1)
-		pointsarray[0] = 0.0;
-	else
-	{
-		// if I want q-points equally spaced...
-		if (spacing_type == 0)
-		{
-			for (int iqd = 0; iqd < numpoints; ++iqd)
-				pointsarray[iqd] = -max_val + (double)iqd * 2.*max_val / double(numpoints - 1+1e-100);
-		}
-		// else, use Chebyshev nodes instead...
-		else if (spacing_type == 1)
-		{
-			//double local_scale = max_val / cos(M_PI / (2.*qtnpts));
-			double local_scale = -max_val;
-			for (int iqd = 0; iqd < numpoints; ++iqd)
-				pointsarray[iqd] = local_scale * cos( M_PI*(2.*(iqd+1.) - 1.) / (2.*numpoints) );
-		}
-	}
-	return;
-}
-
 CorrelationFunction::~CorrelationFunction()
 {
    delete [] K_T;
@@ -890,6 +864,34 @@ void CorrelationFunction::Set_q_points()
 
 	return;
 }
+
+void CorrelationFunction::Fill_out_pts(double * pointsarray, int numpoints, double max_val, int spacing_type)
+{
+	// spacing_type:		0 - uniform spacing
+	//						1 - Chebyshev-node based spacing
+	if (numpoints == 1)
+		pointsarray[0] = 0.0;
+	else
+	{
+		// if I want q-points equally spaced...
+		if (spacing_type == 0)
+		{
+			for (int iqd = 0; iqd < numpoints; ++iqd)
+				pointsarray[iqd] = -max_val + (double)iqd * 2.*max_val / double(numpoints - 1+1e-100);
+		}
+		// else, use Chebyshev nodes instead...
+		else if (spacing_type == 1)
+		{
+			//double local_scale = max_val / cos(M_PI / (2.*qtnpts));
+			double local_scale = -max_val;
+			for (int iqd = 0; iqd < numpoints; ++iqd)
+				pointsarray[iqd] = local_scale * cos( M_PI*(2.*(iqd+1.) - 1.) / (2.*numpoints) );
+		}
+	}
+	return;
+}
+
+
 
 inline int norm (vector<int> v) { int norm2 = 0; for (size_t iv = 0; iv < v.size(); ++iv) norm2+=v[iv]*v[iv]; return (norm2); }
 
