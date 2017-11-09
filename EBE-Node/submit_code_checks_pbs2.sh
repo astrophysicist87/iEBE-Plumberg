@@ -18,7 +18,7 @@ npy0=15
 for axis in X
 do
 	###########
-	for nqt0 in 21 27 31
+	for nqt0 in 13
 	do
 		###########
 		direcName0=$homeDirectory/AXIS_`echo $axis`_pT`echo $npt0`_pY`echo $npy0`_qt`echo $nqt0`
@@ -27,7 +27,7 @@ do
 			mkdir $direcName0
 		fi
 		###########
-		for resfrac in 0.60 1.00
+		for resfrac in 0.00
 		do
 			direcName=$direcName0/RESFRAC_`echo $resfrac`
 			if [ -d "$direcName" ]
@@ -44,12 +44,12 @@ done
 #submit jobs
 for axis in X
 do
-	for nqt0 in 21 27 31
+	for nqt0 in 13
 	do
-		nqx0=21
+		nqx0=11
 		nqy0=1
 		nqz0=1
-		for resfrac in 0.60 1.00
+		for resfrac in 0.00
 		do
 			lwd=$homeDirectory/AXIS_`echo $axis`_pT`echo $npt0`_pY`echo $npy0`_qt`echo $nqt0`/RESFRAC_`echo $resfrac`
 			mkdir $lwd/results

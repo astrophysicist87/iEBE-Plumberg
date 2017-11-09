@@ -165,8 +165,8 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 		{
 			const int n = (qtnpts + 1) / 2;
 			double tmptan = tan(M_PI / (4.0*n));
-			double q_min_local = ( qt_interp <= 0.0 ) ? q_min : q_max*tmptan*tmptan ;	//note min and max swapped
-			double q_max_local = ( qt_interp <= 0.0 ) ? q_min*tmptan*tmptan : q_max ;	//note min and max swapped
+			double q_min_local = ( qt_interp <= 0.0 ) ? q_min : q_min*tmptan*tmptan ;
+			double q_max_local = ( qt_interp <= 0.0 ) ? q_max*tmptan*tmptan : q_max ;
 
 			//set up Chebyshev calculation
 			int npts_loc[1] = { n };
