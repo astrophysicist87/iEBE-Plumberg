@@ -94,6 +94,21 @@ void CorrelationFunction::Cal_correlationfunction(bool project_CF /*==true*/)
 	//output the un-regulated correlation function to separate file for debugging purposes
 	Output_correlationfunction(project_CF);
 
+	//added for checking...
+	if (FLESH_OUT_CF)
+	{
+		Allocate_fleshed_out_CF();
+
+		for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+		{
+			Flesh_out_CF(ipt, ipphi);
+			Output_fleshed_out_correlationfunction(ipt, ipphi, project_CF);
+		}
+	
+		Delete_fleshed_out_CF();
+	}
+
 	delete [] q_interp;
 
 	return;
@@ -263,9 +278,13 @@ void CorrelationFunction::Flesh_out_CF(int ipt, int ipphi, double sample_scale /
 	double qymin = 0.9999*sample_scale*qy_pts[0], qymax = 0.9999*sample_scale*qy_pts[qynpts-1];
 	double qzmin = 0.9999*sample_scale*qz_pts[0], qzmax = 0.9999*sample_scale*qz_pts[qznpts-1];
 
-	double new_Del_qx = (qxmax - qxmin)/(double(new_nqpts-1)+1.e-100);
-	double new_Del_qy = (qymax - qymin)/(double(new_nqpts-1)+1.e-100);
-	double new_Del_qz = (qzmax - qzmin)/(double(new_nqpts-1)+1.e-100);
+	new_nqxpts = ( qxnpts > 1 ) ? new_nqpts : 1;
+	new_nqypts = ( qynpts > 1 ) ? new_nqpts : 1;
+	new_nqzpts = ( qznpts > 1 ) ? new_nqpts : 1;
+
+	double new_Del_qx = (qxmax - qxmin)/(double(new_nqxpts-1)+1.e-100);
+	double new_Del_qy = (qymax - qymin)/(double(new_nqypts-1)+1.e-100);
+	double new_Del_qz = (qzmax - qzmin)/(double(new_nqzpts-1)+1.e-100);
 
 	double *** current_C_slice = CFvals[ipt][ipphi];
 
@@ -273,7 +292,7 @@ void CorrelationFunction::Flesh_out_CF(int ipt, int ipphi, double sample_scale /
 	//cout << "(qymin, qymax, new_Del_qy) = (" << qymin << ", " << qymax << ", " << new_Del_qy << ")" << endl;
 	//cout << "(qzmin, qzmax, new_Del_qz) = (" << qzmin << ", " << qzmax << ", " << new_Del_qz << ")" << endl;
 	
-	for (int iqx = 0; iqx < new_nqpts; ++iqx)
+	/*for (int iqx = 0; iqx < new_nqpts; ++iqx)
 	for (int iqy = 0; iqy < new_nqpts; ++iqy)
 	for (int iqz = 0; iqz < new_nqpts; ++iqz)
 	{
@@ -289,7 +308,56 @@ void CorrelationFunction::Flesh_out_CF(int ipt, int ipphi, double sample_scale /
 		fleshed_out_crossterm[iqx][iqy][iqz] = interpolate_CF(crosstermCFvals[ipt][ipphi], qx0, qy0, qz0, ipt, 1);
 		fleshed_out_resonances[iqx][iqy][iqz] = interpolate_CF(resonancesCFvals[ipt][ipphi], qx0, qy0, qz0, ipt, 2);
 		fleshed_out_CF[iqx][iqy][iqz] = 1.0 + fleshed_out_thermal[iqx][iqy][iqz] + fleshed_out_crossterm[iqx][iqy][iqz] + fleshed_out_resonances[iqx][iqy][iqz];
+	}*/
+
+	//set up Chebyshev calculation
+	const int n = (qxnpts + 1) / 2;
+	double tmptan = tan(M_PI / (4.0*n));
+	double qx_min_local_neg = -qx_max, qx_min_local_pos = -qx_max*tmptan*tmptan ;
+	double qx_max_local_neg = qx_max*tmptan*tmptan, qx_max_local_pos = qx_max ;
+
+	int npts_loc[1] = { n };
+	int os[1] = { n - 1 };
+	double lls[1] = { qx_min_local_neg };
+	double uls[1] = { qx_max_local_neg };
+	int dim_loc = 1;
+
+	double C_at_neg_q[n];	//C - 1
+	for (int iqd = 0; iqd < n; iqd++)
+		C_at_neg_q[iqd] = current_C_slice[iqd][0][0];
+	Chebyshev cfNEG(C_at_neg_q, npts_loc, os, lls, uls, dim_loc);
+
+	double C_at_pos_q[n];	//C - 1
+	lls[0] = qx_min_local_pos;
+	uls[0] = qx_max_local_pos;
+	for (int iqd = n-1; iqd < qxnpts; iqd++)
+		C_at_pos_q[iqd-(n-1)] = current_C_slice[iqd][0][0];
+	Chebyshev cfPOS(C_at_pos_q, npts_loc, os, lls, uls, dim_loc);
+
+	for (int iqx = 0; iqx < (new_nqxpts+1)/2; ++iqx)
+	{
+		double qx0 = qxmin + double(iqx) * new_Del_qx;
+
+		qx_fleshed_out_pts[iqx] = qx0;
+		double point[1] = { qx0 };
+
+		fleshed_out_CF[iqx][0][0] = cfNEG.eval(point);
 	}
+
+	for (int iqx = (new_nqxpts+1)/2; iqx < new_nqxpts; ++iqx)
+	{
+		double qx0 = qxmin + double(iqx) * new_Del_qx;
+
+		qx_fleshed_out_pts[iqx] = qx0;
+		double point[1] = { qx0 };
+
+		const int iqt_i = ( qx0 <= 0.0 ) ? 0 : n-1 ;
+		const int iqt_f = ( qx0 <= 0.0 ) ? n-1 : qxnpts-1 ;
+		const int shift = ( qx0 <= 0.0 ) ? 0 : n-1 ;
+
+		fleshed_out_CF[iqx][0][0] = cfPOS.eval(point);
+	}
+
 
 	return;
 }
@@ -479,9 +547,9 @@ void CorrelationFunction::find_minimum_chisq_correlationfunction_full(double ***
 	double * q3pts = qz_pts;
 	if (fleshing_out_CF)
 	{
-		q1npts = new_nqpts;
-		q2npts = new_nqpts;
-		q3npts = new_nqpts;
+		q1npts = new_nqxpts;
+		q2npts = new_nqypts;
+		q3npts = new_nqzpts;
 		q1pts = qx_fleshed_out_pts;
 		q2pts = qy_fleshed_out_pts;
 		q3pts = qz_fleshed_out_pts;

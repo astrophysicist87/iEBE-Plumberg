@@ -302,21 +302,26 @@ void CorrelationFunction::Output_correlationfunction(bool project_CF /*==true*/)
 	return;
 }
 
-void CorrelationFunction::Output_fleshed_out_correlationfunction(int ipT, int ipphi)
+void CorrelationFunction::Output_fleshed_out_correlationfunction(int ipT, int ipphi, bool project_CF /*==true*/)
 {
 	ostringstream oCorrFunc_stream;
 	string temp_particle_name = particle_name;
 	replace_parentheses(temp_particle_name);
-	oCorrFunc_stream << path << "/correlfunct3D" << "_" << temp_particle_name << "_fleshed_out.dat";
+
+	string CF_proj_string = "";
+	if (!project_CF)
+		CF_proj_string = "unprojected_";
+
+	oCorrFunc_stream << path << "/correlfunct3D_" << CF_proj_string << temp_particle_name << "_fleshed_out.dat";
 	ofstream oCorrFunc;
 	if (ipT==0 && ipphi==0)
 		oCorrFunc.open(oCorrFunc_stream.str().c_str());
 	else
 		oCorrFunc.open(oCorrFunc_stream.str().c_str(), ios::app);
 
-	for (int iqx = 0; iqx < new_nqpts; ++iqx)
-	for (int iqy = 0; iqy < new_nqpts; ++iqy)
-	for (int iqz = 0; iqz < new_nqpts; ++iqz)
+	for (int iqx = 0; iqx < new_nqxpts; ++iqx)
+	for (int iqy = 0; iqy < new_nqypts; ++iqy)
+	for (int iqz = 0; iqz < new_nqzpts; ++iqz)
 	{
 		double ckp = cos_SP_pphi[ipphi], skp = sin_SP_pphi[ipphi];
 		oCorrFunc << scientific << setprecision(7) << setw(15)

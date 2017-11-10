@@ -92,7 +92,8 @@ class CorrelationFunction
 		int n_alpha_points, n_alpha_points_PIONS;
 		//int nFO_cutoff;
 		//int number_of_percentage_markers;
-		double qtmax;
+		double qtmax, qx_max, qy_max, qz_max;
+		int new_nqxpts, new_nqypts, new_nqzpts;
 		double q_space_CF_cutoff;		// when correlator falls below this value,
 							//	set correlator to zero for any q-points further away from q-origin than that
 		double ** current_q_space_cutoff;	// point in q-space at which cutoff of CF begins (depends on pT and pphi)
@@ -376,7 +377,7 @@ class CorrelationFunction
 		void Read_in_correlationfunction();
 		void Output_correlationfunction(bool project_CF = true);
 		void Output_lambdas();
-		void Output_fleshed_out_correlationfunction(int ipt, int ipphi);
+		void Output_fleshed_out_correlationfunction(int ipt, int ipphi, bool project_CF = true);
 		void Dump_spectra_array(string output_filename, double *** array_to_dump);
 		void Load_spectra_array(string output_filename, double *** array_to_read);
 

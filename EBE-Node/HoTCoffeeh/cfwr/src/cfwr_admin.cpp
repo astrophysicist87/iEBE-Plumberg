@@ -875,6 +875,10 @@ void CorrelationFunction::Set_q_points()
 	Fill_out_pts(qy_pts, qynpts, abs(init_qy), QY_POINTS_SPACING);
 	Fill_out_pts(qz_pts, qznpts, abs(init_qz), QZ_POINTS_SPACING);
 
+	qx_max = abs(init_qx);
+	qy_max = abs(init_qy);
+	qz_max = abs(init_qz);
+
 	iqt0 = (qtnpts - 1) / 2;
 	iqx0 = (qxnpts - 1) / 2;
 	iqy0 = (qynpts - 1) / 2;
@@ -1327,23 +1331,23 @@ void CorrelationFunction::Load_decay_channel_info_nb3(int dc_idx, double K_T_loc
 
 void CorrelationFunction::Allocate_fleshed_out_CF()
 {
-	fleshed_out_CF = new double ** [new_nqpts];
-	fleshed_out_thermal = new double ** [new_nqpts];
-	fleshed_out_crossterm = new double ** [new_nqpts];
-	fleshed_out_resonances = new double ** [new_nqpts];
-	for (int iqx = 0; iqx < new_nqpts; ++iqx)
+	fleshed_out_CF = new double ** [new_nqxpts];
+	fleshed_out_thermal = new double ** [new_nqxpts];
+	fleshed_out_crossterm = new double ** [new_nqxpts];
+	fleshed_out_resonances = new double ** [new_nqxpts];
+	for (int iqx = 0; iqx < new_nqxpts; ++iqx)
 	{
-		fleshed_out_CF[iqx] = new double * [new_nqpts];
-		fleshed_out_thermal[iqx] = new double * [new_nqpts];
-		fleshed_out_crossterm[iqx] = new double * [new_nqpts];
-		fleshed_out_resonances[iqx] = new double * [new_nqpts];
-		for (int iqy = 0; iqy < new_nqpts; ++iqy)
+		fleshed_out_CF[iqx] = new double * [new_nqypts];
+		fleshed_out_thermal[iqx] = new double * [new_nqypts];
+		fleshed_out_crossterm[iqx] = new double * [new_nqypts];
+		fleshed_out_resonances[iqx] = new double * [new_nqypts];
+		for (int iqy = 0; iqy < new_nqypts; ++iqy)
 		{
-			fleshed_out_CF[iqx][iqy] = new double [new_nqpts];
-			fleshed_out_thermal[iqx][iqy] = new double [new_nqpts];
-			fleshed_out_crossterm[iqx][iqy] = new double [new_nqpts];
-			fleshed_out_resonances[iqx][iqy] = new double [new_nqpts];
-			for (int iqz = 0; iqz < new_nqpts; ++iqz)
+			fleshed_out_CF[iqx][iqy] = new double [new_nqzpts];
+			fleshed_out_thermal[iqx][iqy] = new double [new_nqzpts];
+			fleshed_out_crossterm[iqx][iqy] = new double [new_nqzpts];
+			fleshed_out_resonances[iqx][iqy] = new double [new_nqzpts];
+			for (int iqz = 0; iqz < new_nqzpts; ++iqz)
 			{
 				fleshed_out_CF[iqx][iqy][iqz] = 0.0;
 				fleshed_out_thermal[iqx][iqy][iqz] = 0.0;
@@ -1353,18 +1357,18 @@ void CorrelationFunction::Allocate_fleshed_out_CF()
 		}
 	}
 
-	qx_fleshed_out_pts = new double [new_nqpts];
-	qy_fleshed_out_pts = new double [new_nqpts];
-	qz_fleshed_out_pts = new double [new_nqpts];
+	qx_fleshed_out_pts = new double [new_nqxpts];
+	qy_fleshed_out_pts = new double [new_nqypts];
+	qz_fleshed_out_pts = new double [new_nqzpts];
 
 	return;
 }
 
 void CorrelationFunction::Delete_fleshed_out_CF()
 {
-	for (int iqx = 0; iqx < new_nqpts; ++iqx)
+	for (int iqx = 0; iqx < new_nqxpts; ++iqx)
 	{
-		for (int iqy = 0; iqy < new_nqpts; ++iqy)
+		for (int iqy = 0; iqy < new_nqypts; ++iqy)
 		{
 			delete [] fleshed_out_CF[iqx][iqy];
 			delete [] fleshed_out_thermal[iqx][iqy];
