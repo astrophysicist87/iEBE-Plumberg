@@ -11,19 +11,19 @@ from scipy.interpolate import griddata
 mpl.rcParams['pdf.fonttype'] = 42
 
 npy = 15
-npphi = 36
-nqpts = 21
+npphi = 4
+nqpts = 5
 
 qAxisOpts = ['X', 'Y', 'Z']
 qAxesLC = ['x', 'y', 'z']
 projectionOpts = ['', '_unprojected']
 #resFracsOpts = ['0.00', '0.10', '0.20', '0.60', '1.00']
 resFracsOpts = ['0.00', '0.10', '0.20']
-PTOpts = ['15']
+PTOpts = ['5']
 #PTOpts = ['31']
 PYOpts = ['15']
 #QTOpts = ['13', '15', '17', '19', '21', '23', '25', '27', '29', '31']
-QTOpts = ['13', '15', '17', '19', '21']
+QTOpts = ['13']
 
 qAxisColors = ['red', 'blue', 'green']
 cmpStyles = ['-', '--']

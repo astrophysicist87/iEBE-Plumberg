@@ -108,25 +108,23 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 
 	if (!q_point_is_outside_grid)
 	{
-		double C_at_q[qtnpts], Ct_at_q[qtnpts], Cct_at_q[qtnpts], Cr_at_q[qtnpts];	//C - 1
-		double tmpC = 0.0, tmpCt = 0.0, tmpCct = 0.0, tmpCr = 0.0;
-	
-		// set CF values along qt-slice for interpolation
-		for (int iqtidx = 0; iqtidx < qtnpts; ++iqtidx)
-		{
-			//return C - 1!!!
-			get_CF_terms(&tmpC, &tmpCt, &tmpCct, &tmpCr, ipt, ipphi, iqtidx, iqx, iqy, iqz, project_CF && !thermal_pions_only);
-			C_at_q[iqtidx] = tmpC;
-			Ct_at_q[iqtidx] = tmpCt;
-			Cct_at_q[iqtidx] = tmpCct;
-			Cr_at_q[iqtidx] = tmpCr;
-//cerr << "Check CF terms: " << qt_pts[iqtidx] << "   " << ipt << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << iqz << "   "
-//		<< tmpC << "   " << tmpCt << "   " << tmpCct << "   " << tmpCr << endl;
-		}
-
 		//assumes qt-grid has already been computed at (adjusted) Chebyshev nodes!!!
 		if (QT_POINTS_SPACING == 1 && interp_flag == 0)
 		{
+			double C_at_q[qtnpts], Ct_at_q[qtnpts], Cct_at_q[qtnpts], Cr_at_q[qtnpts];	//C - 1
+			double tmpC = 0.0, tmpCt = 0.0, tmpCct = 0.0, tmpCr = 0.0;
+	
+			// set CF values along qt-slice for interpolation
+			for (int iqtidx = 0; iqtidx < qtnpts; ++iqtidx)
+			{
+				//return C - 1!!!
+				get_CF_terms(&tmpC, &tmpCt, &tmpCct, &tmpCr, ipt, ipphi, iqtidx, iqx, iqy, iqz, project_CF && !thermal_pions_only);
+				C_at_q[iqtidx] = tmpC;
+				Ct_at_q[iqtidx] = tmpCt;
+				Cct_at_q[iqtidx] = tmpCct;
+				Cr_at_q[iqtidx] = tmpCr;
+			}
+
 			//set up Chebyshev calculation
 			int npts_loc[1] = { qtnpts };
 			int os[1] = { qtnpts - 1 };
@@ -168,6 +166,24 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 			double q_min_local = ( qt_interp <= 0.0 ) ? q_min : q_min*tmptan*tmptan ;
 			double q_max_local = ( qt_interp <= 0.0 ) ? q_max*tmptan*tmptan : q_max ;
 
+			double C_at_q[n], Ct_at_q[n], Cct_at_q[n], Cr_at_q[n];	//C - 1
+			double tmpC = 0.0, tmpCt = 0.0, tmpCct = 0.0, tmpCr = 0.0;
+	
+			const int iqt_i = ( qt_interp <= 0.0 ) ? 0 : n-1 ;
+			const int iqt_f = ( qt_interp <= 0.0 ) ? n-1 : qtnpts-1 ;
+			const int shift = ( qt_interp <= 0.0 ) ? 0 : n-1 ;
+
+			// set CF values along qt-slice for interpolation
+			for (int iqtidx = iqt_i; iqtidx <= iqt_f; ++iqtidx)
+			{
+				//return C - 1!!!
+				get_CF_terms(&tmpC, &tmpCt, &tmpCct, &tmpCr, ipt, ipphi, iqtidx, iqx, iqy, iqz, project_CF && !thermal_pions_only);
+				C_at_q[iqtidx-shift] = tmpC;
+				Ct_at_q[iqtidx-shift] = tmpCt;
+				Cct_at_q[iqtidx-shift] = tmpCct;
+				Cr_at_q[iqtidx-shift] = tmpCr;
+			}
+
 			//set up Chebyshev calculation
 			int npts_loc[1] = { n };
 			int os[1] = { n - 1 };
@@ -190,13 +206,13 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 			//{
 				cerr << "WARNING(OKAY): " << qt_interp << "   " << ipt << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << iqz << "   "
 						<< *totalresult << "   " << *thermalresult << "   " << *CTresult << "   " << *resonanceresult << endl;
-				for (int iqtidx = 0; iqtidx < qtnpts; ++iqtidx)
+				for (int iqtidx = iqt_i; iqtidx <= iqt_f; ++iqtidx)
 				{
 					get_CF_terms(&tmpC, &tmpCt, &tmpCct, &tmpCr, ipt, ipphi, iqtidx, iqx, iqy, iqz, project_CF && !thermal_pions_only);
-					C_at_q[iqtidx] = tmpC;
-					Ct_at_q[iqtidx] = tmpCt;
-					Cct_at_q[iqtidx] = tmpCct;
-					Cr_at_q[iqtidx] = tmpCr;
+					C_at_q[iqtidx-shift] = tmpC;
+					Ct_at_q[iqtidx-shift] = tmpCt;
+					Cct_at_q[iqtidx-shift] = tmpCct;
+					Cr_at_q[iqtidx-shift] = tmpCr;
 					cerr << "Check CF terms: " << qt_pts[iqtidx] << "   " << ipt << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << iqz << "   "
 							<< tmpC << "   " << tmpCt << "   " << tmpCct << "   " << tmpCr << endl;
 				}
@@ -204,6 +220,19 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 		}
 		else	//if not using Chebyshev nodes in qt-direction, just use straight-up linear(0) or cubic(1) interpolation
 		{
+			double C_at_q[qtnpts], Ct_at_q[qtnpts], Cct_at_q[qtnpts], Cr_at_q[qtnpts];	//C - 1
+			double tmpC = 0.0, tmpCt = 0.0, tmpCct = 0.0, tmpCr = 0.0;
+	
+			// set CF values along qt-slice for interpolation
+			for (int iqtidx = 0; iqtidx < qtnpts; ++iqtidx)
+			{
+				//return C - 1!!!
+				get_CF_terms(&tmpC, &tmpCt, &tmpCct, &tmpCr, ipt, ipphi, iqtidx, iqx, iqy, iqz, project_CF && !thermal_pions_only);
+				C_at_q[iqtidx] = tmpC;
+				Ct_at_q[iqtidx] = tmpCt;
+				Cct_at_q[iqtidx] = tmpCct;
+				Cr_at_q[iqtidx] = tmpCr;
+			}
 			*totalresult = interpolate1D(qt_pts, C_at_q, qt_interp, qtnpts, 1, false);
 			*thermalresult = interpolate1D(qt_pts, Ct_at_q, qt_interp, qtnpts, 1, false);
 			*CTresult = interpolate1D(qt_pts, Cct_at_q, qt_interp, qtnpts, 1, false);
@@ -673,9 +702,12 @@ void CorrelationFunction::R2_Fourier_transform(int iKT, double plane_psi, int mo
 
 void CorrelationFunction::Set_target_moments(int iqt, int iqz)
 {
+	Stopwatch sw;
+	sw.Start();
 	cout << "Setting thermal target moments...";
 	Set_thermal_target_moments(iqt, iqz);
-	cout << "done." << endl;
+	sw.Stop();
+	cout << "done in " << sw.printTime() << " seconds." << endl;
 
 	cout << "Setting full target moments...";
 	for (int ipT = 0; ipT < n_pT_pts; ++ipT)

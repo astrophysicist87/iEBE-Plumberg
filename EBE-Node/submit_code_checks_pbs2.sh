@@ -10,8 +10,8 @@ srcDirec=$baseDirectory/HoTCoffeeh
 i=1
 workingDirectory='/home/plumberg.1/Plumberg_iEBE/iEBE-stable/RESULTS_Edec300/results/results-'`echo $i`
 
-npt0=15
-npphi0=36
+npt0=5
+npphi0=4
 npy0=15
 
 #create directories
@@ -46,7 +46,7 @@ for axis in X
 do
 	for nqt0 in 13
 	do
-		nqx0=11
+		nqx0=5
 		nqy0=1
 		nqz0=1
 		for resfrac in 0.00
@@ -76,3 +76,5 @@ done
 
 qstat -u plumberg.1 >> $outfile
 qstat -u plumberg.1 | grep plumberg | awk -F. '{print $1}' >> $jobIDsfilename
+
+# End of file
