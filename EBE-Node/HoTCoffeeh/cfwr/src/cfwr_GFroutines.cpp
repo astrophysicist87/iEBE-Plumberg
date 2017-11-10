@@ -50,7 +50,8 @@ void CorrelationFunction::Get_GF_HBTradii()
 //this function leaves open the option of just interpolating over the qt-direction
 void CorrelationFunction::Cal_correlationfunction(bool project_CF /*==true*/)
 {
-	*global_out_stream_ptr << "Calculating the correlation function..." << endl;
+	string projection_stem = ( project_CF ) ? "projected" : "unprojected" ;
+	*global_out_stream_ptr << "Calculating the " << projection_stem << " correlation function..." << endl;
 
 	//exploits convenient symmetries to get full correlation function
 	//as need for remainder of calculation
@@ -68,7 +69,7 @@ void CorrelationFunction::Cal_correlationfunction(bool project_CF /*==true*/)
 	double * q_interp = new double [4];
 
 	// Then compute full correlation function
-	*global_out_stream_ptr << "Computing the full correlator in XYZ coordinates..." << endl;
+	*global_out_stream_ptr << "Computing the full, " << projection_stem << " correlator in XYZ coordinates..." << endl;
 	Stopwatch sw;
 	sw.Start();
 	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
@@ -88,7 +89,7 @@ void CorrelationFunction::Cal_correlationfunction(bool project_CF /*==true*/)
 		resonancesCFvals[ipt][ipphi][iqx][iqy][iqz] = tmp3;	//Cr
 	}
 	sw.Stop();
-	*global_out_stream_ptr << "Finished computing correlator in " << sw.printTime() << " seconds." << endl;
+	*global_out_stream_ptr << "Finished computing " << projection_stem << " correlator in " << sw.printTime() << " seconds." << endl;
 
 	//output the un-regulated correlation function to separate file for debugging purposes
 	Output_correlationfunction(project_CF);
@@ -102,9 +103,10 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 										int ipt, int ipphi, int iqx, int iqy, int iqz, double qt_interp, int interp_flag /*==0*/, bool project_CF /*==true*/)
 {
 	int qidx = binarySearch(qt_pts, qtnpts, qt_interp);
-	double q_min = qt_pts[0] / cos(M_PI / (2.*qtnpts)), q_max = qt_pts[qtnpts-1] / cos(M_PI / (2.*qtnpts));
+	double q_min = -qtmax;	//the range in qt expected to be covered by
+	double q_max = qtmax;	//Chebyshev interpolation (for any qt spacing choice)
 
-	bool q_point_is_outside_grid = ( qidx == -1 && ( qt_interp < q_min || qt_interp > q_max ) );
+	bool q_point_is_outside_grid = ( ( qidx < 0 || qidx >= qtnpts ) && ( qt_interp < q_min || qt_interp > q_max ) );
 
 	if (!q_point_is_outside_grid)
 	{

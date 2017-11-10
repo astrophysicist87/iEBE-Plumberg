@@ -11,19 +11,19 @@ from scipy.interpolate import griddata
 mpl.rcParams['pdf.fonttype'] = 42
 
 npy = 15
-npphi = 4
-nqpts = 5
+npphi = 36
+nqpts = 21
 
 qAxisOpts = ['X', 'Y', 'Z']
 qAxesLC = ['x', 'y', 'z']
 projectionOpts = ['', '_unprojected']
 #resFracsOpts = ['0.00', '0.10', '0.20', '0.60', '1.00']
-resFracsOpts = ['0.00', '0.10', '0.20']
-PTOpts = ['5']
+resFracsOpts = ['0.00', '0.10', '0.20', '0.60']
+PTOpts = ['15']
 #PTOpts = ['31']
 PYOpts = ['15']
 #QTOpts = ['13', '15', '17', '19', '21', '23', '25', '27', '29', '31']
-QTOpts = ['13']
+QTOpts = ['7']
 
 qAxisColors = ['red', 'blue', 'green']
 cmpStyles = ['-', '--']
@@ -137,8 +137,9 @@ def generate_comparison_plot(ipT, ipphi, ires, iprojection):
 				idx += 1
 
 	ax.set_xlabel(r'$q_x$ (GeV)' % {'opt1': qAxesLC[0]}, {'fontsize': plotfontsize + 5})	
-	ax.set_ylabel(r'$C$', {'fontsize': plotfontsize + 5})
+	ax.set_ylabel(r'$C$', {'fontsize': plotfontsize})
 	ax.legend(loc=0, prop={'size': plotfontsize+5})
+	plt.title(r'RF$=%(opt4)s$, %(opt5)s' % {'opt4': resFracsOpts[ires], 'opt5': projectionOpts[iprojection]})
 	
 	plt.show(block=False)
 
@@ -148,7 +149,7 @@ def generate_comparison_plot(ipT, ipphi, ires, iprojection):
 
 
 def generate_all_plots():
-	chosenpT, chosenpphi = 4, 0
+	#chosenpT, chosenpphi = 0, 0
 	#for i in xrange(7):
 	#	generate_plot(chosenpT, chosenpphi, 3, i, 1, 1)
 	#
@@ -159,7 +160,9 @@ def generate_all_plots():
 	#generate_comparison_plot(chosenpT, chosenpphi, 3, 1, 1)
 	#generate_plot(4, 0, 0, 0, 1, 1)
 	#generate_plot(6, 0, 1, 0, 1, 1)
-	generate_comparison_plot(chosenpT, chosenpphi, 0, 1)
+	chosenpphi = 0
+	for chosenpT in xrange(15):
+		generate_comparison_plot(chosenpT, chosenpphi, 0, 1)
 	pause()
 
 #############################################################################

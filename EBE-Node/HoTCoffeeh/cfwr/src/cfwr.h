@@ -92,6 +92,7 @@ class CorrelationFunction
 		int n_alpha_points, n_alpha_points_PIONS;
 		//int nFO_cutoff;
 		//int number_of_percentage_markers;
+		double qtmax;
 		double q_space_CF_cutoff;		// when correlator falls below this value,
 							//	set correlator to zero for any q-points further away from q-origin than that
 		double ** current_q_space_cutoff;	// point in q-space at which cutoff of CF begins (depends on pT and pphi)

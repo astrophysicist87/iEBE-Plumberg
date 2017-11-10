@@ -10,15 +10,15 @@ srcDirec=$baseDirectory/HoTCoffeeh
 i=1
 workingDirectory='/home/plumberg.1/Plumberg_iEBE/iEBE-stable/RESULTS_Edec300/results/results-'`echo $i`
 
-npt0=5
-npphi0=4
+npt0=15
+npphi0=36
 npy0=15
 
 #create directories
 for axis in X
 do
 	###########
-	for nqt0 in 13
+	for nqt0 in 7 9 11 13 15 17 19 21
 	do
 		###########
 		direcName0=$homeDirectory/AXIS_`echo $axis`_pT`echo $npt0`_pY`echo $npy0`_qt`echo $nqt0`
@@ -44,9 +44,9 @@ done
 #submit jobs
 for axis in X
 do
-	for nqt0 in 13
+	for nqt0 in 7 9 11 13 15 17 19 21
 	do
-		nqx0=5
+		nqx0=21
 		nqy0=1
 		nqz0=1
 		for resfrac in 0.00
