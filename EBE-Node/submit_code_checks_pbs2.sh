@@ -18,7 +18,7 @@ npy0=15
 for axis in XYZ
 do
 	###########
-	for nqt0 in 17
+	for nqt0 in 7
 	do
 		###########
 		direcName0=$homeDirectory/AXIS_`echo $axis`_pT`echo $npt0`_pY`echo $npy0`_qt`echo $nqt0`
@@ -44,7 +44,7 @@ done
 #submit jobs
 for axis in XYZ
 do
-	for nqt0 in 17
+	for nqt0 in 7
 	do
 		nqx0=3
 		nqy0=3
