@@ -69,6 +69,10 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	n_alpha_points = 31;
 	n_alpha_points_PIONS = 101;
 
+	new_nqxpts = ( qxnpts > 1 ) ? new_nqpts : 1;
+        new_nqypts = ( qynpts > 1 ) ? new_nqpts : 1;
+        new_nqzpts = ( qznpts > 1 ) ? new_nqpts : 1;
+
 	//set ofstream for output file
 	global_out_stream_ptr = &myout;
 	

@@ -17,7 +17,7 @@ echo 'Should be in' $workingDirectory
 time nice -n 0 ./cfwr.e CF_npphi=`echo $NPPHI` CF_npT=`echo $NPT` CF_npY=`echo $NPY` \
 						chosenParticlesMode=0 CF_resonanceThreshold=`echo $RESFRAC` \
 						qtnpts=`echo $NQT` qxnpts=`echo $NQX` qynpts=`echo $NQY` qznpts=`echo $NQZ` \
-						delta_qx=0.02 delta_qy=0.02 delta_qz=0.02 1> CFWR_record.out 2> CFWR_err.out
+						delta_qx=0.04 delta_qy=0.04 delta_qz=0.04 1> CFWR_record.out 2> CFWR_err.out
 
 \rm cfwr.e
 \rm results/*.h5

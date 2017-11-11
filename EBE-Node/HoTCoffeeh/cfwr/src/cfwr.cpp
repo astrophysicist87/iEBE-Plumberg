@@ -1341,7 +1341,8 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_alternate(int iqt
 		deltaf_prefactor = 1./(2.0*Tdec*Tdec*(Edec+Pdec));
 
 	//spatial rapidity grid
-	const int eta_s_npts = 101;
+	//const int eta_s_npts = 101;
+	const int eta_s_npts = 31;	//probably close enough...
 	double * eta_s = new double [eta_s_npts];
 	double * eta_s_weight = new double [eta_s_npts];
 	double eta_s_i = 0.0, eta_s_f = 4.0;

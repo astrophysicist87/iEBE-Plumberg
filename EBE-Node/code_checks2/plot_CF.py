@@ -22,7 +22,7 @@ PTOpts = ['15']
 #PTOpts = ['31']
 PYOpts = ['15']
 #QTOpts = ['13', '15', '17', '19', '21', '23', '25', '27', '29', '31']
-QTOpts = ['7', '9', '13', '17', '19', '21']
+QTOpts = ['7', '9', '11', '13', '15', '17', '19', '21']
 
 qAxisColors = ['red', 'blue', 'green']
 cmpStyles = ['-', '--']
@@ -78,8 +78,8 @@ def generate_plotdata(path, ipT, ipphi, npT, npphi, cols):
 	#plotdatax = datax
 	#plotdatay = datay
 	
-	return plotdatax, plotdatay-1.0, [xlower, xupper, ylower-1.0, yupper-1.0]
-	#return plotdatax, plotdatay, [xlower, xupper, ylower, yupper]
+	#return plotdatax, plotdatay-1.0, [xlower, xupper, ylower-1.0, yupper-1.0]
+	return plotdatax, plotdatay, [xlower, xupper, ylower, yupper]
 	#return plotdatax, plotdatay, [xlower, xupper, 1.0, 2.0]
 	#return plotdatax, plotdatay, [GeVToMeV * xlower, GeVToMeV * xupper, 1.0, 2.0]
 
@@ -116,7 +116,7 @@ def generate_comparison_plot(ipT, ipphi, ires, iprojection):
 	# set-up
 	plotfontsize = 12
 	fig, ax = plt.subplots(1, 1)
-	ax.set_yscale("log")
+	#ax.set_yscale("log")
 	fig.subplots_adjust(wspace=0.0, hspace=0.0)
 
 	jet = cm = plt.get_cmap('jet') 
@@ -164,7 +164,7 @@ def generate_all_plots():
 	#for chosenpT in xrange(0,15,3):
 	for chosenpT in xrange(9):
 		#print chosenpT
-		generate_comparison_plot(chosenpT, chosenpphi, 3, 1)
+		generate_comparison_plot(chosenpT, chosenpphi, 3, 0)
 	pause()
 
 #############################################################################

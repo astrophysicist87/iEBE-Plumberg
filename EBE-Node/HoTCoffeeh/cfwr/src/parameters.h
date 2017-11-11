@@ -24,9 +24,9 @@ using namespace std;
 #define QT_POINTS_SPACING			2		// 0 - uniform from -qmax to +qmax
 											// 1 - Chebyshev nodes from -qmax to +qmax
 											// 2 - Chebyshev nodes for +ve and -ve separately (better convergence)
-#define QX_POINTS_SPACING			2		// same
-#define QY_POINTS_SPACING			2		// same
-#define QZ_POINTS_SPACING			2		// same
+#define QX_POINTS_SPACING			0		// same
+#define QY_POINTS_SPACING			0		// same
+#define QZ_POINTS_SPACING			0		// same
 #define MIDRAPIDITY_PIONS_ONLY		1		// obvious
 #define USE_FAST_EXP				1
 #define USE_EXP_RECYCLING			1

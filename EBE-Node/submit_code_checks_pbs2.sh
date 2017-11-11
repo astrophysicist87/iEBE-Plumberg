@@ -11,23 +11,23 @@ i=1
 workingDirectory='/home/plumberg.1/Plumberg_iEBE/iEBE-stable/RESULTS_Edec300/results/results-'`echo $i`
 
 npt0=15
-npphi0=4
+npphi0=36
 npy0=15
 
 #create directories
-for axis in X
+for axis in XYZ
 do
 	###########
-	for nqt0 in 21
+	for nqt0 in 17
 	do
 		###########
-		direcName0=$homeDirectory/AXIS_`echo $axis`_pT`echo $npt0`_pY`echo $npy0`_qt`echo $nqt0`_CHEBINTERP
+		direcName0=$homeDirectory/AXIS_`echo $axis`_pT`echo $npt0`_pY`echo $npy0`_qt`echo $nqt0`
 		if [ ! -d "$direcName0" ]
 		then
 			mkdir $direcName0
 		fi
 		###########
-		for resfrac in 0.00 0.10 0.20
+		for resfrac in 0.00
 		do
 			direcName=$direcName0/RESFRAC_`echo $resfrac`
 			if [ -d "$direcName" ]
@@ -42,16 +42,16 @@ do
 done
 
 #submit jobs
-for axis in X
+for axis in XYZ
 do
-	for nqt0 in 21
+	for nqt0 in 17
 	do
-		nqx0=7
-		nqy0=1
-		nqz0=1
-		for resfrac in 0.00 0.10 0.20
+		nqx0=3
+		nqy0=3
+		nqz0=3
+		for resfrac in 0.00
 		do
-			lwd=$homeDirectory/AXIS_`echo $axis`_pT`echo $npt0`_pY`echo $npy0`_qt`echo $nqt0`_CHEBINTERP/RESFRAC_`echo $resfrac`
+			lwd=$homeDirectory/AXIS_`echo $axis`_pT`echo $npt0`_pY`echo $npy0`_qt`echo $nqt0`/RESFRAC_`echo $resfrac`
 			mkdir $lwd/results
 
 			cp $workingDirectory/decdat2.dat $workingDirectory/decdat_mu.dat $workingDirectory/surface.dat $lwd/results
