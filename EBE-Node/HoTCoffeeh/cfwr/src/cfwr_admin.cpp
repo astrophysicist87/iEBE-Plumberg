@@ -322,11 +322,15 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	sin_SP_pphi = new double [n_pphi_pts];
 	cos_SP_pphi = new double [n_pphi_pts];
 	gauss_quadrature(n_pT_pts, 5, 0.0, 0.0, 0.0, 13.0*n_pT_pts/15.0, SP_pT, SP_pT_wts);
+	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
+		cout << ipt << "   " << SP_pT[ipt] << endl;
+
 	gauss_quadrature(n_pphi_pts, 1, 0.0, 0.0, Kphi_min, Kphi_max, SP_pphi, SP_pphi_wts);
 	for(int ipphi=0; ipphi<n_pphi_pts; ipphi++)
 	{
 		sin_SP_pphi[ipphi] = sin(SP_pphi[ipphi]);
 		cos_SP_pphi[ipphi] = cos(SP_pphi[ipphi]);
+		cout << ipphi << "   " << SP_pphi[ipphi] << endl;
 	}
 	//using this set of SP_Del_pY points to use Chebyshev interpolation for resonance feeddown
 	SP_Del_pY = new double [n_pY_pts];

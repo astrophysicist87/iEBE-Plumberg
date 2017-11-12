@@ -1,56 +1,35 @@
 #!/bin/bash
 
+#set up directory structure
 baseDirectory=/home/plumberg.1/Plumberg_iEBE/iEBE-stable/EBE-Node
-homeDirectory=$baseDirectory/NEW_results
-outfilename=$homeDirectory/"submit_all_pbs_jobs_record_`date +%F`.out"
-jobIDsfilename=$homeDirectory/"jobIDs_`date +%F`.out"
-outfile=`get_filename $outfilename`
-jobIDsfile=`get_filename $jobIDsfilename`
 srcDirec=$baseDirectory/HoTCoffeeh
 
-i=1
-workingDirectory='/home/plumberg.1/Plumberg_iEBE/iEBE-stable/RESULTS_Edec300/results/results-'`echo $i`
+homeDirectory=$baseDirectory/NEW_results
+rm -rf $homeDirectory
+mkdir $homeDirectory
 
-#create directories
-for axis in X
-do
-	###########
-	for nqt0 in 21
-	do
-		###########
-		direcName0=$homeDirectory/results
-		if [ ! -d "$direcName0" ]
-		then
-			mkdir $direcName0
-		fi
-		###########
-		for resfrac in 0.00 0.10 0.20
-		do
-			direcName=$direcName0/RESFRAC_`echo $resfrac`
-			if [ -d "$direcName" ]
-			then
-				rm -rf $direcName
-			fi
-			mkdir $direcName
-		done
-		###########
-	done
-	###########
-done
+outfilename=$homeDirectory/"submit_all_pbs_jobs_record_`date +%F`.out"
+outfile=`get_filename $outfilename`
+
+jobIDsfilename=$homeDirectory/"jobIDs_`date +%F`.out"
+jobIDsfile=`get_filename $jobIDsfilename`
 
 #submit jobs
-for ((i=1; i<=1000; i++))
+for ((i=1; i<=1; i++))
 do
 		npt0=15
 		npphi0=36
 		npy0=15
-		nqt0=17
-		nqx0=7
-		nqy0=7
-		nqz0=7
-		resfrac=0.60
+		nqt0=1
+		nqx0=1
+		nqy0=1
+		nqz0=1
+		resfrac=0.10
 
-		lwd=$homeDirectory/AXIS_`echo $axis`_pT`echo $npt0`_pY`echo $npy0`_qt`echo $nqt0`_CHEBINTERP/RESFRAC_`echo $resfrac`
+		workingDirectory='/home/plumberg.1/Plumberg_iEBE/iEBE-stable/all_hydro_results/results-'`echo $i`
+
+		lwd=$homeDirectory/results-`echo $i`
+		mkdir $lwd
 		mkdir $lwd/results
 
 		cp $workingDirectory/decdat2.dat $workingDirectory/decdat_mu.dat $workingDirectory/surface.dat $lwd/results

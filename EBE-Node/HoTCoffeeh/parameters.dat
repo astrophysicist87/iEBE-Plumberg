@@ -13,7 +13,7 @@ ignore_long_lived_resonances = 1	# do all decay channels (or don't)
 max_lifetime = 100.0			# resonance is ignored if its lifetime is longer than this value
 					# AND ignore_long_lived_resonances is set to 1
 include_delta_f	= 1			# include viscous CF corrections
-include_bulk_pi = 1			# 1 means that there's an extra column in decdat2.dat,
+include_bulk_pi = 0			# 1 means that there's an extra column in decdat2.dat,
 					# i.e., bulk pi is NOT(!!!) used in current calculation!!!
 n_order = 4				# sets max order for azimuthal averaging (0...nOrder-1)
 ############################################################################

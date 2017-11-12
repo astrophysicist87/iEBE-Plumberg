@@ -84,6 +84,7 @@ int main(int argc, char *argv[])
 	int N_stableparticle;
 	ifstream particletable("EOS/EOS_particletable.dat");
 	particletable >> N_stableparticle;
+	output << "Treating " << N_stableparticle << " stable particles!" << endl;
 	double ** particle_mu = new double * [N_stableparticle];
 	for (int i = 0; i < N_stableparticle; i++)
 		particle_mu[i] = new double [FO_length];
