@@ -188,6 +188,8 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+//if (1) return (0);	//just for the moment
+
 	// Create CorrelationFunction object
 	CorrelationFunction correlation_function(paraRdr, &particle[particle_idx], particle, Nparticle, chosen_resonance_indices, particle_idx, output);
 

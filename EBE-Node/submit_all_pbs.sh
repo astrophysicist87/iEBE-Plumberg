@@ -14,16 +14,19 @@ outfile=`get_filename $outfilename`
 jobIDsfilename=$homeDirectory/"jobIDs_`date +%F`.out"
 jobIDsfile=`get_filename $jobIDsfilename`
 
+#run at most 12 jobs at a time
+nMaxProcessesRunning=12
+
 #submit jobs
-for ((i=1; i<=1; i++))
+for ((i=1; i<=1000; i++))
 do
-		npt0=5
-		npphi0=6
-		npy0=5
-		nqt0=1
-		nqx0=1
-		nqy0=1
-		nqz0=1
+		npt0=15
+		npphi0=36
+		npy0=15
+		nqt0=17
+		nqx0=7
+		nqy0=7
+		nqz0=7
 		resfrac=0.60
 
 		workingDirectory='/home/plumberg.1/Plumberg_iEBE/iEBE-stable/all_hydro_results/results-'`echo $i`
@@ -46,11 +49,20 @@ do
 			echo 'Results directory and submission ID:' $i \
 					`qsub -v workingDirectory=$lwd,NPT=$npt0,NPPHI=$npphi0,NPY=$npy0,NQT=$nqt0,NQX=$nqx0,NQY=$nqy0,NQZ=$nqz0,RESFRAC=$resfrac $newPBSscriptName` >> $outfile
 			cd ..;
+			echo 'Submitted' $i 'at' `date` >> $outfile
+			#update list of currently running jobs in case I need to kill all currently running jobs
+			qstat -u plumberg.1 | grep plumberg.1 | awk '$(NF-1)=="R"' | awk -F. '{print $1}' > $jobIDsfile
+			sleep 3
 		)
+
+		nProcessesRunning=`qstat -u plumberg.1 | grep plumberg.1 | awk '$(NF-1)=="R"' | wc -l`
+		until [ "$nProcessesRunning" -lt "$nMaxProcessesRunning" ]
+		do
+			echo $nProcessesRunning '==' $nMaxProcessesRunning "processes currently running at" `date` >> $outfile
+			sleep 10
+			nProcessesRunning=`qstat -u plumberg.1 | grep plumberg.1 | awk '$(NF-1)=="R"' | wc -l`
+		done
+		echo $nProcessesRunning '<' $nMaxProcessesRunning "processes currently running at" `date` >> $outfile
 done
-
-
-qstat -u plumberg.1 >> $outfile
-qstat -u plumberg.1 | grep plumberg | awk -F. '{print $1}' >> $jobIDsfile
 
 # End of file
