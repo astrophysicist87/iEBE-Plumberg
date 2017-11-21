@@ -98,18 +98,18 @@ inline void Iint2(double alpha, double beta, double gamma, double & I0r, double 
 	complex<double> zqi = zsq*zcu;
 	double ea = exp(-alpha);
 
-//	complex<double> Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p;
-//	int errorCode = bessf::cbessik01(z, Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p);
+	complex<double> Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p;
+	int errorCode = bessf::cbessik01(z, Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p);
 
 	complex<double> ck0(	ea * gsl_cheb_eval (cs_accel_expK0re, alpha),
 							ea * gsl_cheb_eval (cs_accel_expK0im, alpha) );
 	complex<double> ck1(	ea * gsl_cheb_eval (cs_accel_expK1re, alpha),
 							ea * gsl_cheb_eval (cs_accel_expK1im, alpha) );
 
-//cout << "Sanity Check1: " << ea * gsl_cheb_eval (cs_accel_expK0re, alpha) << "   " << ea * gsl_cheb_eval (cs_accel_expK0im, alpha) << "   " << ea * gsl_cheb_eval (cs_accel_expK1re, alpha) << "   " << ea * gsl_cheb_eval (cs_accel_expK1im, alpha) << endl;
-//cout << "Sanity Check2: " << Cck0.real() << "   " << Cck0.imag() << "   " << Cck1.real() << "   " << Cck1.imag() << endl;
-//cout << setw(18) << setprecision(16) << alpha << "   " << beta << "   " << gamma << endl;
+//cout << "Bessel Check: " << ea * gsl_cheb_eval (cs_accel_expK0re, alpha) << "   " << ea * gsl_cheb_eval (cs_accel_expK0im, alpha) << "   " << ea * gsl_cheb_eval (cs_accel_expK1re, alpha) << "   " << ea * gsl_cheb_eval (cs_accel_expK1im, alpha) << "   " << Cck0.real() << "   " << Cck0.imag() << "   " << Cck1.real() << "   " << Cck1.imag() << "   " << setw(18) << setprecision(16) << alpha << "   " << beta << "   " << gamma << endl;
 //if (1) exit(8);
+ck0 = Cck0;
+ck1 = Cck1;
 
 	complex<double> I0 = 2.0*ck0;
 	complex<double> I1 = 2.0*z0*ck1 / z;
@@ -235,6 +235,9 @@ void CorrelationFunction::Fourier_transform_emission_function(int iqt, int iqz)
 	
 		Set_current_particle_info(idc);
 
+		if (current_resonance_particle_id != 49)
+			continue;
+
 		Get_spacetime_moments(idc, iqt, iqz);
 	}
 
@@ -326,6 +329,10 @@ void CorrelationFunction::Compute_phase_space_integrals(int iqt, int iqz)
 		// if so, set decay channel info
 		// ************************************************************
 		Set_current_particle_info(idc);
+
+		if (current_resonance_particle_id != 49)
+			continue;
+
 		Allocate_decay_channel_info();				// allocate needed memory
 
 		// ************************************************************

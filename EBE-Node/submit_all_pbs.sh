@@ -17,14 +17,14 @@ jobIDsfile=`get_filename $jobIDsfilename`
 #submit jobs
 for ((i=1; i<=1; i++))
 do
-		npt0=15
-		npphi0=36
-		npy0=15
+		npt0=5
+		npphi0=6
+		npy0=5
 		nqt0=1
 		nqx0=1
 		nqy0=1
 		nqz0=1
-		resfrac=0.10
+		resfrac=0.60
 
 		workingDirectory='/home/plumberg.1/Plumberg_iEBE/iEBE-stable/all_hydro_results/results-'`echo $i`
 
