@@ -70,8 +70,8 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	n_alpha_points_PIONS = 101;
 
 	new_nqxpts = ( qxnpts > 1 ) ? new_nqpts : 1;
-        new_nqypts = ( qynpts > 1 ) ? new_nqpts : 1;
-        new_nqzpts = ( qznpts > 1 ) ? new_nqpts : 1;
+	new_nqypts = ( qynpts > 1 ) ? new_nqpts : 1;
+	new_nqzpts = ( qznpts > 1 ) ? new_nqpts : 1;
 
 	//set ofstream for output file
 	global_out_stream_ptr = &myout;
@@ -1538,7 +1538,8 @@ void CorrelationFunction::Set_all_Bessel_grids(int iqt, int iqz, int particle_mo
 	const std::complex<double> i(0, 1);
 	int na = n_alpha_points;
 	double alpha_min = 4.0;
-	double alpha_max = 75.0;
+	//double alpha_max = 75.0;
+	double alpha_max = 150.0;
 	if (particle_mode)
 	{
 		na = n_alpha_points_PIONS;

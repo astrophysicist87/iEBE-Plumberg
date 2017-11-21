@@ -295,22 +295,22 @@ int CorrelationFunction::Access_resonance_in_HDF_array(int local_pid, int iqt, i
     {
 		Exception::dontPrint();
 		hsize_t offset[RANK2D] = {HDF_indexer(local_icr, iqt, iqz), 0};
-		if (verbose) cout << "In Access_resonance_in_HDF_array(...): called with/using arguments " << local_pid << "   " << iqt << "   " << iqz << "   " << access_mode << "   " << local_icr << "   " << HDF_indexer(local_icr, iqt, iqz) << endl;
+		//if (verbose) cout << "In Access_resonance_in_HDF_array(...): called with/using arguments " << local_pid << "   " << iqt << "   " << iqz << "   " << access_mode << "   " << local_icr << "   " << HDF_indexer(local_icr, iqt, iqz) << endl;
 		hsize_t count[RANK2D] = {1, chunk_size};				// == chunk_dims
 		resonance_dataspace->selectHyperslab(H5S_SELECT_SET, count, offset);
-		if (verbose) debugger(__LINE__, __FILE__);
+		//if (verbose) debugger(__LINE__, __FILE__);
 		
 		switch(access_mode)
 		{
 			case 0:
 			{
-				if (verbose) debugger(__LINE__, __FILE__);
+				//if (verbose) debugger(__LINE__, __FILE__);
 				resonance_dataset->write(resonance_array_to_use, PredType::NATIVE_DOUBLE, *resonance_memspace, *resonance_dataspace);
 				break;
 			}
 			case 1:
 			{
-				if (verbose) debugger(__LINE__, __FILE__);
+				//if (verbose) debugger(__LINE__, __FILE__);
 				resonance_dataset->read(resonance_array_to_use, PredType::NATIVE_DOUBLE, *resonance_memspace, *resonance_dataspace);
 				break;
 			}
@@ -347,7 +347,7 @@ debugger(__LINE__, __FILE__);
 		return -3;
     }
 
-if (verbose) debugger(__LINE__, __FILE__);
+//if (verbose) debugger(__LINE__, __FILE__);
 
 	return (0);
 }

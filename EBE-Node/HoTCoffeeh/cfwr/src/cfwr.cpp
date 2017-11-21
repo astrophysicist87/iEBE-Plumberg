@@ -98,18 +98,20 @@ inline void Iint2(double alpha, double beta, double gamma, double & I0r, double 
 	complex<double> zqi = zsq*zcu;
 	double ea = exp(-alpha);
 
-	complex<double> Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p;
-	int errorCode = bessf::cbessik01(z, Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p);
+//	complex<double> Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p;
+//	int errorCode = bessf::cbessik01(z, Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p);
 
 	complex<double> ck0(	ea * gsl_cheb_eval (cs_accel_expK0re, alpha),
 							ea * gsl_cheb_eval (cs_accel_expK0im, alpha) );
 	complex<double> ck1(	ea * gsl_cheb_eval (cs_accel_expK1re, alpha),
 							ea * gsl_cheb_eval (cs_accel_expK1im, alpha) );
 
-//cout << "Bessel Check: " << ea * gsl_cheb_eval (cs_accel_expK0re, alpha) << "   " << ea * gsl_cheb_eval (cs_accel_expK0im, alpha) << "   " << ea * gsl_cheb_eval (cs_accel_expK1re, alpha) << "   " << ea * gsl_cheb_eval (cs_accel_expK1im, alpha) << "   " << Cck0.real() << "   " << Cck0.imag() << "   " << Cck1.real() << "   " << Cck1.imag() << "   " << setw(18) << setprecision(16) << alpha << "   " << beta << "   " << gamma << endl;
+//cout << "Bessel Check: " << setw(10) << setprecision(8) << ea * gsl_cheb_eval (cs_accel_expK0re, alpha) << "   " << ea * gsl_cheb_eval (cs_accel_expK0im, alpha) << "   " << ea * gsl_cheb_eval (cs_accel_expK1re, alpha) << "   " << ea * gsl_cheb_eval (cs_accel_expK1im, alpha) << "   " << Cck0.real() << "   " << Cck0.imag() << "   " << Cck1.real() << "   " << Cck1.imag() << "   " << setw(18) << setprecision(16) << alpha << "   " << beta << "   " << gamma << endl;
 //if (1) exit(8);
-ck0 = Cck0;
-ck1 = Cck1;
+
+//I think this is the fix...
+//ck0 = Cck0;
+//ck1 = Cck1;
 
 	complex<double> I0 = 2.0*ck0;
 	complex<double> I1 = 2.0*z0*ck1 / z;
@@ -1068,7 +1070,8 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 	double mu = all_particles[local_pid].mu;
 
 	int local_na = n_alpha_points;
-	double alpha_min = 4.0, alpha_max = 75.0;
+	//double alpha_min = 4.0, alpha_max = 75.0;
+	double alpha_min = 4.0, alpha_max = 150.0;
 	if (local_part_mode == 1)
 	{
 		local_na = n_alpha_points_PIONS;
