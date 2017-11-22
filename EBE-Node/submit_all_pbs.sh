@@ -50,15 +50,15 @@ do
 					`qsub -v workingDirectory=$lwd,NPT=$npt0,NPPHI=$npphi0,NPY=$npy0,NQT=$nqt0,NQX=$nqx0,NQY=$nqy0,NQZ=$nqz0,RESFRAC=$resfrac $newPBSscriptName` >> $outfile
 			cd ..;
 			echo 'Submitted' $i 'at' `date` >> $outfile
+			sleep 3
 			#update list of currently running jobs in case I need to kill all currently running jobs
 			qstat -u plumberg.1 | grep plumberg.1 | awk '$(NF-1)=="R"' | awk -F. '{print $1}' > $jobIDsfile
-			sleep 3
 		)
 
 		nProcessesRunning=`qstat -u plumberg.1 | grep plumberg.1 | awk '$(NF-1)=="R"' | wc -l`
 		until [ "$nProcessesRunning" -lt "$nMaxProcessesRunning" ]
 		do
-			echo $nProcessesRunning '==' $nMaxProcessesRunning "processes currently running at" `date` >> $outfile
+			#echo $nProcessesRunning '==' $nMaxProcessesRunning "processes currently running at" `date` >> $outfile
 			sleep 10
 			nProcessesRunning=`qstat -u plumberg.1 | grep plumberg.1 | awk '$(NF-1)=="R"' | wc -l`
 		done
