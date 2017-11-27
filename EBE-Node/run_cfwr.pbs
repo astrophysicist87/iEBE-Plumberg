@@ -19,7 +19,12 @@ time nice -n 0 ./cfwr.e CF_npphi=`echo $NPPHI` CF_npT=`echo $NPT` CF_npY=`echo $
 						qtnpts=`echo $NQT` qxnpts=`echo $NQX` qynpts=`echo $NQY` qznpts=`echo $NQZ` \
 						delta_qx=0.045 delta_qy=0.045 delta_qz=0.045 1> CFWR_record.out 2> CFWR_err.out
 
+cd results
+zip total_Pion_+_eiqx_dN_dypTdpTdphi.zip total_Pion_+_eiqx_dN_dypTdpTdphi.dat
+cd ..
+
 \rm cfwr.e
+\rm results/total_Pion_+_eiqx_dN_dypTdpTdphi.dat
 \rm results/*.h5
 \rm results/__*.tmp
 

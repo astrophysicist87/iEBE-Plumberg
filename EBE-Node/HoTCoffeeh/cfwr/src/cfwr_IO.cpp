@@ -448,7 +448,7 @@ void CorrelationFunction::Output_total_target_eiqx_dN_dypTdpTdphi(double current
 		double sin_transf_tspectra = thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,1)]
 										+ thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,2)];
 		//
-		cout << "IOcheck: " << qt_pts[iqt] << "   " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[iqz] << "   "
+		/*cout << "IOcheck: " << qt_pts[iqt] << "   " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[iqz] << "   "
                         << SP_pT[ipT] << "   " << SP_pphi[ipphi] << endl
 						<< "\t\t" << thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,0)] << "   "
                         << thermal_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,1)] << "   "
@@ -457,7 +457,7 @@ void CorrelationFunction::Output_total_target_eiqx_dN_dypTdpTdphi(double current
 						<< "\t\t" << full_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,0)] << "   "
                         << full_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,1)] << "   "
                         << full_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,2)] << "   "
-                        << full_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,3)] << endl;
+                        << full_target_Yeq0_moments[indexer(ipT,ipphi,iqt,iqx,iqy,iqz,3)] << endl;*/
 
 		output_target_dN_dypTdpTdphi << scientific << setprecision(8) << setw(12)
 			<< qt_pts[iqt] << "   " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[iqz] << "   "

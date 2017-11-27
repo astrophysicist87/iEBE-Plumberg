@@ -4,9 +4,9 @@
 baseDirectory=/home/plumberg.1/Plumberg_iEBE/iEBE-stable/EBE-Node
 srcDirec=$baseDirectory/HoTCoffeeh
 
-homeDirectory=$baseDirectory/NEW_results
-rm -rf $homeDirectory
-mkdir $homeDirectory
+#homeDirectory=$baseDirectory/NEW_results
+#rm -rf $homeDirectory
+#mkdir $homeDirectory
 
 outfilename=$homeDirectory/"submit_all_pbs_jobs_record_`date +%F`.out"
 outfile=`get_filename $outfilename`
@@ -18,8 +18,17 @@ jobIDsfile=`get_filename $jobIDsfilename`
 nMaxProcessesRunning=12
 
 #submit jobs
-for ((i=1; i<=1000; i++))
+for ((i=111; i<=1000; i++))
 do
+		nProcessesRunning=`qstat -u plumberg.1 | grep plumberg.1 | awk '$(NF-1)=="R"' | wc -l`
+		until [ "$nProcessesRunning" -lt "$nMaxProcessesRunning" ]
+		do
+			#echo $nProcessesRunning '==' $nMaxProcessesRunning "processes currently running at" `date` >> $outfile
+			sleep 10
+			nProcessesRunning=`qstat -u plumberg.1 | grep plumberg.1 | awk '$(NF-1)=="R"' | wc -l`
+		done
+		echo $nProcessesRunning '<' $nMaxProcessesRunning "processes currently running at" `date` >> $outfile
+
 		npt0=15
 		npphi0=36
 		npy0=15
@@ -54,15 +63,6 @@ do
 			#update list of currently running jobs in case I need to kill all currently running jobs
 			qstat -u plumberg.1 | grep plumberg.1 | awk '$(NF-1)=="R"' | awk -F. '{print $1}' > $jobIDsfile
 		)
-
-		nProcessesRunning=`qstat -u plumberg.1 | grep plumberg.1 | awk '$(NF-1)=="R"' | wc -l`
-		until [ "$nProcessesRunning" -lt "$nMaxProcessesRunning" ]
-		do
-			#echo $nProcessesRunning '==' $nMaxProcessesRunning "processes currently running at" `date` >> $outfile
-			sleep 10
-			nProcessesRunning=`qstat -u plumberg.1 | grep plumberg.1 | awk '$(NF-1)=="R"' | wc -l`
-		done
-		echo $nProcessesRunning '<' $nMaxProcessesRunning "processes currently running at" `date` >> $outfile
 done
 
 # End of file

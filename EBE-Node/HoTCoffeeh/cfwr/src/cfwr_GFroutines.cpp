@@ -219,6 +219,7 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 			*CTresult = cfct.eval(point);
 			*resonanceresult = cfr.eval(point);
 
+			/*
 			//if (*thermalresult < 0.0 || *resonanceresult < 0.0 )
 			//{
 				cerr << "WARNING(OKAY): " << qt_interp << "   " << ipt << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << iqz << "   "
@@ -234,6 +235,7 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 							<< tmpC << "   " << tmpCt << "   " << tmpCct << "   " << tmpCr << endl;
 				}
 			//}
+			*/
 		}
 		else	//if not using Chebyshev nodes in qt-direction, just use straight-up linear(0) or cubic(1) interpolation
 		{
