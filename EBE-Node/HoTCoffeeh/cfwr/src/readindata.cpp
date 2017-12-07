@@ -106,6 +106,7 @@ void read_decdat(int length, FO_surf* surf_ptr, string localpath, bool include_b
 		surf_ptr[i].bulkPi = 0.0;
 		decdat >> surf_ptr[i].bulkPi;
 	 }
+	//cout << "READCHECK: " << i << "   " << surf_ptr[i].vx << "   " << surf_ptr[i].vy << "   " << 1.- surf_ptr[i].vx*surf_ptr[i].vx - surf_ptr[i].vy*surf_ptr[i].vy << endl;
      surf_ptr[i].gammaT = 1./sqrt(1.- surf_ptr[i].vx*surf_ptr[i].vx - surf_ptr[i].vy*surf_ptr[i].vy);
   }
   decdat.close();

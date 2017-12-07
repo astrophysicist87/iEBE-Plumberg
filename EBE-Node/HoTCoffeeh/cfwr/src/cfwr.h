@@ -63,6 +63,7 @@ class CorrelationFunction
 		double tol;
 		int flagneg;
 		double max_lifetime;
+		double fudge_factor;
 
 		//header info
 		int n_pT_pts, n_pphi_pts, n_pY_pts, nKT, nKphi;

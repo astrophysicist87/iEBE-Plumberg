@@ -15,10 +15,10 @@ npphi0=36
 npy0=15
 
 #create directories
-for axis in XYZ
+for axis in X
 do
 	###########
-	for nqt0 in 7
+	for nqt0 in 17
 	do
 		###########
 		direcName0=$homeDirectory/AXIS_`echo $axis`_pT`echo $npt0`_pY`echo $npy0`_qt`echo $nqt0`
@@ -27,7 +27,7 @@ do
 			mkdir $direcName0
 		fi
 		###########
-		for resfrac in 0.00
+		for resfrac in 1.00
 		do
 			direcName=$direcName0/RESFRAC_`echo $resfrac`
 			if [ -d "$direcName" ]
@@ -42,14 +42,17 @@ do
 done
 
 #submit jobs
-for axis in XYZ
+for axis in X
 do
-	for nqt0 in 7
+	for nqt0 in 17
 	do
-		nqx0=3
-		nqy0=3
-		nqz0=3
-		for resfrac in 0.00
+		nqx0=11
+		nqy0=1
+		nqz0=1
+		dqx=0.01
+		dqy=0.01
+		dqz=0.01
+		for resfrac in 1.00
 		do
 			lwd=$homeDirectory/AXIS_`echo $axis`_pT`echo $npt0`_pY`echo $npy0`_qt`echo $nqt0`/RESFRAC_`echo $resfrac`
 			mkdir $lwd/results
@@ -66,7 +69,7 @@ do
 				\cp -r $srcDirec/EOS .
 
 				echo 'Results directory and submission ID:' $i \
-						`qsub -v workingDirectory=$lwd,NPT=$npt0,NPPHI=$npphi0,NPY=$npy0,NQT=$nqt0,NQX=$nqx0,NQY=$nqy0,NQZ=$nqz0,RESFRAC=$resfrac $newPBSscriptName` >> $outfile
+						`qsub -v workingDirectory=$lwd,NPT=$npt0,NPPHI=$npphi0,NPY=$npy0,NQT=$nqt0,NQX=$nqx0,NQY=$nqy0,NQZ=$nqz0,DQX=$dqx,DQY=$dqy,DQZ=$dqz,RESFRAC=$resfrac $newPBSscriptName` >> $outfile
 				cd ..;
 			)
 		done

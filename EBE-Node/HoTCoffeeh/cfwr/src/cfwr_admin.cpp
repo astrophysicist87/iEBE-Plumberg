@@ -44,6 +44,7 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	tol = paraRdr->getVal("tolerance");
 	flagneg = paraRdr->getVal("flag_negative_S");
 	max_lifetime = paraRdr->getVal("max_lifetime");
+	fudge_factor = paraRdr->getVal("fudge_factor");
 
 	//set header info
 	n_pT_pts = paraRdr->getVal("CF_npT");
@@ -200,7 +201,7 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 				decay_channels[temp_idx].resonance_sign = particle_temp.sign;
 				decay_channels[temp_idx].resonance_mass = particle_temp.mass;
 				decay_channels[temp_idx].nbody = abs(particle_temp.decays_Npart[idecay]);
-				decay_channels[temp_idx].resonance_Gamma = particle_temp.width;
+				decay_channels[temp_idx].resonance_Gamma = fudge_factor * particle_temp.width;
 				decay_channels[temp_idx].resonance_total_br = particle_temp.decays_effective_branchratio[idecay];
 				decay_channels[temp_idx].resonance_direct_br = particle_temp.decays_branchratio[idecay];
 				
@@ -1539,7 +1540,8 @@ void CorrelationFunction::Set_all_Bessel_grids(int iqt, int iqz, int particle_mo
 	int na = n_alpha_points;
 	double alpha_min = 4.0;
 	//double alpha_max = 75.0;
-	double alpha_max = 150.0;
+	//double alpha_max = 150.0;
+	double alpha_max = 200.0;
 	if (particle_mode)
 	{
 		na = n_alpha_points_PIONS;

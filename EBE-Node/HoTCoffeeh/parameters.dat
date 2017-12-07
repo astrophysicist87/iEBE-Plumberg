@@ -54,6 +54,7 @@ calculate_CF_mode = 0			# 0 (default) - compute resonance decays, correlation fu
 					# 2 - read in correlation function and fit
 fit_with_projected_cfvals = 1		# as opposed to unprojected cfvals...
 flesh_out_cf = 0			# refines grid via interpolation before fitting
+fudge_factor = 1.0
 ############################################################################
 qtnpts = 13
 qxnpts = 7

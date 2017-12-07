@@ -27,6 +27,7 @@ const std::complex<double> i(0, 1);
 gsl_cheb_series *cs_accel_expK0re, *cs_accel_expK0im, *cs_accel_expK1re, *cs_accel_expK1im;
 gsl_cheb_series *cs_accel_expK0rePIONS, *cs_accel_expK0imPIONS, *cs_accel_expK1rePIONS, *cs_accel_expK1imPIONS;
 //bool cheb_set = false;
+bool print_stuff = false;
 
 // only need to calculated interpolation grid of spacetime moments for each resonance, NOT each decay channel!
 bool recycle_previous_moments = false;
@@ -106,7 +107,8 @@ inline void Iint2(double alpha, double beta, double gamma, double & I0r, double 
 	complex<double> ck1(	ea * gsl_cheb_eval (cs_accel_expK1re, alpha),
 							ea * gsl_cheb_eval (cs_accel_expK1im, alpha) );
 
-//cout << "Bessel Check: " << setw(10) << setprecision(8) << ea * gsl_cheb_eval (cs_accel_expK0re, alpha) << "   " << ea * gsl_cheb_eval (cs_accel_expK0im, alpha) << "   " << ea * gsl_cheb_eval (cs_accel_expK1re, alpha) << "   " << ea * gsl_cheb_eval (cs_accel_expK1im, alpha) << "   " << Cck0.real() << "   " << Cck0.imag() << "   " << Cck1.real() << "   " << Cck1.imag() << "   " << setw(18) << setprecision(16) << alpha << "   " << beta << "   " << gamma << endl;
+//cout << "Bessel Check: " << setw(10) << setprecision(8) << ea * gsl_cheb_eval (cs_accel_expK0re, alpha) << "   " << ea * gsl_cheb_eval (cs_accel_expK0im, alpha) << "   " << ea * gsl_cheb_eval (cs_accel_expK1re, alpha) << "   " << ea * gsl_cheb_eval (cs_accel_expK1im, alpha) << "   " << Cck0.real() << "   " << Cck0.imag() << "   " << Cck1.real() << "   " << Cck1.imag() << "   ";
+if (print_stuff) cout << "Bessel Check: " << setw(18) << setprecision(16) << alpha << "   " << beta << "   " << gamma << setw(10) << setprecision(8) << endl;
 //if (1) exit(8);
 
 //I think this is the fix...
@@ -237,8 +239,8 @@ void CorrelationFunction::Fourier_transform_emission_function(int iqt, int iqz)
 	
 		Set_current_particle_info(idc);
 
-		if (current_resonance_particle_id != 49)
-			continue;
+		//if (current_resonance_particle_id != 49)
+		//	continue;
 
 		Get_spacetime_moments(idc, iqt, iqz);
 	}
@@ -332,8 +334,8 @@ void CorrelationFunction::Compute_phase_space_integrals(int iqt, int iqz)
 		// ************************************************************
 		Set_current_particle_info(idc);
 
-		if (current_resonance_particle_id != 49)
-			continue;
+		//if (current_resonance_particle_id != 49)
+		//	continue;
 
 		Allocate_decay_channel_info();				// allocate needed memory
 
@@ -1071,7 +1073,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 
 	int local_na = n_alpha_points;
 	//double alpha_min = 4.0, alpha_max = 75.0;
-	double alpha_min = 4.0, alpha_max = 150.0;
+	double alpha_min = 4.0, alpha_max = 200.0;
 	if (local_part_mode == 1)
 	{
 		local_na = n_alpha_points_PIONS;
@@ -1204,6 +1206,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 			double mT = sqrt(pT*pT+localmass*localmass);
 			double alpha = one_by_Tdec*gammaT*mT;
 
+print_stuff = bool( /*ipT == n_pT_pts - 1 &&*/ ipY==ipY0 && iqt==iqt0 && iqz==iqz0 );
 			Iint2(alpha, beta, gamma, I0_a_b_g_re, I1_a_b_g_re, I2_a_b_g_re, I3_a_b_g_re, I0_a_b_g_im, I1_a_b_g_im, I2_a_b_g_im, I3_a_b_g_im);
 			Iint2(2.0*alpha, beta, gamma, I0_2a_b_g_re, I1_2a_b_g_re, I2_2a_b_g_re, I3_2a_b_g_re, I0_2a_b_g_im, I1_2a_b_g_im, I2_2a_b_g_im, I3_2a_b_g_im);
 

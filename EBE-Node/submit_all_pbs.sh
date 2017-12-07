@@ -4,9 +4,9 @@
 baseDirectory=/home/plumberg.1/Plumberg_iEBE/iEBE-stable/EBE-Node
 srcDirec=$baseDirectory/HoTCoffeeh
 
-#homeDirectory=$baseDirectory/NEW_results
-#rm -rf $homeDirectory
-#mkdir $homeDirectory
+homeDirectory=$baseDirectory/NEW_results
+rm -rf $homeDirectory
+mkdir $homeDirectory
 
 outfilename=$homeDirectory/"submit_all_pbs_jobs_record_`date +%F`.out"
 outfile=`get_filename $outfilename`
@@ -18,12 +18,12 @@ jobIDsfile=`get_filename $jobIDsfilename`
 nMaxProcessesRunning=12
 
 #submit jobs
-for ((i=111; i<=1000; i++))
+for ((i=1; i<=1; i++))
 do
 	##########################################
 	# before submitting any more jobs, make sure you aren't at the max. limit
 	##########################################
-	echo 'Waiting to submit results-'$i'...'
+	echo 'Waiting to submit results-'$i'...' >> $outfile
 	nProcessesRunning=`qstat -u plumberg.1 | grep plumberg.1 | awk '$(NF-1)=="R"' | wc -l`
 	until [ "$nProcessesRunning" -lt "$nMaxProcessesRunning" ]
 	do
@@ -32,7 +32,7 @@ do
 		nProcessesRunning=`qstat -u plumberg.1 | grep plumberg.1 | awk '$(NF-1)=="R"' | wc -l`
 	done
 	echo $nProcessesRunning '<' $nMaxProcessesRunning "processes currently running at" `date` >> $outfile
-	echo 'Submitting results-'$i'.'
+	echo 'Submitting results-'$i'.' >> $outfile
 	##########################################
 
 	npt0=15
@@ -41,8 +41,11 @@ do
 	nqt0=17
 	nqx0=7
 	nqy0=7
-	nqz0=7
-	resfrac=0.60
+	nqz0=3
+	dqx=0.01
+	dqy=0.01
+	dqz=0.03
+	resfrac=0.20
 
 	workingDirectory='/home/plumberg.1/Plumberg_iEBE/iEBE-stable/all_hydro_results/results-'`echo $i`
 
@@ -64,7 +67,7 @@ do
 		\cp -r $srcDirec/EOS .
 
 		echo 'Results directory and submission ID:' $i \
-				`qsub -v workingDirectory=$lwd,NPT=$npt0,NPPHI=$npphi0,NPY=$npy0,NQT=$nqt0,NQX=$nqx0,NQY=$nqy0,NQZ=$nqz0,RESFRAC=$resfrac $newPBSscriptName` >> $outfile
+				`qsub -v workingDirectory=$lwd,NPT=$npt0,NPPHI=$npphi0,NPY=$npy0,NQT=$nqt0,NQX=$nqx0,NQY=$nqy0,NQZ=$nqz0,DQX=$dqx,DQY=$dqy,DQZ=$dqz,RESFRAC=$resfrac $newPBSscriptName` >> $outfile
 		cd ..;
 		echo 'Submitted' $i 'at' `date` >> $outfile
 		sleep 3

@@ -17,12 +17,13 @@ nqpts = 21
 qAxisOpts = ['X', 'Y', 'Z']
 qAxesLC = ['x', 'y', 'z']
 projectionOpts = ['', '_unprojected']
-resFracsOpts = ['0.00', '0.10', '0.20', '0.60', '1.00']
+resFracsOpts = ['0.00', '0.10', '0.20', '0.60']
 PTOpts = ['15']
 #PTOpts = ['31']
 PYOpts = ['15']
 #QTOpts = ['13', '15', '17', '19', '21', '23', '25', '27', '29', '31']
-QTOpts = ['7', '9', '11', '13', '15', '17', '19', '21']
+#QTOpts = ['7', '9', '11', '13', '15', '17', '19', '21']
+QTOpts = ['21']
 
 qAxisColors = ['red', 'blue', 'green']
 cmpStyles = ['-', '--']
@@ -32,7 +33,7 @@ GeVToMeV = 1000.0
 panelLabels = ['(a)', '(b)', '(c)']
 panelCounter = 0
 
-nCols = 2
+#nCols = 2
 comparisonPath = './' \
 					+ 'AXIS_X_pT%(opt1)s_pY%(opt2)s_qt%(opt3)s/' \
 					+ 'RESFRAC_%(opt4)s/' \
@@ -55,17 +56,38 @@ def generate_plotdata(path, ipT, ipphi, npT, npphi, cols):
 	elif cols[0]==4:
 		nqx, nqy, nqz = 1, 1, nqpts
 	
+	nCols = len(cols)
+	
 	data = loadtxt(path, usecols=tuple(cols)).reshape([npT, npphi, nqx, nqy, nqz, nCols])
 
-	datax = data[ipT, ipphi, :, 0, 0, 0]
-	datay = data[ipT, ipphi, :, 0, 0, 1]
+	if nCols==2:
+		datax = data[ipT, ipphi, :, 0, 0, 0]
+		datay = data[ipT, ipphi, :, 0, 0, 1]
 
-	if cols[0]==3:
-		datax = data[ipT, ipphi, 0, :, 0, 0]
-		datay = data[ipT, ipphi, 0, :, 0, 1]
-	elif cols[0]==4:
-		datax = data[ipT, ipphi, 0, 0, :, 0]
-		datay = data[ipT, ipphi, 0, 0, :, 1]
+		if cols[0]==3:
+			datax = data[ipT, ipphi, 0, :, 0, 0]
+			datay = data[ipT, ipphi, 0, :, 0, 1]
+		elif cols[0]==4:
+			datax = data[ipT, ipphi, 0, 0, :, 0]
+			datay = data[ipT, ipphi, 0, 0, :, 1]
+	else:
+		datax = data[ipT, ipphi, :, 0, 0, 0]
+		datay = 0.0*data[ipT, ipphi, :, 0, 0, 1]   \
+                + 0.0*data[ipT, ipphi, :, 0, 0, 2] \
+                + data[ipT, ipphi, :, 0, 0, 3]
+
+		if cols[0]==3:
+			datax = data[ipT, ipphi, 0, :, 0, 0]
+			datay = 0.0*data[ipT, ipphi, 0, :, 0, 1]   \
+                    + 0.0*data[ipT, ipphi, 0, :, 0, 2] \
+                    + data[ipT, ipphi, 0, :, 0, 3]
+		elif cols[0]==4:
+			datax = data[ipT, ipphi, 0, 0, :, 0]
+			datay = 0.0*data[ipT, ipphi, 0, 0, :, 1]   \
+                    + 0.0*data[ipT, ipphi, 0, 0, :, 2] \
+                    + data[ipT, ipphi, 0, 0, :, 3]
+
+	datay += 1.0
 	
 	xlower, xupper = min(datax), max(datax)
 	ylower, yupper = min(datay), max(datay)
@@ -79,8 +101,8 @@ def generate_plotdata(path, ipT, ipphi, npT, npphi, cols):
 	#plotdatay = datay
 	
 	#return plotdatax, plotdatay-1.0, [xlower, xupper, ylower-1.0, yupper-1.0]
-	return plotdatax, plotdatay, [xlower, xupper, ylower, yupper]
-	#return plotdatax, plotdatay, [xlower, xupper, 1.0, 2.0]
+	#return plotdatax, plotdatay, [xlower, xupper, ylower, yupper]
+	return plotdatax, plotdatay, [xlower, xupper, 1.0, 1.4]
 	#return plotdatax, plotdatay, [GeVToMeV * xlower, GeVToMeV * xupper, 1.0, 2.0]
 
 #############################################################################
@@ -112,7 +134,7 @@ def generate_plot(ipT, ipphi, inpt, inqt, ires, iprojection):
 #############################################################################
 #############################################################################
 
-def generate_comparison_plot(ipT, ipphi, ires, iprojection):
+def generate_comparison_plot(ipT, ipphi, iprojection):
 	# set-up
 	plotfontsize = 12
 	fig, ax = plt.subplots(1, 1)
@@ -120,28 +142,32 @@ def generate_comparison_plot(ipT, ipphi, ires, iprojection):
 	fig.subplots_adjust(wspace=0.0, hspace=0.0)
 
 	jet = cm = plt.get_cmap('jet') 
-	cNorm  = colors.Normalize(vmin=0, vmax=float(len(PTOpts)*len(PYOpts)*len(QTOpts)))
+	cNorm  = colors.Normalize(vmin=0, vmax=float(len(PTOpts)*len(PYOpts)*len(QTOpts)*len(resFracsOpts)))
 	scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=jet)
 	
 	idx = 0
 	for inpt in xrange(len(PTOpts)):
 		for inpy in xrange(len(PYOpts)):
 			for inqt in xrange(len(QTOpts)):
-				plotPath = comparisonPath % {'opt1': PTOpts[inpt], 'opt2': PYOpts[inpy], 'opt3': QTOpts[inqt], 'opt4': resFracsOpts[ires], 'opt5': projectionOpts[iprojection]}
-				colorVal = scalarMap.to_rgba(float(idx))
-				cols = [2+0, 9]	# chooses q-axes, CF value from CF files
-				plotdatax, plotdatay, lims = generate_plotdata(plotPath, ipT, ipphi, int(PTOpts[inpt]), npphi, cols)
-				ax.plot(plotdatax, plotdatay, linestyle='-', color=colorVal, linewidth=1.5, label=r'$p_T = %(opt1)s, p_Y = %(opt2)s, q_t = %(opt3)s$' % {'opt1': PTOpts[inpt], 'opt2': PYOpts[inpy], 'opt3': QTOpts[inqt]})
-				#ax.plot(tplotdatax, 1.0+tplotdatay, linestyle='--', color='b', linewidth=1.5, label='Thermal part')
-				ax.axis(lims)
-				idx += 1
+				for iRF in xrange(len(resFracsOpts)):
+					plotPath = comparisonPath % {'opt1': PTOpts[inpt], 'opt2': PYOpts[inpy], 'opt3': QTOpts[inqt], 'opt4': resFracsOpts[iRF], 'opt5': projectionOpts[iprojection]}
+					colorVal = scalarMap.to_rgba(float(idx))
+					cols = [2+0, 6, 7, 8, 9]	# chooses q-axes, CF value from CF files
+					plotdatax, plotdatay, lims = generate_plotdata(plotPath, ipT, ipphi, int(PTOpts[inpt]), npphi, cols)
+					ax.plot(plotdatax, plotdatay, linestyle='-', color=colorVal, linewidth=1.5, label=r'RF = %(opt4)s\%' % {'opt4': resFracsOpts[iRF]})
+#                               label=r'$p_T = %(opt1)s, p_Y = %(opt2)s, q_t = %(opt3)s, RF = %(opt4)s$' \
+#                               % {'opt1': PTOpts[inpt], 'opt2': PYOpts[inpy], 'opt3': QTOpts[inqt], 'opt4': resFracsOpts[iRF]})
+					#ax.plot(tplotdatax, 1.0+tplotdatay, linestyle='--', color='b', linewidth=1.5, label='Thermal part')
+					ax.axis(lims)
+					idx += 1
 
 	ax.set_xlabel(r'$q_x$ (GeV)' % {'opt1': qAxesLC[0]}, {'fontsize': plotfontsize + 5})	
 	ax.set_ylabel(r'$C$', {'fontsize': plotfontsize})
 	ax.legend(loc=0, prop={'size': plotfontsize+5})
-	plt.title(r'RF$=%(opt4)s$, %(opt5)s' % {'opt4': resFracsOpts[ires], 'opt5': projectionOpts[iprojection]})
+	#plt.title(r'%(opt5)s' % {'opt4': resFracsOpts[ires], 'opt5': projectionOpts[iprojection]})
 	
-	plt.show(block=False)
+	#plt.show(block=False)
+	plt.savefig('CF_unprojected_ResonanceTermOnly_%(ipT)d_%(ipphi)d.pdf' % {'ipT': ipT, 'ipphi': ipphi}, format='pdf', bbox_inches='tight')
 
 
 #############################################################################
@@ -162,10 +188,10 @@ def generate_all_plots():
 	#generate_plot(6, 0, 1, 0, 1, 1)
 	chosenpphi = 0
 	#for chosenpT in xrange(0,15,3):
-	for chosenpT in xrange(9):
+	for chosenpT in xrange(0,9,4):
 		#print chosenpT
-		generate_comparison_plot(chosenpT, chosenpphi, 3, 0)
-	pause()
+		generate_comparison_plot(chosenpT, chosenpphi, 1)
+	#pause()
 
 #############################################################################
 #############################################################################
