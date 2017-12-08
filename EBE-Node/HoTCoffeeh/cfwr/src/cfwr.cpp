@@ -1038,12 +1038,20 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights(int local_pid)
 			//////////////////////////////////
 			// Now decide what to do with this FO cell
 			//ignore points where delta f is large or emission function goes negative from pdsigma
-			//if ( (flagneg == 1 && FOcell_density < tol ) || abs(term2 + term3) > abs(term1) )
-			//if ( (flagneg == 1 && FOcell_density < tol ) || term1 < 0.0 )
-			//	FOcell_density = 0.0;
+			//if ( abs(term2 + term3) > abs(term1) )
+			//{
+			//	FOcell_density = term1;	//if viscous corrections large, just ignore them
+			//}
+			//if ( flagneg == 1 && FOcell_density < tol )	//whether or not viscous corrections were large, if S goes negative, set it to zero
+			//{												// and ignore on subsequent loops
+			//	FOcell_density = 0.0;	//if negative, set to 0
+			//	FOcells_to_include[isurf * n_pT_pts + ipT][ipphi] = 0;	//ignore in subsequent loops
+			//	continue;
+			//}
 
 			// add FOdensity into full spectra at this pT, pphi
 			spectra_at_pTpphi += FOcell_density;
+			FOcells_to_include[isurf * n_pT_pts + ipT][ipphi] = 1;
 		}		//end of isurf loop
 
 		//update spectra
@@ -1202,6 +1210,8 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 		int iidx = 0;
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		{
+			vector<int> FOcells_to_do = FOcells_to_include[isurf * n_pT_pts + ipT];
+
 			double pT = SP_pT[ipT];
 			double mT = sqrt(pT*pT+localmass*localmass);
 			double alpha = one_by_Tdec*gammaT*mT;
@@ -1215,6 +1225,7 @@ print_stuff = bool( /*ipT == n_pT_pts - 1 &&*/ ipY==ipY0 && iqt==iqt0 && iqz==iq
 
 			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 			{
+				double do_this_FOcell = FOcells_to_do[ipphi];
 				// initialize transverse momentum information
 				double px = pT*cos_SP_pphi[ipphi];
 				double py = pT*sin_SP_pphi[ipphi];
@@ -1236,8 +1247,8 @@ print_stuff = bool( /*ipT == n_pT_pts - 1 &&*/ ipY==ipY0 && iqt==iqt0 && iqz==iq
 				double term2_im = C1 * ( c1*I3_a_b_g_im + c2*I2_a_b_g_im + c3*I1_a_b_g_im + c4*I0_a_b_g_im );
 				double term3_im = C2 * ( c1*I3_2a_b_g_im + c2*I2_2a_b_g_im + c3*I1_2a_b_g_im + c4*I0_2a_b_g_im );
 
-				short_array_C[iidx] = term1_re + term2_re + term3_re;
-				short_array_S[iidx++] = term1_im + term2_im + term3_im;
+				short_array_C[iidx] = do_this_FOcell*(term1_re + term2_re + term3_re);
+				short_array_S[iidx++] = do_this_FOcell*(term1_im + term2_im + term3_im);
 			}
 		}
 
