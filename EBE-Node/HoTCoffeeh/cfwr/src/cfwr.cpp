@@ -13,6 +13,7 @@
 #include<map>
 #include<cstdlib>
 #include<numeric>
+#include<limits>
 
 #include "cfwr.h"
 #include "cfwr_lib.h"
@@ -25,7 +26,6 @@ using namespace std;
 
 const std::complex<double> i(0, 1);
 gsl_cheb_series *cs_accel_expK0re, *cs_accel_expK0im, *cs_accel_expK1re, *cs_accel_expK1im;
-gsl_cheb_series *cs_accel_expK0rePIONS, *cs_accel_expK0imPIONS, *cs_accel_expK1rePIONS, *cs_accel_expK1imPIONS;
 //bool cheb_set = false;
 bool print_stuff = false;
 
@@ -131,47 +131,6 @@ if (print_stuff) cout << "Bessel Check: " << setw(18) << setprecision(16) << alp
 	I1i = I1.imag();
 	I2i = I2.imag();
 	I3i = I3.imag();
-
-	return;
-}
-
-inline void Iint3(double alpha, double beta, double gamma, vector<complex<double> > * I0, vector<complex<double> > * I1, vector<complex<double> > * I2, vector<complex<double> > * I3, int max_n_terms_to_compute)
-{
-	double gsq = gamma*gamma;
-	for (int k = 1; k <= max_n_terms_to_compute; ++k)
-	{
-		complex<double> z0 = k*alpha - i*beta;
-		complex<double> z0sq = z0*z0;
-		complex<double> zsq = z0sq + gsq;
-		complex<double> z = sqrt(zsq);
-		complex<double> zcu = zsq*z;
-		complex<double> zqi = zsq*zcu;
-		double ea = exp(-k * alpha);
-
-//complex<double> Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p;
-//int errorCode = bessf::cbessik01(z, Cci0, Cci1, Cck0, Cck1, Cci0p, Cci1p, Cck0p, Cck1p);
-
-		complex<double> ck0(	ea * gsl_cheb_eval (cs_accel_expK0rePIONS, k*alpha),
-								ea * gsl_cheb_eval (cs_accel_expK0imPIONS, k*alpha) );
-		complex<double> ck1(	ea * gsl_cheb_eval (cs_accel_expK1rePIONS, k*alpha),
-								ea * gsl_cheb_eval (cs_accel_expK1imPIONS, k*alpha) );
-
-//cout << "Sanity Check1: " << ck0.real() << "   " << ck0.imag() << "   " << ck1.real() << "   " << ck1.imag() << endl;
-//cout << "Sanity Check2: " << Cck0.real() << "   " << Cck0.imag() << "   " << Cck1.real() << "   " << Cck1.imag() << endl;
-//cout << "Sanity Check2: " << setw(18) << setprecision(16) << alpha << "   " << beta << "   " << gamma << endl;
-//if (1) exit(8);
-
-		(*I0).push_back(2.0*ck0);
-		(*I1).push_back(2.0*z0*ck1 / z);
-		(*I2).push_back(
-				2.0*z0sq*ck0 / zsq
-				+ 2.0*(z0sq - gsq)*ck1 / zcu
-				);
-		(*I3).push_back(
-				2.0*z0*( ( z0sq*z0sq - 2.0* z0sq*gsq - 3.0 * gsq*gsq ) * ck0 / z
-				+ (-6.0*gsq + z0sq*(2.0 + z0sq + gsq)) * ck1 ) / zqi
-				);
-	}
 
 	return;
 }
@@ -823,7 +782,7 @@ void CorrelationFunction::Reset_FOcells_array()
 {
 	for (int iFOipT = 0; iFOipT < FO_length * n_pT_pts; ++iFOipT)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-		FOcells_to_include[iFOipT][ipphi] = -1;
+		FOcells_to_include[iFOipT][ipphi] = std::numeric_limits<int>::max();
 	return;
 }
 
@@ -1038,20 +997,22 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights(int local_pid)
 			//////////////////////////////////
 			// Now decide what to do with this FO cell
 			//ignore points where delta f is large or emission function goes negative from pdsigma
-			//if ( abs(term2 + term3) > abs(term1) )
-			//{
-			//	FOcell_density = term1;	//if viscous corrections large, just ignore them
-			//}
-			//if ( flagneg == 1 && FOcell_density < tol )	//whether or not viscous corrections were large, if S goes negative, set it to zero
-			//{												// and ignore on subsequent loops
-			//	FOcell_density = 0.0;	//if negative, set to 0
-			//	FOcells_to_include[isurf * n_pT_pts + ipT][ipphi] = 0;	//ignore in subsequent loops
-			//	continue;
-			//}
+			if ( abs(term2 + term3) > abs(term1) )
+			{
+				FOcell_density = term1;	//if viscous corrections large, just ignore them
+				FOcells_to_include[isurf * n_pT_pts + ipT][ipphi] = 1;		//1 means I cut out viscous corrections but kept equilibrium distribution
+			}
+			else
+				FOcells_to_include[isurf * n_pT_pts + ipT][ipphi] = 2;		//2 means I kept everything
+			if ( flagneg == 1 && FOcell_density < tol )	//whether or not viscous corrections were large, if S goes negative, set it to zero
+			{												// and ignore on subsequent loops
+				FOcell_density = 0.0;	//if negative, set to 0
+				FOcells_to_include[isurf * n_pT_pts + ipT][ipphi] = 0;		//0 means I cut out everything (i.e., this cell ignored)
+				continue;
+			}
 
 			// add FOdensity into full spectra at this pT, pphi
 			spectra_at_pTpphi += FOcell_density;
-			FOcells_to_include[isurf * n_pT_pts + ipT][ipphi] = 1;
 		}		//end of isurf loop
 
 		//update spectra
@@ -1225,7 +1186,7 @@ print_stuff = bool( /*ipT == n_pT_pts - 1 &&*/ ipY==ipY0 && iqt==iqt0 && iqz==iq
 
 			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 			{
-				double do_this_FOcell = FOcells_to_do[ipphi];
+				int do_this_FOcell = FOcells_to_do[ipphi];
 				// initialize transverse momentum information
 				double px = pT*cos_SP_pphi[ipphi];
 				double py = pT*sin_SP_pphi[ipphi];
@@ -1247,8 +1208,8 @@ print_stuff = bool( /*ipT == n_pT_pts - 1 &&*/ ipY==ipY0 && iqt==iqt0 && iqz==iq
 				double term2_im = C1 * ( c1*I3_a_b_g_im + c2*I2_a_b_g_im + c3*I1_a_b_g_im + c4*I0_a_b_g_im );
 				double term3_im = C2 * ( c1*I3_2a_b_g_im + c2*I2_2a_b_g_im + c3*I1_2a_b_g_im + c4*I0_2a_b_g_im );
 
-				short_array_C[iidx] = do_this_FOcell*(term1_re + term2_re + term3_re);
-				short_array_S[iidx++] = do_this_FOcell*(term1_im + term2_im + term3_im);
+				short_array_C[iidx] = (do_this_FOcell>0)*term1_re + (do_this_FOcell==2)*(term2_re + term3_re);
+				short_array_S[iidx++] = (do_this_FOcell>0)*term1_im + (do_this_FOcell==2)*(term2_im + term3_im);
 			}
 		}
 
