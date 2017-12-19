@@ -1,6 +1,6 @@
 #!/bin/bash
 
-baseDirectory=/home/plumberg.1/Plumberg_iEBE/iEBE-stable/EBE-Node
+baseDirectory=$HOME/Plumberg_iEBE/iEBE-stable/EBE-Node
 homeDirectory=$baseDirectory/code_checks2
 outfilename=$homeDirectory/"submit_code_checks_pbs2_jobs_record_`date +%F`.out"
 jobIDsfilename=$homeDirectory/"jobIDs_`date +%F`.out"
@@ -8,7 +8,7 @@ outfile=`get_filename $outfilename`
 srcDirec=$baseDirectory/HoTCoffeeh
 
 i=1
-workingDirectory='/home/plumberg.1/Plumberg_iEBE/iEBE-stable/RESULTS_Edec300/results/results-'`echo $i`
+workingDirectory=$HOME'/Plumberg_iEBE/iEBE-stable/RESULTS_Edec300/results/results-'`echo $i`
 
 npt0=15
 npphi0=36

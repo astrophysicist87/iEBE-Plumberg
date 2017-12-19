@@ -28,6 +28,8 @@ using namespace std;
 #define QY_POINTS_SPACING			0		// same
 #define QZ_POINTS_SPACING			0		// same
 #define MIDRAPIDITY_PIONS_ONLY		1		// obvious
+#define USE_EXACT					1		// which emission function (exact is toy boltzmann factor for
+											// comparing with results of Heinz and Wiedemann as a check)
 #define USE_FAST_EXP				1
 #define USE_EXP_RECYCLING			1
 #define USE_RAPIDITY_SYMMETRY		1
@@ -50,6 +52,11 @@ const double MeVToGeV = 0.001;
 const int Maxparticle=400;            //size of array for storage of the particles
 const int Maxdecaychannel=13;
 const int Maxdecaypart=5;
+
+// Space-time rapidity information
+const int eta_s_npts = 31;
+const double eta_s_i = 0.0;
+const double eta_s_f = 4.0;
 
 // Relative momentum information
 const double delta_qt = 0.00625;

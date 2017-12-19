@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #set up directory structure
-baseDirectory=/home/plumberg.1/Plumberg_iEBE/iEBE-stable/EBE-Node
+baseDirectory=$HOME/Plumberg_iEBE/iEBE-stable/EBE-Node
 srcDirec=$baseDirectory/HoTCoffeeh
 
 homeDirectory=$baseDirectory/NEW_results
@@ -47,7 +47,7 @@ do
 	dqz=0.03
 	resfrac=0.20
 
-	workingDirectory='/home/plumberg.1/Plumberg_iEBE/iEBE-stable/all_hydro_results/results-'`echo $i`
+	workingDirectory=$HOME'/Plumberg_iEBE/iEBE-stable/all_hydro_results/results-'`echo $i`
 
 	lwd=$homeDirectory/results-`echo $i`
 	mkdir $lwd

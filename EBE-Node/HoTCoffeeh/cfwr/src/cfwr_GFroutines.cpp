@@ -78,8 +78,8 @@ void CorrelationFunction::Cal_correlationfunction(bool project_CF /*==true*/)
 	for (int iqy = 0; iqy < qynpts; ++iqy)
 	for (int iqz = 0; iqz < qznpts; ++iqz)
 	{
+//if (ipt > 0 || ipphi > 0) continue;
 		Get_q_points(qx_pts[iqx], qy_pts[iqy], qz_pts[iqz], SP_pT[ipt], SP_pphi[ipphi], q_interp);
-
 		//returns only projected value automatically if appropriate options are specified!
 		double tmp1 = 0.0, tmp2 = 0.0, tmp2a = 0.0, tmp3 = 0.0;
 		Compute_correlationfunction(&tmp1, &tmp2, &tmp2a, &tmp3, ipt, ipphi, iqx, iqy, iqz, q_interp[0], 0, project_CF);
@@ -123,7 +123,19 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 
 	bool q_point_is_outside_grid = ( ( qidx < 0 || qidx >= qtnpts ) && ( qt_interp < q_min || qt_interp > q_max ) );
 
-	if (!q_point_is_outside_grid)
+	if (qxnpts==1 && qynpts==1 && qznpts==1)
+	{
+		double tmpC = 0.0, tmpCt = 0.0, tmpCct = 0.0, tmpCr = 0.0;
+		*global_out_stream_ptr << "Warning: qt_interp point essentially zero!" << endl
+								<< "\t qt_interp = " << qt_interp << " out of {q_min, q_max} = {" << q_min << ", " << q_max << "};" << endl
+								<< "\t " << ipt << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << iqz << endl;
+		get_CF_terms(&tmpC, &tmpCt, &tmpCct, &tmpCr, ipt, ipphi, iqt0, iqx0, iqy0, iqz0, project_CF && !thermal_pions_only);
+		*totalresult = tmpC;
+		*thermalresult = tmpCt;
+		*CTresult = tmpCct;
+		*resonanceresult = tmpCr;
+	}
+	else if (!q_point_is_outside_grid)
 	{
 		//assumes qt-grid has already been computed at (adjusted) Chebyshev nodes!!!
 		if (QT_POINTS_SPACING == 1 && interp_flag == 0)
@@ -154,7 +166,7 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 			Chebyshev cft(Ct_at_q, npts_loc, os, lls, uls, dim_loc);
 			Chebyshev cfct(Cct_at_q, npts_loc, os, lls, uls, dim_loc);
 			Chebyshev cfr(Cr_at_q, npts_loc, os, lls, uls, dim_loc);
-	
+
 			*totalresult = cf.eval(point);
 			*thermalresult = cft.eval(point);
 			*CTresult = cfct.eval(point);
@@ -213,7 +225,6 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 			Chebyshev cft(Ct_at_q, npts_loc, os, lls, uls, dim_loc);
 			Chebyshev cfct(Cct_at_q, npts_loc, os, lls, uls, dim_loc);
 			Chebyshev cfr(Cr_at_q, npts_loc, os, lls, uls, dim_loc);
-	
 			*totalresult = cf.eval(point);
 			*thermalresult = cft.eval(point);
 			*CTresult = cfct.eval(point);
@@ -241,7 +252,8 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 		{
 			double C_at_q[qtnpts], Ct_at_q[qtnpts], Cct_at_q[qtnpts], Cr_at_q[qtnpts];	//C - 1
 			double tmpC = 0.0, tmpCt = 0.0, tmpCct = 0.0, tmpCr = 0.0;
-	
+debugger(__LINE__, __FILE__);
+
 			// set CF values along qt-slice for interpolation
 			for (int iqtidx = 0; iqtidx < qtnpts; ++iqtidx)
 			{
@@ -252,6 +264,7 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 				Cct_at_q[iqtidx] = tmpCct;
 				Cr_at_q[iqtidx] = tmpCr;
 			}
+debugger(__LINE__, __FILE__);
 			*totalresult = interpolate1D(qt_pts, C_at_q, qt_interp, qtnpts, 1, false);
 			*thermalresult = interpolate1D(qt_pts, Ct_at_q, qt_interp, qtnpts, 1, false);
 			*CTresult = interpolate1D(qt_pts, Cct_at_q, qt_interp, qtnpts, 1, false);
@@ -776,12 +789,12 @@ void CorrelationFunction::Set_target_moments(int iqt, int iqz)
 {
 	Stopwatch sw;
 	sw.Start();
-	cout << "Setting thermal target moments...";
+	cout << "Setting thermal target moments..." << endl;
 	Set_thermal_target_moments(iqt, iqz);
 	sw.Stop();
 	cout << "done in " << sw.printTime() << " seconds." << endl;
 
-	cout << "Setting full target moments...";
+	cout << "Setting full target moments..." << endl;
 	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
     for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
     for (int iqx = 0; iqx < qxnpts; ++iqx)
@@ -801,7 +814,10 @@ void CorrelationFunction::Set_target_moments(int iqt, int iqz)
 //assume only want midrapidity (Y=0) pions for the timebeing
 void CorrelationFunction::Set_thermal_target_moments(int iqt, int iqz)
 {
-	Cal_dN_dypTdpTdphi_with_weights_Yeq0_alternate(iqt, iqz);
+	if ( USE_EXACT )
+		Cal_dN_dypTdpTdphi_with_weights_toy(target_particle_id, iqt, iqz, ipY0, thermal_target_Yeq0_moments);
+	else
+		Cal_dN_dypTdpTdphi_with_weights_Yeq0_alternate(iqt, iqz);
 
 	return;
 }
@@ -811,7 +827,7 @@ void CorrelationFunction::Set_full_target_moments(int iqt, int iqz)
 	double loc_qz = qz_pts[iqz];
 	double loc_qt = qt_pts[iqt];
 	current_pY_shift = 0.5 * log(abs((loc_qt+loc_qz + 1.e-100)/(loc_qt-loc_qz + 1.e-100)));
-	if (abs(current_pY_shift) > SP_Del_pY_max)	//if resonances decays basically contribute nothing at this (qt, qz)-pair
+	if (abs(current_pY_shift) > SP_Del_pY_max)	//if resonance decays basically contribute nothing at this (qt, qz)-pair
 	{
 		cout << "Set_full_target_moments(" << loc_qt << ", " << loc_qz << "): y_{sym} = " << current_pY_shift << " > SP_Del_pY_max = " << SP_Del_pY_max <<
 				" ==>> No contributions to full target moments." << endl;

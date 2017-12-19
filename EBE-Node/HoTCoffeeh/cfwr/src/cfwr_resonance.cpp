@@ -321,7 +321,7 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 								eiqxEdndp3(PKT, PKphi, Del_PKY, Csum_vec, local_verbose);
 /*for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
 {
-if (ipT==0 && ipphi==0 && ipY==ipY0 && daughter_particle_id==1 && parent_resonance_particle_id==49)
+if (ipT==0 && ipphi==0 && doing_spectra && doing_moments)
 	cout << "CHECK(nb=2,tmpidx): " << PKT << "   " << PKphi << "   " << Del_PKY << "   " << qpt_cs_idx << "   " << VEC_n2_zeta_factor[NB2_indexer(iv,izeta)] << "   " << Csum << "   " << Csum_vec[qpt_cs_idx] << endl;
 }*/
 							}
@@ -331,17 +331,17 @@ if (ipT==0 && ipphi==0 && ipY==ipY0 && daughter_particle_id==1 && parent_resonan
 							for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
 							{
 								zetasum_vec[qpt_cs_idx] += VEC_n2_zeta_factor[NB2_indexer(iv,izeta)]*Csum_vec[qpt_cs_idx];
-//if (ipT==0 && ipphi==0 && ipY==ipY0 && daughter_particle_id==1 && parent_resonance_particle_id==49)
-//	cout << "CHECK(nb=2,Csum): " << qpt_cs_idx << "   " << VEC_n2_zeta_factor[NB2_indexer(iv,izeta)] << "   " << Csum << "   " << Csum_vec[qpt_cs_idx] << endl;
+/*if (ipT==0 && ipphi==0 && doing_spectra && doing_moments)
+	cout << "CHECK(nb=2,Csum): " << qpt_cs_idx << "   " << VEC_n2_zeta_factor[NB2_indexer(iv,izeta)] << "   " << Csum << "   " << Csum_vec[qpt_cs_idx] << endl;*/
 							}
 					}													// end of zeta sum
 					if (doing_moments)
 						for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
 						{
 							vsum_vec[qpt_cs_idx] += VEC_n2_v_factor[iv]*zetasum_vec[qpt_cs_idx];
-//if (ipT==0 && ipphi==0 && ipY==ipY0 && daughter_particle_id==1 && parent_resonance_particle_id==49)
-//	cout << "CHECK(nb=2,zetasum): " << qpt_cs_idx << "   " << VEC_n2_v_factor[iv] << "   "
-//			<< zetasum << "   " << zetasum_vec[qpt_cs_idx] << "   " << vsum_vec[qpt_cs_idx] << endl;
+/*if (ipT==0 && ipphi==0 && doing_spectra && doing_moments)
+	cout << "CHECK(nb=2,zetasum): " << qpt_cs_idx << "   " << VEC_n2_v_factor[iv] << "   "
+			<< zetasum << "   " << zetasum_vec[qpt_cs_idx] << "   " << vsum_vec[qpt_cs_idx] << endl;*/
 						}
 					vsum += VEC_n2_v_factor[iv]*zetasum;
 				}														// end of v sum
@@ -349,13 +349,13 @@ if (ipT==0 && ipphi==0 && ipY==ipY0 && daughter_particle_id==1 && parent_resonan
 					for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
 					{
 						ssum_vec[qpt_cs_idx] += Mres*VEC_n2_s_factor*vsum_vec[qpt_cs_idx];
-//if (ipT==0 && ipphi==0 && ipY==ipY0 && daughter_particle_id==1 && parent_resonance_particle_id==49)
+//if (ipT==0 && ipphi==0 && doing_spectra && doing_moments)
 //	cout << "CHECK(nb=2,vsum): " << qpt_cs_idx << "   " << vsum << "   " << vsum_vec[qpt_cs_idx] << endl;
 					}
 				double ssum = Mres*VEC_n2_s_factor*vsum;
 
 
-//if (ipT==0 && ipphi==0 && daughter_particle_id==1)
+//if (ipT==0 && ipphi==0 && doing_spectra && doing_moments)
 //	cout << "CHECK(nb=2): " << ipY << "   " << iqz << "   " << ssum << "   " << ssum_vec[0] << endl;
 
 				//update all gridpoints for all daughter moments
@@ -366,14 +366,15 @@ if (ipT==0 && ipphi==0 && ipY==ipY0 && daughter_particle_id==1 && parent_resonan
 					for (int iqy = 0; iqy < qynpts; ++iqy)
 					for (int itrig = 0; itrig < ntrig; ++itrig)
 					{
-//cout << "DUMP: " << daughter_lookup_idx << "   " << ipT << "   " << ipphi << "   " << ipY << "   " << iqx << "   " << iqy << "   " << itrig << "   " << current_daughters_dN_dypTdpTdphi_moments[daughter_lookup_idx][fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,itrig)] << endl;
+/*if (ipT==0 && ipphi==0 && doing_spectra && doing_moments)
+cout << "DUMP: " << daughter_lookup_idx << "   " << ipT << "   " << ipphi << "   " << ipY << "   " << iqx << "   " << iqy << "   " << itrig << "   " << current_daughters_dN_dypTdpTdphi_moments[daughter_lookup_idx][fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,itrig)] << endl;*/
 						current_daughters_dN_dypTdpTdphi_moments[daughter_lookup_idx][fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,itrig)] += ssum_vec[qpt_cs_idx];
 						++qpt_cs_idx;
 					}
 				}
 
 				//update daughter spectra separately
-				if ( doing_spectra && ipY == 0 )	//only need spectra at Y == 0
+				if ( doing_spectra && ipY == ipY0 )	//only need spectra at Y == 0
 				{
 					spectra[daughter_particle_id][ipT][ipphi] += ssum;
 					log_spectra[daughter_particle_id][ipT][ipphi] = log(abs(spectra[daughter_particle_id][ipT][ipphi])+1.e-100);

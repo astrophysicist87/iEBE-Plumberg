@@ -46,8 +46,11 @@ int main(int argc, char *argv[])
 	sw_total.Start();
 	sw.Start();
 
+	bool flag_nans = true;
+
 	//flags NaNs when they crop up
-	//feenableexcept(FE_INVALID | FE_OVERFLOW);
+	if (flag_nans)
+		feenableexcept(FE_INVALID | FE_OVERFLOW);
 
 	bool generatedcorrfuncs = false;
     string workingDirectory = "./results";
@@ -60,6 +63,8 @@ int main(int argc, char *argv[])
 
 	output << "/**********Processing output**********/" << endl;
 	output << "entering folder: " << workingDirectory << endl;
+	if (flag_nans)
+		output << "***NOTE: flagging NaNs!***" << endl;
 
 	//load freeze out and particle information
 	int FO_length = 0;

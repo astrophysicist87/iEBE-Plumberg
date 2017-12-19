@@ -37,6 +37,9 @@ int reso_idx_of_moments_to_recycle = -1;
 string reso_name_of_moments_to_recycle = "NULL";
 string current_decay_channel_string = "NULL";
 
+//define some parameters for the exact emission function
+const double Rad = 5.0, Del_tau = 1.0, tau0 = 5.0, etaf = 0.6;
+
 inline void I(double alpha, double beta, double gamma, complex<double> & I0, complex<double> & I1, complex<double> & I2, complex<double> & I3)
 {
 	complex<double> ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p;
@@ -135,6 +138,18 @@ if (print_stuff) cout << "Bessel Check: " << setw(18) << setprecision(16) << alp
 	return;
 }
 
+inline double Hfactor(double r, double tau)
+{
+	return (
+			exp( -r*r/(2.0*Rad*Rad) - (tau-tau0)*(tau-tau0)/(2.0*Del_tau*Del_tau) ) / (M_PI*Del_tau)
+			);
+}
+
+inline double eta_t(double r)
+{
+	return ( etaf*r/Rad );
+}
+
 double CorrelationFunction::place_in_range(double phi, double min, double max)
 {
 	while (phi < min || phi > max)
@@ -169,7 +184,8 @@ void CorrelationFunction::Fourier_transform_emission_function(int iqt, int iqz)
 		*global_out_stream_ptr << "Initializing HDF files...";
 		int HDFInitializationSuccess = Administrate_resonance_HDF_array(0);
 		HDFInitializationSuccess = Administrate_target_thermal_HDF_array(0);
-		Set_all_Bessel_grids(iqt, iqz);
+		if (!thermal_pions_only && !USE_EXACT)
+			Set_all_Bessel_grids(iqt, iqz);
 		//Set_all_Bessel_grids(iqt, iqz, 1);
 		*global_out_stream_ptr << "done." << endl << endl;
 	}
@@ -178,7 +194,8 @@ void CorrelationFunction::Fourier_transform_emission_function(int iqt, int iqz)
 		*global_out_stream_ptr << "Initializing/opening HDF files...";
 		int HDFInitializationSuccess = Administrate_resonance_HDF_array(1);		//open
 		HDFInitializationSuccess = Administrate_target_thermal_HDF_array(1);	//open
-		Set_all_Bessel_grids(iqt, iqz);
+		if (!thermal_pions_only && !USE_EXACT)
+			Set_all_Bessel_grids(iqt, iqz);
 		//Set_all_Bessel_grids(iqt, iqz, 1);
 		*global_out_stream_ptr << "done." << endl << endl;
 	}
@@ -806,10 +823,17 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 	if ( iqt == 0 && iqz == 0 )	//do it right away, so we know which FOcells to skip hereafter
 	{
 		*global_out_stream_ptr << "Computing un-weighted thermal spectra..." << endl;
-		if (local_pid == target_particle_id)
-			Cal_dN_dypTdpTdphi_no_weights_Yeq0_alternate();
+		if ( USE_EXACT )
+		{
+			Cal_dN_dypTdpTdphi_no_weights_toy(local_pid);
+		}
 		else
-			Cal_dN_dypTdpTdphi_no_weights(local_pid);
+		{
+			if (local_pid == target_particle_id)
+				Cal_dN_dypTdpTdphi_no_weights_Yeq0_alternate();
+			else
+				Cal_dN_dypTdpTdphi_no_weights(local_pid);
+		}
 	}
 	else						//otherwise, be sure to load the important FOcells from files!
 	{
@@ -824,37 +848,61 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 	// get weighted spectra with only most important fluid cells, up to given threshhold
 	*global_out_stream_ptr << "Computing weighted thermal spectra..." << endl;
 
-	//prepare for reading...
-	int HDFcode = Administrate_besselcoeffs_HDF_array(1, local_particle_mode);	//open
-	double * BC_chunk = new double [4 * FO_length * local_na];
-	cs_accel_expK0re = gsl_cheb_alloc (local_na - 1);
-	cs_accel_expK0im = gsl_cheb_alloc (local_na - 1);
-	cs_accel_expK1re = gsl_cheb_alloc (local_na - 1);
-	cs_accel_expK1im = gsl_cheb_alloc (local_na - 1);
-	//cheb_set = true;
-
-	///////////////////////////////////
-	// Loop over pY points
-	///////////////////////////////////
-	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
+	if ( USE_EXACT )
 	{
-		sw_qtqzpY.Reset();
-		sw_qtqzpY.Start();
-		ch_SP_pY[ipY] = cosh(SP_Del_pY[ipY] + current_pY_shift);
-		sh_SP_pY[ipY] = sinh(SP_Del_pY[ipY] + current_pY_shift);
-
-		//load appropriate Bessel coefficients
-		HDFcode = Access_besselcoeffs_in_HDF_array(ipY, 1, BC_chunk, local_particle_mode);
-		//do the calculations
-		if (local_pid == target_particle_id)															//pion^+; eventually generalize this to include other options for light particles, too
+		// Loop over pY points
+		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 		{
-			;	//do nothing; get thermal at the end (FOR NOW)
+			sw_qtqzpY.Reset();
+			sw_qtqzpY.Start();
+			ch_SP_pY[ipY] = cosh(SP_Del_pY[ipY] + current_pY_shift);
+			sh_SP_pY[ipY] = sinh(SP_Del_pY[ipY] + current_pY_shift);
+
+			//load appropriate Bessel coefficients
+			Cal_dN_dypTdpTdphi_with_weights_toy(local_pid, iqt, iqz, ipY,
+												current_dN_dypTdpTdphi_moments);
+
+			sw_qtqzpY.Stop();
+			if (VERBOSE > 1) *global_out_stream_ptr
+							<< "Finished loop with ( iqt, iqz, ipY ) = ( "
+							<< iqt << ", " << iqz << ", " << ipY << " ) in "
+							<< sw_qtqzpY.printTime() << " seconds." << endl;
 		}
-		else
-			Cal_dN_dypTdpTdphi_with_weights(local_pid, ipY, iqt, iqz, BC_chunk, local_particle_mode);
-		sw_qtqzpY.Stop();
-		if (VERBOSE > 1) *global_out_stream_ptr << "Finished loop with ( iqt, iqz, ipY ) = ( " << iqt << ", " << iqz << ", " << ipY << " ) in " << sw_qtqzpY.printTime() << " seconds." << endl;
 	}
+	else
+	{
+		//prepare for reading...
+		int HDFcode = Administrate_besselcoeffs_HDF_array(1, local_particle_mode);	//open
+		double * BC_chunk = new double [4 * FO_length * local_na];
+		cs_accel_expK0re = gsl_cheb_alloc (local_na - 1);
+		cs_accel_expK0im = gsl_cheb_alloc (local_na - 1);
+		cs_accel_expK1re = gsl_cheb_alloc (local_na - 1);
+		cs_accel_expK1im = gsl_cheb_alloc (local_na - 1);
+
+		///////////////////////////////////
+		// Loop over pY points
+		///////////////////////////////////
+		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
+		{
+			sw_qtqzpY.Reset();
+			sw_qtqzpY.Start();
+			ch_SP_pY[ipY] = cosh(SP_Del_pY[ipY] + current_pY_shift);
+			sh_SP_pY[ipY] = sinh(SP_Del_pY[ipY] + current_pY_shift);
+
+			//load appropriate Bessel coefficients
+			HDFcode = Access_besselcoeffs_in_HDF_array(ipY, 1, BC_chunk, local_particle_mode);
+			Cal_dN_dypTdpTdphi_with_weights(local_pid, ipY, iqt, iqz, BC_chunk, local_particle_mode);
+
+			sw_qtqzpY.Stop();
+			if (VERBOSE > 1) *global_out_stream_ptr << "Finished loop with ( iqt, iqz, ipY ) = ( "
+							<< iqt << ", " << iqz << ", " << ipY << " ) in "
+							<< sw_qtqzpY.printTime() << " seconds." << endl;
+		}
+
+		HDFcode = Administrate_besselcoeffs_HDF_array(2, local_particle_mode);
+		delete [] BC_chunk;
+	}
+
 
 	//HDF5 block
 	if (local_pid == target_particle_id && MIDRAPIDITY_PIONS_ONLY)	//nothing to store
@@ -865,7 +913,8 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 		int setHDFresonanceSpectra = Access_resonance_in_HDF_array(local_pid, iqt, iqz, 0, current_dN_dypTdpTdphi_moments);
 		if (setHDFresonanceSpectra < 0)
 		{
-			cerr << "Failed to set this resonance(local_pid = " << local_pid << ") in HDF resonance array!  Exiting..." << endl;
+			cerr << "Failed to set this resonance(local_pid = "
+					<< local_pid << ") in HDF resonance array!  Exiting..." << endl;
 			exit(1);
 		}
 
@@ -875,14 +924,13 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 			int setHDFtargetSpectra = Access_target_thermal_in_HDF_array(iqt, iqz, 0, current_dN_dypTdpTdphi_moments, true);
 			if (setHDFtargetSpectra < 0)
 			{
-				cerr << "Failed to set this resonance(local_pid = " << local_pid << ") in HDF thermal target array!  Exiting..." << endl;
+				cerr << "Failed to set this resonance(local_pid = "
+						<< local_pid << ") in HDF thermal target array!  Exiting..." << endl;
 				exit(1);
 			}
 			HDFInitializationSuccess = Administrate_target_thermal_HDF_array(2);	//close
 		}
 	}
-
-	HDFcode = Administrate_besselcoeffs_HDF_array(2, local_particle_mode);
 
 	if ( iqt == 0 && iqz == 0 )	//if the FOcells were computed this loop, be sure to dump them to files!
 		Dump_FOcells(local_pid);
@@ -891,8 +939,6 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 
 	sw.Stop();
 	*global_out_stream_ptr << "Took " << sw.printTime() << " seconds to set dN/dypTdpTdphi moments." << endl;
-
-	delete [] BC_chunk;
 
 	return;
 }
@@ -931,6 +977,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights(int local_pid)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 	{
 		double loc_pT = SP_pT[ipT];
+		double loc_pphi = SP_pphi[ipphi];
 		int pTpphi_index = ipT * n_pphi_pts + ipphi;
 		double sin_pphi = sin_SP_pphi[ipphi];
 		double cos_pphi = cos_SP_pphi[ipphi];
@@ -951,6 +998,8 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights(int local_pid)
 			FO_surf * surf = &FOsurf_ptr[isurf];
 
 			double tau = surf->tau;
+			double rpt = surf->r;
+			double phipt = place_in_range(surf->phi, SP_pphi_min, SP_pphi_max);
 
 			double vx = surf->vx;
 			double vy = surf->vy;
@@ -976,19 +1025,26 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights(int local_pid)
 			double b = -2.0*loc_mT*(px*pi01 + py*pi02);
 			double c = px*px*pi11 + 2.0*px*py*pi12 + py*py*pi22 - loc_mT*loc_mT*pi33;
 
-			double alpha = one_by_Tdec*gammaT*loc_mT;
+			double alpha = ( USE_EXACT ) ? one_by_Tdec*loc_mT*cosh(eta_t(rpt)) : one_by_Tdec*gammaT*loc_mT;
+			double loc_beta = 0.0, loc_gamma = 0.0;
 			double transverse_f0 = exp( one_by_Tdec*(gammaT*(px*vx + py*vy) + mu) );
 
 			complex<double> I0_a_b_g, I1_a_b_g, I2_a_b_g, I3_a_b_g;
-			complex<double> I0_2a_b_g, I1_2a_b_g, I2_2a_b_g, I3_2a_b_g;
-			I(alpha, 0.0, 0.0, I0_a_b_g, I1_a_b_g, I2_a_b_g, I3_a_b_g);
-			I(2.0*alpha, 0.0, 0.0, I0_2a_b_g, I1_2a_b_g, I2_2a_b_g, I3_2a_b_g);
+			I(alpha, loc_beta, loc_gamma, I0_a_b_g, I1_a_b_g, I2_a_b_g, I3_a_b_g);
+			double term1 = A*Hfactor(rpt, tau)*exp( one_by_Tdec*loc_pT*sinh(eta_t(rpt))*cos(phipt - loc_pphi) )*I1_a_b_g.real();
+			double term2 = 0.0, term3 = 0.0;
+			
+			if ( USE_EXACT )
+			{
+				complex<double> I0_2a_b_g, I1_2a_b_g, I2_2a_b_g, I3_2a_b_g;
+				I(2.0*alpha, loc_beta, loc_gamma, I0_2a_b_g, I1_2a_b_g, I2_2a_b_g, I3_2a_b_g);
 
-			double term1 = transverse_f0 * (A*I1_a_b_g.real() + B*I0_a_b_g.real());
-			double term2 = C * transverse_f0
-							* ( A*a*I3_a_b_g.real() + (B*a+b*A)*I2_a_b_g.real() + (B*b+c*A)*I1_a_b_g.real() + B*c*I0_a_b_g.real() );
-			double term3 = -sign * C * transverse_f0 * transverse_f0
-							* ( A*a*I3_2a_b_g.real() + (B*a+b*A)*I2_2a_b_g.real() + (B*b+c*A)*I1_2a_b_g.real() + B*c*I0_2a_b_g.real() );
+				term1 = transverse_f0 * (A*I1_a_b_g.real() + B*I0_a_b_g.real());
+				term2 = C * transverse_f0
+								* ( A*a*I3_a_b_g.real() + (B*a+b*A)*I2_a_b_g.real() + (B*b+c*A)*I1_a_b_g.real() + B*c*I0_a_b_g.real() );
+				term3 = -sign * C * transverse_f0 * transverse_f0
+								* ( A*a*I3_2a_b_g.real() + (B*a+b*A)*I2_2a_b_g.real() + (B*b+c*A)*I1_2a_b_g.real() + B*c*I0_2a_b_g.real() );
+			}
 
 			double FOcell_density = term1 + term2 + term3;
 			//////////////////////////////////
@@ -1117,6 +1173,8 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 		FO_surf * surf = &FOsurf_ptr[isurf];
 
 		double tau = surf->tau;
+		double rpt = surf->r;
+		double phipt = place_in_range(surf->phi, SP_pphi_min, SP_pphi_max);
 
 		double vx = surf->vx;
 		double vy = surf->vy;
@@ -1175,11 +1233,12 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 
 			double pT = SP_pT[ipT];
 			double mT = sqrt(pT*pT+localmass*localmass);
-			double alpha = one_by_Tdec*gammaT*mT;
-
-print_stuff = bool( /*ipT == n_pT_pts - 1 &&*/ ipY==ipY0 && iqt==iqt0 && iqz==iqz0 );
+			double alpha = ( USE_EXACT ) ? one_by_Tdec*mT*cosh(eta_t(rpt)) : one_by_Tdec*gammaT*mT;
+			
+//print_stuff = bool( /*ipT == n_pT_pts - 1 &&*/ ipY==ipY0 && iqt==iqt0 && iqz==iqz0 );
 			Iint2(alpha, beta, gamma, I0_a_b_g_re, I1_a_b_g_re, I2_a_b_g_re, I3_a_b_g_re, I0_a_b_g_im, I1_a_b_g_im, I2_a_b_g_im, I3_a_b_g_im);
-			Iint2(2.0*alpha, beta, gamma, I0_2a_b_g_re, I1_2a_b_g_re, I2_2a_b_g_re, I3_2a_b_g_re, I0_2a_b_g_im, I1_2a_b_g_im, I2_2a_b_g_im, I3_2a_b_g_im);
+			if ( USE_EXACT )
+				Iint2(2.0*alpha, beta, gamma, I0_2a_b_g_re, I1_2a_b_g_re, I2_2a_b_g_re, I3_2a_b_g_re, I0_2a_b_g_im, I1_2a_b_g_im, I2_2a_b_g_im, I3_2a_b_g_im);
 
 			double A = tau*prefactor*mT*da0;
 			double a = mT*mT*(pi00 + pi33);
@@ -1190,23 +1249,31 @@ print_stuff = bool( /*ipT == n_pT_pts - 1 &&*/ ipY==ipY0 && iqt==iqt0 && iqz==iq
 				// initialize transverse momentum information
 				double px = pT*cos_SP_pphi[ipphi];
 				double py = pT*sin_SP_pphi[ipphi];
+				double pphi = SP_pphi[ipphi];
 
 				double B = tau*prefactor*(px*da1 + py*da2);
 				double b = -2.0*mT*(px*pi01 + py*pi02);
 				double c = px*px*pi11 + 2.0*px*py*pi12 + py*py*pi22 - mT*mT*pi33;
 
-				double transverse_f0 = exp( one_by_Tdec*(gammaT*(px*vx + py*vy) + mu) );
+				double overall_S_factor = A*Hfactor(rpt, tau)*exp( one_by_Tdec*pT*sinh(eta_t(rpt))*cos(phipt - pphi) );
+				double term1_re = overall_S_factor*I1_a_b_g_re;
+				double term1_im = overall_S_factor*I1_a_b_g_im;
+				double term2_re = 0.0, term3_re = 0.0, term2_im = 0.0, term3_im = 0.0;
 
-				double term1_re = transverse_f0 * (A*I1_a_b_g_re + B*I0_a_b_g_re);
-				double term1_im = transverse_f0 * (A*I1_a_b_g_im + B*I0_a_b_g_im);
+				if ( USE_EXACT )
+				{
+					double transverse_f0 = exp( one_by_Tdec*(gammaT*(px*vx + py*vy) + mu) );
+					term1_re = transverse_f0 * (A*I1_a_b_g_re + B*I0_a_b_g_re);
+					term1_im = transverse_f0 * (A*I1_a_b_g_im + B*I0_a_b_g_im);
 
-				double c1 = A*a, c2 = B*a+b*A, c3 = B*b+c*A, c4 = B*c;
-				double C1 = C * transverse_f0;
-				double C2 = -sign * transverse_f0 * C1;
-				double term2_re = C1 * ( c1*I3_a_b_g_re + c2*I2_a_b_g_re + c3*I1_a_b_g_re + c4*I0_a_b_g_re );
-				double term3_re = C2 * ( c1*I3_2a_b_g_re + c2*I2_2a_b_g_re + c3*I1_2a_b_g_re + c4*I0_2a_b_g_re );
-				double term2_im = C1 * ( c1*I3_a_b_g_im + c2*I2_a_b_g_im + c3*I1_a_b_g_im + c4*I0_a_b_g_im );
-				double term3_im = C2 * ( c1*I3_2a_b_g_im + c2*I2_2a_b_g_im + c3*I1_2a_b_g_im + c4*I0_2a_b_g_im );
+					double c1 = A*a, c2 = B*a+b*A, c3 = B*b+c*A, c4 = B*c;
+					double C1 = C * transverse_f0;
+					double C2 = -sign * transverse_f0 * C1;
+					term2_re = C1 * ( c1*I3_a_b_g_re + c2*I2_a_b_g_re + c3*I1_a_b_g_re + c4*I0_a_b_g_re );
+					term3_re = C2 * ( c1*I3_2a_b_g_re + c2*I2_2a_b_g_re + c3*I1_2a_b_g_re + c4*I0_2a_b_g_re );
+					term2_im = C1 * ( c1*I3_a_b_g_im + c2*I2_a_b_g_im + c3*I1_a_b_g_im + c4*I0_a_b_g_im );
+					term3_im = C2 * ( c1*I3_2a_b_g_im + c2*I2_2a_b_g_im + c3*I1_2a_b_g_im + c4*I0_2a_b_g_im );
+				}
 
 				short_array_C[iidx] = (do_this_FOcell>0)*term1_re + (do_this_FOcell==2)*(term2_re + term3_re);
 				short_array_S[iidx++] = (do_this_FOcell>0)*term1_im + (do_this_FOcell==2)*(term2_im + term3_im);
@@ -1300,6 +1367,127 @@ print_stuff = bool( /*ipT == n_pT_pts - 1 &&*/ ipY==ipY0 && iqt==iqt0 && iqz==iq
 	return;
 }
 
+void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights_Yeq0_alternate()
+{
+	//pions
+	int local_pid = target_particle_id;
+
+	// set particle information
+	double sign = all_particles[local_pid].sign;
+	double degen = all_particles[local_pid].gspin;
+	double localmass = all_particles[local_pid].mass;
+	double mu = all_particles[local_pid].mu;
+
+	// set some freeze-out surface information that's constant the whole time
+	double prefactor = 1.0*degen/(8.0*M_PI*M_PI*M_PI)/(hbarC*hbarC*hbarC);
+	double Tdec = (&FOsurf_ptr[0])->Tdec;
+	double Pdec = (&FOsurf_ptr[0])->Pdec;
+	double Edec = (&FOsurf_ptr[0])->Edec;
+	double one_by_Tdec = 1./Tdec;
+	double deltaf_prefactor = 0.;
+	if (use_delta_f)
+		deltaf_prefactor = 1./(2.0*Tdec*Tdec*(Edec+Pdec));
+
+	//spatial rapidity grid
+	//const int eta_s_npts = 31;
+	double * eta_s = new double [eta_s_npts];
+	double * eta_s_weight = new double [eta_s_npts];
+	//double eta_s_i = 0.0, eta_s_f = 4.0;
+	gauss_quadrature(eta_s_npts, 1, 0.0, 0.0, eta_s_i, eta_s_f, eta_s, eta_s_weight);
+	double * ch_eta_s = new double [eta_s_npts];
+	double * sh_eta_s = new double [eta_s_npts];
+	for (int ieta = 0; ieta < eta_s_npts; ieta++)
+	{
+		ch_eta_s[ieta] = cosh(eta_s[ieta]);
+		sh_eta_s[ieta] = sinh(eta_s[ieta]);
+	}
+	// set the rapidity-integration symmetry factor
+	double eta_even_factor = 2.0;
+
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+	{
+		double pT = SP_pT[ipT];
+		double pphi = SP_pphi[ipphi];
+		double px = pT*cos_SP_pphi[ipphi];
+		double py = pT*sin_SP_pphi[ipphi];
+		double mT = sqrt(pT*pT+localmass*localmass);
+
+		double spectra_at_pTpphi = 0.0;
+
+		for (int isurf = 0; isurf < FO_length; ++isurf)
+		{
+			FO_surf*surf = &FOsurf_ptr[isurf];
+
+			double tau = surf->tau;
+			double xpt = surf->xpt;
+			double ypt = surf->ypt;
+			double rpt = surf->r;
+			double phipt = place_in_range(surf->phi, SP_pphi_min, SP_pphi_max);
+			double ch_eta_t = cosh(eta_t(rpt));
+			double sh_eta_t = sinh(eta_t(rpt));
+
+			double vx = surf->vx;
+			double vy = surf->vy;
+			double gammaT = surf->gammaT;
+
+			double da0 = surf->da0;
+			double da1 = surf->da1;
+			double da2 = surf->da2;
+
+			double pi00 = surf->pi00;
+			double pi01 = surf->pi01;
+			double pi02 = surf->pi02;
+			double pi11 = surf->pi11;
+			double pi12 = surf->pi12;
+			double pi22 = surf->pi22;
+			double pi33 = surf->pi33;
+
+			for (int ieta = 0; ieta < eta_s_npts; ++ieta)
+			{
+				double p0 = mT*ch_eta_s[ieta];
+				double pz = mT*sh_eta_s[ieta];
+
+				double f0 = ( USE_EXACT ) ? Hfactor(rpt, tau)*exp( one_by_Tdec*pT*sh_eta_t*cos(phipt - pphi) )
+												* exp( -one_by_Tdec*p0*ch_eta_t )
+							: 1./(exp( one_by_Tdec*(gammaT*(p0*1. - px*vx - py*vy) - mu) )+sign);	//thermal equilibrium distributions
+				//viscous corrections
+				double deltaf = 0.;
+				if (use_delta_f && !USE_EXACT)
+					deltaf = deltaf_prefactor * (1. - sign*f0)
+								* (p0*p0*pi00 - 2.0*p0*px*pi01 - 2.0*p0*py*pi02 + px*px*pi11 + 2.0*px*py*pi12 + py*py*pi22 + pz*pz*pi33);
+
+				//p^mu d^3sigma_mu factor: The plus sign is due to the fact that the DA# variables are for the covariant surface integration
+				double S_p_with_weight = ( USE_EXACT ) ? eta_s_weight[ieta]*tau*prefactor*da0*f0
+											: eta_s_weight[ieta]*tau*prefactor*(p0*da0 + px*da1 + py*da2)*f0*(1.+deltaf);
+
+				//ignore points where delta f is large or emission function goes negative from pdsigma
+				if ( (1. + deltaf < 0.0) || (flagneg == 1 && S_p_with_weight < tol) )
+				{
+					S_p_with_weight = 0.0;
+					continue;
+				}
+
+				spectra_at_pTpphi += eta_even_factor * S_p_with_weight;
+			}
+		}
+
+		//update spectra
+		spectra[local_pid][ipT][ipphi] = spectra_at_pTpphi;
+		thermal_spectra[local_pid][ipT][ipphi] = spectra_at_pTpphi;
+		log_spectra[local_pid][ipT][ipphi] = log(abs(spectra_at_pTpphi) + 1.e-100);
+		sign_spectra[local_pid][ipT][ipphi] = sgn(spectra_at_pTpphi);
+	}
+
+	//clean up
+	delete [] eta_s;
+	delete [] eta_s_weight;
+	delete [] ch_eta_s;
+	delete [] sh_eta_s;
+
+	return;
+}
+
 
 void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_alternate(int iqt, int iqz)
 {
@@ -1327,10 +1515,10 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_alternate(int iqt
 
 	//spatial rapidity grid
 	//const int eta_s_npts = 101;
-	const int eta_s_npts = 31;	//probably close enough...
+	//const int eta_s_npts = 31;	//probably close enough...
 	double * eta_s = new double [eta_s_npts];
 	double * eta_s_weight = new double [eta_s_npts];
-	double eta_s_i = 0.0, eta_s_f = 4.0;
+	//double eta_s_i = 0.0, eta_s_f = 4.0;
 	gauss_quadrature(eta_s_npts, 1, 0.0, 0.0, eta_s_i, eta_s_f, eta_s, eta_s_weight);
 	double * ch_eta_s = new double [eta_s_npts];
 	double * sh_eta_s = new double [eta_s_npts];
@@ -1347,6 +1535,10 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_alternate(int iqt
 		double tau = surf->tau;
 		double xpt = surf->xpt;
 		double ypt = surf->ypt;
+		double rpt = surf->r;
+		double phipt = place_in_range(surf->phi, SP_pphi_min, SP_pphi_max);
+		double ch_eta_t = cosh(eta_t(rpt));
+		double sh_eta_t = sinh(eta_t(rpt));
 
 		double vx = surf->vx;
 		double vy = surf->vy;
@@ -1380,28 +1572,32 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_alternate(int iqt
 			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 			{
 				double pT = SP_pT[ipT];
+				double pphi = SP_pphi[ipphi];
 				double px = pT*cos_SP_pphi[ipphi];
 				double py = pT*sin_SP_pphi[ipphi];
 				double mT = sqrt(pT*pT+localmass*localmass);
 				double p0 = mT*ch_eta_s[ieta];
 				double pz = mT*sh_eta_s[ieta];
 
-				double f0 = 1./(exp( one_by_Tdec*(gammaT*(p0*1. - px*vx - py*vy) - mu) )+sign);	//thermal equilibrium distributions
+				double f0 = ( USE_EXACT ) ? Hfactor(rpt, tau)*exp( one_by_Tdec*pT*sh_eta_t*cos(phipt - pphi) )
+												* exp( -one_by_Tdec*p0*ch_eta_t )
+							: 1./(exp( one_by_Tdec*(gammaT*(p0*1. - px*vx - py*vy) - mu) )+sign);	//thermal equilibrium distributions
 				//viscous corrections
 				double deltaf = 0.;
-				if (use_delta_f)
+				if (use_delta_f && !USE_EXACT)
 					deltaf = deltaf_prefactor * (1. - sign*f0)
 								* (p0*p0*pi00 - 2.0*p0*px*pi01 - 2.0*p0*py*pi02 + px*px*pi11 + 2.0*px*py*pi12 + py*py*pi22 + pz*pz*pi33);
 
 				//p^mu d^3sigma_mu factor: The plus sign is due to the fact that the DA# variables are for the covariant surface integration
-				double S_p_with_weight = eta_s_weight[ieta]*tau*prefactor*(p0*da0 + px*da1 + py*da2)*f0*(1.+deltaf);
+				double S_p_with_weight = ( USE_EXACT ) ? eta_s_weight[ieta]*tau*prefactor*da0*f0
+											: eta_s_weight[ieta]*tau*prefactor*(p0*da0 + px*da1 + py*da2)*f0*(1.+deltaf);
 
 				//ignore points where delta f is large or emission function goes negative from pdsigma
-				/*if ( (1. + deltaf < 0.0) || (flagneg == 1 && S_p < tol) )
+				if ( (1. + deltaf < 0.0) || (flagneg == 1 && S_p_with_weight < tol) )
 				{
-					S_p = 0.0;
+					S_p_with_weight = 0.0;
 					continue;
-				}*/
+				}
 
 				for (int iqx = 0; iqx < qxnpts; ++iqx)
 				for (int iqy = 0; iqy < qynpts; ++iqy)
@@ -1428,118 +1624,6 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_alternate(int iqt
 	return;
 }
 
-void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights_Yeq0_alternate()
-{
-	//pions
-	int local_pid = target_particle_id;
-
-	// set particle information
-	double sign = all_particles[local_pid].sign;
-	double degen = all_particles[local_pid].gspin;
-	double localmass = all_particles[local_pid].mass;
-	double mu = all_particles[local_pid].mu;
-
-	// set some freeze-out surface information that's constant the whole time
-	double prefactor = 1.0*degen/(8.0*M_PI*M_PI*M_PI)/(hbarC*hbarC*hbarC);
-	double Tdec = (&FOsurf_ptr[0])->Tdec;
-	double Pdec = (&FOsurf_ptr[0])->Pdec;
-	double Edec = (&FOsurf_ptr[0])->Edec;
-	double one_by_Tdec = 1./Tdec;
-	double deltaf_prefactor = 0.;
-	if (use_delta_f)
-		deltaf_prefactor = 1./(2.0*Tdec*Tdec*(Edec+Pdec));
-
-	//spatial rapidity grid
-	const int eta_s_npts = 31;
-	double * eta_s = new double [eta_s_npts];
-	double * eta_s_weight = new double [eta_s_npts];
-	double eta_s_i = 0.0, eta_s_f = 4.0;
-	gauss_quadrature(eta_s_npts, 1, 0.0, 0.0, eta_s_i, eta_s_f, eta_s, eta_s_weight);
-	double * ch_eta_s = new double [eta_s_npts];
-	double * sh_eta_s = new double [eta_s_npts];
-	for (int ieta = 0; ieta < eta_s_npts; ieta++)
-	{
-		ch_eta_s[ieta] = cosh(eta_s[ieta]);
-		sh_eta_s[ieta] = sinh(eta_s[ieta]);
-	}
-	// set the rapidity-integration symmetry factor
-	double eta_even_factor = 2.0;
-
-	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
-	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-	{
-		double pT = SP_pT[ipT];
-		double px = pT*cos_SP_pphi[ipphi];
-		double py = pT*sin_SP_pphi[ipphi];
-		double mT = sqrt(pT*pT+localmass*localmass);
-
-		double spectra_at_pTpphi = 0.0;
-
-		for (int isurf = 0; isurf < FO_length; ++isurf)
-		{
-			FO_surf*surf = &FOsurf_ptr[isurf];
-
-			double tau = surf->tau;
-			double xpt = surf->xpt;
-			double ypt = surf->ypt;
-
-			double vx = surf->vx;
-			double vy = surf->vy;
-			double gammaT = surf->gammaT;
-
-			double da0 = surf->da0;
-			double da1 = surf->da1;
-			double da2 = surf->da2;
-
-			double pi00 = surf->pi00;
-			double pi01 = surf->pi01;
-			double pi02 = surf->pi02;
-			double pi11 = surf->pi11;
-			double pi12 = surf->pi12;
-			double pi22 = surf->pi22;
-			double pi33 = surf->pi33;
-
-			for (int ieta = 0; ieta < eta_s_npts; ++ieta)
-			{
-				double p0 = mT*ch_eta_s[ieta];
-				double pz = mT*sh_eta_s[ieta];
-
-				double f0 = 1./(exp( one_by_Tdec*(gammaT*(p0*1. - px*vx - py*vy) - mu) )+sign);	//thermal equilibrium distributions
-				//viscous corrections
-				double deltaf = 0.;
-				if (use_delta_f)
-					deltaf = deltaf_prefactor * (1. - sign*f0)
-								* (p0*p0*pi00 - 2.0*p0*px*pi01 - 2.0*p0*py*pi02 + px*px*pi11 + 2.0*px*py*pi12 + py*py*pi22 + pz*pz*pi33);
-
-				//p^mu d^3sigma_mu factor: The plus sign is due to the fact that the DA# variables are for the covariant surface integration
-				double S_p_with_weight = eta_s_weight[ieta]*tau*prefactor*(p0*da0 + px*da1 + py*da2)*f0*(1.+deltaf);
-
-				//ignore points where delta f is large or emission function goes negative from pdsigma
-				/*if ( (1. + deltaf < 0.0) || (flagneg == 1 && S_p < tol) )
-				{
-					S_p = 0.0;
-					continue;
-				}*/
-
-				spectra_at_pTpphi += eta_even_factor * S_p_with_weight;
-			}
-		}
-
-		//update spectra
-		spectra[local_pid][ipT][ipphi] = spectra_at_pTpphi;
-		thermal_spectra[local_pid][ipT][ipphi] = spectra_at_pTpphi;
-		log_spectra[local_pid][ipT][ipphi] = log(abs(spectra_at_pTpphi) + 1.e-100);
-		sign_spectra[local_pid][ipT][ipphi] = sgn(spectra_at_pTpphi);
-	}
-
-	//clean up
-	delete [] eta_s;
-	delete [] eta_s_weight;
-	delete [] ch_eta_s;
-	delete [] sh_eta_s;
-
-	return;
-}
 
 //only works at Y==0!!!
 void CorrelationFunction::Reflect_in_qz_and_qt()

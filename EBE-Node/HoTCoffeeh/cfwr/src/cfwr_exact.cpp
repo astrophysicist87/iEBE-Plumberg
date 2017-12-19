@@ -15,6 +15,7 @@
 #include<numeric>
 
 #include "cfwr.h"
+#include "cfwr_lib.h"
 #include "gauss_quadrature.h"
 #include "bessel.h"
 
@@ -247,6 +248,334 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_function_approx(int lo
 		*sinLcosT_dN_dypTdpTdphi += cos_ta * sin_qx_S_x_K;
 		*sinLsinT_dN_dypTdpTdphi += sin_ta * sin_qx_S_x_K;
 	}
+
+	return;
+}
+
+//define some parameters for the exact emission function
+const double Rad = 5.0, Del_tau = 1.0, tau0 = 5.0, etaf = 0.6;
+
+inline double Hfactor(double r, double tau)
+{
+	return (
+			exp( -r*r/(2.0*Rad*Rad) - (tau-tau0)*(tau-tau0)/(2.0*Del_tau*Del_tau) ) / (M_PI*Del_tau)
+			);
+}
+
+inline double eta_t(double r)
+{
+	return ( etaf*r/Rad );
+}
+
+void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights_toy(int local_pid)
+{
+	//space-time integration grid
+	const int n_tau_pts = 51;
+	const int n_r_pts = 81;
+	const int n_phi_pts = 31;
+	double * tau_pts = new double [n_tau_pts];
+	double * tau_wts = new double [n_tau_pts];
+	double * x_pts = new double [n_r_pts];
+	double * x_wts = new double [n_r_pts];
+	double * phi_pts = new double [n_phi_pts];
+	double * phi_wts = new double [n_phi_pts];
+	gauss_quadrature(n_tau_pts, 1, 0.0, 0.0, 0.0, 10.0, tau_pts, tau_wts);
+	gauss_quadrature(n_r_pts, 1, 0.0, 0.0, -1.0, 1.0, x_pts, x_wts);
+	gauss_quadrature(n_phi_pts, 1, 0.0, 0.0, 0.0, 2.0*M_PI, phi_pts, phi_wts);
+
+	// set particle information
+	double degen = all_particles[local_pid].gspin;
+	double localmass = all_particles[local_pid].mass;
+
+	// set some freeze-out surface information that's constant the whole time
+	double prefactor = 1.0*degen/(8.0*M_PI*M_PI*M_PI)/(hbarC*hbarC*hbarC);
+	double Tdec = (&FOsurf_ptr[0])->Tdec;
+	double Pdec = (&FOsurf_ptr[0])->Pdec;
+	double Edec = (&FOsurf_ptr[0])->Edec;
+	double one_by_Tdec = 1./Tdec;
+
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+	{
+//if (ipT > 0 || ipphi > 0) continue;
+		double pT = SP_pT[ipT];
+		double pphi = SP_pphi[ipphi];
+		double mT = sqrt(pT*pT+localmass*localmass);
+
+		double spectra_at_pTpphi = 0.0;
+
+		for (int ir = 0; ir < n_r_pts; ++ir)
+		{
+
+			//set r-point inside pT loop, since optimal distribution of integration points
+			// depends on value of MT
+			double rmin = 0.0, rmax = 5.0 * Rad / sqrt(1.0 + mT*one_by_Tdec*etaf*etaf);
+			double hw = 0.5 * (rmax - rmin), cen = 0.5 * (rmax + rmin);
+			double rpt = cen + hw * x_pts[ir];
+
+			double ch_eta_t = cosh(eta_t(rpt));
+			double sh_eta_t = sinh(eta_t(rpt));
+
+			double alpha = mT*ch_eta_t*one_by_Tdec;
+			complex<double> I0, I1, I2, I3;
+			Iexact(alpha, 0.0, 0.0, I0, I1, I2, I3);
+
+			for (int itau = 0; itau < n_tau_pts; ++itau)
+			{
+				double tau = tau_pts[itau];
+				double local_H = Hfactor(rpt, tau);
+
+				for (int iphi = 0; iphi < n_phi_pts; ++iphi)
+				{
+					double phipt = phi_pts[iphi];
+//if (local_pid != target_particle_id)
+//	cout << "SPECTRA: " << local_pid << "   " << ipT << "   " << ipphi << "   " << ir << "   " << itau << "   " << iphi << "   ";
+// << "   " << ch_eta_t << "   " << sh_eta_t << "   ";
+//	cout << tau_wts[itau] << "   " << r_wts[ir] << "   " << phi_wts[iphi] << "   " << mT << "   " << tau << "   " << rpt << "   ";
+//	cout << prefactor << "   " << local_H << "   " << one_by_Tdec << "   " << pT << "   " << phipt << "   " << pphi << "   " << "   " << cos(phipt - pphi)
+//			<< "   " << exp( one_by_Tdec*pT*sh_eta_t*cos(phipt - pphi) ) << "   ";
+					double S_p_with_weight = tau_wts[itau]*hw*x_wts[ir]*phi_wts[iphi]*mT*tau*rpt*prefactor
+												*local_H*exp( one_by_Tdec*pT*sh_eta_t*cos(phipt - pphi) );
+//if (local_pid != target_particle_id)
+//	cout << S_p_with_weight << "   " << I1.real() << "   " << I1.imag() << endl;
+
+					spectra_at_pTpphi += S_p_with_weight*I1.real();
+				}
+			}
+		}
+
+		//update spectra
+		spectra[local_pid][ipT][ipphi] = spectra_at_pTpphi;
+		thermal_spectra[local_pid][ipT][ipphi] = spectra_at_pTpphi;
+		log_spectra[local_pid][ipT][ipphi] = log(abs(spectra_at_pTpphi) + 1.e-100);
+		sign_spectra[local_pid][ipT][ipphi] = sgn(spectra_at_pTpphi);
+//		cout << "FINAL SPECTRA: " << all_particles[local_pid].name << "   " << SP_pT[ipT] << "   " << SP_pphi[ipphi] << "   " << spectra[local_pid][ipT][ipphi] << endl;
+	}
+
+	//clean up
+	delete [] tau_pts;
+	delete [] tau_wts;
+	delete [] x_pts;
+	delete [] x_wts;
+	delete [] phi_pts;
+	delete [] phi_wts;
+
+	return;
+}
+
+void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_toy(int local_pid, int iqt, int iqz, int ipY, double * moments_to_update)
+{
+	//space-time integration grid
+	const int n_tau_pts = 51;
+	const int n_r_pts = 81;
+	const int n_phi_pts = 31;
+	double * tau_pts = new double [n_tau_pts];
+	double * tau_wts = new double [n_tau_pts];
+	double * x_pts = new double [n_r_pts];
+	double * x_wts = new double [n_r_pts];
+	double * phi_pts = new double [n_phi_pts];
+	double * phi_wts = new double [n_phi_pts];
+	gauss_quadrature(n_tau_pts, 1, 0.0, 0.0, 0.0, 10.0, tau_pts, tau_wts);
+	gauss_quadrature(n_r_pts, 1, 0.0, 0.0, -1.0, 1.0, x_pts, x_wts);
+	gauss_quadrature(n_phi_pts, 1, 0.0, 0.0, 0.0, 2.0*M_PI, phi_pts, phi_wts);
+	/*for (int itau = 0; itau < n_tau_pts; itau++)
+		cout << itau << "   " << tau_pts[itau] << endl;
+	for (int ir = 0; ir < n_r_pts; ir++)
+		cout << ir << "   " << r_pts[ir] << endl;
+	for (int iphi = 0; iphi < n_phi_pts; iphi++)
+		cout << iphi << "   " << phi_pts[iphi] << endl;
+	if (1) exit (1);*/
+
+	//q-point info
+	double qt_loc = qt_pts[iqt], qz_loc = qz_pts[iqz];
+
+	//zero arrays
+	if (local_pid == target_particle_id)
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+	for (int iqx = 0; iqx < qxnpts; ++iqx)
+	for (int iqy = 0; iqy < qynpts; ++iqy)
+	for (int ii = 0; ii < 4; ++ii)
+		moments_to_update[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, ii)] = 0.0;
+	else
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+	for (int iqx = 0; iqx < qxnpts; ++iqx)
+	for (int iqy = 0; iqy < qynpts; ++iqy)
+	for (int ii = 0; ii < 4; ++ii)
+		moments_to_update[fixQTQZ_indexer(ipT, ipphi, ipY, iqx, iqy, ii)] = 0.0;
+
+
+	// set particle information
+	double degen = all_particles[local_pid].gspin;
+	double localmass = all_particles[local_pid].mass;
+
+	// set some freeze-out surface information that's constant the whole time
+	double prefactor = 1.0*degen/(8.0*M_PI*M_PI*M_PI)/(hbarC*hbarC*hbarC);
+	double Tdec = (&FOsurf_ptr[0])->Tdec;
+	double Pdec = (&FOsurf_ptr[0])->Pdec;
+	double Edec = (&FOsurf_ptr[0])->Edec;
+	double one_by_Tdec = 1./Tdec;
+
+	double ch_pY = ch_SP_pY[ipY];
+	double sh_pY = sh_SP_pY[ipY];
+
+	if (local_pid == target_particle_id)
+	{
+		for (int ir = 0; ir < n_r_pts; ++ir)
+		for (int itau = 0; itau < n_tau_pts; ++itau)
+		{
+			double tau = tau_pts[itau];
+			double beta = tau * hbarCm1 * ( qt_loc*ch_pY - qz_loc*sh_pY );
+			double gamma = tau * hbarCm1 * ( qz_loc*ch_pY - qt_loc*sh_pY );
+
+//cout << "CHECKbg: " << beta << "   " << gamma << "   " << tau << "   " << hbarCm1 << "   " << qt_loc << "   " << ch_pY << "   " << qz_loc << "   " << sh_pY << endl;
+
+			for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+			{
+//if (ipT > 0) continue;
+				double pT = SP_pT[ipT];
+				double mT = sqrt(pT*pT+localmass*localmass);
+
+				//set r-point inside pT loop, since optimal distribution of integration points
+				// depends on value of MT
+				double rmin = 0.0, rmax = 7.5 * Rad / sqrt(1.0 + mT*one_by_Tdec*etaf*etaf);
+				double hw = 0.5 * (rmax - rmin), cen = 0.5 * (rmax + rmin);
+				double rpt = cen + hw * x_pts[ir];
+
+				double local_H = Hfactor(rpt, tau);
+				double ch_eta_t = cosh(eta_t(rpt));
+				double sh_eta_t = sinh(eta_t(rpt));
+
+				double alpha = mT * one_by_Tdec * ch_eta_t;
+				complex<double> I0, I1, I2, I3;
+				Iexact(alpha, beta, gamma, I0, I1, I2, I3);
+				double cos_phi_L = I1.real();
+				double sin_phi_L = I1.imag();
+
+				for (int iphi = 0; iphi < n_phi_pts; ++iphi)
+				{
+					double phipt = phi_pts[iphi];
+					double xpt = rpt*cos(phipt), ypt = rpt*sin(phipt);
+
+					for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+					{
+//if (ipphi > 0) continue;
+						double pphi = SP_pphi[ipphi];
+
+//if (local_pid != target_particle_id)
+//	cout << "MOMENTS: " << local_pid << "   " << ir << "   " << itau << "   " << iphi << "   ";
+						double S_p_with_weight = tau_wts[itau]*hw*x_wts[ir]*phi_wts[iphi]*mT*tau*rpt*prefactor*local_H*exp( one_by_Tdec*pT*sh_eta_t*cos(phipt - pphi) );
+
+//if (local_pid != target_particle_id)
+//	cout << S_p_with_weight << "   " << I1.real() << "   " << I1.imag() << endl;
+
+						for (int iqx = 0; iqx < qxnpts; ++iqx)
+						for (int iqy = 0; iqy < qynpts; ++iqy)
+						{
+							double cosAx = cos(qx_pts[iqx]*xpt/hbarC), sinAx = sin(qx_pts[iqx]*xpt/hbarC);
+							double cosAy = cos(qy_pts[iqy]*ypt/hbarC), sinAy = sin(qy_pts[iqy]*ypt/hbarC);
+							double cos_trans_Fourier = cosAx*cosAy - sinAx*sinAy;	//==cos(qx x + qy y)
+							double sin_trans_Fourier = sinAx*cosAy + cosAx*sinAy;	//==sin(qx x + qy y)
+							moments_to_update[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 0)] += S_p_with_weight * cos_phi_L * cos_trans_Fourier;
+							moments_to_update[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 1)] -= S_p_with_weight * cos_phi_L * sin_trans_Fourier;
+							moments_to_update[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 2)] += S_p_with_weight * sin_phi_L * cos_trans_Fourier;
+							moments_to_update[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 3)] += S_p_with_weight * sin_phi_L * sin_trans_Fourier;
+						}
+					}
+				}
+			}
+		}
+	}
+	else
+	{
+		for (int itau = 0; itau < n_tau_pts; ++itau)
+		for (int ir = 0; ir < n_r_pts; ++ir)
+		{
+			double tau = tau_pts[itau];
+			double beta = tau * hbarCm1 * ( qt_loc*ch_pY - qz_loc*sh_pY );
+			double gamma = tau * hbarCm1 * ( qz_loc*ch_pY - qt_loc*sh_pY );
+//cout << "CHECKbg: " << beta << "   " << gamma << "   " << tau << "   " << hbarCm1 << "   " << qt_loc << "   " << ch_pY << "   " << qz_loc << "   " << sh_pY << endl;
+
+			for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+			{
+				double pT = SP_pT[ipT];
+				double mT = sqrt(pT*pT+localmass*localmass);
+
+				//set r-point inside pT loop, since optimal distribution of integration points
+				// depends on value of MT
+				double rmin = 0.0, rmax = 7.5 * Rad / sqrt(1.0 + mT*one_by_Tdec*etaf*etaf);
+				double hw = 0.5 * (rmax - rmin), cen = 0.5 * (rmax + rmin);
+				double rpt = cen + hw * x_pts[ir];
+
+				double local_H = Hfactor(rpt, tau);
+				double ch_eta_t = cosh(eta_t(rpt));
+				double sh_eta_t = sinh(eta_t(rpt));
+
+				double alpha = mT * one_by_Tdec * ch_eta_t;
+				complex<double> I0, I1, I2, I3;
+				Iexact(alpha, beta, gamma, I0, I1, I2, I3);
+				double cos_phi_L = I1.real();
+				double sin_phi_L = I1.imag();
+
+				for (int iphi = 0; iphi < n_phi_pts; ++iphi)
+				{
+					double phipt = phi_pts[iphi];
+					double xpt = rpt*cos(phipt), ypt = rpt*sin(phipt);
+
+					for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+					{
+						double pphi = SP_pphi[ipphi];
+
+	//if (ipY==ipY0)
+	//	cout << "MOMENTS: " << local_pid << "   " << iqt << "   " << ipT << "   " << ipphi << "   " << ir << "   " << itau << "   " << iphi << "   ";
+						double S_p_with_weight = tau_wts[itau]*hw*x_wts[ir]*phi_wts[iphi]*mT*tau*rpt*prefactor*local_H*exp( one_by_Tdec*pT*sh_eta_t*cos(phipt - pphi) );
+	//if (ipY==ipY0)
+	//	cout << S_p_with_weight << "   " << I1.real() << "   " << I1.imag() << endl;
+
+						for (int iqx = 0; iqx < qxnpts; ++iqx)
+						for (int iqy = 0; iqy < qynpts; ++iqy)
+						{
+							double cosAx = cos(qx_pts[iqx]*xpt/hbarC), sinAx = sin(qx_pts[iqx]*xpt/hbarC);
+							double cosAy = cos(qy_pts[iqy]*ypt/hbarC), sinAy = sin(qy_pts[iqy]*ypt/hbarC);
+							double cos_trans_Fourier = cosAx*cosAy - sinAx*sinAy;	//==cos(qx x + qy y)
+							double sin_trans_Fourier = sinAx*cosAy + cosAx*sinAy;	//==sin(qx x + qy y)
+							moments_to_update[fixQTQZ_indexer(ipT, ipphi, ipY, iqx, iqy, 0)] += S_p_with_weight * cos_phi_L * cos_trans_Fourier;
+							moments_to_update[fixQTQZ_indexer(ipT, ipphi, ipY, iqx, iqy, 1)] -= S_p_with_weight * cos_phi_L * sin_trans_Fourier;
+							moments_to_update[fixQTQZ_indexer(ipT, ipphi, ipY, iqx, iqy, 2)] += S_p_with_weight * sin_phi_L * cos_trans_Fourier;
+							moments_to_update[fixQTQZ_indexer(ipT, ipphi, ipY, iqx, iqy, 3)] += S_p_with_weight * sin_phi_L * sin_trans_Fourier;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	/*if (ipY==ipY0)
+	{
+		if (local_pid==target_particle_id)
+		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+		for (int iqx = 0; iqx < qxnpts; ++iqx)
+		for (int iqy = 0; iqy < qynpts; ++iqy)
+			cout << "FINAL MOMENTS: " << all_particles[local_pid].name << "   " << iqt << "   " << ipY << "   " << SP_pT[ipT] << "   " << SP_pphi[ipphi]
+					<< "   " << moments_to_update[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 0)] << endl;
+		else
+		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+		for (int iqx = 0; iqx < qxnpts; ++iqx)
+		for (int iqy = 0; iqy < qynpts; ++iqy)
+			cout << "FINAL MOMENTS: " << all_particles[local_pid].name << "   " << iqt << "   " << ipY << "   " << SP_pT[ipT] << "   " << SP_pphi[ipphi]
+					<< "   " << moments_to_update[fixQTQZ_indexer(ipT, ipphi, ipY, iqx, iqy, 0)] << endl;
+	}*/
+
+	//clean up
+	delete [] tau_pts;
+	delete [] tau_wts;
+	delete [] x_pts;
+	delete [] x_wts;
+	delete [] phi_pts;
+	delete [] phi_wts;
 
 	return;
 }

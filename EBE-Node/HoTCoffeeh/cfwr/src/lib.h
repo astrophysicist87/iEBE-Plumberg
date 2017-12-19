@@ -79,7 +79,9 @@ void sort_by_column(vector< vector<T> > * values)
 }
 
 
-/*USAGE: debugger(__LINE__, __FILE__);*/
+/*USAGE:
+debugger(__LINE__, __FILE__);
+*/
 void debugger(int cln, const char* cfn);
 void print_now();
 
