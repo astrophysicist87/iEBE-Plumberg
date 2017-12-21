@@ -270,8 +270,8 @@ inline double eta_t(double r)
 void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights_toy(int local_pid)
 {
 	//space-time integration grid
-	const int n_tau_pts = 51;
-	const int n_r_pts = 81;
+	const int n_tau_pts = 31;
+	const int n_r_pts = 31;
 	const int n_phi_pts = 31;
 	double * tau_pts = new double [n_tau_pts];
 	double * tau_wts = new double [n_tau_pts];
@@ -287,6 +287,16 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights_toy(int local_pid)
 	double degen = all_particles[local_pid].gspin;
 	double localmass = all_particles[local_pid].mass;
 
+	//checking alpha range of Iexact
+	/*for (int ia = 0; ia <= 1000; ++ia)
+	{
+		double alpha = (double)ia;
+		complex<double> I0, I1, I2, I3;
+		Iexact(alpha, 0.0, 0.0, I0, I1, I2, I3);
+		cout << alpha << "   " << I1.real() << "   " << I1.imag() << endl;
+	}
+	if (1) exit (1);*/
+
 	// set some freeze-out surface information that's constant the whole time
 	double prefactor = 1.0*degen/(8.0*M_PI*M_PI*M_PI)/(hbarC*hbarC*hbarC);
 	double Tdec = (&FOsurf_ptr[0])->Tdec;
@@ -298,6 +308,8 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights_toy(int local_pid)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 	{
 //if (ipT > 0 || ipphi > 0) continue;
+//if (ipT != 0 && ipT != 4 && ipT != 8) continue;
+//if (ipphi > 0) continue;
 		double pT = SP_pT[ipT];
 		double pphi = SP_pphi[ipphi];
 		double mT = sqrt(pT*pT+localmass*localmass);
@@ -309,7 +321,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights_toy(int local_pid)
 
 			//set r-point inside pT loop, since optimal distribution of integration points
 			// depends on value of MT
-			double rmin = 0.0, rmax = 5.0 * Rad / sqrt(1.0 + mT*one_by_Tdec*etaf*etaf);
+			double rmin = 0.0, rmax = 15.0 * Rad / sqrt(1.0 + mT*one_by_Tdec*etaf*etaf);
 			double hw = 0.5 * (rmax - rmin), cen = 0.5 * (rmax + rmin);
 			double rpt = cen + hw * x_pts[ir];
 
@@ -318,7 +330,10 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights_toy(int local_pid)
 
 			double alpha = mT*ch_eta_t*one_by_Tdec;
 			complex<double> I0, I1, I2, I3;
-			Iexact(alpha, 0.0, 0.0, I0, I1, I2, I3);
+			if (alpha < 700.0)	//get nans soon after
+				Iexact(alpha, 0.0, 0.0, I0, I1, I2, I3);
+			else
+				I1 = 0.0;
 
 			for (int itau = 0; itau < n_tau_pts; ++itau)
 			{
@@ -328,18 +343,24 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights_toy(int local_pid)
 				for (int iphi = 0; iphi < n_phi_pts; ++iphi)
 				{
 					double phipt = phi_pts[iphi];
-//if (local_pid != target_particle_id)
-//	cout << "SPECTRA: " << local_pid << "   " << ipT << "   " << ipphi << "   " << ir << "   " << itau << "   " << iphi << "   ";
-// << "   " << ch_eta_t << "   " << sh_eta_t << "   ";
-//	cout << tau_wts[itau] << "   " << r_wts[ir] << "   " << phi_wts[iphi] << "   " << mT << "   " << tau << "   " << rpt << "   ";
-//	cout << prefactor << "   " << local_H << "   " << one_by_Tdec << "   " << pT << "   " << phipt << "   " << pphi << "   " << "   " << cos(phipt - pphi)
-//			<< "   " << exp( one_by_Tdec*pT*sh_eta_t*cos(phipt - pphi) ) << "   ";
+					if (one_by_Tdec*pT*sh_eta_t*cos(phipt - pphi) > 700.0)
+						continue;
+/*if (local_pid != target_particle_id)
+{
+	cout << "SPECTRA: " << local_pid << "   " << ipT << "   " << ipphi << "   " << ir << "   " << itau << "   " << iphi << "   "
+			<< "   " << ch_eta_t << "   " << sh_eta_t << "   ";
+	cout << tau_wts[itau] << "   " << hw*x_wts[ir] << "   " << phi_wts[iphi] << "   " << mT << "   " << tau << "   " << rpt << "   ";
+	cout << prefactor << "   " << local_H << "   " << one_by_Tdec << "   " << pT << "   " << phipt << "   " << pphi << "   " << "   " << cos(phipt - pphi)
+			<< "   " << exp( one_by_Tdec*pT*sh_eta_t*cos(phipt - pphi) ) << "   ";
+}*/
 					double S_p_with_weight = tau_wts[itau]*hw*x_wts[ir]*phi_wts[iphi]*mT*tau*rpt*prefactor
 												*local_H*exp( one_by_Tdec*pT*sh_eta_t*cos(phipt - pphi) );
 //if (local_pid != target_particle_id)
 //	cout << S_p_with_weight << "   " << I1.real() << "   " << I1.imag() << endl;
 
 					spectra_at_pTpphi += S_p_with_weight*I1.real();
+//cout << "CHECKGRID: " << rpt << "   " << tau << "   " << phipt << "   "
+//		<< mT*tau*rpt*prefactor*local_H << "   " << exp( one_by_Tdec*pT*sh_eta_t*cos(phipt - pphi) ) << "   " << I1.real() << "   " << pT << "   " << pphi << "   " << S_p_with_weight*I1.real() << endl;
 				}
 			}
 		}
@@ -349,8 +370,10 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights_toy(int local_pid)
 		thermal_spectra[local_pid][ipT][ipphi] = spectra_at_pTpphi;
 		log_spectra[local_pid][ipT][ipphi] = log(abs(spectra_at_pTpphi) + 1.e-100);
 		sign_spectra[local_pid][ipT][ipphi] = sgn(spectra_at_pTpphi);
-//		cout << "FINAL SPECTRA: " << all_particles[local_pid].name << "   " << SP_pT[ipT] << "   " << SP_pphi[ipphi] << "   " << spectra[local_pid][ipT][ipphi] << endl;
+		//cout << "FINAL SPECTRA: " << all_particles[local_pid].name << "   " << SP_pT[ipT] << "   " << SP_pphi[ipphi] << "   " << spectra[local_pid][ipT][ipphi] << endl;
 	}
+
+//	if (1) exit (1);
 
 	//clean up
 	delete [] tau_pts;
@@ -367,8 +390,8 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_toy(int local_pid, int
 {
 	//space-time integration grid
 	const int n_tau_pts = 51;
-	const int n_r_pts = 81;
-	const int n_phi_pts = 31;
+	const int n_r_pts = 101;
+	const int n_phi_pts = 51;
 	double * tau_pts = new double [n_tau_pts];
 	double * tau_wts = new double [n_tau_pts];
 	double * x_pts = new double [n_r_pts];
@@ -433,13 +456,14 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_toy(int local_pid, int
 
 			for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 			{
+//if (ipT != 0 && ipT != 4 && ipT != 8) continue;
 //if (ipT > 0) continue;
 				double pT = SP_pT[ipT];
 				double mT = sqrt(pT*pT+localmass*localmass);
 
 				//set r-point inside pT loop, since optimal distribution of integration points
 				// depends on value of MT
-				double rmin = 0.0, rmax = 7.5 * Rad / sqrt(1.0 + mT*one_by_Tdec*etaf*etaf);
+				double rmin = 0.0, rmax = 15.0 * Rad / sqrt(1.0 + mT*one_by_Tdec*etaf*etaf);
 				double hw = 0.5 * (rmax - rmin), cen = 0.5 * (rmax + rmin);
 				double rpt = cen + hw * x_pts[ir];
 
@@ -449,7 +473,11 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_toy(int local_pid, int
 
 				double alpha = mT * one_by_Tdec * ch_eta_t;
 				complex<double> I0, I1, I2, I3;
-				Iexact(alpha, beta, gamma, I0, I1, I2, I3);
+				complex<double> z = sqrt((alpha-i*beta)*(alpha-i*beta) + gamma*gamma);
+				if (abs(z) < 700.0)	//get nans soon after
+					Iexact(alpha, beta, gamma, I0, I1, I2, I3);
+				else
+					I1 = 0.0;
 				double cos_phi_L = I1.real();
 				double sin_phi_L = I1.imag();
 
@@ -462,10 +490,14 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_toy(int local_pid, int
 					{
 //if (ipphi > 0) continue;
 						double pphi = SP_pphi[ipphi];
+						if (one_by_Tdec*pT*sh_eta_t*cos(phipt - pphi) > 700.0)
+							continue;
 
 //if (local_pid != target_particle_id)
 //	cout << "MOMENTS: " << local_pid << "   " << ir << "   " << itau << "   " << iphi << "   ";
-						double S_p_with_weight = tau_wts[itau]*hw*x_wts[ir]*phi_wts[iphi]*mT*tau*rpt*prefactor*local_H*exp( one_by_Tdec*pT*sh_eta_t*cos(phipt - pphi) );
+						double S_p_with_weight = tau_wts[itau]*hw*x_wts[ir]*phi_wts[iphi]
+													*mT*tau*rpt*prefactor*local_H
+													*exp( one_by_Tdec*pT*sh_eta_t*cos(phipt - pphi) );
 
 //if (local_pid != target_particle_id)
 //	cout << S_p_with_weight << "   " << I1.real() << "   " << I1.imag() << endl;
@@ -481,6 +513,9 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_toy(int local_pid, int
 							moments_to_update[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 1)] -= S_p_with_weight * cos_phi_L * sin_trans_Fourier;
 							moments_to_update[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 2)] += S_p_with_weight * sin_phi_L * cos_trans_Fourier;
 							moments_to_update[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 3)] += S_p_with_weight * sin_phi_L * sin_trans_Fourier;
+
+//cout << "CHECKGRID: " << rpt << "   " << tau << "   " << phipt << "   " << alpha << "   " << beta << "   " << gamma << "   "
+//		<< S_p_with_weight << "   " << cos_trans_Fourier << "   " << sin_trans_Fourier << "   " << cos_phi_L << "   " << sin_phi_L << endl;
 						}
 					}
 				}
@@ -499,12 +534,13 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_toy(int local_pid, int
 
 			for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 			{
+//if (ipT != 0 && ipT != 4 && ipT != 8) continue;
 				double pT = SP_pT[ipT];
 				double mT = sqrt(pT*pT+localmass*localmass);
 
 				//set r-point inside pT loop, since optimal distribution of integration points
 				// depends on value of MT
-				double rmin = 0.0, rmax = 7.5 * Rad / sqrt(1.0 + mT*one_by_Tdec*etaf*etaf);
+				double rmin = 0.0, rmax = 15.0 * Rad / sqrt(1.0 + mT*one_by_Tdec*etaf*etaf);
 				double hw = 0.5 * (rmax - rmin), cen = 0.5 * (rmax + rmin);
 				double rpt = cen + hw * x_pts[ir];
 
@@ -514,7 +550,11 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_toy(int local_pid, int
 
 				double alpha = mT * one_by_Tdec * ch_eta_t;
 				complex<double> I0, I1, I2, I3;
-				Iexact(alpha, beta, gamma, I0, I1, I2, I3);
+				complex<double> z = sqrt((alpha-i*beta)*(alpha-i*beta) + gamma*gamma);
+				if (abs(z) < 700.0)	//get nans soon after
+					Iexact(alpha, beta, gamma, I0, I1, I2, I3);
+				else
+					I1 = 0.0;
 				double cos_phi_L = I1.real();
 				double sin_phi_L = I1.imag();
 
@@ -525,7 +565,10 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_toy(int local_pid, int
 
 					for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 					{
+//if (ipphi > 0) continue;
 						double pphi = SP_pphi[ipphi];
+						if (one_by_Tdec*pT*sh_eta_t*cos(phipt - pphi) > 700.0)
+							continue;
 
 	//if (ipY==ipY0)
 	//	cout << "MOMENTS: " << local_pid << "   " << iqt << "   " << ipT << "   " << ipphi << "   " << ir << "   " << itau << "   " << iphi << "   ";
@@ -544,6 +587,9 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_toy(int local_pid, int
 							moments_to_update[fixQTQZ_indexer(ipT, ipphi, ipY, iqx, iqy, 1)] -= S_p_with_weight * cos_phi_L * sin_trans_Fourier;
 							moments_to_update[fixQTQZ_indexer(ipT, ipphi, ipY, iqx, iqy, 2)] += S_p_with_weight * sin_phi_L * cos_trans_Fourier;
 							moments_to_update[fixQTQZ_indexer(ipT, ipphi, ipY, iqx, iqy, 3)] += S_p_with_weight * sin_phi_L * sin_trans_Fourier;
+//cout << "CHECKGRID: " << rpt << "   " << tau << "   " << phipt << "   " << alpha << "   " << beta << "   " << gamma << "   "
+//		<< S_p_with_weight << "   " << cos_trans_Fourier << "   " << sin_trans_Fourier << "   " << cos_phi_L << "   " << sin_phi_L << endl;
+
 						}
 					}
 				}
@@ -551,22 +597,32 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_toy(int local_pid, int
 		}
 	}
 
-	/*if (ipY==ipY0)
+/*	if (ipY==ipY0)
 	{
 		if (local_pid==target_particle_id)
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		for (int iqx = 0; iqx < qxnpts; ++iqx)
 		for (int iqy = 0; iqy < qynpts; ++iqy)
+		{
+if (ipT != 0 && ipT != 4 && ipT != 8) continue;
+if (ipphi > 0) continue;
 			cout << "FINAL MOMENTS: " << all_particles[local_pid].name << "   " << iqt << "   " << ipY << "   " << SP_pT[ipT] << "   " << SP_pphi[ipphi]
-					<< "   " << moments_to_update[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 0)] << endl;
+					<< "   " << moments_to_update[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 0)]
+					<< "   " << moments_to_update[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 1)]
+					<< "   " << moments_to_update[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 2)]
+					<< "   " << moments_to_update[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 3)] << endl;
+		}
 		else
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		for (int iqx = 0; iqx < qxnpts; ++iqx)
 		for (int iqy = 0; iqy < qynpts; ++iqy)
 			cout << "FINAL MOMENTS: " << all_particles[local_pid].name << "   " << iqt << "   " << ipY << "   " << SP_pT[ipT] << "   " << SP_pphi[ipphi]
-					<< "   " << moments_to_update[fixQTQZ_indexer(ipT, ipphi, ipY, iqx, iqy, 0)] << endl;
+					<< "   " << moments_to_update[fixQTQZ_indexer(ipT, ipphi, ipY, iqx, iqy, 0)]
+					<< "   " << moments_to_update[fixQTQZ_indexer(ipT, ipphi, ipY, iqx, iqy, 1)]
+					<< "   " << moments_to_update[fixQTQZ_indexer(ipT, ipphi, ipY, iqx, iqy, 2)]
+					<< "   " << moments_to_update[fixQTQZ_indexer(ipT, ipphi, ipY, iqx, iqy, 3)] << endl;
 	}*/
 
 	//clean up

@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
 	sw_total.Start();
 	sw.Start();
 
-	bool flag_nans = true;
+	bool flag_nans = false;
 
 	//flags NaNs when they crop up
 	if (flag_nans)

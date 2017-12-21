@@ -814,6 +814,16 @@ void CorrelationFunction::Set_target_moments(int iqt, int iqz)
 //assume only want midrapidity (Y=0) pions for the timebeing
 void CorrelationFunction::Set_thermal_target_moments(int iqt, int iqz)
 {
+	double loc_qz = qz_pts[iqz];
+	double loc_qt = qt_pts[iqt];
+	current_pY_shift = 0.5 * log(abs((loc_qt+loc_qz + 1.e-100)/(loc_qt-loc_qz + 1.e-100)));
+
+	for (int ipY = 0; ipY < n_pY_pts; ++ipY)
+	{
+		ch_SP_pY[ipY] = cosh(SP_Del_pY[ipY] + current_pY_shift);
+		sh_SP_pY[ipY] = sinh(SP_Del_pY[ipY] + current_pY_shift);
+	}
+
 	if ( USE_EXACT )
 		Cal_dN_dypTdpTdphi_with_weights_toy(target_particle_id, iqt, iqz, ipY0, thermal_target_Yeq0_moments);
 	else

@@ -857,6 +857,9 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 			sw_qtqzpY.Start();
 			ch_SP_pY[ipY] = cosh(SP_Del_pY[ipY] + current_pY_shift);
 			sh_SP_pY[ipY] = sinh(SP_Del_pY[ipY] + current_pY_shift);
+//cout << "CHECKloop: " << ipY << "   " << iqt << "   " << iqz << "   " << current_pY_shift << "   "
+//		<< qt_pts[iqt] << "   " << qz_pts[iqz] << "   " << SP_Del_pY[ipY] << "   "
+//		<< ch_SP_pY[ipY] << "   " << sh_SP_pY[ipY] << endl;
 
 			//load appropriate Bessel coefficients
 			Cal_dN_dypTdpTdphi_with_weights_toy(local_pid, iqt, iqz, ipY,
