@@ -121,7 +121,6 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	Set_use_delta_f();
 
 //****************************************************************************************************
-//OLD CODE FOR READING IN SELECTED decay_channels...
 	current_resonance_mass = 0.0;
 	current_resonance_mu = 0.0;
 	current_resonance_Gamma = 0.0;

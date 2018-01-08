@@ -41,7 +41,7 @@ typedef struct
 	double * resonance_decay_Gammas;
 	string resonance_name;
 	bool include_channel;
-}decay_info;
+} decay_info;
 
 class CorrelationFunction
 {
@@ -291,6 +291,8 @@ class CorrelationFunction
 					double * sinLcosT_dN_dypTdpTdphi, double * sinLsinT_dN_dypTdpTdphi);
 		void Cal_dN_dypTdpTdphi_no_weights_toy(int local_pid);
 		void Cal_dN_dypTdpTdphi_with_weights_toy(int local_pid, int iqt, int iqz, int ipY, double * moments_to_update);
+		void Cal_dN_dypTdpTdphi_with_weights_toy_func(int local_pid, double pT, double pphi, double pY, double qt, double qx,
+														double qy, double qz, double * mom_CC, double * mom_CS, double * mom_SC, double * mom_SS);
 		void Do_resonance_integrals(int parent_resonance_particle_id, int daughter_particle_id, int decay_channel, int iqt, int iqz);
 		void Clear_and_set_exp_table_nb2();
 		void Clear_and_set_exp_table_nb3();

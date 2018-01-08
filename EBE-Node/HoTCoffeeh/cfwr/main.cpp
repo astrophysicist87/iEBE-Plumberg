@@ -131,15 +131,6 @@ int main(int argc, char *argv[])
 	output << "Used " << sw.printTime() << " sec." << endl;
 
 	//HBT calculations begin ...
-	double localy = 0.0e0;
-    sw.Reset();
-	sw.Start();
-	if(fabs(localy) > 1e-16)
-	{
-		output << "Case of y != 0 not yet supported.  Exiting..." << endl;
-		return 0;
-	}
-
 	// Get chosen particles
 	double threshold = 0.0;
 	double net_fraction_resonance_contribution = 0.0;

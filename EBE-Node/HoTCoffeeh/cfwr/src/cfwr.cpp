@@ -184,7 +184,7 @@ void CorrelationFunction::Fourier_transform_emission_function(int iqt, int iqz)
 		*global_out_stream_ptr << "Initializing HDF files...";
 		int HDFInitializationSuccess = Administrate_resonance_HDF_array(0);
 		HDFInitializationSuccess = Administrate_target_thermal_HDF_array(0);
-		if (!thermal_pions_only && !USE_EXACT)
+		if (!thermal_pions_only && ( !USE_EXACT || USE_CF ) )
 			Set_all_Bessel_grids(iqt, iqz);
 		//Set_all_Bessel_grids(iqt, iqz, 1);
 		*global_out_stream_ptr << "done." << endl << endl;
@@ -194,7 +194,7 @@ void CorrelationFunction::Fourier_transform_emission_function(int iqt, int iqz)
 		*global_out_stream_ptr << "Initializing/opening HDF files...";
 		int HDFInitializationSuccess = Administrate_resonance_HDF_array(1);		//open
 		HDFInitializationSuccess = Administrate_target_thermal_HDF_array(1);	//open
-		if (!thermal_pions_only && !USE_EXACT)
+		if (!thermal_pions_only && ( !USE_EXACT || USE_CF ) )
 			Set_all_Bessel_grids(iqt, iqz);
 		//Set_all_Bessel_grids(iqt, iqz, 1);
 		*global_out_stream_ptr << "done." << endl << endl;
@@ -823,7 +823,7 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 	if ( iqt == 0 && iqz == 0 )	//do it right away, so we know which FOcells to skip hereafter
 	{
 		*global_out_stream_ptr << "Computing un-weighted thermal spectra..." << endl;
-		if ( USE_EXACT )
+		if ( USE_EXACT && !USE_CF )
 		{
 			Cal_dN_dypTdpTdphi_no_weights_toy(local_pid);
 		}
@@ -848,7 +848,7 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 	// get weighted spectra with only most important fluid cells, up to given threshhold
 	*global_out_stream_ptr << "Computing weighted thermal spectra..." << endl;
 
-	if ( USE_EXACT )
+	if ( USE_EXACT && !USE_CF )
 	{
 		// Loop over pY points
 		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
@@ -1037,7 +1037,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights(int local_pid)
 			double term1 = A*Hfactor(rpt, tau)*exp( one_by_Tdec*loc_pT*sinh(eta_t(rpt))*cos(phipt - loc_pphi) )*I1_a_b_g.real();
 			double term2 = 0.0, term3 = 0.0;
 			
-			if ( USE_EXACT )
+			if ( !USE_EXACT )
 			{
 				complex<double> I0_2a_b_g, I1_2a_b_g, I2_2a_b_g, I3_2a_b_g;
 				I(2.0*alpha, loc_beta, loc_gamma, I0_2a_b_g, I1_2a_b_g, I2_2a_b_g, I3_2a_b_g);
@@ -1240,7 +1240,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 			
 //print_stuff = bool( /*ipT == n_pT_pts - 1 &&*/ ipY==ipY0 && iqt==iqt0 && iqz==iqz0 );
 			Iint2(alpha, beta, gamma, I0_a_b_g_re, I1_a_b_g_re, I2_a_b_g_re, I3_a_b_g_re, I0_a_b_g_im, I1_a_b_g_im, I2_a_b_g_im, I3_a_b_g_im);
-			if ( USE_EXACT )
+			if ( !USE_EXACT )
 				Iint2(2.0*alpha, beta, gamma, I0_2a_b_g_re, I1_2a_b_g_re, I2_2a_b_g_re, I3_2a_b_g_re, I0_2a_b_g_im, I1_2a_b_g_im, I2_2a_b_g_im, I3_2a_b_g_im);
 
 			double A = tau*prefactor*mT*da0;
@@ -1263,7 +1263,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 				double term1_im = overall_S_factor*I1_a_b_g_im;
 				double term2_re = 0.0, term3_re = 0.0, term2_im = 0.0, term3_im = 0.0;
 
-				if ( USE_EXACT )
+				if ( !USE_EXACT )
 				{
 					double transverse_f0 = exp( one_by_Tdec*(gammaT*(px*vx + py*vy) + mu) );
 					term1_re = transverse_f0 * (A*I1_a_b_g_re + B*I0_a_b_g_re);

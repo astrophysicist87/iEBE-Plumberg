@@ -298,7 +298,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights_toy(int local_pid)
 	if (1) exit (1);*/
 
 	// set some freeze-out surface information that's constant the whole time
-	double prefactor = 1.0*degen/(8.0*M_PI*M_PI*M_PI)/(hbarC*hbarC*hbarC);
+	double prefactor = 1.0*degen/(8.0*M_PI*M_PI*M_PI)/hbarC;
 	double Tdec = (&FOsurf_ptr[0])->Tdec;
 	double Pdec = (&FOsurf_ptr[0])->Pdec;
 	double Edec = (&FOsurf_ptr[0])->Edec;
@@ -357,6 +357,11 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights_toy(int local_pid)
 												*local_H*exp( one_by_Tdec*pT*sh_eta_t*cos(phipt - pphi) );
 //if (local_pid != target_particle_id)
 //	cout << S_p_with_weight << "   " << I1.real() << "   " << I1.imag() << endl;
+/*cout << "CHECKS: " << rpt << "   " << tau << "   " << phipt << "   "
+		<< prefactor*mT*rpt*tau*exp( -(tau-tau0)*(tau-tau0)/(2.0*Del_tau*Del_tau) ) / (M_PI*Del_tau) << "   "
+		<< exp( -rpt*rpt/(2.0*Rad*Rad) + one_by_Tdec*pT*sh_eta_t*cos(phipt - pphi) ) << "   "
+		<< alpha << "   " << I1.real() << "   " << I1.imag() << "   "
+		<< S_p_with_weight*I1.real() << endl;*/
 
 					spectra_at_pTpphi += S_p_with_weight*I1.real();
 //cout << "CHECKGRID: " << rpt << "   " << tau << "   " << phipt << "   "
@@ -434,7 +439,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_toy(int local_pid, int
 	double localmass = all_particles[local_pid].mass;
 
 	// set some freeze-out surface information that's constant the whole time
-	double prefactor = 1.0*degen/(8.0*M_PI*M_PI*M_PI)/(hbarC*hbarC*hbarC);
+	double prefactor = 1.0*degen/(8.0*M_PI*M_PI*M_PI)/hbarC;
 	double Tdec = (&FOsurf_ptr[0])->Tdec;
 	double Pdec = (&FOsurf_ptr[0])->Pdec;
 	double Edec = (&FOsurf_ptr[0])->Edec;
@@ -597,33 +602,132 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_toy(int local_pid, int
 		}
 	}
 
-/*	if (ipY==ipY0)
-	{
+	//if (ipY==ipY0)
+	//{
 		if (local_pid==target_particle_id)
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		for (int iqx = 0; iqx < qxnpts; ++iqx)
 		for (int iqy = 0; iqy < qynpts; ++iqy)
 		{
-if (ipT != 0 && ipT != 4 && ipT != 8) continue;
-if (ipphi > 0) continue;
-			cout << "FINAL MOMENTS: " << all_particles[local_pid].name << "   " << iqt << "   " << ipY << "   " << SP_pT[ipT] << "   " << SP_pphi[ipphi]
-					<< "   " << moments_to_update[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 0)]
-					<< "   " << moments_to_update[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 1)]
-					<< "   " << moments_to_update[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 2)]
-					<< "   " << moments_to_update[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 3)] << endl;
+//if (ipT != 0 && ipT != 4 && ipT != 8) continue;
+//if (ipphi > 0) continue;
+			cout << "FINAL MOMENTS: " << all_particles[local_pid].name << "   " << qt_pts[iqt] << "   " << qx_pts[iqx] << "   " << SP_Del_pY[ipY] << "   " << SP_pT[ipT] << "   " << SP_pphi[ipphi]
+					<< "   " << moments_to_update[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 0)] + moments_to_update[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 3)]
+					<< "   " << moments_to_update[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 1)] + moments_to_update[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 2)] << endl;
 		}
 		else
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		for (int iqx = 0; iqx < qxnpts; ++iqx)
 		for (int iqy = 0; iqy < qynpts; ++iqy)
-			cout << "FINAL MOMENTS: " << all_particles[local_pid].name << "   " << iqt << "   " << ipY << "   " << SP_pT[ipT] << "   " << SP_pphi[ipphi]
-					<< "   " << moments_to_update[fixQTQZ_indexer(ipT, ipphi, ipY, iqx, iqy, 0)]
-					<< "   " << moments_to_update[fixQTQZ_indexer(ipT, ipphi, ipY, iqx, iqy, 1)]
-					<< "   " << moments_to_update[fixQTQZ_indexer(ipT, ipphi, ipY, iqx, iqy, 2)]
-					<< "   " << moments_to_update[fixQTQZ_indexer(ipT, ipphi, ipY, iqx, iqy, 3)] << endl;
-	}*/
+			cout << "FINAL MOMENTS: " << all_particles[local_pid].name << "   " << qt_pts[iqt] << "   " << qx_pts[iqx] << "   " << SP_Del_pY[ipY] << "   " << SP_pT[ipT] << "   " << SP_pphi[ipphi]
+					<< "   " << moments_to_update[fixQTQZ_indexer(ipT, ipphi, ipY, iqx, iqy, 0)] + moments_to_update[fixQTQZ_indexer(ipT, ipphi, ipY, iqx, iqy, 3)]
+					<< "   " << moments_to_update[fixQTQZ_indexer(ipT, ipphi, ipY, iqx, iqy, 1)] + moments_to_update[fixQTQZ_indexer(ipT, ipphi, ipY, iqx, iqy, 2)] << endl;
+	//}
+
+	//clean up
+	delete [] tau_pts;
+	delete [] tau_wts;
+	delete [] x_pts;
+	delete [] x_wts;
+	delete [] phi_pts;
+	delete [] phi_wts;
+
+	return;
+}
+
+void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_toy_func(
+		int local_pid, double pT_loc, double pphi_loc, double pY_loc,
+		double qt_loc, double qx_loc, double qy_loc, double qz_loc,
+		double * mom_CC, double * mom_CS, double * mom_SC, double * mom_SS)
+{
+	//space-time integration grid
+	const int n_tau_pts = 51;
+	const int n_r_pts = 101;
+	const int n_phi_pts = 51;
+	double * tau_pts = new double [n_tau_pts];
+	double * tau_wts = new double [n_tau_pts];
+	double * x_pts = new double [n_r_pts];
+	double * x_wts = new double [n_r_pts];
+	double * phi_pts = new double [n_phi_pts];
+	double * phi_wts = new double [n_phi_pts];
+	gauss_quadrature(n_tau_pts, 1, 0.0, 0.0, 0.0, 10.0, tau_pts, tau_wts);
+	gauss_quadrature(n_r_pts, 1, 0.0, 0.0, -1.0, 1.0, x_pts, x_wts);
+	gauss_quadrature(n_phi_pts, 1, 0.0, 0.0, 0.0, 2.0*M_PI, phi_pts, phi_wts);
+
+	// set particle information
+	double degen = all_particles[local_pid].gspin;
+	double localmass = all_particles[local_pid].mass;
+
+	// set some freeze-out surface information that's constant the whole time
+	double prefactor = 1.0*degen/(8.0*M_PI*M_PI*M_PI)/hbarC;
+	double Tdec = (&FOsurf_ptr[0])->Tdec;
+	double Pdec = (&FOsurf_ptr[0])->Pdec;
+	double Edec = (&FOsurf_ptr[0])->Edec;
+	double one_by_Tdec = 1./Tdec;
+
+	double ch_pY = cosh(pY_loc);
+	double sh_pY = sinh(pY_loc);
+
+	*mom_CC = 0.0;
+	*mom_CS = 0.0;
+	*mom_SC = 0.0;
+	*mom_SS = 0.0;
+
+	for (int ir = 0; ir < n_r_pts; ++ir)
+	for (int itau = 0; itau < n_tau_pts; ++itau)
+	{
+		double tau = tau_pts[itau];
+		double beta = tau * hbarCm1 * ( qt_loc*ch_pY - qz_loc*sh_pY );
+		double gamma = tau * hbarCm1 * ( qz_loc*ch_pY - qt_loc*sh_pY );
+
+		double mT = sqrt(pT_loc*pT_loc+localmass*localmass);
+
+		//set r-point inside pT loop, since optimal distribution of integration points
+		// depends on value of MT
+		double rmin = 0.0, rmax = 15.0 * Rad / sqrt(1.0 + mT*one_by_Tdec*etaf*etaf);
+		double hw = 0.5 * (rmax - rmin), cen = 0.5 * (rmax + rmin);
+		double rpt = cen + hw * x_pts[ir];
+
+		double local_H = Hfactor(rpt, tau);
+		double ch_eta_t = cosh(eta_t(rpt));
+		double sh_eta_t = sinh(eta_t(rpt));
+
+		double alpha = mT * one_by_Tdec * ch_eta_t;
+		complex<double> I0, I1, I2, I3;
+		complex<double> z = sqrt((alpha-i*beta)*(alpha-i*beta) + gamma*gamma);
+		if (abs(z) < 700.0)	//get nans soon after
+			Iexact(alpha, beta, gamma, I0, I1, I2, I3);
+		else
+			I1 = 0.0;
+		double cos_phi_L = I1.real();
+		double sin_phi_L = I1.imag();
+
+		for (int iphi = 0; iphi < n_phi_pts; ++iphi)
+		{
+			double phipt = phi_pts[iphi];
+			double xpt = rpt*cos(phipt), ypt = rpt*sin(phipt);
+
+			if (one_by_Tdec*pT_loc*sh_eta_t*cos(phipt - pphi_loc) > 700.0)
+				continue;
+
+			double S_p_with_weight = tau_wts[itau]*hw*x_wts[ir]*phi_wts[iphi]
+										*mT*tau*rpt*prefactor*local_H
+										*exp( one_by_Tdec*pT_loc*sh_eta_t*cos(phipt - pphi_loc) );
+
+			double cosAx = cos(qx_loc*xpt/hbarC), sinAx = sin(qx_loc*xpt/hbarC);
+			double cosAy = cos(qy_loc*ypt/hbarC), sinAy = sin(qy_loc*ypt/hbarC);
+			double cos_trans_Fourier = cosAx*cosAy - sinAx*sinAy;	//==cos(qx x + qy y)
+			double sin_trans_Fourier = sinAx*cosAy + cosAx*sinAy;	//==sin(qx x + qy y)
+
+			*mom_CC += S_p_with_weight * cos_phi_L * cos_trans_Fourier;
+			*mom_CS -= S_p_with_weight * cos_phi_L * sin_trans_Fourier;
+			*mom_SC += S_p_with_weight * sin_phi_L * cos_trans_Fourier;
+			*mom_SS += S_p_with_weight * sin_phi_L * sin_trans_Fourier;
+
+		}
+	}
 
 	//clean up
 	delete [] tau_pts;

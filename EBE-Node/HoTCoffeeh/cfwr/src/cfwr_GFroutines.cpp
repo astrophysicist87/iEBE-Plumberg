@@ -824,7 +824,7 @@ void CorrelationFunction::Set_thermal_target_moments(int iqt, int iqz)
 		sh_SP_pY[ipY] = sinh(SP_Del_pY[ipY] + current_pY_shift);
 	}
 
-	if ( USE_EXACT )
+	if ( USE_EXACT && !USE_CF )
 		Cal_dN_dypTdpTdphi_with_weights_toy(target_particle_id, iqt, iqz, ipY0, thermal_target_Yeq0_moments);
 	else
 		Cal_dN_dypTdpTdphi_with_weights_Yeq0_alternate(iqt, iqz);
