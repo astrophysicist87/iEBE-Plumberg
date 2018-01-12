@@ -106,6 +106,7 @@ superMCParameters = {
     'maxy'                          :   13.0,       # grid size in y (fm)
     'dx'                            :   0.1,        # grid spacing in x (fm)
     'dy'                            :   0.1,        # grid spacing in y (fm)
+    'nev'                           :   1,
 }
 
 preEquilibriumControl = {

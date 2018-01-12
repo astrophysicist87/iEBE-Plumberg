@@ -7,10 +7,10 @@ controlParameterList = {
 }
 
 initial_condition_control = {
-    'centrality': '0-10%',  # centrality bin
+    'centrality': '0-1%',  # centrality bin
     'cut_type': 'total_entropy',
     # centrality cut variable: total_entropy or Npart
-    'initial_condition_type': 'pre-generated',
+    'initial_condition_type': 'superMC',
     # type of initial conditions: superMC or pre-generated
     'pre-generated_initial_file_path': 'initial_conditions', 
     # file path for the pre-generated initial condition files
@@ -27,7 +27,7 @@ superMCParameters = {
     'finalFactor'                   :   28.656,
     'alpha'                         :   0.14,      # WN/BC mixing ratio in MCGlb
     'lambda'                        :   0.288,      # saturation scale parameter in MCKLN
-    'operation'                     :   1,
+    'operation'                     :   3,
     'include_NN_correlation'        :   1,
     'cc_fluctuation_model'          :   6,
     'cc_fluctuation_Gamma_theta'    :   0.75,       
@@ -35,7 +35,7 @@ superMCParameters = {
     'maxy'                          :   13.0,       # grid size in y (fm)
     'dx'                            :   0.1,        # grid spacing in x (fm)
     'dy'                            :   0.1,        # grid spacing in y (fm)
-	'nev'							:	1,
+	'nev'							:	1000,
 }
 
 # only effective when simulation_type == hydroEM_preEquilibrium

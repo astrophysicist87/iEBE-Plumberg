@@ -261,6 +261,16 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 	Tabulate_resonance_Chebyshev_coefficients(parent_resonance_particle_id);
 	Refine_resonance_grids(parent_resonance_particle_id);
 
+	const int nProperTime = 1001;
+	double * PropTimePts = new double [nProperTime];
+	double * PropTimeWts = new double [nProperTime];
+	gauss_quadrature(nProperTime, 5, 0.0, 0.0, 0.0, current_resonance_Gamma/hbarC, PropTimePts, PropTimeWts);
+	//gauss_quadrature(nProperTime, 1, 0.0, 0.0, 0.0, 5.0/( current_resonance_Gamma / hbarC ), PropTimePts, PropTimeWts);
+
+	const double bw = 0.05;
+	const double rmax = 10.0, taumax = 20.0;
+	vector<double> DDC_grid(int(1.0+rmax/bw)*int(1.0+taumax/bw), 0.0);
+
 	if (n_body == 2)
 	{
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
@@ -314,6 +324,54 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 							//spectra
 							if ( doing_spectra )
 								Edndp3(PKT, PKphi, &Csum);
+
+//try outputting emission function too
+if (ipT == 0 && ipphi == 0 && ipY == ipY0 && daughter_particle_id == target_particle_id && iqt == 0 && iqz == 0)
+for (int isurf = 0; isurf < FO_length; ++isurf)
+for (int iProperTime = 0; iProperTime < nProperTime; ++iProperTime)
+{
+	FO_surf * surf = &FOsurf_ptr[isurf];
+
+	double FOt = surf->tau;	//ch(0)==1
+	double FOx = surf->xpt;
+	double FOy = surf->ypt;
+	double FOz = 0.0;		//sh(0)==0
+
+	Mres = current_resonance_mass;
+	Gamma = current_resonance_Gamma;
+	double tau = PropTimePts[iProperTime];
+
+	double shift_t = currentPpm[0]*tau/Mres;
+	double shift_x = currentPpm[1]*tau/Mres;
+	double shift_y = currentPpm[2]*tau/Mres;
+	double shift_z = currentPpm[3]*tau/Mres;
+
+	double net_t = FOt + shift_t, net_z = FOz + shift_z;
+	double net_x = FOx + shift_x, net_y = FOy + shift_y;
+
+	int net_tau = (int)(sqrt(net_t*net_t - net_z*net_z)/bw);
+	int net_r = (int)(sqrt(net_x*net_x + net_y*net_y)/bw);
+
+	/*
+	cout << "DDC: "
+			//<< FOt << "   " << FOx << "   " << FOy << "   " << sqrt(FOx*FOx+FOy*FOy) << "   "
+			//<< shift_t << "   " << shift_x << "   " << shift_y << "   " << shift_z << "   "
+			<< net_tau << "   " //<< FOx + shift_x << "   " << FOy + shift_y << "   " << net_z << "   "
+			<< net_r << "   " //<< local_pT << "   " << local_pphi << "   "
+			<< VEC_n2_zeta_factor[NB2_indexer(iv,izeta)]
+				* Mres * VEC_n2_s_factor * VEC_n2_v_factor[iv]
+				* Gamma * PropTimeWts[iProperTime] * exp(-Gamma*PropTimePts[iProperTime]/hbarC)
+				* S_x_p( parent_resonance_particle_id, isurf, 0.0, local_pT, local_pphi, local_pY )
+			<< "\n";
+	*/
+	if (0 <= net_tau && net_tau < 401 && 0 <= net_r && net_r < 401)
+		DDC_grid.at(net_tau*401+net_r)
+			+= VEC_n2_zeta_factor[NB2_indexer(iv,izeta)]
+				* Mres * VEC_n2_s_factor * VEC_n2_v_factor[iv]
+				* Gamma * PropTimeWts[iProperTime] * exp(-Gamma*PropTimePts[iProperTime]/hbarC)
+				* S_x_p( parent_resonance_particle_id, isurf, 0.0, local_pT, local_pphi, local_pY );
+}
+
 							//space-time moments
 							if ( doing_moments )
 							{
@@ -527,11 +585,15 @@ cout << "DUMP: " << daughter_lookup_idx << "   " << ipT << "   " << ipphi << "  
 
 	Delete_resonance_running_sum_vectors();
 
+	for (int itau = 0; itau < 401; ++itau)
+	for (int ir = 0; ir < 401; ++ir)
+		cout << "DDC: " << bw*itau << "   " << bw*ir << "   " << DDC_grid.at(itau*401+ir) << "\n";
+
 	do_resonance_integrals_sw.Stop();
 	*global_out_stream_ptr << "\t--> Finished this decay loop through Do_resonance_integrals(...) in " << do_resonance_integrals_sw.printTime() << " seconds." << endl;
 
-//if (n_body == 2)
-//	exit(8);
+if (1)
+	exit(8);
 
 	return;
 }

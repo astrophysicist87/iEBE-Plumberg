@@ -28,7 +28,7 @@ using namespace std;
 #define QY_POINTS_SPACING			0		// same
 #define QZ_POINTS_SPACING			0		// same
 #define MIDRAPIDITY_PIONS_ONLY		1		// obvious
-#define USE_EXACT					1		// which emission function (exact is toy boltzmann factor for
+#define USE_EXACT					0		// which emission function (exact is toy boltzmann factor for
 											// comparing with results of Heinz and Wiedemann as a check)
 #define USE_CF						0		// which FO surface
 #define USE_FAST_EXP				1

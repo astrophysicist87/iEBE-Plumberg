@@ -1684,4 +1684,73 @@ cout << "Finished reflection in qz and qt!" << endl;
 	return;
 }
 
+
+
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+double CorrelationFunction::S_x_p( int local_pid,
+									int isurf, double eta_s,
+									double pT, double pphi, double pY )
+{
+	// set particle information
+	double sign = all_particles[local_pid].sign;
+	double degen = all_particles[local_pid].gspin;
+	double localmass = all_particles[local_pid].mass;
+	double mu = all_particles[local_pid].mu;
+
+	// set some freeze-out surface information that's constant the whole time
+	double prefactor = 1.0*degen/(8.0*M_PI*M_PI*M_PI)/(hbarC*hbarC*hbarC);
+	double Tdec = (&FOsurf_ptr[0])->Tdec;
+	double Pdec = (&FOsurf_ptr[0])->Pdec;
+	double Edec = (&FOsurf_ptr[0])->Edec;
+	double one_by_Tdec = 1./Tdec;
+	double deltaf_prefactor = 0.;
+	if (use_delta_f)
+		deltaf_prefactor = 1./(2.0*Tdec*Tdec*(Edec+Pdec));
+
+	FO_surf * surf = &FOsurf_ptr[isurf];
+
+	double vx = surf->vx;
+	double vy = surf->vy;
+	double gammaT = surf->gammaT;
+
+	double da0 = surf->da0;
+	double da1 = surf->da1;
+	double da2 = surf->da2;
+
+	double pi00 = surf->pi00;
+	double pi01 = surf->pi01;
+	double pi02 = surf->pi02;
+	double pi11 = surf->pi11;
+	double pi12 = surf->pi12;
+	double pi22 = surf->pi22;
+	double pi33 = surf->pi33;
+
+	double px = pT*cos(pphi);
+	double py = pT*sin(pphi);
+	double mT = sqrt(pT*pT+localmass*localmass);
+	double p0 = mT*cosh(pY-eta_s);
+	double pz = mT*sinh(pY-eta_s);	//double-check sign, but okay for now
+
+	double f0 = 1./(exp( one_by_Tdec*(gammaT*(p0*1. - px*vx - py*vy) - mu) )+sign);	//thermal equilibrium distributions
+	//viscous corrections
+	double deltaf = 0.;
+	if (use_delta_f)
+		deltaf = deltaf_prefactor * (1. - sign*f0)
+					* (p0*p0*pi00 - 2.0*p0*px*pi01 - 2.0*p0*py*pi02 + px*px*pi11 + 2.0*px*py*pi12 + py*py*pi22 + pz*pz*pi33);
+
+	//p^mu d^3sigma_mu factor: The plus sign is due to the fact that the DA# variables are for the covariant surface integration
+	double S_p = prefactor*(p0*da0 + px*da1 + py*da2)*f0*(1.+deltaf);
+
+	//ignore points where delta f is large or emission function goes negative from pdsigma
+	if ( (1. + deltaf < 0.0) || (flagneg == 1 && S_p < tol) )
+		S_p = 0.0;
+
+	return (S_p);
+}
+
+
 //End of file

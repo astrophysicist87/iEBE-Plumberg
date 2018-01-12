@@ -9,5 +9,5 @@ except:
 
 # call the real shell
 import SequentialEventDriver
-SequentialEventDriver.controlParameterList["numberOfEvents"] = numberOfEvents
+#SequentialEventDriver.controlParameterList["numberOfEvents"] = numberOfEvents
 SequentialEventDriver.sequentialEventDriverShell()

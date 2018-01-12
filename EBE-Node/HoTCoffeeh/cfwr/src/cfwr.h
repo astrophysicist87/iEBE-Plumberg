@@ -414,6 +414,10 @@ class CorrelationFunction
 				vector<int> chosen_resonances, int particle_idx, ofstream& myout);
 		~CorrelationFunction();
 
+		//misc
+		double S_x_p( int local_pid, int isurf, double eta_s,
+						double pT, double pphi, double pY );
+
 };
 
 #endif
