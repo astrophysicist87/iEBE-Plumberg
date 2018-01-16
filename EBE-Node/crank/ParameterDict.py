@@ -10,11 +10,11 @@ initial_condition_control = {
     'centrality': '0-1%',  # centrality bin
     'cut_type': 'total_entropy',
     # centrality cut variable: total_entropy or Npart
-    'initial_condition_type': 'superMC',
+    'initial_condition_type': 'pre-generated',
     # type of initial conditions: superMC or pre-generated
-    'pre-generated_initial_file_path': 'initial_conditions', 
+    'pre-generated_initial_file_path': 'smooth_ICs', 
     # file path for the pre-generated initial condition files
-    'pre-generated_initial_file_pattern': 'sd_event_[0-9]*_block.dat',  
+    'pre-generated_initial_file_pattern': 'sdAvg_order_[0-9]*_block.dat',  
     # name pattern for the initial condition files
     'pre-generated_initial_file_read_in_mode': 2, # read in mode for VISH2+1
 }
@@ -35,7 +35,7 @@ superMCParameters = {
     'maxy'                          :   13.0,       # grid size in y (fm)
     'dx'                            :   0.1,        # grid spacing in x (fm)
     'dy'                            :   0.1,        # grid spacing in y (fm)
-	'nev'							:	1000,
+	'nev'							:	1,
 }
 
 # only effective when simulation_type == hydroEM_preEquilibrium
@@ -63,8 +63,9 @@ hydroParameters = {
     'dy'        :   0.10,     # lattice spacing in y (fm)
                               # need to be the same as dy in superMC
     'Edec'      :   0.5,  #
-    'ndx'       :   2,
-    'ndy'       :   2,
+    'ndx'       :   1,
+    'ndy'       :   1,
+    'ndt'       :   1,
     'IhydroJetoutput' :   0,  # switch for output hydro evolution history
     'InitialURead'    :   0,  # set it to be 1 when simulation_type == hydroEM_preEquilibrium
     'Initialpitensor' :   1,  # initialization of pi tensor

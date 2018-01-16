@@ -212,6 +212,27 @@ int main(int argc, char *argv[])
 		correlation_function.osr = thermal_particles_to_omit;
 	}
 
+//cheat...
+
+int test_pid = 1;	//rho+
+double cos_res = 0.0, sin_res = 0.0;
+double cos_norm = 0.0, sin_norm = 0.0;
+double pT = 1.01002173, pphi = 0.0, p_Y = 0.0;
+double qx = 0.15, qy = 0.0, qz = 0.0;
+double m = particle[test_pid].mass;
+double xi2 = m*m + pT*pT + 0.25 * (qx*qx + qy*qy + qz*qz);
+double qt = sqrt(xi2 + qx*pT) - sqrt(xi2 - qx*pT);
+correlation_function.Cal_dN_dypTdpTdphi_with_weights_function_approx(
+	test_pid, pT, pphi, p_Y,
+	0.0, 0.0, 0.0, 0.0, &cos_norm, &sin_norm);
+correlation_function.Cal_dN_dypTdpTdphi_with_weights_function_approx(
+	test_pid, pT, pphi, p_Y,
+	qt, qx, qy, qz, &cos_res, &sin_res);
+cout << "ANSWER: " << (cos_res*cos_res + sin_res*sin_res)/(cos_norm*cos_norm + sin_norm*sin_norm) << endl;
+
+//if (1) exit(8);
+
+
 	////////////////////////////////////////////
 	// Actual calculations start here...
 	////////////////////////////////////////////

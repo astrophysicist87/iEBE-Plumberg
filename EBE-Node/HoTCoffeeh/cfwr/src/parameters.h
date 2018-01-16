@@ -30,7 +30,7 @@ using namespace std;
 #define MIDRAPIDITY_PIONS_ONLY		1		// obvious
 #define USE_EXACT					0		// which emission function (exact is toy boltzmann factor for
 											// comparing with results of Heinz and Wiedemann as a check)
-#define USE_CF						0		// which FO surface
+#define USE_CF						1		// which FO surface
 #define USE_FAST_EXP				1
 #define USE_EXP_RECYCLING			1
 #define USE_RAPIDITY_SYMMETRY		1

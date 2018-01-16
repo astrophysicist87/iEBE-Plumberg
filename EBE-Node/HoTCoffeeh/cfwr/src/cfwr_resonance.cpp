@@ -20,6 +20,7 @@ using namespace std;
 const int n_refinement_pts = 201;
 double Delta_DpY;
 const double PTCHANGE = 1.0;
+const bool SKIP_LARGE_PTR = true;	//for now
 gsl_cheb_series *cs_accel_expEdNd3p;
 
 double * val11_arr, * val12_arr, * val21_arr, * val22_arr;
@@ -261,15 +262,15 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 	Tabulate_resonance_Chebyshev_coefficients(parent_resonance_particle_id);
 	Refine_resonance_grids(parent_resonance_particle_id);
 
-	const int nProperTime = 1001;
+	/*const int nProperTime = 1001;
 	double * PropTimePts = new double [nProperTime];
 	double * PropTimeWts = new double [nProperTime];
 	gauss_quadrature(nProperTime, 5, 0.0, 0.0, 0.0, current_resonance_Gamma/hbarC, PropTimePts, PropTimeWts);
-	//gauss_quadrature(nProperTime, 1, 0.0, 0.0, 0.0, 5.0/( current_resonance_Gamma / hbarC ), PropTimePts, PropTimeWts);
 
 	const double bw = 0.05;
-	const double rmax = 10.0, taumax = 20.0;
-	vector<double> DDC_grid(int(1.0+rmax/bw)*int(1.0+taumax/bw), 0.0);
+	const double rmax = 20.0, taumax = 20.0;
+	const int r_size = int(1.0+rmax/bw), tau_size = int(1.0+taumax/bw);
+	vector<double> DDC_grid(n_pT_pts*r_size*tau_size, 0.0);*/
 
 	if (n_body == 2)
 	{
@@ -325,8 +326,9 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 							if ( doing_spectra )
 								Edndp3(PKT, PKphi, &Csum);
 
+/*
 //try outputting emission function too
-if (ipT == 0 && ipphi == 0 && ipY == ipY0 && daughter_particle_id == target_particle_id && iqt == 0 && iqz == 0)
+if (ipphi == 0 && ipY == ipY0 && daughter_particle_id == target_particle_id && iqt == 0 && iqz == 0)
 for (int isurf = 0; isurf < FO_length; ++isurf)
 for (int iProperTime = 0; iProperTime < nProperTime; ++iProperTime)
 {
@@ -352,26 +354,14 @@ for (int iProperTime = 0; iProperTime < nProperTime; ++iProperTime)
 	int net_tau = (int)(sqrt(net_t*net_t - net_z*net_z)/bw);
 	int net_r = (int)(sqrt(net_x*net_x + net_y*net_y)/bw);
 
-	/*
-	cout << "DDC: "
-			//<< FOt << "   " << FOx << "   " << FOy << "   " << sqrt(FOx*FOx+FOy*FOy) << "   "
-			//<< shift_t << "   " << shift_x << "   " << shift_y << "   " << shift_z << "   "
-			<< net_tau << "   " //<< FOx + shift_x << "   " << FOy + shift_y << "   " << net_z << "   "
-			<< net_r << "   " //<< local_pT << "   " << local_pphi << "   "
-			<< VEC_n2_zeta_factor[NB2_indexer(iv,izeta)]
-				* Mres * VEC_n2_s_factor * VEC_n2_v_factor[iv]
-				* Gamma * PropTimeWts[iProperTime] * exp(-Gamma*PropTimePts[iProperTime]/hbarC)
-				* S_x_p( parent_resonance_particle_id, isurf, 0.0, local_pT, local_pphi, local_pY )
-			<< "\n";
-	*/
-	if (0 <= net_tau && net_tau < 401 && 0 <= net_r && net_r < 401)
-		DDC_grid.at(net_tau*401+net_r)
+	if (0 <= net_tau && net_tau < tau_size && 0 <= net_r && net_r < r_size)
+		DDC_grid.at( ( ipT * tau_size + net_tau ) * r_size + net_r )
 			+= VEC_n2_zeta_factor[NB2_indexer(iv,izeta)]
 				* Mres * VEC_n2_s_factor * VEC_n2_v_factor[iv]
 				* Gamma * PropTimeWts[iProperTime] * exp(-Gamma*PropTimePts[iProperTime]/hbarC)
 				* S_x_p( parent_resonance_particle_id, isurf, 0.0, local_pT, local_pphi, local_pY );
 }
-
+*/
 							//space-time moments
 							if ( doing_moments )
 							{
@@ -585,15 +575,16 @@ cout << "DUMP: " << daughter_lookup_idx << "   " << ipT << "   " << ipphi << "  
 
 	Delete_resonance_running_sum_vectors();
 
-	for (int itau = 0; itau < 401; ++itau)
-	for (int ir = 0; ir < 401; ++ir)
-		cout << "DDC: " << bw*itau << "   " << bw*ir << "   " << DDC_grid.at(itau*401+ir) << "\n";
+	/*
+	if (daughter_particle_id == target_particle_id && iqt == 0 && iqz == 0)
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+	for (int itau = 0; itau < tau_size; ++itau)
+	for (int ir = 0; ir < r_size; ++ir)
+		cout << "DDC: " << SP_pT[ipT] << "   " << bw*itau << "   " << bw*ir << "   " << DDC_grid.at( ( ipT * tau_size + itau ) * r_size + ir ) << "\n";
+	*/
 
 	do_resonance_integrals_sw.Stop();
 	*global_out_stream_ptr << "\t--> Finished this decay loop through Do_resonance_integrals(...) in " << do_resonance_integrals_sw.printTime() << " seconds." << endl;
-
-if (1)
-	exit(8);
 
 	return;
 }
@@ -609,6 +600,9 @@ void CorrelationFunction::Edndp3(double ptr, double pphir, double * result, int 
 	int npT_max = n_pT_pts - 1;
 
 	// locate pT interval
+	if (SKIP_LARGE_PTR and ptr > SP_pT[npT_max])
+		return;
+
 	int npt = 1;
 	while ((ptr > SP_pT[npt]) &&
 			(npt < npT_max)) ++npt;
@@ -750,6 +744,9 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 	int npT_max = n_pT_pts - 1;
 
 	// locate pT interval
+	if (SKIP_LARGE_PTR and ptr > SP_pT[npT_max])
+		return;
+
 	int npt = 1;
 	while ((ptr > SP_pT[npt]) &&
 		(npt < npT_max)) ++npt;

@@ -81,6 +81,9 @@ INC		= 	main.h \
 			$(SRCDIR)/chebyshev.h \
 			$(SRCDIR)/chebyshev_library.h \
 			$(SRCDIR)/fastexp.h
+#			$(SRCDIR)/cast.h \
+#			$(SRCDIR)/sse.h \
+#			$(SRCDIR)/fasttrig.h
 
 # -------------------------------------------------
 

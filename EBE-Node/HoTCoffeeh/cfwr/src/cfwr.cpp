@@ -21,6 +21,8 @@
 #include "Stopwatch.h"
 #include "gauss_quadrature.h"
 #include "bessel.h"
+//#include "fastexp.h"
+//#include "fasttrig.h"
 
 using namespace std;
 
@@ -331,6 +333,7 @@ void CorrelationFunction::Compute_phase_space_integrals(int iqt, int iqz)
 
 			Set_current_daughter_info(idc, idc_DI);
 
+//cout << "CHECK ARGS: " << current_resonance_particle_id << "   " << daughter_resonance_particle_id << "   " << idc << "   " << idc_DI << "   " << iqt << "   " << iqz << endl;
 			Do_resonance_integrals(current_resonance_particle_id, daughter_resonance_particle_id, idc, iqt, iqz);
 		}
 		Update_daughter_spectra(decay_channels[idc-1].resonance_particle_id, iqt, iqz);
@@ -1517,11 +1520,8 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_alternate(int iqt
 		deltaf_prefactor = 1./(2.0*Tdec*Tdec*(Edec+Pdec));
 
 	//spatial rapidity grid
-	//const int eta_s_npts = 101;
-	//const int eta_s_npts = 31;	//probably close enough...
 	double * eta_s = new double [eta_s_npts];
 	double * eta_s_weight = new double [eta_s_npts];
-	//double eta_s_i = 0.0, eta_s_f = 4.0;
 	gauss_quadrature(eta_s_npts, 1, 0.0, 0.0, eta_s_i, eta_s_f, eta_s, eta_s_weight);
 	double * ch_eta_s = new double [eta_s_npts];
 	double * sh_eta_s = new double [eta_s_npts];
@@ -1540,8 +1540,8 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_alternate(int iqt
 		double ypt = surf->ypt;
 		double rpt = surf->r;
 		double phipt = place_in_range(surf->phi, SP_pphi_min, SP_pphi_max);
-		double ch_eta_t = cosh(eta_t(rpt));
-		double sh_eta_t = sinh(eta_t(rpt));
+		double ch_eta_t = ( USE_EXACT ) ? cosh(eta_t(rpt)) : 0.0;
+		double sh_eta_t = ( USE_EXACT ) ? sinh(eta_t(rpt)) : 0.0;
 
 		double vx = surf->vx;
 		double vy = surf->vy;
@@ -1566,14 +1566,16 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_alternate(int iqt
 		{
 			double tpt = tau*ch_eta_s[ieta];
 			double zpt = tau*sh_eta_s[ieta];
-			double phi_L = (tpt*qt-zpt*qz)/hbarC;
-			double phi_L_mz = (tpt*qt+zpt*qz)/hbarC;
+			double phi_L = place_in_range( (tpt*qt-zpt*qz)/hbarC, -M_PI, M_PI );
+			double phi_L_mz = place_in_range( (tpt*qt+zpt*qz)/hbarC, -M_PI, M_PI );
 			double cos_phi_L = cos(phi_L) + cos(phi_L_mz);	//shortcut for eta_s-integral
 			double sin_phi_L = sin(phi_L) + sin(phi_L_mz);	//shortcut for eta_s-integral
 
 			for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 			{
+				if (ipT != 8 or ipphi > 0)
+					continue;
 				double pT = SP_pT[ipT];
 				double pphi = SP_pphi[ipphi];
 				double px = pT*cos_SP_pphi[ipphi];
