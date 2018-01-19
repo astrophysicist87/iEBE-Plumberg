@@ -200,11 +200,12 @@ int main(int argc, char *argv[])
 	output << "Using fraction_of_resonances = " << net_fraction_resonance_contribution << endl;
 
 	//allows me to omit thermal pions easily, e.g.
-	bool omit_specific_resonances = false;
+	bool omit_specific_resonances = true;
 	if (omit_specific_resonances)
 	{
 		vector<int> thermal_particles_to_omit;
 		thermal_particles_to_omit.push_back(particle_idx);	//push back pion(+) to ignore thermal pions
+		thermal_particles_to_omit.push_back(9);	//push back rho(+) to ignore thermal rhos (if doing phase space integration exactly)
 		//double tmp = 0.0;
 		//double threshhold_of_thermal_resonances_to_omit = 0.6;	//60%
 		//get_important_resonances(particle_idx, &thermal_resonances_to_omit, particle, Nparticle, threshhold_of_thermal_resonances_to_omit, tmp, output);
@@ -213,7 +214,7 @@ int main(int argc, char *argv[])
 	}
 
 //cheat...
-
+/*
 int test_pid = 1;	//rho+
 double cos_res = 0.0, sin_res = 0.0;
 double cos_norm = 0.0, sin_norm = 0.0;
@@ -229,8 +230,39 @@ correlation_function.Cal_dN_dypTdpTdphi_with_weights_function_approx(
 	test_pid, pT, pphi, p_Y,
 	qt, qx, qy, qz, &cos_res, &sin_res);
 cout << "ANSWER: " << (cos_res*cos_res + sin_res*sin_res)/(cos_norm*cos_norm + sin_norm*sin_norm) << endl;
+*/
+/*
+const int n_pts = 51;
+double * dummy_pts_1 = new double [n_pts];
+double * dummy_wts_1 = new double [n_pts];
+double * dummy_pts_2 = new double [n_pts];
+double * dummy_wts_2 = new double [n_pts];
+double * dummy_pts_3 = new double [n_pts];
+double * dummy_wts_3 = new double [n_pts];
 
-//if (1) exit(8);
+double alpha = 7.0;
+
+gauss_quadrature(n_pts, 6, 0.0, 0.0, 0.0, 0.5*alpha, dummy_pts_1, dummy_wts_1);
+gauss_quadrature(n_pts, 6, 0.0, 0.0, 0.0, 1.0*alpha, dummy_pts_2, dummy_wts_2);
+gauss_quadrature(n_pts, 6, 0.0, 0.0, 0.0, 2.0*alpha, dummy_pts_3, dummy_wts_3);
+
+for (int i = 0; i < n_pts; ++i)
+	cout << "GHQ: " << i
+			<< "   " << dummy_pts_1[i] << "   " << dummy_wts_1[i]
+			<< "   " << dummy_pts_2[i] << "   " << dummy_wts_2[i]
+			<< "   " << dummy_pts_3[i] << "   " << dummy_wts_3[i]
+			<< endl;
+
+double integral1 = 0.0, integral2 = 0.0, integral3 = 0.0;
+for (int i = 0; i < n_pts; ++i)
+{
+	integral1 += dummy_wts_1[i]*exp(-alpha*cosh(dummy_pts_1[i]));
+	//integral2 += dummy_wts_2[i]*exp(-2.0*dummy_pts_2[i]*dummy_pts_2[i]);
+	//integral3 += dummy_wts_3[i]*exp(-2.0*dummy_pts_3[i]*dummy_pts_3[i]);
+}
+cout << "CHECK: " << setw(30) << setprecision(20) << 2.0*gsl_sf_bessel_K0(alpha) << "   " << integral1 << endl;
+
+if (1) exit(8);*/
 
 
 	////////////////////////////////////////////

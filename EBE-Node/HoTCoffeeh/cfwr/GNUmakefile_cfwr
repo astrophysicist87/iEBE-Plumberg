@@ -30,7 +30,7 @@ CFLAGS= $(shell ../../crank/configure_compiler_C++_Flags.sh)
 #						-Wreorder -Wreturn-type -Wsign-compare -Wsequence-point -Wtrigraphs \
 #						-Wunused-function -Wunused-but-set-variable -Wunused-variable \
 #						-Wwrite-strings
-CFLAGS += -lgsl -lgslcblas -g
+CFLAGS += -lgsl -lgslcblas -g -openmp
 # -w3 -wd981
 ###CFLAGS += -lgsl -lgslcblas -g -profile-functions -profile-loops=all -profile-loops-report=2
 

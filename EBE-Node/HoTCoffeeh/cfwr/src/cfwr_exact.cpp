@@ -43,6 +43,21 @@ inline void Iexact(double alpha, double beta, double gamma, complex<double> & I0
 	return;
 }
 
+inline void Iexact(double alpha, double beta, double gamma, complex<double> & I0, complex<double> & I1)
+{
+	complex<double> ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p;
+	complex<double> z0 = alpha - i*beta;
+	complex<double> z0sq = pow(z0, 2.0);
+	double gsq = gamma*gamma;
+	complex<double> z = sqrt(z0sq + gsq);
+	int errorCode = bessf::cbessik01(z, ci0, ci1, ck0, ck1, ci0p, ci1p, ck0p, ck1p);
+	
+	I0 = 2.0*ck0;
+	I1 = 2.0*z0*ck1 / z;
+
+	return;
+}
+
 void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_function_approx(int local_pid, double pT, double pphi, double p_Y,
 					double qt, double qx, double qy, double qz, double * cosqx_dN_dypTdpTdphi, double * sinqx_dN_dypTdpTdphi)
 {
@@ -148,10 +163,11 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_function_approx(int lo
 
 
 
-void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_function_approx(int local_pid, double pT, double pphi, double Del_p_Y,
+void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_function_approx(
+					int local_pid, double pT, double pphi, double Del_p_Y,
 					double qt, double qx, double qy, double qz,
 					double * cosLcosT_dN_dypTdpTdphi, double * cosLsinT_dN_dypTdpTdphi,
-					double * sinLcosT_dN_dypTdpTdphi, double * sinLsinT_dN_dypTdpTdphi)
+					double * sinLcosT_dN_dypTdpTdphi, double * sinLsinT_dN_dypTdpTdphi )
 {
 	// set particle information
 	double sign = all_particles[local_pid].sign;
@@ -229,14 +245,17 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_function_approx(int lo
 		double beta = (tau / hbarC) * ( qt*ch_pY - qz*sh_pY );
 		double gamma = (tau / hbarC) * ( qz*ch_pY - qt*sh_pY );
 
-		complex<double> I0_a_b_g, I1_a_b_g, I2_a_b_g, I3_a_b_g;
-		complex<double> I0_2a_b_g, I1_2a_b_g, I2_2a_b_g, I3_2a_b_g;
-		Iexact(alpha, beta, gamma, I0_a_b_g, I1_a_b_g, I2_a_b_g, I3_a_b_g);
-		Iexact(2.0*alpha, beta, gamma, I0_2a_b_g, I1_2a_b_g, I2_2a_b_g, I3_2a_b_g);
+		complex<double> I0_a_b_g(0,0), I1_a_b_g(0,0), I2_a_b_g(0,0), I3_a_b_g(0,0);
+		complex<double> I0_2a_b_g(0,0), I1_2a_b_g(0,0), I2_2a_b_g(0,0), I3_2a_b_g(0,0);
+		Iexact(alpha, beta, gamma, I0_a_b_g, I1_a_b_g);
+		//Iexact(alpha, beta, gamma, I0_a_b_g, I1_a_b_g, I2_a_b_g, I3_a_b_g);
+		//Iexact(2.0*alpha, beta, gamma, I0_2a_b_g, I1_2a_b_g, I2_2a_b_g, I3_2a_b_g);
 
 		complex<double> term1 = transverse_f0 * (A*I1_a_b_g + B*I0_a_b_g);
-		complex<double> term2 = C * transverse_f0 * ( A*a*I3_a_b_g + (B*a+b*A)*I2_a_b_g + (B*b+c*A)*I1_a_b_g + B*c*I0_a_b_g );
-		complex<double> term3 = -sign * C * transverse_f0 * transverse_f0 * ( A*a*I3_2a_b_g + (B*a+b*A)*I2_2a_b_g + (B*b+c*A)*I1_2a_b_g + B*c*I0_2a_b_g );
+		//complex<double> term2 = C * transverse_f0 * ( A*a*I3_a_b_g + (B*a+b*A)*I2_a_b_g + (B*b+c*A)*I1_a_b_g + B*c*I0_a_b_g );
+		//complex<double> term3 = -sign * C * transverse_f0 * transverse_f0 * ( A*a*I3_2a_b_g + (B*a+b*A)*I2_2a_b_g + (B*b+c*A)*I1_2a_b_g + B*c*I0_2a_b_g );
+		complex<double> term2(0,0);
+		complex<double> term3(0,0);
 
 		complex<double> eiqx_S_x_K = term1 + term2 + term3;
 
@@ -247,6 +266,121 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_function_approx(int lo
 		*cosLsinT_dN_dypTdpTdphi -= sin_ta * cos_qx_S_x_K;	//for consistency with thermal calculation
 		*sinLcosT_dN_dypTdpTdphi += cos_ta * sin_qx_S_x_K;
 		*sinLsinT_dN_dypTdpTdphi += sin_ta * sin_qx_S_x_K;
+	}
+
+	return;
+}
+
+void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_function_etas_integ(
+					int local_pid, double pT, double pphi, double Del_p_Y,
+					double qt, double qx, double qy, double qz,
+					double * cosLcosT_dN_dypTdpTdphi, double * cosLsinT_dN_dypTdpTdphi,
+					double * sinLcosT_dN_dypTdpTdphi, double * sinLsinT_dN_dypTdpTdphi )
+{
+	// set particle information
+	double sign = all_particles[local_pid].sign;
+	double degen = all_particles[local_pid].gspin;
+	double localmass = all_particles[local_pid].mass;
+	double mu = all_particles[local_pid].mu;
+
+	// set some freeze-out surface information that's constant the whole time
+	double prefactor = 1.0*degen/(8.0*M_PI*M_PI*M_PI)/(hbarC*hbarC*hbarC);
+	double Tdec = (&FOsurf_ptr[0])->Tdec;
+	double Pdec = (&FOsurf_ptr[0])->Pdec;
+	double Edec = (&FOsurf_ptr[0])->Edec;
+	double one_by_Tdec = 1./Tdec;
+	double deltaf_prefactor = 0.;
+	if (use_delta_f)
+		deltaf_prefactor = 1./(2.0*Tdec*Tdec*(Edec+Pdec));
+
+	double pY_shift = 0.5 * log(abs((qt+qz + 1.e-100)/(qt-qz + 1.e-100)));
+	double ch_pY = cosh(Del_p_Y+pY_shift);
+	double sh_pY = sinh(Del_p_Y+pY_shift);
+
+	*cosLcosT_dN_dypTdpTdphi = 0.0;
+	*cosLsinT_dN_dypTdpTdphi = 0.0;
+	*sinLcosT_dN_dypTdpTdphi = 0.0;
+	*sinLsinT_dN_dypTdpTdphi = 0.0;
+
+	for (int isurf = 0; isurf < FO_length; ++isurf)
+	{
+		FO_surf*surf = &FOsurf_ptr[isurf];
+
+		double tau = surf->tau;
+		double xpt = surf->xpt;
+		double ypt = surf->ypt;
+
+		double vx = surf->vx;
+		double vy = surf->vy;
+		double gammaT = surf->gammaT;
+
+		double da0 = surf->da0;
+		double da1 = surf->da1;
+		double da2 = surf->da2;
+
+		double pi00 = surf->pi00;
+		double pi01 = surf->pi01;
+		double pi02 = surf->pi02;
+		double pi11 = surf->pi11;
+		double pi12 = surf->pi12;
+		double pi22 = surf->pi22;
+		double pi33 = surf->pi33;
+
+		double * tmpX = oscx[isurf];
+		double * tmpY = oscy[isurf];
+		double estimated_Del_etas_width = sqrt(0.5*one_by_Tdec*mT*gammaT);
+
+		for (int ieta = 0; ieta < base_Del_eta_s_npts; ++ieta)
+		{
+			double Del_eta_s = base_Del_eta_s[ieta] * estimated_Del_etas_width;
+			double Del_eta_s_weight = base_Del_eta_s_weight[ieta] * estimated_Del_etas_width;
+			double ch_Del_eta_s = cosh(Del_eta_s);
+			double sh_Del_eta_s = sinh(Del_eta_s);
+			double ch_eta_s = ch_pY * ch_Del_eta_s - sh_pY * sh_Del_eta_s;
+			double sh_eta_s = sh_pY * ch_Del_eta_s - ch_pY * sh_Del_eta_s;
+
+			double tpt = tau*ch_eta_s;
+			double zpt = tau*sh_eta_s;
+			double phi_L = (tpt*qt-zpt*qz)/hbarC;
+			//double phi_L_mz = place_in_range( (tpt*qt+zpt*qz)/hbarC, -M_PI, M_PI );
+			//double cos_phi_L = cos(phi_L) + cos(phi_L_mz);	//shortcut for eta_s-integral
+			//double sin_phi_L = sin(phi_L) + sin(phi_L_mz);	//shortcut for eta_s-integral
+			double cos_phi_L = cos(phi_L);
+			double sin_phi_L = sin(phi_L);
+
+			double px = pT*cos(pphi);
+			double py = pT*sin(pphi);
+			double mT = sqrt(pT*pT+localmass*localmass);
+			double p0 = mT * ch_Del_eta_s;
+			double pz = mT * sh_Del_eta_s;
+
+			double f0 = 1./(exp( one_by_Tdec*(gammaT*(p0*1. - px*vx - py*vy) - mu) )+sign);	//thermal equilibrium distributions
+			//viscous corrections
+			double deltaf = 0.;
+			if (use_delta_f)
+				deltaf = deltaf_prefactor * (1. - sign*f0)
+							* (p0*p0*pi00 - 2.0*p0*px*pi01 - 2.0*p0*py*pi02 + px*px*pi11 + 2.0*px*py*pi12 + py*py*pi22 + pz*pz*pi33);
+
+			//p^mu d^3sigma_mu factor: The plus sign is due to the fact that the DA# variables are for the covariant surface integration
+			double S_p_with_weight = Del_eta_s_weight*tau*prefactor*(p0*da0 + px*da1 + py*da2)*f0*(1.+deltaf);
+
+			//ignore points where delta f is large or emission function goes negative from pdsigma
+			if ( (1. + deltaf < 0.0) || (flagneg == 1 && S_p_with_weight < tol) )
+			{
+				S_p_with_weight = 0.0;
+				continue;
+			}
+
+			double cosAx = cos(qx*xpt/hbarC), sinAx = sin(qx*xpt/hbarC);
+			double cosAy = cos(qy*ypt/hbarC), sinAy = sin(qy*ypt/hbarC);
+			double cos_trans_Fourier = cosAx*cosAy - sinAx*sinAy;	//==cos(qx x + qy y)
+			double sin_trans_Fourier = sinAx*cosAy + cosAx*sinAy;	//==sin(qx x + qy y)
+
+			*cosLcosT_dN_dypTdpTdphi += S_p_with_weight * cos_phi_L * cos_trans_Fourier;
+			*cosLsinT_dN_dypTdpTdphi -= S_p_with_weight * cos_phi_L * sin_trans_Fourier;
+			*sinLcosT_dN_dypTdpTdphi += S_p_with_weight * sin_phi_L * cos_trans_Fourier;
+			*sinLsinT_dN_dypTdpTdphi += S_p_with_weight * sin_phi_L * sin_trans_Fourier;
+		}
 	}
 
 	return;

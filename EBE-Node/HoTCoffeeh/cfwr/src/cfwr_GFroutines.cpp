@@ -787,6 +787,10 @@ void CorrelationFunction::R2_Fourier_transform(int iKT, double plane_psi, int mo
 
 void CorrelationFunction::Set_target_moments(int iqt, int iqz)
 {
+	if ( !thermal_pions_only or
+			find(osr.begin(), osr.end(), target_particle_id) != osr.end() )
+		return;
+
 	Stopwatch sw;
 	sw.Start();
 	cout << "Setting thermal target moments..." << endl;
@@ -804,7 +808,7 @@ void CorrelationFunction::Set_target_moments(int iqt, int iqz)
 		= thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)];
 
 	//if not just doing thermal pions, includ resonance contributions, too
-	if (!thermal_pions_only)
+	if ( !thermal_pions_only )
 		Set_full_target_moments(iqt, iqz);
 	cout << "done." << endl;
 
@@ -834,58 +838,74 @@ void CorrelationFunction::Set_thermal_target_moments(int iqt, int iqz)
 
 void CorrelationFunction::Set_full_target_moments(int iqt, int iqz)
 {
-	double loc_qz = qz_pts[iqz];
-	double loc_qt = qt_pts[iqt];
-	current_pY_shift = 0.5 * log(abs((loc_qt+loc_qz + 1.e-100)/(loc_qt-loc_qz + 1.e-100)));
-	if (abs(current_pY_shift) > SP_Del_pY_max)	//if resonance decays basically contribute nothing at this (qt, qz)-pair
+	//this one includes resonance decay contributions,
+	//needs thermal contributions added in
+	int getHDFresonanceSpectra = Access_resonance_in_HDF_array(target_particle_id, iqt, iqz, 1, current_dN_dypTdpTdphi_moments, true);
+
+	bool use_interp = true;
+	if (use_interp)
 	{
-		cout << "Set_full_target_moments(" << loc_qt << ", " << loc_qz << "): y_{sym} = " << current_pY_shift << " > SP_Del_pY_max = " << SP_Del_pY_max <<
-				" ==>> No contributions to full target moments." << endl;
-		return;	//don't do anything
-	}
-
-	int getHDFresonanceSpectra = Access_resonance_in_HDF_array(target_particle_id, iqt, iqz, 1, current_dN_dypTdpTdphi_moments, true);	//this one includes resonance decay contributions
-
-	gsl_cheb_series *cs_accel_expEdNd3p = gsl_cheb_alloc (n_pY_pts - 1);
-	cs_accel_expEdNd3p->a = adjusted_SP_Del_pY_minimum;
-	cs_accel_expEdNd3p->b = SP_Del_pY_max;
-
-	double * chebyshev_a_cfs = new double[n_pY_pts];
-
-	double trig_parity_factors[4] = {1.0, -1.0, -1.0, 1.0};
-
-	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
-	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-	for (int iqx = 0; iqx < qxnpts; ++iqx)
-	for (int iqy = 0; iqy < qynpts; ++iqy)
-	for (int itrig = 0; itrig < ntrig; ++itrig)
-	{
-		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
+		double loc_qz = qz_pts[iqz];
+		double loc_qt = qt_pts[iqt];
+		current_pY_shift = 0.5 * log(abs((loc_qt+loc_qz + 1.e-100)/(loc_qt-loc_qz + 1.e-100)));
+		if (abs(current_pY_shift) > SP_Del_pY_max)	//if resonance decays basically contribute nothing at this (qt, qz)-pair
 		{
-			chebyshev_a_cfs[ipY] = 0.0;
-			for (int kpY = 0; kpY < n_pY_pts; ++kpY)
-			{
-				chebyshev_a_cfs[ipY] += exp(abs(SP_Del_pY[kpY])) * chebTcfs[ipY * n_pY_pts + kpY] * current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)];
-
-				if (ipY==0 && ipT==0 && ipphi==0) cout << "CHECKinterp: " << iqz << "   " << itrig << "   " << SP_Del_pY[kpY]
-					<< "   " << thermal_target_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)]
-					<< "   " << current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)] << endl;
-			}
+			cout << "Set_full_target_moments(" << loc_qt << ", " << loc_qz << "): y_{sym} = " << current_pY_shift << " > SP_Del_pY_max = " << SP_Del_pY_max <<
+					" ==>> No contributions to full target moments." << endl;
+			return;	//don't do anything
 		}
 
-		cs_accel_expEdNd3p->c = chebyshev_a_cfs;
-		double tmp_Del_pY = -current_pY_shift;	//interpolating to this point
-		double current_trig_parity_factor = ( ( tmp_Del_pY < 0.0 )
-											&& ( abs(loc_qt) < abs(loc_qz) )
-											) ? trig_parity_factors[itrig] : 1.0;
-		full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)] += exp(-abs(tmp_Del_pY)) * current_trig_parity_factor
-																					* gsl_cheb_eval (cs_accel_expEdNd3p, abs(tmp_Del_pY));
-		if (ipT==0 && ipphi==0) cout << "CHECKinterp2: " << iqz << "   " << itrig << "   "
-							<< exp(-abs(tmp_Del_pY)) * current_trig_parity_factor
-									* gsl_cheb_eval (cs_accel_expEdNd3p, abs(tmp_Del_pY)) << endl;
-	}
+		gsl_cheb_series *cs_accel_expEdNd3p = gsl_cheb_alloc (n_pY_pts - 1);
+		cs_accel_expEdNd3p->a = adjusted_SP_Del_pY_minimum;
+		cs_accel_expEdNd3p->b = SP_Del_pY_max;
 
-	delete [] chebyshev_a_cfs;
+		double * chebyshev_a_cfs = new double[n_pY_pts];
+
+		double trig_parity_factors[4] = {1.0, -1.0, -1.0, 1.0};
+
+		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+		for (int iqx = 0; iqx < qxnpts; ++iqx)
+		for (int iqy = 0; iqy < qynpts; ++iqy)
+		for (int itrig = 0; itrig < ntrig; ++itrig)
+		{
+			for (int ipY = 0; ipY < n_pY_pts; ++ipY)
+			{
+				chebyshev_a_cfs[ipY] = 0.0;
+				for (int kpY = 0; kpY < n_pY_pts; ++kpY)
+				{
+					chebyshev_a_cfs[ipY] += exp(abs(SP_Del_pY[kpY])) * chebTcfs[ipY * n_pY_pts + kpY] * current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)];
+
+					if (ipY==0 && ipT==0 && ipphi==0) cout << "CHECKinterp: " << iqz << "   " << itrig << "   " << SP_Del_pY[kpY]
+						<< "   " << thermal_target_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)]
+						<< "   " << current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)] << endl;
+				}
+			}
+
+			cs_accel_expEdNd3p->c = chebyshev_a_cfs;
+			double tmp_Del_pY = -current_pY_shift;	//interpolating to this point
+			double current_trig_parity_factor = ( ( tmp_Del_pY < 0.0 )
+												&& ( abs(loc_qt) < abs(loc_qz) )
+												) ? trig_parity_factors[itrig] : 1.0;
+			full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)] += exp(-abs(tmp_Del_pY)) * current_trig_parity_factor
+																						* gsl_cheb_eval (cs_accel_expEdNd3p, abs(tmp_Del_pY));
+			if (ipT==0 && ipphi==0) cout << "CHECKinterp2: " << iqz << "   " << itrig << "   "
+								<< exp(-abs(tmp_Del_pY)) * current_trig_parity_factor
+										* gsl_cheb_eval (cs_accel_expEdNd3p, abs(tmp_Del_pY)) << endl;
+		}
+
+		delete [] chebyshev_a_cfs;
+	}
+	else
+	{
+		//alt: skip interp if only doing Y=0
+		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+		for (int iqx = 0; iqx < qxnpts; ++iqx)
+		for (int iqy = 0; iqy < qynpts; ++iqy)
+		for (int itrig = 0; itrig < ntrig; ++itrig)
+			full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)] += current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY0,iqx,iqy,itrig)];
+	}
 
 	return;
 }

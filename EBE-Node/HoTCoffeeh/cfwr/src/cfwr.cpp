@@ -1574,8 +1574,8 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_alternate(int iqt
 			for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 			{
-				if (ipT != 8 or ipphi > 0)
-					continue;
+				//if (ipT != 8 or ipphi > 0)
+				//	continue;
 				double pT = SP_pT[ipT];
 				double pphi = SP_pphi[ipphi];
 				double px = pT*cos_SP_pphi[ipphi];

@@ -286,6 +286,13 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 
 			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 			{
+
+if (ipT != 0 and ipT != 4 and ipT != 8)
+	continue;
+if (ipphi > 0)
+	continue;
+if (ipY != ipY0)
+	continue;
 				double local_pT = SP_pT[ipT];
 				double local_pphi = SP_pphi[ipphi];
 				double local_pY = SP_Del_pY[ipY] + current_pY_shift;
@@ -838,13 +845,32 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 		double akr = 1./(1.+alpha_pm*alpha_pm);
 		double aki = alpha_pm/(1.+alpha_pm*alpha_pm);
 
+		bool use_exact = false;
 		double tempCS[4];
-		if (pY_out_of_range)
+		if (use_exact)
 		{
 			tempCS[0] = 0.0, tempCS[1] = 0.0, tempCS[2] = 0.0, tempCS[3] = 0.0;
-			Cal_dN_dypTdpTdphi_with_weights_function_approx(current_parent_resonance, ptr, phir, spyr,
-															qt_pts[current_iqt], qx_pts[qx_idx], qy_pts[qy_idx], qz_pts[current_iqz],
-															&tempCS[0], &tempCS[1], &tempCS[2], &tempCS[3]);
+			Cal_dN_dypTdpTdphi_with_weights_function_approx(
+					current_parent_resonance, ptr, phir, spyr,
+					qt_pts[current_iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[current_iqz],
+					&tempCS[0], &tempCS[1], &tempCS[2], &tempCS[3] );
+			/*cout << "Check thermal routines: "
+					<< ptr << "   " << phir << "   " << spyr << "   "
+					<< spyr+current_pY_shift << endl
+					<< qt_pts[current_iqt] << "   " << qx_pts[iqx] << "   "
+					<< qy_pts[iqy] << "   " << qz_pts[current_iqz] << endl
+					<< "\t\t" << tempCS[0] << "   " << tempCS[1] << "   "
+					<< tempCS[2] << "   " << tempCS[3] << endl;
+
+			tempCS[0] = 0.0, tempCS[1] = 0.0, tempCS[2] = 0.0, tempCS[3] = 0.0;
+			Cal_dN_dypTdpTdphi_with_weights_function_etas_integ(
+					current_parent_resonance, ptr, phir, spyr,
+					qt_pts[current_iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[current_iqz],
+					&tempCS[0], &tempCS[1], &tempCS[2], &tempCS[3] );
+			cout << "\t\t" << tempCS[0] << "   " << tempCS[1] << "   "
+					<< tempCS[2] << "   " << tempCS[3] << endl;
+
+if (1) exit (8);*/
 		}
 
 		for (int iCS = 0; iCS < 2; ++iCS)	//cosine (rapidity-even), then sine (rapidity-odd)
@@ -852,14 +878,9 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 
 			double SXCpm = 0.0, SXSpm = 0.0;
 
-			if (pY_out_of_range)
+			if (use_exact)
 			{
-				cout << "cfwr_resonance(pY_out_of_range=true): "
-						<< ptr << "   " << phir << "   " << spyr << "   " << spyr+current_pY_shift << "   " << qt_pts[current_iqt] << "   "
-						<< qx_pts[qx_idx] << "   " << qy_pts[qy_idx] << "   " << qz_pts[current_iqz] << endl
-						<< "\t\t" << tempCS[2*iCS] << "   " << tempCS[2*iCS+1] << endl;
-
-				SXCpm = tempCS[2*iCS];
+				SXCpm = tempCS[2*iCS+0];
 				SXSpm = tempCS[2*iCS+1];
 			}
 			else
@@ -992,28 +1013,21 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 				//		extra minus sign with inversion
 				/////////////////////////////////////////////
 			}
-
-		    /////////////////////////////////////////////////////
-		    // Finally, update results vectors appropriately
-		    /////////////////////////////////////////////////////
-		    //--> update the real part of weighted daughter spectra
-		    //results[qpt_cs_idx] += akr*SXCpm-aki*SXSpm;						//multiply checked
-		    //--> update the imaginary part of weighted daughter spectra
-		    //results[qpt_cs_idx+1] += parity_factor * (akr*SXSpm+aki*SXCpm);	//multiply checked
-
+			
 			/*
 			bool check_final_interpolation = true;
 			if (check_final_interpolation)
 			{
-				double tempCosCos = 0.0, tempCosSin = 0.0, tempSinCos = 0.0, tempSinSin = 0.0;
-				Cal_dN_dypTdpTdphi_with_weights_toy_func(current_parent_resonance, ptr, phir, spyr,
+				double tempCS[4];
+				tempCS[0] = 0.0, tempCS[1] = 0.0, tempCS[2] = 0.0, tempCS[3] = 0.0;
+				Cal_dN_dypTdpTdphi_with_weights_function_approx(current_parent_resonance, ptr, phir, spyr,
 																qt_pts[current_iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[current_iqz],
-																&tempCosCos, &tempCosSin, &tempSinCos, &tempSinSin);
+																&tempCS[0], &tempCS[1], &tempCS[2], &tempCS[3]);
 				cout << "final interpolation check: "
 						<< ptr << "   " << phir << "   " << spyr << "   " << spyr+current_pY_shift << "   " << qt_pts[current_iqt] << "   "
 						<< qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[current_iqz] << endl
 						<< "\t\t" << iCS << ": " << SXCpm << "   " << SXSpm << endl
-						<< "\t\t" << tempCosCos << "   " << tempCosSin << "   " << tempSinCos << "   " << tempSinSin << endl;
+						<< "\t\t" << tempCS[2*iCS+0] << "   " << tempCS[2*iCS+1] << endl;
 			}
 			*/
 
@@ -1021,7 +1035,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 									+ iCS * (akr*SXSpm+aki*SXCpm);  //only one term is ever non-zero
 			results[qpt_cs_idx+1] += (1-iCS) * (akr*SXSpm+aki*SXCpm)
 									+ iCS * (akr*SXCpm-aki*SXSpm);					//only one term is ever non-zero
-//
+
 			//if (current_ipY==ipY0) cout << "apm: " << akr << "   " << aki << endl;
 
 		    qpt_cs_idx += 2;

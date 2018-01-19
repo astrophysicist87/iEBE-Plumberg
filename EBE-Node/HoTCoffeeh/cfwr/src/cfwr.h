@@ -156,6 +156,8 @@ class CorrelationFunction
 		double * K_T, * K_phi, * K_phi_weight;
 		    
 		//momentum rapidity grid
+		double * eta_s, * eta_s_weight, * ch_eta_s, * sh_eta_s;
+		double * base_Del_eta_s, * base_Del_eta_s_weight;
 		double * SP_Del_pY, * ch_SP_pY, * sh_SP_pY;
 		double * chebTcfs;
 		double ** chebyshev_a_cfs, ** refined_resonance_grids, ** log_refined_grids, ** sgn_refined_grids;	//for resonance interpolation
@@ -280,19 +282,34 @@ class CorrelationFunction
 		void Set_full_target_moments(int iqt, int iqz);
 		void Set_giant_arrays(int iqt, int iqx, int iqy, int iqz);
 		void Cal_dN_dypTdpTdphi_no_weights(int local_pid);
-		void Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY, int iqt, int iqz, double * BC_chunk, int local_part_mode);
+		void Cal_dN_dypTdpTdphi_with_weights(
+					int local_pid, int ipY, int iqt, int iqz,
+					double * BC_chunk, int local_part_mode);
 		void Cal_dN_dypTdpTdphi_with_weights_Yeq0_alternate(int iqt, int iqz);
 		void Cal_dN_dypTdpTdphi_no_weights_Yeq0_alternate();
-		void Cal_dN_dypTdpTdphi_with_weights_function_approx(int local_pid, double pT, double pphi, double pY,
-												double qt, double qx, double qy, double qz, double * cosqx_dN_dypTdpTdphi, double * sinqx_dN_dypTdpTdphi);
-		void Cal_dN_dypTdpTdphi_with_weights_function_approx(int local_pid, double pT, double pphi, double p_Y,
+		void Cal_dN_dypTdpTdphi_with_weights_function_approx(
+					int local_pid, double pT, double pphi, double pY,
+					double qt, double qx, double qy, double qz,
+					double * cosqx_dN_dypTdpTdphi, double * sinqx_dN_dypTdpTdphi);
+		void Cal_dN_dypTdpTdphi_with_weights_function_approx(
+					int local_pid, double pT, double pphi, double p_Y,
+					double qt, double qx, double qy, double qz,
+					double * cosLcosT_dN_dypTdpTdphi, double * cosLsinT_dN_dypTdpTdphi,
+					double * sinLcosT_dN_dypTdpTdphi, double * sinLsinT_dN_dypTdpTdphi);
+		void Cal_dN_dypTdpTdphi_with_weights_function_etas_integ(
+					int local_pid, double pT, double pphi, double p_Y,
 					double qt, double qx, double qy, double qz,
 					double * cosLcosT_dN_dypTdpTdphi, double * cosLsinT_dN_dypTdpTdphi,
 					double * sinLcosT_dN_dypTdpTdphi, double * sinLsinT_dN_dypTdpTdphi);
 		void Cal_dN_dypTdpTdphi_no_weights_toy(int local_pid);
-		void Cal_dN_dypTdpTdphi_with_weights_toy(int local_pid, int iqt, int iqz, int ipY, double * moments_to_update);
-		void Cal_dN_dypTdpTdphi_with_weights_toy_func(int local_pid, double pT, double pphi, double pY, double qt, double qx,
-														double qy, double qz, double * mom_CC, double * mom_CS, double * mom_SC, double * mom_SS);
+		void Cal_dN_dypTdpTdphi_with_weights_toy(
+					int local_pid, int iqt, int iqz, int ipY,
+					double * moments_to_update);
+		void Cal_dN_dypTdpTdphi_with_weights_toy_func(
+					int local_pid, double pT, double pphi, double pY,
+					double qt, double qx, double qy, double qz,
+					double * mom_CC, double * mom_CS,
+					double * mom_SC, double * mom_SS);
 		void Do_resonance_integrals(int parent_resonance_particle_id, int daughter_particle_id, int decay_channel, int iqt, int iqz);
 		void Clear_and_set_exp_table_nb2();
 		void Clear_and_set_exp_table_nb3();

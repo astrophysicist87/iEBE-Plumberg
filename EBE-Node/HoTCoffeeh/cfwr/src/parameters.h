@@ -55,9 +55,10 @@ const int Maxdecaychannel=13;
 const int Maxdecaypart=5;
 
 // Space-time rapidity information
-const int eta_s_npts = 101;
+const int eta_s_npts = 15;
+const int base_Del_eta_s_npts = 51;
 const double eta_s_i = 0.0;
-const double eta_s_f = 6.0;
+const double eta_s_f = 4.0;
 
 // Relative momentum information
 const double delta_qt = 0.00625;
@@ -79,9 +80,9 @@ const double Kphi_min = 0.0;
 const double Kphi_max = 2.0*M_PI;
 
 // Phase-space integral information
-const int n_zeta_pts = 21;
-const int n_v_pts = 21;
-const int n_s_pts = 21;
+const int n_zeta_pts = 12;
+const int n_v_pts = 12;
+const int n_s_pts = 12;
 
 // Fitting information
 const size_t fit_max_iterations = 1000;  // stop at this point if not converged 

@@ -347,6 +347,24 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 		SP_Del_pY[ipY] = local_center + local_scale * cos( M_PI*(2.*(ipY+1.) - 1.) / (2.*n_pY_pts) );
 		cout << ipY << "   " << SP_Del_pY[ipY] << endl;
 	}
+
+	//spatial rapidity grid
+	eta_s = new double [eta_s_npts];
+	eta_s_weight = new double [eta_s_npts];
+	gauss_quadrature(eta_s_npts, 1, 0.0, 0.0, eta_s_i, eta_s_f, eta_s, eta_s_weight);
+	ch_eta_s = new double [eta_s_npts];
+	sh_eta_s = new double [eta_s_npts];
+	for (int ieta = 0; ieta < eta_s_npts; ieta++)
+	{
+		ch_eta_s[ieta] = cosh(eta_s[ieta]);
+		sh_eta_s[ieta] = sinh(eta_s[ieta]);
+	}
+	//alternative spatial rapidity grid
+	base_Del_eta_s = new double [base_Del_eta_s_npts];
+	base_Del_eta_s_weight = new double [base_Del_eta_s_npts];
+	gauss_quadrature(base_Del_eta_s_npts, 6, 0.0, 0.0, 0.0, 1.0, base_Del_eta_s, base_Del_eta_s_weight);
+	//base_ch_Del_eta_s = new double [base_Del_eta_s_npts];
+	//base_sh_Del_eta_s = new double [base_Del_eta_s_npts];
 	//if (1) exit (8);
 
 	//also do Chebyshev function evaluations now
