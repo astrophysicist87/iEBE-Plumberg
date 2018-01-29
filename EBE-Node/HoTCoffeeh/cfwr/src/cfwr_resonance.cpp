@@ -941,145 +941,59 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 		oldSXCSpm[0] = 0.0, oldSXCSpm[1] = 0.0, oldSXCSpm[2] = 0.0, oldSXCSpm[3] = 0.0;
 		newSXCSpm[0] = 0.0, newSXCSpm[1] = 0.0, newSXCSpm[2] = 0.0, newSXCSpm[3] = 0.0;
 
-		for (int iCS = 0; iCS < 2; ++iCS)	//cosine (rapidity-even), then sine (rapidity-odd)
-		{
+		//for (int iCS = 0; iCS < 2; ++iCS)	//cosine (rapidity-even), then sine (rapidity-odd)
+		//{
 
-			double SXCpm = 0.0, SXSpm = 0.0;
+			double SCCpm = 0.0, SCSpm = 0.0, SSCpm = 0.0, SSSpm = 0.0;
 
 			if (use_exact)
 			{
-				SXCpm = tempCS[2*iCS+0];
-				SXSpm = tempCS[2*iCS+1];
+				SCCpm = tempCS[0];
+				SCSpm = tempCS[1];
+				SSCpm = tempCS[2];
+				SSSpm = tempCS[3];
 			}
 			else
 			{
-				/////////////////////////////////////////////////////////////////
-				// DO REAL PART
-				/////////////////////////////////////////////////////////////////
-				// interpolate over pT values
-				/////////////////////////////////////////////////////////////////
-				val11 = moment_parity[2*iCS+0] * val11_arr[reversible_qpt_cs_idx+2*iCS];
-				val21 = moment_parity[2*iCS+0] * val21_arr[reversible_qpt_cs_idx+2*iCS];
-				val12 = moment_parity[2*iCS+0] * val12_arr[reversible_qpt_cs_idx+2*iCS];
-				val22 = moment_parity[2*iCS+0] * val22_arr[reversible_qpt_cs_idx+2*iCS];
+				val11 = moment_parity[0] * val11_arr[reversible_qpt_cs_idx+0];
+				val21 = moment_parity[0] * val21_arr[reversible_qpt_cs_idx+0];
+				val12 = moment_parity[0] * val12_arr[reversible_qpt_cs_idx+0];
+				val22 = moment_parity[0] * val22_arr[reversible_qpt_cs_idx+0];
 
-				/*
-				if (current_ipT==0 && current_ipphi==0)
-				{
-					//cout << "Interp: " << pT0 << "   " << pT1 << "   " << npt-1 << "   " << npt << "   " 
-					//		<< phi0 << "   " << phi1 << "   " << nphim1 << "   " << nphi << "   " 
-					//		<< py0 << "   " << py1 << "   " << npym1 << "   " << npy << endl;
-					cout << "Interp: " << pT0 << "   " << pT1 << "   " << phi0 << "   " << phi1 << "   " << py0 << "   " << py1 << "   "
-							<< qt_pts[current_iqt] << "   " << qx_pts[qx_idx] << "   " << qy_pts[qy_idx] << "   " << qz_pts[current_iqz] << endl;
-
-					double tempCS[4];
-					tempCS[0] = 0.0, tempCS[1] = 0.0, tempCS[2] = 0.0, tempCS[3] = 0.0;
-					Cal_dN_dypTdpTdphi_with_weights_toy_func(current_parent_resonance, ptr, phi0, parity_factor * py0,
-																qt_pts[current_iqt], qx_pts[qx_idx], qy_pts[qy_idx], qz_pts[current_iqz],
-																&tempCS[0], &tempCS[1], &tempCS[2], &tempCS[3]);
-					cout << setw(20) << "Sanity check(val11): " << reversible_qpt_cs_idx+2*iCS << "   " << iCS << "   " << val11
-							<< "   " << tempCS[0] << "   " << tempCS[1] << "   " << tempCS[2] << "   " << tempCS[3] << endl;
-					tempCS[0] = 0.0, tempCS[1] = 0.0, tempCS[2] = 0.0, tempCS[3] = 0.0;
-					Cal_dN_dypTdpTdphi_with_weights_toy_func(current_parent_resonance, ptr, phi1, parity_factor * py0,
-																qt_pts[current_iqt], qx_pts[qx_idx], qy_pts[qy_idx], qz_pts[current_iqz],
-																&tempCS[0], &tempCS[1], &tempCS[2], &tempCS[3]);
-					cout << setw(20) << "Sanity check(val21): " << reversible_qpt_cs_idx+2*iCS << "   " << iCS << "   " << val21
-							<< "   " << tempCS[0] << "   " << tempCS[1] << "   " << tempCS[2] << "   " << tempCS[3] << endl;
-					//////////////////////////////////////////////////////////////////
-					tempCS[0] = 0.0, tempCS[1] = 0.0, tempCS[2] = 0.0, tempCS[3] = 0.0;
-					Cal_dN_dypTdpTdphi_with_weights_toy_func(current_parent_resonance, ptr, phi0, parity_factor * py1,
-																qt_pts[current_iqt], qx_pts[qx_idx], qy_pts[qy_idx], qz_pts[current_iqz],
-																&tempCS[0], &tempCS[1], &tempCS[2], &tempCS[3]);
-					cout << setw(20) << "Sanity check(val12): " << reversible_qpt_cs_idx+2*iCS << "   " << iCS << "   " << val12
-							<< "   " << tempCS[0] << "   " << tempCS[1] << "   " << tempCS[2] << "   " << tempCS[3] << endl;
-					tempCS[0] = 0.0, tempCS[1] = 0.0, tempCS[2] = 0.0, tempCS[3] = 0.0;
-					Cal_dN_dypTdpTdphi_with_weights_toy_func(current_parent_resonance, ptr, phi1, parity_factor * py1,
-																qt_pts[current_iqt], qx_pts[qx_idx], qy_pts[qy_idx], qz_pts[current_iqz],
-																&tempCS[0], &tempCS[1], &tempCS[2], &tempCS[3]);
-					cout << setw(20) << "Sanity check(val22): " << reversible_qpt_cs_idx+2*iCS << "   " << iCS << "   " << val22
-							<< "   " << tempCS[0] << "   " << tempCS[1] << "   " << tempCS[2] << "   " << tempCS[3] << endl;
-				}
-				*/
-
-				//////////////////////////////////////
-				// interpolate val11 and val12 over the pphi direction to get val1
-				// similarly for val21 and val22 --> val2
-				//////////////////////////////////////
 				val1 = lin_int(del_phir_phi0, one_by_pphidiff, val11, val21);
 				val2 = lin_int(del_phir_phi0, one_by_pphidiff, val12, val22);
 
-				// finally, get the interpolated value
-				SXCpm = lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
-				/////////////////////////////////////////////
-				//SXCpm: X is C (rapidity-even) or S (rapidity-odd)
-				//source transverse-even (C) moments evaluated in the following way:
-				// (a) - spyr > 0.0 (Yr > Yr_sym)
-				//		evaluated at +q_T and spyr
-				// (b) - spyr < 0.0 && |q^0| >= |q_z|
-				//		evaluated at +q_T and pyr = abs(spyr)
-				// (c) - spyr < 0.0 && |q^0| < |q_z|
-				//		evaluated at -q_T and pyr = abs(spyr);
-				//		moments are transverse-even, so no
-				//		extra minus sign with inversion
-				/////////////////////////////////////////////
+				SCCpm = lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
+				//
+				val11 = moment_parity[1] * val11_arr[reversible_qpt_cs_idx+1];
+				val21 = moment_parity[1] * val21_arr[reversible_qpt_cs_idx+1];
+				val12 = moment_parity[1] * val12_arr[reversible_qpt_cs_idx+1];
+				val22 = moment_parity[1] * val22_arr[reversible_qpt_cs_idx+1];
 
-
-				/////////////////////////////////////////////////////////////////
-				// DO IMAGINARY PART
-				/////////////////////////////////////////////////////////////////
-				// interpolate over pT values
-				/////////////////////////////////////////////////////////////////
-				val11 = moment_parity[2*iCS+1] * val11_arr[reversible_qpt_cs_idx+2*iCS+1];
-				val21 = moment_parity[2*iCS+1] * val21_arr[reversible_qpt_cs_idx+2*iCS+1];
-				val12 = moment_parity[2*iCS+1] * val12_arr[reversible_qpt_cs_idx+2*iCS+1];
-				val22 = moment_parity[2*iCS+1] * val22_arr[reversible_qpt_cs_idx+2*iCS+1];
-
-				/*if (current_reso_nbody==2 && current_parent_resonance==49 && current_ipY==ipY0 && current_ipT==0 && current_ipphi==0)
-				{
-					double tempCS[4];
-					tempCS[0] = 0.0, tempCS[1] = 0.0, tempCS[2] = 0.0, tempCS[3] = 0.0;
-					Cal_dN_dypTdpTdphi_with_weights_function_approx(current_parent_resonance, ptr, phi0, parity_factor * py0,
-																qt_pts[current_iqt], qx_pts[qx_idx], qy_pts[qy_idx], qz_pts[current_iqz],
-																&tempCS[0], &tempCS[1], &tempCS[2], &tempCS[3]);
-					cout << setw(20) << "Sanity check(val11): " << reversible_qpt_cs_idx+2*iCS+1 << "   " << iCS << "   " << val11 << "   " << tempCS[2*iCS+1] << endl;
-					tempCS[0] = 0.0, tempCS[1] = 0.0, tempCS[2] = 0.0, tempCS[3] = 0.0;
-					Cal_dN_dypTdpTdphi_with_weights_function_approx(current_parent_resonance, ptr, phi1, parity_factor * py0,
-																qt_pts[current_iqt], qx_pts[qx_idx], qy_pts[qy_idx], qz_pts[current_iqz],
-																&tempCS[0], &tempCS[1], &tempCS[2], &tempCS[3]);
-					cout << setw(20) << "Sanity check(val21): " << reversible_qpt_cs_idx+2*iCS+1 << "   " << iCS << "   " << val21 << "   " << tempCS[2*iCS+1] << endl;
-					tempCS[0] = 0.0, tempCS[1] = 0.0, tempCS[2] = 0.0, tempCS[3] = 0.0;
-					Cal_dN_dypTdpTdphi_with_weights_function_approx(current_parent_resonance, ptr, phi0, parity_factor * py1,
-																qt_pts[current_iqt], qx_pts[qx_idx], qy_pts[qy_idx], qz_pts[current_iqz],
-																&tempCS[0], &tempCS[1], &tempCS[2], &tempCS[3]);
-					cout << setw(20) << "Sanity check(val12): " << reversible_qpt_cs_idx+2*iCS+1 << "   " << iCS << "   " << val12 << "   " << tempCS[2*iCS+1] << endl;
-					tempCS[0] = 0.0, tempCS[1] = 0.0, tempCS[2] = 0.0, tempCS[3] = 0.0;
-					Cal_dN_dypTdpTdphi_with_weights_function_approx(current_parent_resonance, ptr, phi1, parity_factor * py1,
-																qt_pts[current_iqt], qx_pts[qx_idx], qy_pts[qy_idx], qz_pts[current_iqz],
-																&tempCS[0], &tempCS[1], &tempCS[2], &tempCS[3]);
-					cout << setw(20) << "Sanity check(val22): " << reversible_qpt_cs_idx+2*iCS+1 << "   " << iCS << "   " << val22 << "   " << tempCS[2*iCS+1] << endl;
-				}*/
-
-				//////////////////////////////////////
-				// interpolate val11 and val12 over the pphi direction to get val1
-				// similarly for val21 and val22 --> val2
-				//////////////////////////////////////
 				val1 = lin_int(del_phir_phi0, one_by_pphidiff, val11, val21);
 				val2 = lin_int(del_phir_phi0, one_by_pphidiff, val12, val22);
 
-				// finally, get the interpolated value
-				SXSpm = lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
-				/////////////////////////////////////////////
-				//SXSpm: X is C (rapidity-even) or S (rapidity-odd)
-				//source transverse-odd (S) moments evaluated in the following way:
-				// (a) - spyr > 0.0 (Yr > Yr_sym)
-				//		evaluated at +q_T and spyr
-				// (b) - spyr < 0.0 && |q^0| >= |q_z|
-				//		evaluated at +q_T and pyr = abs(spyr)
-				// (c) - spyr < 0.0 && |q^0| < |q_z|
-				//		evaluated at -q_T and pyr = abs(spyr);
-				//		moments are transverse-odd, so get an
-				//		extra minus sign with inversion
-				/////////////////////////////////////////////
+				SCSpm = lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
+				//
+				val11 = moment_parity[2] * val11_arr[reversible_qpt_cs_idx+2];
+				val21 = moment_parity[2] * val21_arr[reversible_qpt_cs_idx+2];
+				val12 = moment_parity[2] * val12_arr[reversible_qpt_cs_idx+2];
+				val22 = moment_parity[2] * val22_arr[reversible_qpt_cs_idx+2];
+
+				val1 = lin_int(del_phir_phi0, one_by_pphidiff, val11, val21);
+				val2 = lin_int(del_phir_phi0, one_by_pphidiff, val12, val22);
+
+				SSCpm = lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
+				//
+				val11 = moment_parity[3] * val11_arr[reversible_qpt_cs_idx+3];
+				val21 = moment_parity[3] * val21_arr[reversible_qpt_cs_idx+3];
+				val12 = moment_parity[3] * val12_arr[reversible_qpt_cs_idx+3];
+				val22 = moment_parity[3] * val22_arr[reversible_qpt_cs_idx+3];
+
+				val1 = lin_int(del_phir_phi0, one_by_pphidiff, val11, val21);
+				val2 = lin_int(del_phir_phi0, one_by_pphidiff, val12, val22);
+
+				SSSpm = lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
 			}
 			
 			/*
@@ -1099,22 +1013,27 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 			}
 			*/
 
-			results[qpt_cs_idx] += (1-iCS) * (akr*SXCpm-aki*SXSpm)
-									+ iCS * (akr*SXSpm+aki*SXCpm);  	//only one term is ever non-zero
-			results[qpt_cs_idx+1] += (1-iCS) * (akr*SXSpm+aki*SXCpm)
-									+ iCS * (akr*SXCpm-aki*SXSpm);		//only one term is ever non-zero
+			results[qpt_cs_idx] += akr*SCCpm-aki*SCSpm;
+			results[qpt_cs_idx+1] += akr*SCSpm+aki*SCCpm;
+			//results[qpt_cs_idx+2] += akr*SSSpm-aki*SSCpm;
+			//results[qpt_cs_idx+3] += akr*SSCpm+aki*SSSpm;
+			results[qpt_cs_idx+2] += akr*SSCpm+aki*SSSpm;
+			results[qpt_cs_idx+3] += akr*SSSpm-aki*SSCpm;
 
-			oldSXCSpm[2*iCS+0] = SXCpm;
-			oldSXCSpm[2*iCS+1] = SXSpm;
-			newSXCSpm[2*iCS+0] = (1-iCS) * (akr*SXCpm-aki*SXSpm)
-									+ iCS * (akr*SXSpm+aki*SXCpm);
-			newSXCSpm[2*iCS+1] = (1-iCS) * (akr*SXSpm+aki*SXCpm)
-									+ iCS * (akr*SXCpm-aki*SXSpm);
+			oldSXCSpm[0] = SCCpm;
+			oldSXCSpm[1] = SCSpm;
+			oldSXCSpm[2] = SSCpm;
+			oldSXCSpm[3] = SSSpm;
+			newSXCSpm[0] = akr*SCCpm-aki*SCSpm;
+			newSXCSpm[1] = akr*SCSpm+aki*SCCpm;
+			//newSXCSpm[2] = akr*SSSpm-aki*SSCpm;
+			//newSXCSpm[3] = akr*SSCpm+aki*SSSpm;
+			newSXCSpm[2] = akr*SSCpm+aki*SSSpm;
+			newSXCSpm[3] = akr*SSSpm-aki*SSCpm;
 
-			//if (current_ipY==ipY0) cout << "apm: " << akr << "   " << aki << endl;
-
-		    qpt_cs_idx += 2;
-		}
+		    //qpt_cs_idx += 2;
+		    qpt_cs_idx += 4;
+		//}
 
 		bool check_final_increment = true;
 		if (check_final_increment)
