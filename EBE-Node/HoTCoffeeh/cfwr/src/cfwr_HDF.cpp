@@ -19,6 +19,16 @@ using namespace std;
 
 const int RANK2D = 2;
 
+void CorrelationFunction::Initialize_HDF_arrays()
+{
+	*global_out_stream_ptr << "Initializing HDF files...";
+	int HDFInitializationSuccess = Administrate_resonance_HDF_array(0);
+	HDFInitializationSuccess = Administrate_target_thermal_HDF_array(0);
+	*global_out_stream_ptr << "...done.\n";
+
+	return;
+}
+
 //*******************************************
 // HDF array for resonances
 //*******************************************
@@ -55,17 +65,14 @@ int CorrelationFunction::Administrate_resonance_HDF_array(int administration_mod
 
 				resonance_file = new H5::H5File(RESONANCE_FILE_NAME, H5F_ACC_TRUNC);
 
-				//DSetCreatPropList cparms;
 				hsize_t chunk_dims[RANK2D] = {1, chunk_size};
 				cparms.setChunk( RANK2D, chunk_dims );
 
-				//hsize_t dims[RANK2D] = {(NchosenParticle + 1) * ((qtnpts+1)/2) * (qznpts+1)/2, chunk_size};
 				resonance_dataspace = new H5::DataSpace (RANK2D, dims);
 
 				resonance_dataset = new H5::DataSet( resonance_file->createDataSet(RESONANCE_DATASET_NAME, PredType::NATIVE_DOUBLE, *resonance_dataspace, cparms) );
 
 				hsize_t count[RANK2D] = {1, chunk_size};
-				//hsize_t dimsm[RANK2D] = {1, chunk_size};
 				hsize_t offset[RANK2D] = {0, 0};
 
 				resonance_memspace = new H5::DataSpace (RANK2D, dimsm, NULL);
@@ -74,11 +81,9 @@ int CorrelationFunction::Administrate_resonance_HDF_array(int administration_mod
 					*global_out_stream_ptr << "HDF resonance file doesn't exist!  Initializing to zero..." << endl;
 
 					for (int ir = 0; ir < NchosenParticle + 1; ++ir)
-					//for (int iqt = 0; iqt < qtnpts; ++iqt)
 					for (int iqt = 0; iqt < (qtnpts+1)/2; ++iqt)
 					for (int iqz = 0; iqz < (qznpts+1)/2; ++iqz)
 					{
-						//offset[0] = ir;
 						offset[0] = HDF_indexer(ir, iqt, iqz);
 						resonance_dataspace->selectHyperslab(H5S_SELECT_SET, count, offset);
 	

@@ -7,6 +7,7 @@
 #include<vector>
 #include<stdio.h>
 #include<time.h>
+#include<complex>
 
 #include "cfwr.h"
 #include "cfwr_lib.h"
@@ -17,10 +18,12 @@
 
 using namespace std;
 
+const std::complex<double> i(0, 1);
+
 const int n_refinement_pts = 201;
 double Delta_DpY;
 const double PTCHANGE = 1.0;
-const bool SKIP_LARGE_PTR = true;	//for now
+const bool SKIP_LARGE_PTR = false;	//for now
 gsl_cheb_series *cs_accel_expEdNd3p;
 
 double * val11_arr, * val12_arr, * val21_arr, * val22_arr;
@@ -93,15 +96,10 @@ void CorrelationFunction::Tabulate_resonance_Chebyshev_coefficients(int parent_r
 		{
 			chebyshev_a_cfs[idx][ipY] = 0.0;
 			for (int kpY = 0; kpY < n_pY_pts; ++kpY)
-			{
-				chebyshev_a_cfs[idx][ipY] += exp(abs(SP_Del_pY[kpY])) * chebTcfs[ipY * n_pY_pts + kpY] * current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)];
-//if (ipT==1 && ipphi==1 && ipY==0 && iqx==0 && iqy==0)
-//{
-//	double tmpcos = 0.0, tmpsin = 0.0;
-	//Cal_dN_dypTdpTdphi_with_weights_function_approx(parent_resonance_particle_id, SP_pT[ipT], SP_pphi[ipphi], SP_Del_pY[kpY], qt_pts[current_iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[current_iqz], &tmpcos, &tmpsin);
-	//cout << "GRID: " << ipT << "   " << ipphi << "   " << kpY << "   " << SP_Del_pY[kpY] << "   " << iqx << "   " << iqy << "   " << itrig << "   " << tmpcos << "   " << tmpsin << "   " << current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)] << endl;
-//}
-			}
+				chebyshev_a_cfs[idx][ipY]
+					+= exp(abs(SP_Del_pY[kpY]))
+						* chebTcfs[ipY * n_pY_pts + kpY]
+						* current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)];
 		}
 		++idx;
 	}
@@ -138,14 +136,6 @@ void CorrelationFunction::Refine_resonance_grids(int parent_resonance_particle_i
 			double tmp_pY = SP_Del_pY_min + (double)iii * Delta_DpY;
 			double tmp_result = exp(-abs(tmp_pY)) * gsl_cheb_eval (cs_accel_expEdNd3p, tmp_pY);
 			refined_resonance_grids[tmp_index][(iqx * qynpts + iqy)*ntrig + itrig] = tmp_result;
-//if (ipT==1 && ipphi==1 && iqx==0 && iqy==0)
-//{
-	double tmpCS[4];
-	tmpCS[0] = 0.0, tmpCS[1] = 0.0, tmpCS[2] = 0.0, tmpCS[3] = 0.0;
-	//Cal_dN_dypTdpTdphi_with_weights_function_approx(parent_resonance_particle_id, SP_pT[ipT], SP_pphi[ipphi], tmp_pY, qt_pts[current_iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[current_iqz], &tmpCS[0], &tmpCS[1], &tmpCS[2], &tmpCS[3]);
-	//cout << "REFINED: " << iii << "   " << tmp_pY << "   " << SP_pT[ipT] << "   " << SP_pphi[ipphi] << "   " << qt_pts[current_iqt] << "   " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[current_iqz] << "   " << itrig << "   " << tmpCS[itrig] << "   " << tmp_result << endl;
-	//cout << "refined_resonance_grids[" << tmp_index << "][" << (iqx * qynpts + iqy)*ntrig + itrig << "] = " << tmp_result << ", *** " << ipT << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << itrig << "   " << iii << " ***" << endl;
-//}
 			log_refined_grids[tmp_index][(iqx * qynpts + iqy)*ntrig + itrig] = log(abs(tmp_result)+1.e-100);
 			sgn_refined_grids[tmp_index][(iqx * qynpts + iqy)*ntrig + itrig] = sgn(tmp_result);
 		}
@@ -262,21 +252,39 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 	Tabulate_resonance_Chebyshev_coefficients(parent_resonance_particle_id);
 	Refine_resonance_grids(parent_resonance_particle_id);
 
-	/*const int nProperTime = 1001;
+/*
+	const int nProperTime = 1001;
 	double * PropTimePts = new double [nProperTime];
 	double * PropTimeWts = new double [nProperTime];
 	gauss_quadrature(nProperTime, 5, 0.0, 0.0, 0.0, current_resonance_Gamma/hbarC, PropTimePts, PropTimeWts);
 
-	const double bw = 0.05;
+	const double bw = 0.1;
 	const double rmax = 20.0, taumax = 20.0;
 	const int r_size = int(1.0+rmax/bw), tau_size = int(1.0+taumax/bw);
-	vector<double> DDC_grid(n_pT_pts*r_size*tau_size, 0.0);*/
+	vector<double> DDC_grid(n_pT_pts*r_size*tau_size, 0.0);
+*/
+/*
+	const int nProperTime = 21;
+	double * PropTimePts = new double [nProperTime];
+	double * PropTimeWts = new double [nProperTime];
+	gauss_quadrature(nProperTime, 5, 0.0, 0.0, 0.0, current_resonance_Gamma/hbarC, PropTimePts, PropTimeWts);
+
+	const double bw = 0.1;
+	const double tmax = 100.0;
+	const int t_size = int(1.0+tmax/bw);
+	vector<double> DDC_grid(n_pT_pts*t_size, 0.0);
+*/
 
 	if (n_body == 2)
 	{
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 		{
+//if (ipT != 4)
+//	continue;
+//if (ipY != ipY0)
+//	continue;
+
 			if (doing_moments)
 			{
 				for (int igrid = 0; igrid < grids_calculated_length; ++igrid)
@@ -286,13 +294,9 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 
 			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 			{
+//if (ipphi > 0)
+//	continue;
 
-if (ipT != 0 and ipT != 4 and ipT != 8)
-	continue;
-if (ipphi > 0)
-	continue;
-if (ipY != ipY0)
-	continue;
 				double local_pT = SP_pT[ipT];
 				double local_pphi = SP_pphi[ipphi];
 				double local_pY = SP_Del_pY[ipY] + current_pY_shift;
@@ -366,9 +370,49 @@ for (int iProperTime = 0; iProperTime < nProperTime; ++iProperTime)
 			+= VEC_n2_zeta_factor[NB2_indexer(iv,izeta)]
 				* Mres * VEC_n2_s_factor * VEC_n2_v_factor[iv]
 				* Gamma * PropTimeWts[iProperTime] * exp(-Gamma*PropTimePts[iProperTime]/hbarC)
-				* S_x_p( parent_resonance_particle_id, isurf, 0.0, local_pT, local_pphi, local_pY );
+				* S_x_p( parent_resonance_particle_id, isurf, 0.0, PKT, PKphi, VEC_n2_P_Y[iv] );
 }
 */
+/*
+//try outputting emission function too
+if (ipphi == 0 && ipY == ipY0 && daughter_particle_id == target_particle_id && iqt == 0 && iqz == 0)
+for (int isurf = 0; isurf < FO_length; ++isurf)
+for (int ieta = 0; ieta < 2*eta_s_npts; ++ieta)
+for (int iProperTime = 0; iProperTime < nProperTime; ++iProperTime)
+{
+	FO_surf * surf = &FOsurf_ptr[isurf];
+	double eta_s_loc = (ieta < eta_s_npts) ? -eta_s[eta_s_npts-1-ieta] : eta_s[ieta-eta_s_npts];
+
+	double FOt = surf->tau*cosh(eta_s_loc);
+	double FOx = surf->xpt;
+	double FOy = surf->ypt;
+	double FOz = surf->tau*sinh(eta_s_loc);
+
+	Mres = current_resonance_mass;
+	Gamma = current_resonance_Gamma;
+	double tau = PropTimePts[iProperTime];
+
+	double shift_t = currentPpm[0]*tau/Mres;
+	double net_t = FOt + shift_t;
+	int net_it = (int)(net_t/bw);
+
+	if (0.0 <= net_t && net_t < tmax)
+	{
+		double tmp_S = S_x_p( parent_resonance_particle_id, isurf, eta_s_loc, PKT, PKphi, VEC_n2_P_Y[iv] );
+		double tmp_result = VEC_n2_zeta_factor[NB2_indexer(iv,izeta)]
+					* Mres * VEC_n2_s_factor * VEC_n2_v_factor[iv]
+					* Gamma * PropTimeWts[iProperTime] * exp(-Gamma*PropTimePts[iProperTime]/hbarC) / hbarC
+					* tmp_S;
+
+		DDC_grid.at( ipT * t_size + net_it ) += tmp_result;
+
+		if (iProperTime==0)
+			cout << iv << "   " << izeta << "   " << isurf << "   " << ieta << "   " << eta_s_loc << "   "
+					<< "   " << tmp_S << "\n";
+	}
+}
+*/
+
 							//space-time moments
 							if ( doing_moments )
 							{
@@ -582,13 +626,21 @@ cout << "DUMP: " << daughter_lookup_idx << "   " << ipT << "   " << ipphi << "  
 
 	Delete_resonance_running_sum_vectors();
 
-	/*
+/*
+	//print results
 	if (daughter_particle_id == target_particle_id && iqt == 0 && iqz == 0)
 	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 	for (int itau = 0; itau < tau_size; ++itau)
 	for (int ir = 0; ir < r_size; ++ir)
 		cout << "DDC: " << SP_pT[ipT] << "   " << bw*itau << "   " << bw*ir << "   " << DDC_grid.at( ( ipT * tau_size + itau ) * r_size + ir ) << "\n";
-	*/
+*/
+/*
+	//print results
+	if (daughter_particle_id == target_particle_id && iqt == 0 && iqz == 0)
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+	for (int it = 0; it < t_size; ++it)
+		cout << "DDC: " << SP_pT[ipT] << "   " << bw*it << "   " << DDC_grid.at( ipT * t_size + it ) << "\n";
+*/
 
 	do_resonance_integrals_sw.Stop();
 	*global_out_stream_ptr << "\t--> Finished this decay loop through Do_resonance_integrals(...) in " << do_resonance_integrals_sw.printTime() << " seconds." << endl;
@@ -744,6 +796,8 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 		}
 		pyr = abs(spyr);
 	}
+
+	double pY_shift = 0.5 * log(abs((qt_pts[current_iqt]+qz_pts[current_iqz] + 1.e-100)/(qt_pts[current_iqt]-qz_pts[current_iqz] + 1.e-100)));
 	
 	bool pY_out_of_range = false;
 
@@ -844,8 +898,18 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 		//thus, qlist_idx should loop FORWARD
 		double akr = 1./(1.+alpha_pm*alpha_pm);
 		double aki = alpha_pm/(1.+alpha_pm*alpha_pm);
+		//set q-dependent pre-factor
+		complex<double> one = 1.0;
+		double tmp_mT = sqrt(ptr*ptr+Mres*Mres);
+		double tmp_px = ptr*cos(phir);
+		double tmp_py = ptr*sin(phir);
+		complex<double> ak = ( tmp_mT * ( qt_pts[current_iqt]*cosh(pyr+pY_shift) - qz_pts[current_iqz]*sinh(pyr+pY_shift) )
+								- ( qx_pts[iqx]*tmp_px + qy_pts[iqy]*tmp_py ) )
+								/ ( Mres*Gamma );
+		complex<double> q_dep_factor = one/(one - i*ak);
+		//cout << "CHECK AK: " << akr << "   " << aki << "   "  << q_dep_factor.real() << "   " << q_dep_factor.imag() << endl;
 
-		bool use_exact = false;
+		bool use_exact = true;
 		double tempCS[4];
 		if (use_exact)
 		{
@@ -854,7 +918,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 					current_parent_resonance, ptr, phir, spyr,
 					qt_pts[current_iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[current_iqz],
 					&tempCS[0], &tempCS[1], &tempCS[2], &tempCS[3] );
-			/*cout << "Check thermal routines: "
+			cout << "Check thermal routines: "
 					<< ptr << "   " << phir << "   " << spyr << "   "
 					<< spyr+current_pY_shift << endl
 					<< qt_pts[current_iqt] << "   " << qx_pts[iqx] << "   "
@@ -870,8 +934,12 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 			cout << "\t\t" << tempCS[0] << "   " << tempCS[1] << "   "
 					<< tempCS[2] << "   " << tempCS[3] << endl;
 
-if (1) exit (8);*/
+//if (1) exit (8);
 		}
+
+		double oldSXCSpm[4], newSXCSpm[4];
+		oldSXCSpm[0] = 0.0, oldSXCSpm[1] = 0.0, oldSXCSpm[2] = 0.0, oldSXCSpm[3] = 0.0;
+		newSXCSpm[0] = 0.0, newSXCSpm[1] = 0.0, newSXCSpm[2] = 0.0, newSXCSpm[3] = 0.0;
 
 		for (int iCS = 0; iCS < 2; ++iCS)	//cosine (rapidity-even), then sine (rapidity-odd)
 		{
@@ -1032,14 +1100,42 @@ if (1) exit (8);*/
 			*/
 
 			results[qpt_cs_idx] += (1-iCS) * (akr*SXCpm-aki*SXSpm)
-									+ iCS * (akr*SXSpm+aki*SXCpm);  //only one term is ever non-zero
+									+ iCS * (akr*SXSpm+aki*SXCpm);  	//only one term is ever non-zero
 			results[qpt_cs_idx+1] += (1-iCS) * (akr*SXSpm+aki*SXCpm)
-									+ iCS * (akr*SXCpm-aki*SXSpm);					//only one term is ever non-zero
+									+ iCS * (akr*SXCpm-aki*SXSpm);		//only one term is ever non-zero
+
+			oldSXCSpm[2*iCS+0] = SXCpm;
+			oldSXCSpm[2*iCS+1] = SXSpm;
+			newSXCSpm[2*iCS+0] = (1-iCS) * (akr*SXCpm-aki*SXSpm)
+									+ iCS * (akr*SXSpm+aki*SXCpm);
+			newSXCSpm[2*iCS+1] = (1-iCS) * (akr*SXSpm+aki*SXCpm)
+									+ iCS * (akr*SXCpm-aki*SXSpm);
 
 			//if (current_ipY==ipY0) cout << "apm: " << akr << "   " << aki << endl;
 
 		    qpt_cs_idx += 2;
 		}
+
+		bool check_final_increment = true;
+		if (check_final_increment)
+		{
+			double tempR = 0.0, tempI = 0.0;
+			tempCS[0] = 0.0, tempCS[1] = 0.0, tempCS[2] = 0.0, tempCS[3] = 0.0;
+			Cal_dN_dypTdpTdphi_with_weights_function_and_decay_etas_integ(current_parent_resonance, ptr, phir, spyr,
+															qt_pts[current_iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[current_iqz],
+															&tempCS[0], &tempCS[1], &tempCS[2], &tempCS[3],
+															&tempR, &tempI);
+			cout << "final increment check: "
+					<< ptr << "   " << phir << "   " << spyr << "   " << spyr+current_pY_shift << "   " << qt_pts[current_iqt] << "   "
+					<< qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[current_iqz] << endl
+					<< "\t\t" << alpha_pm << "   "  << q_dep_factor.real() << "   " << q_dep_factor.imag() << endl
+					<< "\t\t" << oldSXCSpm[0] << "   " << oldSXCSpm[1] << "   " << oldSXCSpm[2] << "   " << oldSXCSpm[3] << endl
+					<< "\t\t" << newSXCSpm[0] << "   " << newSXCSpm[1] << "   " << newSXCSpm[2] << "   " << newSXCSpm[3] << endl
+					<< "\t\t" << tempCS[0] << "   " << tempCS[1] << "   " << tempCS[2] << "   " << tempCS[3] << endl
+					<< "\t\t" << tempR << "   " << tempI << endl;
+			if (1) exit (8);
+		}
+
 		//needed to exploit symmetries of sine component
 		reversible_qpt_cs_idx += rev_qpt_cs_step;
 		qlist_idx += qlist_step;

@@ -263,6 +263,7 @@ class CorrelationFunction
 		void Load_FOcells(int local_pid);
 
 		// HDF routines
+		void Initialize_HDF_arrays();
 		// resonances
 		int Access_resonance_in_HDF_array(int local_pid, int iqt, int iqz, int access_mode, double * resonance_array_to_fill, bool verbose = false);
 		int Administrate_resonance_HDF_array(int administration_mode);
@@ -300,7 +301,14 @@ class CorrelationFunction
 					int local_pid, double pT, double pphi, double p_Y,
 					double qt, double qx, double qy, double qz,
 					double * cosLcosT_dN_dypTdpTdphi, double * cosLsinT_dN_dypTdpTdphi,
-					double * sinLcosT_dN_dypTdpTdphi, double * sinLsinT_dN_dypTdpTdphi);
+					double * sinLcosT_dN_dypTdpTdphi, double * sinLsinT_dN_dypTdpTdphi,
+					double use_Boltzmann_approx = 0.0);
+		void Cal_dN_dypTdpTdphi_with_weights_function_and_decay_etas_integ(
+					int local_pid, double pT, double pphi, double Del_p_Y,
+					double qt, double qx, double qy, double qz,
+					double * cosLcosT_dN_dypTdpTdphi, double * cosLsinT_dN_dypTdpTdphi,
+					double * sinLcosT_dN_dypTdpTdphi, double * sinLsinT_dN_dypTdpTdphi,
+					double * res_RE, double * res_IM );
 		void Cal_dN_dypTdpTdphi_no_weights_toy(int local_pid);
 		void Cal_dN_dypTdpTdphi_with_weights_toy(
 					int local_pid, int iqt, int iqz, int ipY,

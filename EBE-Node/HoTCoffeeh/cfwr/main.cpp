@@ -1,3 +1,4 @@
+#include <omp.h>
 #include<iostream>
 #include<iomanip>
 #include<fstream>
@@ -200,7 +201,7 @@ int main(int argc, char *argv[])
 	output << "Using fraction_of_resonances = " << net_fraction_resonance_contribution << endl;
 
 	//allows me to omit thermal pions easily, e.g.
-	bool omit_specific_resonances = true;
+	bool omit_specific_resonances = false;
 	if (omit_specific_resonances)
 	{
 		vector<int> thermal_particles_to_omit;
@@ -262,8 +263,41 @@ for (int i = 0; i < n_pts; ++i)
 }
 cout << "CHECK: " << setw(30) << setprecision(20) << 2.0*gsl_sf_bessel_K0(alpha) << "   " << integral1 << endl;
 
-if (1) exit(8);*/
+*/
 
+
+/*
+		double ptr = 0.204426, phir = 0.0336253, spyr = -1.65126;
+		double qt = -0.198469, qx = 0.0, qy = 0.0, qz = 0.0;
+		double tempCS[4];
+		tempCS[0] = 0.0, tempCS[1] = 0.0, tempCS[2] = 0.0, tempCS[3] = 0.0;
+		correlation_function.Cal_dN_dypTdpTdphi_with_weights_function_approx(
+				9, ptr, phir, spyr, qt, qx, qy, qz,
+				&tempCS[0], &tempCS[1], &tempCS[2], &tempCS[3] );
+		cout << "Check thermal routines: "
+				<< ptr << "   " << phir << "   " << spyr << "   " 
+				<< qt << "   " << qx << "   "
+				<< qy << "   " << qz << endl
+				<< "\t\t" << tempCS[0] << "   " << tempCS[1] << "   "
+				<< tempCS[2] << "   " << tempCS[3] << endl;
+
+		tempCS[0] = 0.0, tempCS[1] = 0.0, tempCS[2] = 0.0, tempCS[3] = 0.0;
+		correlation_function.Cal_dN_dypTdpTdphi_with_weights_function_etas_integ(
+				9, ptr, phir, spyr, qt, qx, qy, qz,
+				&tempCS[0], &tempCS[1], &tempCS[2], &tempCS[3], 0.0 );
+		cout << "\t\t" << tempCS[0] << "   " << tempCS[1] << "   "
+				<< tempCS[2] << "   " << tempCS[3] << endl;
+
+		tempCS[0] = 0.0, tempCS[1] = 0.0, tempCS[2] = 0.0, tempCS[3] = 0.0;
+		correlation_function.Cal_dN_dypTdpTdphi_with_weights_function_etas_integ(
+				9, ptr, phir, spyr, qt, qx, qy, qz,
+				&tempCS[0], &tempCS[1], &tempCS[2], &tempCS[3], 1.0 );
+		cout << "\t\t" << tempCS[0] << "   " << tempCS[1] << "   "
+				<< tempCS[2] << "   " << tempCS[3] << endl;
+
+
+if (1) exit(8);
+*/
 
 	////////////////////////////////////////////
 	// Actual calculations start here...
@@ -280,7 +314,10 @@ if (1) exit(8);*/
 		int local_qtnpts = (int)(paraRdr->getVal("qtnpts"));
 		int local_qznpts = (int)(paraRdr->getVal("qznpts"));
 
+		correlation_function.Initialize_HDF_arrays();
+
 		//looping in this way keeps *h5 files and total loaded memory of program small at any one time
+		//#pragma omp parallel for
 		for (int iqt = 0; iqt < (local_qtnpts+1)/2; ++iqt)
 		for (int iqz = 0; iqz < (local_qznpts+1)/2; ++iqz)
 		{

@@ -55,7 +55,7 @@ const int Maxdecaychannel=13;
 const int Maxdecaypart=5;
 
 // Space-time rapidity information
-const int eta_s_npts = 15;
+const int eta_s_npts = 501;
 const int base_Del_eta_s_npts = 51;
 const double eta_s_i = 0.0;
 const double eta_s_f = 4.0;

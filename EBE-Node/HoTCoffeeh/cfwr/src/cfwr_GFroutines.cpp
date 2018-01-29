@@ -787,29 +787,47 @@ void CorrelationFunction::R2_Fourier_transform(int iKT, double plane_psi, int mo
 
 void CorrelationFunction::Set_target_moments(int iqt, int iqz)
 {
-	if ( !thermal_pions_only or
-			find(osr.begin(), osr.end(), target_particle_id) != osr.end() )
-		return;
+	bool include_thermal_pions = false;
+	if (include_thermal_pions)
+	{
+		/*if ( !thermal_pions_only or
+				find(osr.begin(), osr.end(), target_particle_id) != osr.end() )
+			return;*/
 
-	Stopwatch sw;
-	sw.Start();
-	cout << "Setting thermal target moments..." << endl;
-	Set_thermal_target_moments(iqt, iqz);
-	sw.Stop();
-	cout << "done in " << sw.printTime() << " seconds." << endl;
+		//Stopwatch sw;
+		//sw.Start();
+		cout << "Setting thermal target moments..." << endl;
+		Set_thermal_target_moments(iqt, iqz);
+		//sw.Stop();
+		//cout << "done in " << sw.printTime() << " seconds." << endl;
 
-	cout << "Setting full target moments..." << endl;
-	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
-    for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-    for (int iqx = 0; iqx < qxnpts; ++iqx)
-    for (int iqy = 0; iqy < qynpts; ++iqy)
-    for (int itrig = 0; itrig < ntrig; ++itrig)
-    	full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)]
-		= thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)];
+		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+		for (int iqx = 0; iqx < qxnpts; ++iqx)
+		for (int iqy = 0; iqy < qynpts; ++iqy)
+		for (int itrig = 0; itrig < ntrig; ++itrig)
+			full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)]
+				= thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)];
+	}
+	else
+	{
+		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+		for (int iqx = 0; iqx < qxnpts; ++iqx)
+		for (int iqy = 0; iqy < qynpts; ++iqy)
+		for (int itrig = 0; itrig < ntrig; ++itrig)
+			full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)]
+				= 0.0;
+	}
 
-	//if not just doing thermal pions, includ resonance contributions, too
-	if ( !thermal_pions_only )
-		Set_full_target_moments(iqt, iqz);
+	bool include_resonance_pions = true;
+	if (include_resonance_pions)
+	{
+		cout << "Setting full target moments..." << endl;
+		//if not just doing thermal pions, include resonance contributions, too
+		if ( !thermal_pions_only )
+			Set_full_target_moments(iqt, iqz);
+	}
 	cout << "done." << endl;
 
 	return;

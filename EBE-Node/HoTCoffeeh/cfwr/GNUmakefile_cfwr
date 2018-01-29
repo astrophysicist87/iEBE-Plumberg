@@ -11,6 +11,7 @@
 ##  
 
 #running with icpc
+#export OMP_NUM_THREADS=$(nproc --all)
 export HDF5_CXX=$(shell ../../crank/configure_compiler_C++.sh)
 export HDF5_CXXLINKER=$(shell ../../crank/configure_compiler_C++.sh)
 export HDF5_CLINKER=$(shell ../../crank/configure_compiler_C++.sh)
@@ -30,7 +31,8 @@ CFLAGS= $(shell ../../crank/configure_compiler_C++_Flags.sh)
 #						-Wreorder -Wreturn-type -Wsign-compare -Wsequence-point -Wtrigraphs \
 #						-Wunused-function -Wunused-but-set-variable -Wunused-variable \
 #						-Wwrite-strings
-CFLAGS += -lgsl -lgslcblas -g -openmp
+CFLAGS += -lgsl -lgslcblas -g
+#-openmp
 # -w3 -wd981
 ###CFLAGS += -lgsl -lgslcblas -g -profile-functions -profile-loops=all -profile-loops-report=2
 

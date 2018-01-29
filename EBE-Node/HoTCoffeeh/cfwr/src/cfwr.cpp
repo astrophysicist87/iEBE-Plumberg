@@ -21,8 +21,6 @@
 #include "Stopwatch.h"
 #include "gauss_quadrature.h"
 #include "bessel.h"
-//#include "fastexp.h"
-//#include "fasttrig.h"
 
 using namespace std;
 
@@ -180,27 +178,13 @@ void CorrelationFunction::Fourier_transform_emission_function(int iqt, int iqz)
 	//current_pY_shift = 0.0;
 
 	///////
-	//on first loop ONLY, initialize necessary HDF files
-	if (iqt == 0 && iqz == 0)
-	{
-		*global_out_stream_ptr << "Initializing HDF files...";
-		int HDFInitializationSuccess = Administrate_resonance_HDF_array(0);
-		HDFInitializationSuccess = Administrate_target_thermal_HDF_array(0);
-		if (!thermal_pions_only && ( !USE_EXACT || USE_CF ) )
-			Set_all_Bessel_grids(iqt, iqz);
-		//Set_all_Bessel_grids(iqt, iqz, 1);
-		*global_out_stream_ptr << "done." << endl << endl;
-	}
-	else
-	{
-		*global_out_stream_ptr << "Initializing/opening HDF files...";
-		int HDFInitializationSuccess = Administrate_resonance_HDF_array(1);		//open
-		HDFInitializationSuccess = Administrate_target_thermal_HDF_array(1);	//open
-		if (!thermal_pions_only && ( !USE_EXACT || USE_CF ) )
-			Set_all_Bessel_grids(iqt, iqz);
-		//Set_all_Bessel_grids(iqt, iqz, 1);
-		*global_out_stream_ptr << "done." << endl << endl;
-	}
+	*global_out_stream_ptr << "Initializing/opening HDF files...";
+	int HDFInitializationSuccess = Administrate_resonance_HDF_array(1);		//open
+	HDFInitializationSuccess = Administrate_target_thermal_HDF_array(1);	//open
+	if (!thermal_pions_only && ( !USE_EXACT || USE_CF ) )
+		Set_all_Bessel_grids(iqt, iqz);
+	//Set_all_Bessel_grids(iqt, iqz, 1);
+	*global_out_stream_ptr << "done." << endl << endl;
 	///////
 
 	*global_out_stream_ptr << "Setting spacetime moments grid..." << endl;
@@ -216,9 +200,6 @@ void CorrelationFunction::Fourier_transform_emission_function(int iqt, int iqz)
 			continue;
 	
 		Set_current_particle_info(idc);
-
-		//if (current_resonance_particle_id != 49)
-		//	continue;
 
 		Get_spacetime_moments(idc, iqt, iqz);
 	}
@@ -311,9 +292,6 @@ void CorrelationFunction::Compute_phase_space_integrals(int iqt, int iqz)
 		// if so, set decay channel info
 		// ************************************************************
 		Set_current_particle_info(idc);
-
-		//if (current_resonance_particle_id != 49)
-		//	continue;
 
 		Allocate_decay_channel_info();				// allocate needed memory
 
