@@ -575,9 +575,9 @@ inline double eta_t(double r)
 void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights_toy(int local_pid)
 {
 	//space-time integration grid
-	const int n_tau_pts = 31;
+	const int n_tau_pts = 21;
 	const int n_r_pts = 31;
-	const int n_phi_pts = 31;
+	const int n_phi_pts = 21;
 	double * tau_pts = new double [n_tau_pts];
 	double * tau_wts = new double [n_tau_pts];
 	double * x_pts = new double [n_r_pts];
@@ -699,9 +699,9 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights_toy(int local_pid)
 void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_toy(int local_pid, int iqt, int iqz, int ipY, double * moments_to_update)
 {
 	//space-time integration grid
-	const int n_tau_pts = 51;
-	const int n_r_pts = 101;
-	const int n_phi_pts = 51;
+	const int n_tau_pts = 21;
+	const int n_r_pts = 31;
+	const int n_phi_pts = 21;
 	double * tau_pts = new double [n_tau_pts];
 	double * tau_wts = new double [n_tau_pts];
 	double * x_pts = new double [n_r_pts];

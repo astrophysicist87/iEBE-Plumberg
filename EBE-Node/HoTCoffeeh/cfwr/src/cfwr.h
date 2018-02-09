@@ -63,7 +63,6 @@ class CorrelationFunction
 		double tol;
 		int flagneg;
 		double max_lifetime;
-		double fudge_factor;
 
 		//header info
 		int n_pT_pts, n_pphi_pts, n_pY_pts, nKT, nKphi;
@@ -90,7 +89,7 @@ class CorrelationFunction
 		int qspace_cs_slice_length;
 		int full_FO_length;
 		int FO_length;
-		int n_alpha_points, n_alpha_points_PIONS;
+		int n_alpha_points;
 		//int nFO_cutoff;
 		//int number_of_percentage_markers;
 		double qtmax, qx_max, qy_max, qz_max;

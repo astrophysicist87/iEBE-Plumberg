@@ -511,14 +511,14 @@ int CorrelationFunction::Administrate_besselcoeffs_HDF_array(int administration_
 	const int n_chunks = n_pY_pts;
 	//const int chunk_size = 4 * FO_length * n_alpha_points;
 	int chunk_size = 4 * FO_length * n_alpha_points;
-	if (particle_mode)
-		chunk_size = 4 * FO_length * n_alpha_points_PIONS;
+	//if (particle_mode)
+	//	chunk_size = 4 * FO_length * n_alpha_points_PIONS;
 
 	double * besselcoeffs_chunk = new double [chunk_size];
 
 	string pions_stem = "";
-	if (particle_mode)
-		pions_stem = "_PIONS";
+	//if (particle_mode)
+	//	pions_stem = "_PIONS";
 
 	ostringstream filename_stream_ra;
 	filename_stream_ra << path << "/Bessel_coefficients" << pions_stem << ".h5";
@@ -646,8 +646,8 @@ int CorrelationFunction::Access_besselcoeffs_in_HDF_array(int ipY, int access_mo
 	const int n_chunks = n_pY_pts;
 	//const int chunk_size = 4 * FO_length * n_alpha_points;
 	int chunk_size = 4 * FO_length * n_alpha_points;
-	if (particle_mode)
-		chunk_size = 4 * FO_length * n_alpha_points_PIONS;
+	//if (particle_mode)
+	//	chunk_size = 4 * FO_length * n_alpha_points_PIONS;
 
 	double * besselcoeffs_chunk = new double [chunk_size];
 

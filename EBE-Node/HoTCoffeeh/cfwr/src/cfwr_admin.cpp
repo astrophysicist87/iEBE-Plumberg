@@ -44,7 +44,6 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	tol = paraRdr->getVal("tolerance");
 	flagneg = paraRdr->getVal("flag_negative_S");
 	max_lifetime = paraRdr->getVal("max_lifetime");
-	fudge_factor = paraRdr->getVal("fudge_factor");
 
 	//set header info
 	n_pT_pts = paraRdr->getVal("CF_npT");
@@ -68,7 +67,7 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	init_qz = -0.5*double(qznpts-1)*delta_qz;
 
 	n_alpha_points = 31;
-	n_alpha_points_PIONS = 101;
+	//n_alpha_points_PIONS = 101;
 
 	new_nqxpts = ( qxnpts > 1 ) ? new_nqpts : 1;
 	new_nqypts = ( qynpts > 1 ) ? new_nqpts : 1;
@@ -200,7 +199,7 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 				decay_channels[temp_idx].resonance_sign = particle_temp.sign;
 				decay_channels[temp_idx].resonance_mass = particle_temp.mass;
 				decay_channels[temp_idx].nbody = abs(particle_temp.decays_Npart[idecay]);
-				decay_channels[temp_idx].resonance_Gamma = fudge_factor * particle_temp.width;
+				decay_channels[temp_idx].resonance_Gamma = particle_temp.width;
 				decay_channels[temp_idx].resonance_total_br = particle_temp.decays_effective_branchratio[idecay];
 				decay_channels[temp_idx].resonance_direct_br = particle_temp.decays_branchratio[idecay];
 				
@@ -896,7 +895,7 @@ void CorrelationFunction::Set_q_points()
 	qtmax = max( qxymax, qz_pts[qznpts-1] );				//just choose the biggest value
 
 	//for bug-checking
-	qtmax = 0.2;
+	//qtmax = 0.2;
 
 	Fill_out_pts(qt_pts, qtnpts, qtmax, QT_POINTS_SPACING);
 	//Fill_out_pts(qt_pts, qtnpts, sqrt(1.1*init_qz*init_qz), 0);
@@ -1421,7 +1420,7 @@ void CorrelationFunction::Delete_fleshed_out_CF()
 	return;
 }
 
-void CorrelationFunction::Set_Y_eq_0_Bessel_grids(int iqt, int iqz, double * BC_chunk)
+/*void CorrelationFunction::Set_Y_eq_0_Bessel_grids(int iqt, int iqz, double * BC_chunk)
 {
 	const std::complex<double> i(0, 1);
 	int n_coeffs = n_alpha_points_PIONS;
@@ -1552,6 +1551,7 @@ void CorrelationFunction::Set_Y_eq_0_Bessel_grids(int iqt, int iqz, double * BC_
 	cout << "Finished setting Bessel grids successfully." << endl;
 	return;
 }
+*/
 
 
 void CorrelationFunction::Set_all_Bessel_grids(int iqt, int iqz, int particle_mode /*==0*/)
@@ -1562,12 +1562,12 @@ void CorrelationFunction::Set_all_Bessel_grids(int iqt, int iqz, int particle_mo
 	//double alpha_max = 75.0;
 	//double alpha_max = 150.0;
 	double alpha_max = 200.0;
-	if (particle_mode)
+	/*if (particle_mode)
 	{
 		na = n_alpha_points_PIONS;
 		alpha_min = 0.5;
 		alpha_max = 400.0;
-	}
+	}*/
 
 	int n_coeffs = na;
 	double coeffs_array[na];

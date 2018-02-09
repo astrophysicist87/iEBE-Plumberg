@@ -280,7 +280,7 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 		{
-//if (ipT != 4)
+//if (ipT != 0 && ipT != 4 && ipT != 8)
 //	continue;
 //if (ipY != ipY0)
 //	continue;
@@ -909,7 +909,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 		complex<double> q_dep_factor = one/(one - i*ak);
 		//cout << "CHECK AK: " << akr << "   " << aki << "   "  << q_dep_factor.real() << "   " << q_dep_factor.imag() << endl;
 
-		bool use_exact = true;
+		bool use_exact = false;
 		double tempCS[4];
 		if (use_exact)
 		{
@@ -918,7 +918,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 					current_parent_resonance, ptr, phir, spyr,
 					qt_pts[current_iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[current_iqz],
 					&tempCS[0], &tempCS[1], &tempCS[2], &tempCS[3] );
-			cout << "Check thermal routines: "
+			/*cout << "Check thermal routines: "
 					<< ptr << "   " << phir << "   " << spyr << "   "
 					<< spyr+current_pY_shift << endl
 					<< qt_pts[current_iqt] << "   " << qx_pts[iqx] << "   "
@@ -932,7 +932,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 					qt_pts[current_iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[current_iqz],
 					&tempCS[0], &tempCS[1], &tempCS[2], &tempCS[3] );
 			cout << "\t\t" << tempCS[0] << "   " << tempCS[1] << "   "
-					<< tempCS[2] << "   " << tempCS[3] << endl;
+					<< tempCS[2] << "   " << tempCS[3] << endl;*/
 
 //if (1) exit (8);
 		}
@@ -1035,7 +1035,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 		    qpt_cs_idx += 4;
 		//}
 
-		bool check_final_increment = true;
+		bool check_final_increment = false;
 		if (check_final_increment)
 		{
 			double tempR = 0.0, tempI = 0.0;
@@ -1052,7 +1052,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 					<< "\t\t" << newSXCSpm[0] << "   " << newSXCSpm[1] << "   " << newSXCSpm[2] << "   " << newSXCSpm[3] << endl
 					<< "\t\t" << tempCS[0] << "   " << tempCS[1] << "   " << tempCS[2] << "   " << tempCS[3] << endl
 					<< "\t\t" << tempR << "   " << tempI << endl;
-			if (1) exit (8);
+			//if (1) exit (8);
 		}
 
 		//needed to exploit symmetries of sine component

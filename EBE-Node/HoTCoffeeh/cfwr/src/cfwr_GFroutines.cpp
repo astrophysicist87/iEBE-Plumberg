@@ -517,13 +517,6 @@ void CorrelationFunction::get_CF_terms(double * totalresult, double * thermalres
 	double sin_transf_spectra = full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,1)]
 									+ full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,2)];		//add imaginary components
 
-/*if (ipt==0 && ipphi==0 && iqx==0 && iqy==0)
-	cout << "CFterms: " << iqt << "  " << iqz << "   "
-			<< thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,0)] << "   "
-			<< thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,1)] << "   "
-			<< thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,2)] << "   "
-			<< thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,3)] << endl;*/
-
 	if (return_projected_value)
 	{
 		nonFTd_spectra = nonFTd_tspectra + (nonFTd_spectra - nonFTd_tspectra) / fraction_of_resonances;
@@ -555,7 +548,8 @@ void CorrelationFunction::get_CF_terms(double * totalresult, double * thermalres
 //**************************************************************
 // Gaussian fit routine below
 //**************************************************************
-void CorrelationFunction::find_minimum_chisq_correlationfunction_full(double *** Correl_3D, int ipt, int ipphi, bool fleshing_out_CF /*== true*/)
+void CorrelationFunction::find_minimum_chisq_correlationfunction_full(
+		double *** Correl_3D, int ipt, int ipphi, bool fleshing_out_CF /*== true*/)
 {
 	double * q1pts = qx_pts;
 	double * q2pts = qy_pts;
@@ -787,7 +781,7 @@ void CorrelationFunction::R2_Fourier_transform(int iKT, double plane_psi, int mo
 
 void CorrelationFunction::Set_target_moments(int iqt, int iqz)
 {
-	bool include_thermal_pions = false;
+	bool include_thermal_pions = true;
 	if (include_thermal_pions)
 	{
 		/*if ( !thermal_pions_only or
