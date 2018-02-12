@@ -868,6 +868,7 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 		///////////////////////////////////
 		// Loop over pY points
 		///////////////////////////////////
+		//#pragma omp parallel for
 		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 		{
 			sw_qtqzpY.Reset();
@@ -1474,9 +1475,6 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights_Yeq0_alternate()
 	return;
 }
 
-
-//NON-VECTORIZED VERSION
-/*
 void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_alternate(int iqt, int iqz)
 {
 	//pions
@@ -1609,7 +1607,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_alternate(int iqt
 	delete [] sh_eta_s;
 
 	return;
-}*/
+}
 
 void printState(string tag)
 {
@@ -1620,211 +1618,6 @@ void printState(string tag)
 	     << now->tm_min << ':'
 	     << now->tm_sec
 	     << endl;
-
-}
-
-//VECTORIZED VERSION
-void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_alternate(int iqt, int iqz)
-{
-	//pions
-	int local_pid = target_particle_id;
-
-	//q-point info
-	double qt = qt_pts[iqt], qz = qz_pts[iqz];
-
-	// set particle information
-	double sign = all_particles[local_pid].sign;
-	double degen = all_particles[local_pid].gspin;
-	double localmass = all_particles[local_pid].mass;
-	double mu = all_particles[local_pid].mu;
-
-	// set some freeze-out surface information that's constant the whole time
-	double prefactor = 1.0*degen/(8.0*M_PI*M_PI*M_PI)/(hbarC*hbarC*hbarC);
-	double Tdec = (&FOsurf_ptr[0])->Tdec;
-	double Pdec = (&FOsurf_ptr[0])->Pdec;
-	double Edec = (&FOsurf_ptr[0])->Edec;
-	double one_by_Tdec = 1./Tdec;
-	double deltaf_prefactor = 0.;
-	if (use_delta_f)
-		deltaf_prefactor = 1./(2.0*Tdec*Tdec*(Edec+Pdec));
-
-	//spatial rapidity grid
-	double * eta_s = new double [eta_s_npts];
-	double * eta_s_weight = new double [eta_s_npts];
-	gauss_quadrature(eta_s_npts, 1, 0.0, 0.0, eta_s_i, eta_s_f, eta_s, eta_s_weight);
-	double * ch_eta_s = new double [eta_s_npts];
-	double * sh_eta_s = new double [eta_s_npts];
-	for (int ieta = 0; ieta < eta_s_npts; ieta++)
-	{
-		ch_eta_s[ieta] = cosh(eta_s[ieta]);
-		sh_eta_s[ieta] = sinh(eta_s[ieta]);
-	}
-
-	const long int len = FO_length*eta_s_npts;
-	double * S_vector = new double [len];
-	double * x_vector = new double [len];
-	double * y_vector = new double [len];
-	double * phi_L_vector = new double [len];
-	double * phi_L_mz_vector = new double [len];
-	double * c_phi_L_vector = new double [len];
-	double * c_phi_L_mz_vector = new double [len];
-	double * s_phi_L_vector = new double [len];
-	double * s_phi_L_mz_vector = new double [len];
-	double * arg_vector = new double [len];
-	double * carg_perp_vector = new double [len];
-	double * sarg_perp_vector = new double [len];
-
-	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
-	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
-	{
-		//if (ipT != 8 or ipphi > 0)
-		//	continue;
-		cout << "VECTORIZED TEST: " << ipT << "   " << ipphi << endl;
-		double pT = SP_pT[ipT];
-		double pphi = SP_pphi[ipphi];
-		double px = pT*cos_SP_pphi[ipphi];
-		double py = pT*sin_SP_pphi[ipphi];
-		double mT = sqrt(pT*pT+localmass*localmass);
-
-//		printState("\t Starting FO loop at ");
-
-		long int idx = 0;
-		for (int isurf = 0; isurf < FO_length; ++isurf)
-		{
-			FO_surf*surf = &FOsurf_ptr[isurf];
-
-			double tau = surf->tau;
-			double xpt = surf->xpt;
-			double ypt = surf->ypt;
-
-			double rpt = surf->r;
-			double phipt = place_in_range(surf->phi, SP_pphi_min, SP_pphi_max);
-			double ch_eta_t = ( USE_EXACT ) ? cosh(eta_t(rpt)) : 0.0;
-			double sh_eta_t = ( USE_EXACT ) ? sinh(eta_t(rpt)) : 0.0;
-
-			double vx = surf->vx;
-			double vy = surf->vy;
-			double gammaT = surf->gammaT;
-
-			double da0 = surf->da0;
-			double da1 = surf->da1;
-			double da2 = surf->da2;
-
-			double pi00 = surf->pi00;
-			double pi01 = surf->pi01;
-			double pi02 = surf->pi02;
-			double pi11 = surf->pi11;
-			double pi12 = surf->pi12;
-			double pi22 = surf->pi22;
-			double pi33 = surf->pi33;
-
-			double * tmpX = oscx[isurf];
-			double * tmpY = oscy[isurf];
-
-			for (int ieta = 0; ieta < eta_s_npts; ++ieta)
-			{
-				double p0 = mT*ch_eta_s[ieta];
-				double pz = mT*sh_eta_s[ieta];
-				double tpt = tau*ch_eta_s[ieta];
-				double zpt = tau*sh_eta_s[ieta];
-				double phi_L = (tpt*qt-zpt*qz)/hbarC;
-				double phi_L_mz = (tpt*qt+zpt*qz)/hbarC;
-				//double cos_phi_L = cos(phi_L) + cos(phi_L_mz);	//shortcut for eta_s-integral
-				//double sin_phi_L = sin(phi_L) + sin(phi_L_mz);	//shortcut for eta_s-integral
-
-				double f0 = ( USE_EXACT ) ? Hfactor(rpt, tau)*exp( one_by_Tdec*pT*sh_eta_t*cos(phipt - pphi) )
-												* exp( -one_by_Tdec*p0*ch_eta_t )
-							: 1./(exp( one_by_Tdec*(gammaT*(p0*1. - px*vx - py*vy) - mu) )+sign);	//thermal equilibrium distributions
-				//viscous corrections
-				double deltaf = 0.;
-				if (use_delta_f && !USE_EXACT)
-					deltaf = deltaf_prefactor * (1. - sign*f0)
-								* (p0*p0*pi00 - 2.0*p0*px*pi01 - 2.0*p0*py*pi02 + px*px*pi11 + 2.0*px*py*pi12 + py*py*pi22 + pz*pz*pi33);
-
-				//p^mu d^3sigma_mu factor: The plus sign is due to the fact that the DA# variables are for the covariant surface integration
-				double S_p_with_weight = ( USE_EXACT ) ? eta_s_weight[ieta]*tau*prefactor*da0*f0
-											: eta_s_weight[ieta]*tau*prefactor*(p0*da0 + px*da1 + py*da2)*f0*(1.+deltaf);
-
-				//ignore points where delta f is large or emission function goes negative from pdsigma
-				if ( (1. + deltaf < 0.0) || (flagneg == 1 && S_p_with_weight < tol) )
-				{
-					S_p_with_weight = 0.0;
-					//continue;
-				}
-							
-				x_vector[idx] = xpt;
-				y_vector[idx] = ypt;
-				phi_L_vector[idx] = phi_L;
-				phi_L_mz_vector[idx] = phi_L_mz;
-				S_vector[idx] = S_p_with_weight;
-				++idx;
-			}
-		}
-
-//		printState("\t Finished FO loop at ");
-
-//		printState("\t Starting qT loop at ");
-
-		for (int iqx = 0; iqx < qxnpts; ++iqx)
-		for (int iqy = 0; iqy < qynpts; ++iqy)
-		{
-			//transverse part
-			double qx_scl = qx_pts[iqx] / hbarC, qy_scl = qy_pts[iqy] / hbarC;
-//printState("\t Checkpoint #1: ");
-			cblas_dscal(len, qx_scl, x_vector, 1);	//in-place multiplication qx*x/hbarC
-			cblas_dscal(len, qy_scl, y_vector, 1);	//in-place multiplication qy*y/hbarC
-			vdAdd(len, x_vector, y_vector, arg_vector);	//gives (qx x + qy y)/hbarC
-			vdSinCos(len, arg_vector, sarg_perp_vector, carg_perp_vector);
-//printState("\t Checkpoint #2: ");
-			//longitudinal part
-			vdSinCos(len, phi_L_vector, s_phi_L_vector, c_phi_L_vector);
-			vdSinCos(len, phi_L_mz_vector, s_phi_L_mz_vector, c_phi_L_mz_vector);
-			vdAdd(len, s_phi_L_vector, s_phi_L_mz_vector, s_phi_L_vector);	//in-place addition
-			vdAdd(len, c_phi_L_vector, c_phi_L_mz_vector, c_phi_L_vector);	//in-place addition
-//printState("\t Checkpoint #3: ");
-			//thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 0)] += S_p_with_weight * cos_phi_L * cos_trans_Fourier;
-			//thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 1)] -= S_p_with_weight * cos_phi_L * sin_trans_Fourier;
-			//thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 2)] += S_p_with_weight * sin_phi_L * cos_trans_Fourier;
-			//thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 3)] += S_p_with_weight * sin_phi_L * sin_trans_Fourier;
-
-			//do dot products here
-			//NOTE THAT arg_vector IS REUSED HERE!!!!!!!!!!!!!!
-			//CC
-			vdMul(len, c_phi_L_vector, carg_perp_vector, arg_vector);
-			thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 0)] = cblas_ddot(len, S_vector, 1, arg_vector, 1);
-			//CS - note extra minus sign
-			vdMul(len, c_phi_L_vector, sarg_perp_vector, arg_vector);
-			thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 1)] = -cblas_ddot(len, S_vector, 1, arg_vector, 1);
-			//SC
-			vdMul(len, s_phi_L_vector, carg_perp_vector, arg_vector);
-			thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 2)] = cblas_ddot(len, S_vector, 1, arg_vector, 1);
-			//SS
-			vdMul(len, s_phi_L_vector, sarg_perp_vector, arg_vector);
-			thermal_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, 3)] = cblas_ddot(len, S_vector, 1, arg_vector, 1);
-//printState("\t Checkpoint #4: ");
-		}
-
-//		printState("\t Finished qT loop at ");
-	}
-
-	//clean up
-	delete [] eta_s;
-	delete [] eta_s_weight;
-	delete [] ch_eta_s;
-	delete [] sh_eta_s;
-	delete [] S_vector;
-	delete [] x_vector;
-	delete [] y_vector;
-	delete [] phi_L_vector;
-	delete [] phi_L_mz_vector;
-	delete [] c_phi_L_vector;
-	delete [] c_phi_L_mz_vector;
-	delete [] s_phi_L_vector;
-	delete [] s_phi_L_mz_vector;
-	delete [] arg_vector;
-	delete [] carg_perp_vector;
-	delete [] sarg_perp_vector;
-
 	return;
 }
 

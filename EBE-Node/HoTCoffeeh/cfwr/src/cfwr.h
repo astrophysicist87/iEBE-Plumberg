@@ -43,6 +43,23 @@ typedef struct
 	bool include_channel;
 } decay_info;
 
+struct Correlationfunction3D_data
+{
+	size_t data_length;
+	double * q_o;
+	double * q_s;
+	double * q_l;
+	double * y;
+	double * sigma;
+};
+
+int Fittarget_correlfun3D_f (const gsl_vector *xvec_ptr, void *params_ptr, gsl_vector *f_ptr);
+int Fittarget_correlfun3D_df (const gsl_vector *xvec_ptr, void *params_ptr,  gsl_matrix *Jacobian_ptr);
+int Fittarget_correlfun3D_fdf (const gsl_vector* xvec_ptr, void *params_ptr, gsl_vector* f_ptr, gsl_matrix* Jacobian_ptr);
+int Fittarget_correlfun3D_f_withlambda (const gsl_vector *xvec_ptr, void *params_ptr, gsl_vector *f_ptr);
+int Fittarget_correlfun3D_df_withlambda (const gsl_vector *xvec_ptr, void *params_ptr,  gsl_matrix *Jacobian_ptr);
+int Fittarget_correlfun3D_fdf_withlambda (const gsl_vector* xvec_ptr, void *params_ptr, gsl_vector* f_ptr, gsl_matrix* Jacobian_ptr);
+
 class CorrelationFunction
 {
 	private:
@@ -441,6 +458,12 @@ class CorrelationFunction
 		//misc
 		double S_x_p( int local_pid, int isurf, double eta_s,
 						double pT, double pphi, double pY );
+		int print_fit_state_3D (size_t iteration, gsl_multifit_fdfsolver * solver_ptr);
+		void Fit_Correlationfunction3D_withlambda(double *** Correl_3D, int ipt, int ipphi, bool fleshing_out_CF = true);
+		int print_fit_state_3D_withlambda (size_t iteration, gsl_multifit_fdfsolver * solver_ptr);
+		inline double get_fit_results(int i, gsl_multifit_fdfsolver * solver_ptr);
+		inline double get_fit_err (int i, gsl_matrix * covariance_ptr);
+
 
 };
 

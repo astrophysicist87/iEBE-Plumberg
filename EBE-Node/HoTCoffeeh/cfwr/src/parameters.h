@@ -21,7 +21,7 @@
 using namespace std;
 
 #define VERBOSE 					0		// specifies level of output - 0 is lowest (no output)
-#define QT_POINTS_SPACING			2		// 0 - uniform from -qmax to +qmax
+#define QT_POINTS_SPACING			1		// 0 - uniform from -qmax to +qmax
 											// 1 - Chebyshev nodes from -qmax to +qmax
 											// 2 - Chebyshev nodes for +ve and -ve separately (better convergence)
 #define QX_POINTS_SPACING			0		// same
@@ -55,7 +55,7 @@ const int Maxdecaychannel=13;
 const int Maxdecaypart=5;
 
 // Space-time rapidity information
-const int eta_s_npts = 51;
+const int eta_s_npts = 15;
 const int base_Del_eta_s_npts = 51;
 const double eta_s_i = 0.0;
 const double eta_s_f = 4.0;

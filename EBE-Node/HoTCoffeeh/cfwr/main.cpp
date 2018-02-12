@@ -189,6 +189,7 @@ int main(int argc, char *argv[])
 
 	// Create CorrelationFunction object
 	CorrelationFunction correlation_function(paraRdr, &particle[particle_idx], particle, Nparticle, chosen_resonance_indices, particle_idx, output);
+	//#pragma omp threadprivate(correlation_function)
 
 	// Set path and freeze-out surface information
 	correlation_function.Set_path(workingDirectory);
@@ -314,10 +315,13 @@ if (1) exit(8);
 		int local_qtnpts = (int)(paraRdr->getVal("qtnpts"));
 		int local_qznpts = (int)(paraRdr->getVal("qznpts"));
 
+		//initialize HDF5 files first, to help with HDF5-OpenMP synchronization
 		correlation_function.Initialize_HDF_arrays();
 
 		//looping in this way keeps *h5 files and total loaded memory of program small at any one time
-		//#pragma omp parallel for
+		//#pragma omp parallel for ordered default(none) collapse(2)\
+        //                         private(sw, local_qtnpts, local_qznpts, output)\
+        //                         copyin(correlation_function)
 		for (int iqt = 0; iqt < (local_qtnpts+1)/2; ++iqt)
 		for (int iqz = 0; iqz < (local_qznpts+1)/2; ++iqz)
 		{

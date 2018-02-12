@@ -145,6 +145,24 @@ inline void CorrelationFunction::addElementToQueue(priority_queue<pair<double, s
 	return;
 }
 
+//*********************************************************************
+//  Function to return the i'th best-fit parameter
+inline double CorrelationFunction::get_fit_results(int i, gsl_multifit_fdfsolver * solver_ptr)
+{
+	return gsl_vector_get (solver_ptr->x, i);
+}
+
+//*********************************************************************
+//  Function to retrieve the square root of the diagonal elements of
+//   the covariance matrix.
+inline double CorrelationFunction::get_fit_err (int i, gsl_matrix * covariance_ptr)
+{
+	return sqrt (gsl_matrix_get (covariance_ptr, i, i));
+}
+
+/************************************************************************/
+
+
 //End of file
 
 #endif
