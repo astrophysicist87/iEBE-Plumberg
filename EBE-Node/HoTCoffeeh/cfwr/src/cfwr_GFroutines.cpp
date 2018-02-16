@@ -26,6 +26,8 @@ void CorrelationFunction::Get_GF_HBTradii()
 	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 	{
+		if (ipt > 0 or ipphi > 0)
+			continue;
 		*global_out_stream_ptr << "   --> Doing pT = " << SP_pT[ipt] << ", pphi = " << SP_pphi[ipphi] << "..." << endl;
 		
 		//determine whether to use fleshed out / projected CFvals
@@ -37,8 +39,8 @@ void CorrelationFunction::Get_GF_HBTradii()
 		}
 
 		//finally, do fits
-		Fit_Correlationfunction3D_withlambda( CF_for_fitting, ipt, ipphi, FLESH_OUT_CF );
-		//find_minimum_chisq_correlationfunction_full( CF_for_fitting, ipt, ipphi, FLESH_OUT_CF );
+		//Fit_Correlationfunction3D_withlambda( CF_for_fitting, ipt, ipphi, FLESH_OUT_CF );
+		find_minimum_chisq_correlationfunction_full( CF_for_fitting, ipt, ipphi, FLESH_OUT_CF );
 	}
 
 	if (FLESH_OUT_CF)
@@ -103,6 +105,8 @@ void CorrelationFunction::Cal_correlationfunction(bool project_CF /*==true*/)
 		for (int ipt = 0; ipt < n_pT_pts; ++ipt)
 		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		{
+			if (ipt > 0 or ipphi > 0)
+				continue;
 			Flesh_out_CF(ipt, ipphi);
 			Output_fleshed_out_correlationfunction(ipt, ipphi, project_CF);
 		}
@@ -308,7 +312,7 @@ void CorrelationFunction::Flesh_out_CF(int ipt, int ipphi, double sample_scale /
 	//cout << "(qymin, qymax, new_Del_qy) = (" << qymin << ", " << qymax << ", " << new_Del_qy << ")" << endl;
 	//cout << "(qzmin, qzmax, new_Del_qz) = (" << qzmin << ", " << qzmax << ", " << new_Del_qz << ")" << endl;
 	
-	/*for (int iqx = 0; iqx < new_nqpts; ++iqx)
+	for (int iqx = 0; iqx < new_nqpts; ++iqx)
 	for (int iqy = 0; iqy < new_nqpts; ++iqy)
 	for (int iqz = 0; iqz < new_nqpts; ++iqz)
 	{
@@ -324,9 +328,10 @@ void CorrelationFunction::Flesh_out_CF(int ipt, int ipphi, double sample_scale /
 		fleshed_out_crossterm[iqx][iqy][iqz] = interpolate_CF(crosstermCFvals[ipt][ipphi], qx0, qy0, qz0, ipt, 1);
 		fleshed_out_resonances[iqx][iqy][iqz] = interpolate_CF(resonancesCFvals[ipt][ipphi], qx0, qy0, qz0, ipt, 2);
 		fleshed_out_CF[iqx][iqy][iqz] = 1.0 + fleshed_out_thermal[iqx][iqy][iqz] + fleshed_out_crossterm[iqx][iqy][iqz] + fleshed_out_resonances[iqx][iqy][iqz];
-	}*/
+	}
 
 	//set up Chebyshev calculation
+	/*
 	const int n = (qxnpts + 1) / 2;
 	double tmptan = tan(M_PI / (4.0*n));
 	double qx_min_local_neg = -qx_max, qx_min_local_pos = -qx_max*tmptan*tmptan ;
@@ -373,7 +378,7 @@ void CorrelationFunction::Flesh_out_CF(int ipt, int ipphi, double sample_scale /
 
 		fleshed_out_CF[iqx][0][0] = cfPOS.eval(point);
 	}
-
+	*/
 
 	return;
 }
@@ -747,8 +752,8 @@ void CorrelationFunction::Fit_Correlationfunction3D_withlambda(double *** Correl
 		Correlfun3D_data.y[idx] = Correl_3D[i][j][k];
 		//Correlfun3D_data.sigma[idx] = Correl_3D_err[i][j][k];
 		Correlfun3D_data.sigma[idx] = 1.e-3;
-if (i==(q1npts-1)/2 && j==(q2npts-1)/2 && k==(q3npts-1)/2)
-	Correlfun3D_data.sigma[idx] = 1.e10;	//ignore central point
+//if (i==(q1npts-1)/2 && j==(q2npts-1)/2 && k==(q3npts-1)/2)
+//	Correlfun3D_data.sigma[idx] = 1.e10;	//ignore central point
 		idx++;
 	}
 	double para_init[n_para] = { 1.0, 1.0, 1.0, 1.0, 1.0 };  // initial guesses of parameters
@@ -769,7 +774,7 @@ if (i==(q1npts-1)/2 && j==(q2npts-1)/2 && k==(q3npts-1)/2)
 	gsl_multifit_fdfsolver_set (solver_ptr, &target_func, &xvec_ptr.vector);
 
 	size_t iteration = 0;         // initialize iteration counter
-	print_fit_state_3D (iteration, solver_ptr);
+	print_fit_state_3D_withlambda (iteration, solver_ptr);
 	int status;  		// return value from gsl function calls (e.g., error)
 	do
 	{
@@ -779,10 +784,12 @@ if (i==(q1npts-1)/2 && j==(q2npts-1)/2 && k==(q3npts-1)/2)
 		status = gsl_multifit_fdfsolver_iterate (solver_ptr);
 
 		// print out the status of the fit
-		if (VERBOSE > 2) cout << "status = " << gsl_strerror (status) << endl;
+		//if (VERBOSE > 2)
+			cout << "status = " << gsl_strerror (status) << endl;
 
 		// customized routine to print out current parameters
-		if (VERBOSE > 2) print_fit_state_3D (iteration, solver_ptr);
+		//if (VERBOSE > 2)
+			print_fit_state_3D_withlambda (iteration, solver_ptr);
 
 		if (status)    // check for a nonzero status code
 		{
@@ -798,8 +805,10 @@ if (i==(q1npts-1)/2 && j==(q2npts-1)/2 && k==(q3npts-1)/2)
 	gsl_multifit_covar (solver_ptr->J, 0.0, covariance_ptr);
 
 	// print out the covariance matrix using the gsl function (not elegant!)
-	if (VERBOSE > 2) cout << endl << "Covariance matrix: " << endl;
-	if (VERBOSE > 2) gsl_matrix_fprintf (stdout, covariance_ptr, "%g");
+	if (VERBOSE > 2)
+		cout << endl << "Covariance matrix: " << endl;
+	if (VERBOSE > 2)
+		gsl_matrix_fprintf (stdout, covariance_ptr, "%g");
 
 	cout.setf (ios::fixed, ios::floatfield);	// output in fixed format
 	cout.precision (5);		                // # of digits in doubles
@@ -839,8 +848,8 @@ if (i==(q1npts-1)/2 && j==(q2npts-1)/2 && k==(q3npts-1)/2)
 	R2_long_err[ipt][ipphi] = c*get_fit_err(3, covariance_ptr)*hbarC*hbarC;
 	R2_outside_err[ipt][ipphi] = c*get_fit_err(4, covariance_ptr)*hbarC*hbarC;
 
-	if (VERBOSE > 1) 
-	{
+	//if (VERBOSE > 1) 
+	//{
 		cout << "final results: " << endl;
 		cout << scientific << setw(10) << setprecision(5) 
 			<< "chisq/dof = " << chi*chi/dof << endl;
@@ -850,7 +859,7 @@ if (i==(q1npts-1)/2 && j==(q2npts-1)/2 && k==(q3npts-1)/2)
 		cout << " R2_side[ipt=" << ipt << "][ipphi=" << ipphi << "] = " << R2_side_GF[ipt][ipphi] << " +/- " << R2_side_err[ipt][ipphi] << endl;
 		cout << " R2_long[ipt=" << ipt << "][ipphi=" << ipphi << "] = " << R2_long_GF[ipt][ipphi] << " +/- " << R2_long_err[ipt][ipphi] << endl;
 		cout << " R2_outside[ipt=" << ipt << "][ipphi=" << ipphi << "] = " << R2_outside_GF[ipt][ipphi] << " +/- " << R2_outside_err[ipt][ipphi] << endl;
-	}
+	//}
 
 	//clean up
 	gsl_matrix_free (covariance_ptr);

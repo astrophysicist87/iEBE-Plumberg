@@ -891,8 +891,8 @@ void CorrelationFunction::Set_q_points()
 	double qymax = abs(init_qy);
 	double qxymax = sqrt(qxmax*qxmax+qymax*qymax);
 	double xi2 = mtarget*mtarget + SP_pT_max*SP_pT_max + 0.25*qxymax*qxymax;	//pretend that Kphi == 0, qx == qo and qs == ql == 0, to maximize qtmax
-	//double qtmax = sqrt(xi2 + SP_pT_max*qxymax) - sqrt(xi2 - SP_pT_max*qxymax) + 1.e-10;
-	qtmax = max( qxymax, qz_pts[qznpts-1] );				//just choose the biggest value
+	qtmax = sqrt(xi2 + SP_pT_max*qxymax) - sqrt(xi2 - SP_pT_max*qxymax) + 1.e-10;	//THIS IS THE INCORRECT VERSION - ONLY NEEDED FOR COMPARISONS WITH PREVIOUS CODE VERSIONS!!!
+	//qtmax = max( qxymax, qz_pts[qznpts-1] );				//just choose the biggest value (THIS IS THE CORRECT VERSION!!!!!)
 
 	//for bug-checking
 	//qtmax = 0.2;
