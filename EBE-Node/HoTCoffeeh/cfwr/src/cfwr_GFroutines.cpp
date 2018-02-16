@@ -26,8 +26,8 @@ void CorrelationFunction::Get_GF_HBTradii()
 	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 	{
-		if (ipt > 0 or ipphi > 0)
-			continue;
+		//if (ipt > 0 or ipphi > 0)
+		//	continue;
 		*global_out_stream_ptr << "   --> Doing pT = " << SP_pT[ipt] << ", pphi = " << SP_pphi[ipphi] << "..." << endl;
 		
 		//determine whether to use fleshed out / projected CFvals
@@ -105,8 +105,8 @@ void CorrelationFunction::Cal_correlationfunction(bool project_CF /*==true*/)
 		for (int ipt = 0; ipt < n_pT_pts; ++ipt)
 		for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		{
-			if (ipt > 0 or ipphi > 0)
-				continue;
+			//if (ipt > 0 or ipphi > 0)
+			//	continue;
 			Flesh_out_CF(ipt, ipphi);
 			Output_fleshed_out_correlationfunction(ipt, ipphi, project_CF);
 		}
