@@ -1449,11 +1449,11 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights_Yeq0_alternate()
 											: eta_s_weight[ieta]*tau*prefactor*(p0*da0 + px*da1 + py*da2)*f0*(1.+deltaf);
 
 				//ignore points where delta f is large or emission function goes negative from pdsigma
-				/*if ( (1. + deltaf < 0.0) || (flagneg == 1 && S_p_with_weight < tol) )
+				if ( (1. + deltaf < 0.0) || (flagneg == 1 && S_p_with_weight < tol) )
 				{
 					S_p_with_weight = 0.0;
 					continue;
-				}*/
+				}
 
 				spectra_at_pTpphi += eta_even_factor * S_p_with_weight;
 			}
@@ -1578,11 +1578,11 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_alternate(int iqt
 											: eta_s_weight[ieta]*tau*prefactor*(p0*da0 + px*da1 + py*da2)*f0*(1.+deltaf);
 
 				//ignore points where delta f is large or emission function goes negative from pdsigma
-				/*if ( (1. + deltaf < 0.0) || (flagneg == 1 && S_p_with_weight < tol) )
+				if ( (1. + deltaf < 0.0) || (flagneg == 1 && S_p_with_weight < tol) )
 				{
 					S_p_with_weight = 0.0;
 					continue;
-				}*/
+				}
 
 				for (int iqx = 0; iqx < qxnpts; ++iqx)
 				for (int iqy = 0; iqy < qynpts; ++iqy)
