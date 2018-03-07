@@ -14,22 +14,22 @@ workingDirectory=$HOME'/Plumberg_iEBE/iEBE-stable/RESULTS_Edec300/results/result
 
 npt0=15
 npphi0=36
-npy0=15
+npy0=21
 
 #run at most this many jobs at a time
-nMaxProcessesRunning=16
+nMaxProcessesRunning=12
 
 declare -A qxSizes=( ["X"]=51 ["Y"]=1 ["Z"]=1)
 declare -A qySizes=( ["X"]=1 ["Y"]=51 ["Z"]=1)
 declare -A qzSizes=( ["X"]=1 ["Y"]=1 ["Z"]=51)
 
 #submit jobs
-for axis in X Y Z
+for axis in X
 do
-	for nqt0 in 11 13 15 17 19 21
+	for nqt0 in 17
 	do
 		###########
-		direcName0=$homeDirectory/AXIS_`echo $axis`_qt_`echo $nqt0`
+		direcName0=$homeDirectory/AXIS_`echo $axis`_qt_`echo $nqt0`_largerPY
 		if [ ! -d "$direcName0" ]
 		then
 			mkdir $direcName0
@@ -42,7 +42,8 @@ do
 		dqy=0.004
 		dqz=0.004
 
-		for resfrac in 0.00 0.10 0.20 0.30 0.40 0.50 0.60 0.70 0.80 0.90 1.00
+		#for resfrac in 0.00 0.10 0.20 0.30 0.40 0.50 0.60 0.70 0.80 0.90 1.00
+		for resfrac in 0.30
 		do
 			##########################################
 			# before submitting any more jobs, make sure you aren't at the max. limit

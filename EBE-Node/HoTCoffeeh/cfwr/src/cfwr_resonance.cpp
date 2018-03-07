@@ -20,7 +20,7 @@ using namespace std;
 
 const std::complex<double> i(0, 1);
 
-const int n_refinement_pts = 201;
+const int n_refinement_pts = 501;
 double Delta_DpY;
 const double PTCHANGE = 1.0;
 const bool SKIP_LARGE_PTR = false;	//for now
@@ -576,7 +576,7 @@ cout << "DUMP: " << daughter_lookup_idx << "   " << ipT << "   " << ipphi << "  
 					}
 				}
 
-				if ( doing_spectra && ipY == (n_pY_pts-1)/2 )	//only need spectra at Y == 0
+				if ( doing_spectra && ipY == ipY0 )	//only need spectra at Y == 0
 				{
 					//update daughter spectra separately
 					spectra[daughter_particle_id][ipT][ipphi] += ssum;
