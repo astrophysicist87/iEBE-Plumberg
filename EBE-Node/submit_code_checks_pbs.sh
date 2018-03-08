@@ -1,12 +1,12 @@
 #!/bin/bash
 
 baseDirectory=$HOME/Plumberg_iEBE/iEBE-stable/EBE-Node
-homeDirectory=$baseDirectory/code_checks
+homeDirectory=$baseDirectory/code_checks_prev
 outfilename=$homeDirectory/"submit_jobs_record_`date +%F`.out"
 jobIDsfilename=$homeDirectory/"jobIDs_`date +%F`.out"
 jobIDsfile=`get_filename $jobIDsfilename`
 outfile=`get_filename $outfilename`
-srcDirec=$baseDirectory/HoTCoffeeh
+srcDirec=$baseDirectory/HoTCoffeeh_prev
 
 i=1
 workingDirectory=$HOME'/Plumberg_iEBE/iEBE-stable/RESULTS_Edec300/results/results-'`echo $i`
