@@ -315,26 +315,36 @@ if (1) exit(8);
 		int local_qtnpts = (int)(paraRdr->getVal("qtnpts"));
 		int local_qznpts = (int)(paraRdr->getVal("qznpts"));
 
-		//initialize HDF5 files first, to help with HDF5-OpenMP synchronization
-		correlation_function.Initialize_HDF_arrays();
+		//initialize HDF5 arrays
+		correlation_function.Initialize_HDF_target_thermal_array();
+		correlation_function.Initialize_HDF_target_full_array();
+		correlation_function.Initialize_HDF_resonance_array();
 
 		//looping in this way keeps *h5 files and total loaded memory of program small at any one time
-		//#pragma omp parallel for ordered default(none) collapse(2)\
-        //                         private(sw, local_qtnpts, local_qznpts, output)\
-        //                         copyin(correlation_function)
 		for (int iqt = 0; iqt < (local_qtnpts+1)/2; ++iqt)
 		for (int iqz = 0; iqz < (local_qznpts+1)/2; ++iqz)
 		{
 			//if (iqt + iqz > 0) continue;
 			sw.Start();
+
+			correlation_function.Reset_HDF_resonance_array();
+
 			correlation_function.Fourier_transform_emission_function(iqt, iqz);
+
 			correlation_function.Compute_phase_space_integrals(iqt, iqz);
+
 			correlation_function.Set_target_moments(iqt, iqz);
+
+			correlation_function.Close_HDF_resonance_array();
+
 			sw.Stop();
 			output << "Completed this (iqt=" << iqt << ",iqz=" << iqz << ")-loop in " << sw.printTime() << " seconds." << endl;
 			sw.Reset();
 		}
 	}
+
+	//clean up
+	//correlation_function.Close_HDF_resonance_array();
 
 	//decide whether to compute correlation function or read it in
 	if ((int)(paraRdr->getVal("calculate_CF_mode")) < 2)

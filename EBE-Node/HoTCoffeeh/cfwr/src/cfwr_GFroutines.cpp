@@ -958,7 +958,7 @@ void CorrelationFunction::R2_Fourier_transform(int iKT, double plane_psi, int mo
 
 void CorrelationFunction::Set_target_moments(int iqt, int iqz)
 {
-	bool include_thermal_pions = true;
+	bool include_thermal_pions = false;
 	if (include_thermal_pions)
 	{
 		/*if ( !thermal_pions_only or
@@ -1029,7 +1029,7 @@ void CorrelationFunction::Set_full_target_moments(int iqt, int iqz)
 {
 	//this one includes resonance decay contributions,
 	//needs thermal contributions added in
-	int getHDFresonanceSpectra = Access_resonance_in_HDF_array(target_particle_id, iqt, iqz, 1, current_dN_dypTdpTdphi_moments, true);
+	int getHDFresonanceSpectra = Access_target_full_in_HDF_array(iqt, iqz, 1, current_dN_dypTdpTdphi_moments, true);
 
 	bool use_interp = true;
 	if (use_interp)

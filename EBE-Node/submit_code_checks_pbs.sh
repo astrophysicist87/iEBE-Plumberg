@@ -14,7 +14,7 @@ workingDirectory=$HOME'/Plumberg_iEBE/iEBE-stable/RESULTS_Edec300/results/result
 
 npt0=15
 npphi0=36
-npy0=21
+npy0=15
 
 #run at most this many jobs at a time
 nMaxProcessesRunning=12
@@ -26,10 +26,10 @@ declare -A qzSizes=( ["X"]=1 ["Y"]=1 ["Z"]=51)
 #submit jobs
 for axis in X
 do
-	for nqt0 in 17
+	for nqt0 in 1
 	do
 		###########
-		direcName0=$homeDirectory/AXIS_`echo $axis`_qt_`echo $nqt0`_largerPY
+		direcName0=$homeDirectory/AXIS_`echo $axis`_qt_`echo $nqt0`_pT_`echo $npt0`_VERBOSE
 		if [ ! -d "$direcName0" ]
 		then
 			mkdir $direcName0
@@ -38,9 +38,9 @@ do
 		nqx0=${qxSizes[$axis]}
 		nqy0=${qySizes[$axis]}
 		nqz0=${qzSizes[$axis]}
-		dqx=0.004
-		dqy=0.004
-		dqz=0.004
+		dqx=0.001
+		dqy=0.001
+		dqz=0.001
 
 		#for resfrac in 0.00 0.10 0.20 0.30 0.40 0.50 0.60 0.70 0.80 0.90 1.00
 		for resfrac in 0.30

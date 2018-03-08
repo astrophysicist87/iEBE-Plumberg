@@ -20,7 +20,7 @@ using namespace std;
 
 const std::complex<double> i(0, 1);
 
-const int n_refinement_pts = 501;
+const int n_refinement_pts = 201;
 double Delta_DpY;
 const double PTCHANGE = 1.0;
 const bool SKIP_LARGE_PTR = false;	//for now
@@ -42,6 +42,7 @@ void check_for_NaNs(string variable_name, const T variable_value, ofstream& loca
 
 double CorrelationFunction::get_Q()
 {
+
 	double smin = (m2+m3)*(m2+m3);
 	double smax = (Mres-mass)*(Mres-mass);
 	double sum = 0.;
@@ -61,6 +62,7 @@ double CorrelationFunction::get_Q()
 
 double CorrelationFunction::g(double s)
 {
+
 	double gs_pstar_loc = sqrt( ((Mres+mass)*(Mres+mass) - s)*((Mres-mass)*(Mres-mass) - s) )/(2.0*Mres);
 	double g_res = br/(4.*M_PI*gs_pstar_loc);
 	if (n_body == 3 || n_body == 4)		//both set up to work the same way
@@ -76,6 +78,7 @@ double CorrelationFunction::g(double s)
 
 void CorrelationFunction::Tabulate_resonance_Chebyshev_coefficients(int parent_resonance_particle_id)
 {
+
 	cs_accel_expEdNd3p = gsl_cheb_alloc (n_pY_pts - 1);
 	cs_accel_expEdNd3p->a = adjusted_SP_Del_pY_minimum;
 	cs_accel_expEdNd3p->b = SP_Del_pY_max;
@@ -109,6 +112,7 @@ void CorrelationFunction::Tabulate_resonance_Chebyshev_coefficients(int parent_r
 
 void CorrelationFunction::Refine_resonance_grids(int parent_resonance_particle_id)
 {
+
 	Delta_DpY = (SP_Del_pY_max - SP_Del_pY_min) / (double)(n_refinement_pts - 1);
 
 	long cfs_array_length = qxnpts * qynpts * ntrig;
@@ -147,6 +151,7 @@ void CorrelationFunction::Refine_resonance_grids(int parent_resonance_particle_i
 
 void CorrelationFunction::Clear_and_set_exp_table_nb2()
 {
+
 	long cfs_array_length = qxnpts * qynpts * ntrig;
 	long momentum_length = n_pphi_pts * n_v_pts * n_zeta_pts;
 	for (int imom = 0; imom < momentum_length; ++imom)
@@ -163,6 +168,7 @@ void CorrelationFunction::Clear_and_set_exp_table_nb2()
 
 void CorrelationFunction::Clear_and_set_exp_table_nb3()
 {
+
 	long cfs_array_length = qxnpts * qynpts * ntrig;
 	long momentum_length = n_pphi_pts * n_s_pts * n_v_pts * n_zeta_pts;
 	for (int imom = 0; imom < momentum_length; ++imom)
@@ -174,11 +180,13 @@ void CorrelationFunction::Clear_and_set_exp_table_nb3()
 		exp_table_22[imom][icf] = -1.0;
 	}
 
+
 	return;
 }
 
 void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_id, int daughter_particle_id, int decay_channel, int iqt, int iqz)
 {
+
 	//time_t rawtime;
   	//struct tm * timeinfo;
 	Stopwatch do_resonance_integrals_sw;
@@ -280,10 +288,10 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 		{
-//if (ipT != 0 && ipT != 4 && ipT != 8)
-//	continue;
-//if (ipY != ipY0)
-//	continue;
+if (ipT != 0 && ipT != 4 && ipT != 8)
+	continue;
+if (ipY != ipY0)
+	continue;
 
 			if (doing_moments)
 			{
@@ -294,8 +302,8 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 
 			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 			{
-//if (ipphi > 0)
-//	continue;
+if (ipphi > 0)
+	continue;
 
 				double local_pT = SP_pT[ipT];
 				double local_pphi = SP_pphi[ipphi];
@@ -330,6 +338,7 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 						for (int tempidx = 0; tempidx <= 1; ++tempidx)
 						{
 							current_tempidx = tempidx;
+cout << "PROGRESS: " << current_is << "   " << iv << "   " << izeta << "   " << tempidx << endl;
 							if (tempidx != 0)
 								PKphi = VEC_n2_PPhi_tildeFLIP[NB2_indexer(iv,izeta)];		//also takes Pp --> Pm
 							currentPpm = VEC_n2_Ppm[NB2_indexer(iv,izeta)*2 + tempidx];
@@ -490,6 +499,10 @@ cout << "DUMP: " << daughter_lookup_idx << "   " << ipT << "   " << ipphi << "  
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 		{
+if (ipT != 0 && ipT != 4 && ipT != 8)
+	continue;
+if (ipY != ipY0)
+	continue;
 			if (doing_moments)
 			{
 				for (int igrid = 0; igrid < grids_calculated_length; ++igrid)
@@ -499,6 +512,9 @@ cout << "DUMP: " << daughter_lookup_idx << "   " << ipT << "   " << ipphi << "  
 
 			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 			{
+if (ipphi > 0)
+	continue;
+
 				double local_pT = SP_pT[ipT];
 				double local_pphi = SP_pphi[ipphi];
 				double local_pY = SP_Del_pY[ipY] + current_pY_shift;
@@ -533,6 +549,7 @@ cout << "DUMP: " << daughter_lookup_idx << "   " << ipT << "   " << ipphi << "  
 
 							for (int tempidx = 0; tempidx <= 1; ++tempidx)
 							{
+cout << "PROGRESS: " << is << "   " << iv << "   " << izeta << "   " << tempidx << endl;
 								current_tempidx = tempidx;
 								if (tempidx != 0)
 									PKphi = VEC_n3_PPhi_tildeFLIP[NB3_indexer(is,iv,izeta)];		//also takes Pp --> Pm
@@ -645,6 +662,7 @@ cout << "DUMP: " << daughter_lookup_idx << "   " << ipT << "   " << ipphi << "  
 	do_resonance_integrals_sw.Stop();
 	*global_out_stream_ptr << "\t--> Finished this decay loop through Do_resonance_integrals(...) in " << do_resonance_integrals_sw.printTime() << " seconds." << endl;
 
+
 	return;
 }
 
@@ -652,6 +670,7 @@ cout << "DUMP: " << daughter_lookup_idx << "   " << ipT << "   " << ipphi << "  
 ///////////////////////////////////////////////////////
 void CorrelationFunction::Edndp3(double ptr, double pphir, double * result, int loc_verb /*==0*/)
 {
+
 	double phi0, phi1;
 	double f1, f2;
 
@@ -752,6 +771,7 @@ void CorrelationFunction::Edndp3(double ptr, double pphir, double * result, int 
 				
 	// now, interpolate f1 and f2 over the pphi direction
 	*result += lin_int(pphir-phi0, one_by_pphidiff, f1, f2);
+
 
 	return;
 }
@@ -933,7 +953,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 					&tempCS[0], &tempCS[1], &tempCS[2], &tempCS[3] );
 			cout << "\t\t" << tempCS[0] << "   " << tempCS[1] << "   "
 					<< tempCS[2] << "   " << tempCS[3] << endl;*/
-
+			return;
 //if (1) exit (8);
 		}
 
@@ -1052,7 +1072,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 					<< "\t\t" << newSXCSpm[0] << "   " << newSXCSpm[1] << "   " << newSXCSpm[2] << "   " << newSXCSpm[3] << endl
 					<< "\t\t" << tempCS[0] << "   " << tempCS[1] << "   " << tempCS[2] << "   " << tempCS[3] << endl
 					<< "\t\t" << tempR << "   " << tempI << endl;
-			//if (1) exit (8);
+			if (1) exit (8);
 		}
 
 		//needed to exploit symmetries of sine component
@@ -1096,6 +1116,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 ///////////////////////////////////////////////////////
 void CorrelationFunction::Set_val_arrays(double ptr, double phir, double spyr)
 {
+
 	double phi0, phi1, py0, py1;
 	double val11, val12, val21, val22;	//store intermediate results of pT interpolation
 	double val1, val2;					//store intermediate results of pphi interpolation

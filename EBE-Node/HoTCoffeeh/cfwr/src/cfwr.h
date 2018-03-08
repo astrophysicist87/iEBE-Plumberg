@@ -279,7 +279,11 @@ class CorrelationFunction
 		void Load_FOcells(int local_pid);
 
 		// HDF routines
-		void Initialize_HDF_arrays();
+		void Initialize_HDF_resonance_array();
+		void Reset_HDF_resonance_array();
+		void Close_HDF_resonance_array();
+		void Initialize_HDF_target_thermal_array();
+		void Initialize_HDF_target_full_array();
 		// resonances
 		int Access_resonance_in_HDF_array(int local_pid, int iqt, int iqz, int access_mode, double * resonance_array_to_fill, bool verbose = false);
 		int Administrate_resonance_HDF_array(int administration_mode);
@@ -289,7 +293,9 @@ class CorrelationFunction
 		int Administrate_besselcoeffs_HDF_array(int administration_mode, int particle_mode = 0);
 		// target thermal moments...
 		int Administrate_target_thermal_HDF_array(int administration_mode);
-		int Access_target_thermal_in_HDF_array(int iqt, int iqz, int access_mode, double * target_thermal_array_to_fill, bool verbose = false);
+		int Access_target_thermal_in_HDF_array(int iqt, int iqz, int access_mode, double * target_full_array_to_fill, bool verbose = false);
+		int Administrate_target_full_HDF_array(int administration_mode);
+		int Access_target_full_in_HDF_array(int iqt, int iqz, int access_mode, double * target_full_array_to_fill, bool verbose = false);
 
 		void Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int iqz);
 		void Set_all_Bessel_grids(int iqt, int iqz, int particle_mode = 0);
@@ -442,6 +448,10 @@ class CorrelationFunction
 		H5::DataSpace * tta_dataspace, * tta_memspace;
 		H5::H5File * tta_file;
 		H5::DataSet * tta_dataset;
+		//full target array
+		H5::DataSpace * tfa_dataspace, * tfa_memspace;
+		H5::H5File * tfa_file;
+		H5::DataSet * tfa_dataset;
 		//all resonance array
 		H5::DataSpace * resonance_dataspace, * resonance_memspace;
 		H5::H5File * resonance_file;

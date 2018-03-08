@@ -154,6 +154,7 @@ inline double eta_t(double r)
 
 double CorrelationFunction::place_in_range(double phi, double min, double max)
 {
+
 	while (phi < min || phi > max)
 	{
 		if (phi < min) phi += twopi;
@@ -168,6 +169,7 @@ double CorrelationFunction::place_in_range(double phi, double min, double max)
 // ************************************************************
 void CorrelationFunction::Fourier_transform_emission_function(int iqt, int iqz)
 {
+
 	Stopwatch BIGsw;
 	global_plane_psi = 0.0;	//for now
 
@@ -260,6 +262,7 @@ void CorrelationFunction::Fourier_transform_emission_function(int iqt, int iqz)
 
 void CorrelationFunction::Compute_phase_space_integrals(int iqt, int iqz)
 {
+
 	if (thermal_pions_only)
 	{
 		*global_out_stream_ptr << "Thermal pions only: no phase-space integrals need to be computed." << endl;
@@ -337,6 +340,7 @@ void CorrelationFunction::Compute_phase_space_integrals(int iqt, int iqz)
 
 bool CorrelationFunction::Do_this_decay_channel(int dc_idx)
 {
+
 	string local_name = "Thermal pion(+)";
 	if (dc_idx == 0)
 	{
@@ -359,6 +363,7 @@ bool CorrelationFunction::Do_this_decay_channel(int dc_idx)
 // ************************************************************
 bool CorrelationFunction::Do_this_daughter_particle(int dc_idx, int daughter_idx, int * daughter_resonance_pid)
 {
+
 	// assume dc_idx > 0
 	string local_name = decay_channels[dc_idx-1].resonance_name;
 
@@ -397,6 +402,7 @@ bool CorrelationFunction::Do_this_daughter_particle(int dc_idx, int daughter_idx
 
 void CorrelationFunction::Set_current_particle_info(int dc_idx)
 {
+
 	if (dc_idx == 0)
 	{
 		muRES = particle_mu;
@@ -479,6 +485,7 @@ void CorrelationFunction::Set_current_particle_info(int dc_idx)
 
 void CorrelationFunction::Set_current_daughter_info(int dc_idx, int daughter_idx)
 {
+
 	if (dc_idx > 1)
 	{
 		previous_resonance_particle_id = current_resonance_particle_id;		//for look-up in all_particles
@@ -589,6 +596,7 @@ void CorrelationFunction::Set_current_daughter_info(int dc_idx, int daughter_idx
 
 bool CorrelationFunction::Search_for_similar_particle(int reso_idx, int * result)
 {
+
 	// for the timebeing, just search from beginning of decay_channels until similar particle is found;
 	// should be more careful, since could lead to small numerical discrepancies if similar particle was
 	// already recycled by some other (dissimilar) particle, but ignore this complication for now...
@@ -609,6 +617,7 @@ bool CorrelationFunction::Search_for_similar_particle(int reso_idx, int * result
 //**********************************************************************************************
 bool CorrelationFunction::particles_are_the_same(int reso_idx1, int reso_idx2)
 {
+
 	int icr1 = chosen_resonances[reso_idx1];
 	int icr2 = chosen_resonances[reso_idx2];
 	//int icr1 = reso_idx1;
@@ -627,6 +636,7 @@ bool CorrelationFunction::particles_are_the_same(int reso_idx1, int reso_idx2)
 
 void CorrelationFunction::Recycle_spacetime_moments()
 {
+
 	//*global_out_stream_ptr << "PIDs: " << current_resonance_particle_id << "   " << reso_particle_id_of_moments_to_recycle << endl;
 	int HDFcopyChunkSuccess = Copy_chunk(current_resonance_particle_id, reso_particle_id_of_moments_to_recycle);
 	if (HDFcopyChunkSuccess < 0) exit(1);
@@ -645,6 +655,7 @@ void CorrelationFunction::Recycle_spacetime_moments()
 //**************************************************************
 void CorrelationFunction::Load_resonance_and_daughter_spectra(int local_pid, int iqt, int iqz)
 {
+
 	// get parent resonance spectra, set logs and signs arrays that are needed for interpolation
 	int getHDFresonanceSpectra = Access_resonance_in_HDF_array(local_pid, iqt, iqz, 1, current_dN_dypTdpTdphi_moments);
 
@@ -682,11 +693,21 @@ void CorrelationFunction::Load_resonance_and_daughter_spectra(int local_pid, int
 
 void CorrelationFunction::Update_daughter_spectra(int local_pid, int iqt, int iqz)
 {
+
 	int d_idx = 0;
 	for (set<int>::iterator it = daughter_resonance_indices.begin(); it != daughter_resonance_indices.end(); ++it)
 	{
 		int daughter_pid = *it;		//daughter pid is pointed to by iterator
-		int setHDFresonanceSpectra = Access_resonance_in_HDF_array(daughter_pid, iqt, iqz, 0, current_daughters_dN_dypTdpTdphi_moments[d_idx]);
+		int setHDFresonanceSpectra = Access_resonance_in_HDF_array(
+										daughter_pid, iqt, iqz, 0,
+										current_daughters_dN_dypTdpTdphi_moments[d_idx]);
+
+		//update the target particle moments too, if applicable
+		if (daughter_pid == target_particle_id)
+			setHDFresonanceSpectra = Access_target_full_in_HDF_array(
+										iqt, iqz, 0,
+										current_daughters_dN_dypTdpTdphi_moments[d_idx],
+										true);
 
 		++d_idx;
 	}
@@ -699,6 +720,7 @@ void CorrelationFunction::Update_daughter_spectra(int local_pid, int iqt, int iq
 
 void CorrelationFunction::Set_spectra_logs_and_signs(int local_pid)
 {
+
 	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 	{
@@ -714,6 +736,7 @@ void CorrelationFunction::Set_spectra_logs_and_signs(int local_pid)
 
 void CorrelationFunction::Get_spacetime_moments(int dc_idx, int iqt, int iqz)
 {
+
 //**************************************************************
 //Set resonance name
 //**************************************************************
@@ -780,6 +803,7 @@ void CorrelationFunction::Get_spacetime_moments(int dc_idx, int iqt, int iqz)
 
 void CorrelationFunction::Reset_FOcells_array()
 {
+
 	for (int iFOipT = 0; iFOipT < FO_length * n_pT_pts; ++iFOipT)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 		FOcells_to_include[iFOipT][ipphi] = std::numeric_limits<int>::max();
@@ -788,6 +812,7 @@ void CorrelationFunction::Reset_FOcells_array()
 
 void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int iqz)
 {
+
 	double localmass = all_particles[local_pid].mass;
 	int local_particle_mode = 1;
 	int local_na = n_alpha_points;
@@ -932,6 +957,7 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 
 void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights(int local_pid)
 {
+
 	// set particle information
 	double sign = all_particles[local_pid].sign;
 	double degen = all_particles[local_pid].gspin;
@@ -1074,6 +1100,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights(int local_pid)
 //////////////////////////////////////////
 void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY, int iqt, int iqz, double * BC_chunk, int local_part_mode)
 {
+
 	Stopwatch sw, sw_FOsurf;
 	sw.Start();
 
@@ -1356,6 +1383,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 
 void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights_Yeq0_alternate()
 {
+
 	//pions
 	int local_pid = target_particle_id;
 
@@ -1477,6 +1505,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights_Yeq0_alternate()
 
 void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_Yeq0_alternate(int iqt, int iqz)
 {
+
 	//pions
 	int local_pid = target_particle_id;
 
@@ -1625,6 +1654,7 @@ void printState(string tag)
 //only works at Y==0!!!
 void CorrelationFunction::Reflect_in_qz_and_qt()
 {
+
 cout << "Currently reflecting in qz and qt!" << endl;
 	//for (int iqt = 0; iqt < (qtnpts-1)/2; ++iqt)
 	for (int iqt = 0; iqt < (qtnpts+1)/2; ++iqt)
@@ -1689,6 +1719,7 @@ double CorrelationFunction::S_x_p( int local_pid,
 									int isurf, double eta_s,
 									double pT, double pphi, double pY )
 {
+
 	// set particle information
 	double sign = all_particles[local_pid].sign;
 	double degen = all_particles[local_pid].gspin;
