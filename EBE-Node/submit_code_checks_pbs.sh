@@ -1,20 +1,20 @@
 #!/bin/bash
 
 baseDirectory=$HOME/Plumberg_iEBE/iEBE-stable/EBE-Node
-homeDirectory=$baseDirectory/code_checks_prev
+homeDirectory=$baseDirectory/code_checks_new_qt_interp
 outfilename=$homeDirectory/"submit_jobs_record_`date +%F`.out"
 jobIDsfilename=$homeDirectory/"jobIDs_`date +%F`.out"
 jobIDsfile=`get_filename $jobIDsfilename`
 outfile=`get_filename $outfilename`
-srcDirec=$baseDirectory/HoTCoffeeh_prev
+srcDirec=$baseDirectory/HoTCoffeeh
 
 i=1
-workingDirectory=$HOME'/Plumberg_iEBE/iEBE-stable/RESULTS_Edec300/results/results-'`echo $i`
-#workingDirectory=$HOME'/Plumberg_iEBE/iEBE-stable/avgRESULTS/job-1/event-1'
+#workingDirectory=$HOME'/Plumberg_iEBE/iEBE-stable/RESULTS_Edec300/results/results-'`echo $i`
+workingDirectory=$HOME'/Plumberg_iEBE/iEBE-stable/avgRESULTS/job-1/event-1'
 
 npt0=15
 npphi0=36
-npy0=15
+npy0=3
 
 #run at most this many jobs at a time
 nMaxProcessesRunning=12
@@ -26,10 +26,11 @@ declare -A qzSizes=( ["X"]=1 ["Y"]=1 ["Z"]=51)
 #submit jobs
 for axis in X
 do
-	for nqt0 in 1
+	for nqt0 in 17 31
 	do
 		###########
-		direcName0=$homeDirectory/AXIS_`echo $axis`_qt_`echo $nqt0`_pT_`echo $npt0`_VERBOSE
+		#direcName0=$homeDirectory/AXIS_`echo $axis`_qt_`echo $nqt0`_pT_`echo $npt0`_VERBOSE
+		direcName0=$homeDirectory/AXIS_`echo $axis`_tmp
 		if [ ! -d "$direcName0" ]
 		then
 			mkdir $direcName0

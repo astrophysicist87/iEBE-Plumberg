@@ -288,7 +288,7 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 		{
-if (ipT != 0 && ipT != 4 && ipT != 8)
+if (/*ipT != 0 && ipT != 4 && */ipT != 8)
 	continue;
 if (ipY != ipY0)
 	continue;
@@ -499,7 +499,7 @@ cout << "DUMP: " << daughter_lookup_idx << "   " << ipT << "   " << ipphi << "  
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 		{
-if (ipT != 0 && ipT != 4 && ipT != 8)
+if (/*ipT != 0 && ipT != 4 && */ipT != 8)
 	continue;
 if (ipY != ipY0)
 	continue;
@@ -929,7 +929,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 		complex<double> q_dep_factor = one/(one - i*ak);
 		//cout << "CHECK AK: " << akr << "   " << aki << "   "  << q_dep_factor.real() << "   " << q_dep_factor.imag() << endl;
 
-		bool use_exact = false;
+		bool use_exact = true;
 		double tempCS[4];
 		if (use_exact)
 		{
@@ -953,7 +953,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 					&tempCS[0], &tempCS[1], &tempCS[2], &tempCS[3] );
 			cout << "\t\t" << tempCS[0] << "   " << tempCS[1] << "   "
 					<< tempCS[2] << "   " << tempCS[3] << endl;*/
-			return;
+//			return;
 //if (1) exit (8);
 		}
 

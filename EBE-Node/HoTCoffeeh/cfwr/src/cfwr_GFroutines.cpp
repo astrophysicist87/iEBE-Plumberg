@@ -958,7 +958,7 @@ void CorrelationFunction::R2_Fourier_transform(int iKT, double plane_psi, int mo
 
 void CorrelationFunction::Set_target_moments(int iqt, int iqz)
 {
-	bool include_thermal_pions = false;
+	bool include_thermal_pions = true;
 	if (include_thermal_pions)
 	{
 		/*if ( !thermal_pions_only or

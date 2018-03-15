@@ -400,7 +400,7 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	for (int iqt = 0; iqt < qtnpts; iqt++)
 		cout << "qt_pts[" << iqt << "] = " << qt_pts[iqt] << endl;
 	cout << "********************" << endl;
-	/*double * q_point = new double [4];
+	double * q_point = new double [4];
 	for(int ipt=0; ipt<n_pT_pts; ipt++)
 	for(int ipphi=0; ipphi<n_pphi_pts; ipphi++)
 	for (int iqx = 0; iqx < qxnpts; ++iqx)
@@ -410,10 +410,10 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 		Get_q_points(qx_pts[iqx], qy_pts[iqy], qz_pts[iqz], SP_pT[ipt], SP_pphi[ipphi], q_point);
 		cout << "SANITY CHECK OF QT_INTERP: " << SP_pT[ipt] << "   " << SP_pphi[ipphi] << "   "
 				<< q_point[0] << "   " << q_point[1] << "   " << q_point[2] << "   " << q_point[3] << endl;
-	}*/
+	}
 
-	//delete [] q_point;
-	//if (1) exit(8);
+	delete [] q_point;
+	if (1) exit(8);
 
 	plane_angle = new double [n_order];
 
