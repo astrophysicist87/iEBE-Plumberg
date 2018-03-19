@@ -123,14 +123,14 @@ inline double Chebyshev::dot(double * x, double * y, int length)
     return (sum);
 }
 
-inline double semi_infinite_scaling(double x, double L)
+inline double semi_infinite_scaling(double x, double x0, double L)
 {
-	return ( L * ( 1. + x ) / ( 1. - x ) );
+	return ( x0 + L * ( 1. + x ) / ( 1. - x ) );
 }
 
-inline double semi_infinite_inverse_scaling(double x, double L)
+inline double semi_infinite_inverse_scaling(double y, double x0, double L)
 {
-	return ( ( x - L ) / ( x + L ) );
+	return ( ( y - L - x0 ) / ( y + L - x0 ) );
 }
 
 void Chebyshev::set_nodes(int number_of_points, double * nodes)
@@ -294,7 +294,7 @@ double Chebyshev::eval(double * p)
 				unadj_p[idim] = 2.0 * ((p[idim] - lower_limits[idim]) / (upper_limits[idim] - lower_limits[idim])) - 1.0;
 				break;
 			case 1:		//semi-infinite Chebyshev interpolation: scale set by upper_limits[idim]
-				unadj_p[idim] = semi_infinite_inverse_scaling(p[idim], upper_limits[idim]);
+				unadj_p[idim] = semi_infinite_inverse_scaling(p[idim], lower_limits[idim], upper_limits[idim]);
 				break;
 			default:
 				cerr << "Chebyshev(): invalid mode choice of modes[dim = " << idim << "] == " << modes[idim] << "!" << endl;

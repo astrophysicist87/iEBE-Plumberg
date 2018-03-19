@@ -400,7 +400,7 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	for (int iqt = 0; iqt < qtnpts; iqt++)
 		cout << "qt_pts[" << iqt << "] = " << qt_pts[iqt] << endl;
 	cout << "********************" << endl;
-	double * q_point = new double [4];
+	/*double * q_point = new double [4];
 	for(int ipt=0; ipt<n_pT_pts; ipt++)
 	for(int ipphi=0; ipphi<n_pphi_pts; ipphi++)
 	for (int iqx = 0; iqx < qxnpts; ++iqx)
@@ -413,7 +413,7 @@ CorrelationFunction::CorrelationFunction(ParameterReader * paraRdr_in, particle_
 	}
 
 	delete [] q_point;
-	if (1) exit(8);
+	if (1) exit(8);*/
 
 	plane_angle = new double [n_order];
 
@@ -959,6 +959,27 @@ void CorrelationFunction::Fill_out_pts(double * pointsarray, int numpoints, doub
 			{
 				z2[iqd] = -cos( M_PI*(2.*(iqd+1.) - 1.) / (2.*n) );
 				pointsarray[n + iqd - 1] = (1.0 + z2[iqd]) * hw2 + a2;
+			}
+		}
+		else if (spacing_type == 3)
+		{
+			//break range of points into two sections (+ve and -ve)
+			const int n = (numpoints + 1) / 2;
+
+			double tmpsin = sin(3.0*M_PI / (4.0*n));
+			//double tmpcos1 = cos(3.0*M_PI / (4.0*n));
+			double tmpcos2 = cos(M_PI / (2.0*n));
+			double tmpcos3 = cos(3.0*M_PI / (2.0*n));
+			
+			for (int iqd = 0; iqd < n; ++iqd)
+			{
+				double ii = iqd + 1.0;
+				double numerator = 2.0 * max_val * tmpsin * tmpsin
+									* ( cos(M_PI*(2.0*ii-1.0)/(2.0*n)) + tmpcos2 );
+				double denominator = ( cos(M_PI*(2.0*ii-1.0)/(2.0*n)) - 1.0 ) * (tmpcos2 + tmpcos3);
+				pointsarray[iqd] = numerator / denominator;
+				//pointsarray[iqd] = -pointsarray[numpoints-iqd-1];
+				pointsarray[numpoints-iqd-1] = -pointsarray[iqd];
 			}
 		}
 	}

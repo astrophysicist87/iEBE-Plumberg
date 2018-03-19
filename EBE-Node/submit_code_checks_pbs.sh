@@ -22,15 +22,18 @@ nMaxProcessesRunning=12
 declare -A qxSizes=( ["X"]=51 ["Y"]=1 ["Z"]=1)
 declare -A qySizes=( ["X"]=1 ["Y"]=51 ["Z"]=1)
 declare -A qzSizes=( ["X"]=1 ["Y"]=1 ["Z"]=51)
+#declare -A qxSizes=( ["X"]=7 ["Y"]=1 ["Z"]=1)
+#declare -A qySizes=( ["X"]=7 ["Y"]=51 ["Z"]=1)
+#declare -A qzSizes=( ["X"]=7 ["Y"]=1 ["Z"]=51)
 
 #submit jobs
 for axis in X
 do
-	for nqt0 in 17 31
+	for nqt0 in 17
 	do
 		###########
 		#direcName0=$homeDirectory/AXIS_`echo $axis`_qt_`echo $nqt0`_pT_`echo $npt0`_VERBOSE
-		direcName0=$homeDirectory/AXIS_`echo $axis`_tmp
+		direcName0=$homeDirectory/AXIS_`echo $axis`_sp3
 		if [ ! -d "$direcName0" ]
 		then
 			mkdir $direcName0

@@ -21,9 +21,10 @@
 using namespace std;
 
 #define VERBOSE 					0		// specifies level of output - 0 is lowest (no output)
-#define QT_POINTS_SPACING			2		// 0 - uniform from -qmax to +qmax
+#define QT_POINTS_SPACING			3		// 0 - uniform from -qmax to +qmax
 											// 1 - Chebyshev nodes from -qmax to +qmax
 											// 2 - Chebyshev nodes for +ve and -ve separately (better convergence)
+											// 3 - Chebyshev nodes for +ve and -ve separately (maybe even better?)
 #define QX_POINTS_SPACING			0		// same
 #define QY_POINTS_SPACING			0		// same
 #define QZ_POINTS_SPACING			0		// same
@@ -80,9 +81,9 @@ const double Kphi_min = 0.0;
 const double Kphi_max = 2.0*M_PI;
 
 // Phase-space integral information
-const int n_zeta_pts = 12;
-const int n_v_pts = 12;
-const int n_s_pts = 12;
+const int n_zeta_pts = 4;
+const int n_v_pts = 4;
+const int n_s_pts = 4;
 
 // Fitting information
 const size_t fit_max_iterations = 1000;  // stop at this point if not converged 

@@ -253,6 +253,70 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 			//}
 			*/
 		}
+		else if (QT_POINTS_SPACING == 3 && interp_flag == 0)	//use a different distribution of qt points for better accuracy
+		{
+			const int n = (qtnpts + 1) / 2;
+
+			double tmpsin1 = sin(M_PI / (4.0*n));
+			double tmpsin2 = sin(3.0*M_PI / (4.0*n));
+			double tmpcos1 = cos(M_PI / (4.0*n));
+			double tmpcos2 = cos(M_PI / (2.0*n));
+			double tmpcos3 = cos(3.0*M_PI / (2.0*n));
+
+			double prefactor_x0 = -2.0 * tmpsin1*tmpsin1*tmpsin2*tmpsin2 / (tmpcos2+tmpcos3);
+			double prefactor_L = 2.0 * tmpcos1*tmpcos1*tmpsin2*tmpsin2 / (tmpcos2+tmpcos3);
+			double x0_loc = ( qt_interp <= 0.0 ) ? prefactor_x0 * q_min : prefactor_x0 * q_max ;
+			double L_loc = ( qt_interp <= 0.0 ) ? prefactor_L * q_min : prefactor_L * q_max ;
+
+			double C_at_q[n], Ct_at_q[n], Cct_at_q[n], Cr_at_q[n];	//C - 1
+			double tmpC = 0.0, tmpCt = 0.0, tmpCct = 0.0, tmpCr = 0.0;
+	
+			const int iqt_i = ( qt_interp <= 0.0 ) ? 0 : n-1 ;
+			const int iqt_f = ( qt_interp <= 0.0 ) ? n-1 : qtnpts-1 ;
+			const int shift = ( qt_interp <= 0.0 ) ? 0 : n-1 ;
+
+			// set CF values along qt-slice for interpolation
+			for (int iqtidx = iqt_i; iqtidx <= iqt_f; ++iqtidx)
+			{
+				//return C - 1!!!
+				get_CF_terms(&tmpC, &tmpCt, &tmpCct, &tmpCr, ipt, ipphi, iqtidx, iqx, iqy, iqz, project_CF && !thermal_pions_only);
+				C_at_q[iqtidx-shift] = tmpC;
+				Ct_at_q[iqtidx-shift] = tmpCt;
+				Cct_at_q[iqtidx-shift] = tmpCct;
+				Cr_at_q[iqtidx-shift] = tmpCr;
+			}
+
+			//set up Chebyshev calculation
+			int npts_loc[1] = { n };
+			int os[1] = { n - 1 };
+			double lls[1] = { x0_loc };
+			double uls[1] = { L_loc };
+			double modes[1] = { 1 };
+			double point[1] = { qt_interp };
+			int dim_loc = 1;
+
+			Chebyshev cf(C_at_q, npts_loc, os, lls, uls, dim_loc);
+			Chebyshev cft(Ct_at_q, npts_loc, os, lls, uls, dim_loc);
+			Chebyshev cfct(Cct_at_q, npts_loc, os, lls, uls, dim_loc);
+			Chebyshev cfr(Cr_at_q, npts_loc, os, lls, uls, dim_loc);
+			*totalresult = cf.eval(point);
+			*thermalresult = cft.eval(point);
+			*CTresult = cfct.eval(point);
+			*resonanceresult = cfr.eval(point);
+
+			cerr << "WARNING(OKAY): " << qt_interp << "   " << ipt << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << iqz << "   "
+					<< *totalresult << "   " << *thermalresult << "   " << *CTresult << "   " << *resonanceresult << endl;
+			for (int iqtidx = iqt_i; iqtidx <= iqt_f; ++iqtidx)
+			{
+				get_CF_terms(&tmpC, &tmpCt, &tmpCct, &tmpCr, ipt, ipphi, iqtidx, iqx, iqy, iqz, project_CF && !thermal_pions_only);
+				C_at_q[iqtidx-shift] = tmpC;
+				Ct_at_q[iqtidx-shift] = tmpCt;
+				Cct_at_q[iqtidx-shift] = tmpCct;
+				Cr_at_q[iqtidx-shift] = tmpCr;
+				cerr << "Check CF terms: " << qt_pts[iqtidx] << "   " << ipt << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << iqz << "   "
+						<< tmpC << "   " << tmpCt << "   " << tmpCct << "   " << tmpCr << endl;
+			}
+		}
 		else	//if not using Chebyshev nodes in qt-direction, just use straight-up linear(0) or cubic(1) interpolation
 		{
 			double C_at_q[qtnpts], Ct_at_q[qtnpts], Cct_at_q[qtnpts], Cr_at_q[qtnpts];	//C - 1
