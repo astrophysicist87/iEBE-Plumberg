@@ -338,7 +338,7 @@ if (RUN_TRUNCATED_CALCULATION && ipphi > 0)
 						for (int tempidx = 0; tempidx <= 1; ++tempidx)
 						{
 							current_tempidx = tempidx;
-cout << "PROGRESS: " << current_is << "   " << iv << "   " << izeta << "   " << tempidx << endl;
+//cout << "PROGRESS: " << current_is << "   " << iv << "   " << izeta << "   " << tempidx << endl;
 							if (tempidx != 0)
 								PKphi = VEC_n2_PPhi_tildeFLIP[NB2_indexer(iv,izeta)];		//also takes Pp --> Pm
 							currentPpm = VEC_n2_Ppm[NB2_indexer(iv,izeta)*2 + tempidx];
@@ -549,7 +549,7 @@ if (RUN_TRUNCATED_CALCULATION && ipphi > 0)
 
 							for (int tempidx = 0; tempidx <= 1; ++tempidx)
 							{
-cout << "PROGRESS: " << is << "   " << iv << "   " << izeta << "   " << tempidx << endl;
+//cout << "PROGRESS: " << is << "   " << iv << "   " << izeta << "   " << tempidx << endl;
 								current_tempidx = tempidx;
 								if (tempidx != 0)
 									PKphi = VEC_n3_PPhi_tildeFLIP[NB3_indexer(is,iv,izeta)];		//also takes Pp --> Pm

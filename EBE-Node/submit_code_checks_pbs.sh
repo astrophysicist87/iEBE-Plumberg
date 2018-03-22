@@ -1,8 +1,7 @@
 #!/bin/bash
 
 baseDirectory=$HOME/Plumberg_iEBE/iEBE-stable/EBE-Node
-#homeDirectory=$baseDirectory/code_checks_PHASE_SPACE
-homeDirectory=$baseDirectory/code_checks_new_qt_interp
+homeDirectory=$baseDirectory/code_checks
 outfilename=$homeDirectory/"submit_jobs_record_`date +%F`.out"
 jobIDsfilename=$homeDirectory/"jobIDs_`date +%F`.out"
 jobIDsfile=`get_filename $jobIDsfilename`
@@ -10,12 +9,12 @@ outfile=`get_filename $outfilename`
 srcDirec=$baseDirectory/HoTCoffeeh
 
 i=1
-#workingDirectory=$HOME'/Plumberg_iEBE/iEBE-stable/RESULTS_Edec300/results/results-'`echo $i`
-workingDirectory=$HOME'/Plumberg_iEBE/iEBE-stable/avgRESULTS/job-1/event-1'
+workingDirectory=$HOME'/Plumberg_iEBE/iEBE-stable/RESULTS_Edec300/results/results-'`echo $i`
+#workingDirectory=$HOME'/Plumberg_iEBE/iEBE-stable/avgRESULTS/job-1/event-1'
 
 npt0=15
 npphi0=36
-npy0=3
+npy0=15
 
 #run at most this many jobs at a time
 nMaxProcessesRunning=16
@@ -23,16 +22,17 @@ nMaxProcessesRunning=16
 declare -A qxSizes=( ["XYZ"]=7 ["X"]=51 ["Y"]=1 ["Z"]=1)
 declare -A qySizes=( ["XYZ"]=7 ["X"]=1 ["Y"]=51 ["Z"]=1)
 declare -A qzSizes=( ["XYZ"]=7 ["X"]=1 ["Y"]=1 ["Z"]=51)
+declare -A dqxVals=( ["XYZ"]=0.025 ["X"]=0.003 ["Y"]=0.001 ["Z"]=0.001)
+declare -A dqyVals=( ["XYZ"]=0.025 ["X"]=0.001 ["Y"]=0.003 ["Z"]=0.001)
+declare -A dqzVals=( ["XYZ"]=0.020 ["X"]=0.001 ["Y"]=0.001 ["Z"]=0.003)
 
 #submit jobs
-for axis in X
+for axis in XYZ X Y Z
 do
-	#for nqt0 in 17 31
-	for nqt0 in 7 11 17 21 25 31
+	for nqt0 in 31
 	do
 		###########
-		#direcName0=$homeDirectory/AXIS_`echo $axis`_qt_`echo $nqt0`_PS12
-		direcName0=$homeDirectory/AXIS_`echo $axis`_qt_`echo $nqt0`_sp3
+		direcName0=$homeDirectory/AXIS_`echo $axis`_qt`echo $nqt0`_pT`echo $npt0`_pY`echo $npy0`
 		if [ ! -d "$direcName0" ]
 		then
 			mkdir $direcName0
@@ -41,12 +41,11 @@ do
 		nqx0=${qxSizes[$axis]}
 		nqy0=${qySizes[$axis]}
 		nqz0=${qzSizes[$axis]}
-		dqx=0.001
-		dqy=0.001
-		dqz=0.001
+		dqx=${dqxVals[$axis]}
+		dqy=${dqyVals[$axis]}
+		dqz=${dqzVals[$axis]}
 
-		#for resfrac in 0.00 0.10 0.20 0.30 0.40 0.50 0.60 0.70 0.80 0.90 1.00
-		for resfrac in 0.30
+		for resfrac in 0.00 0.10 0.20 0.30 0.40 0.50 0.60 0.70 0.80 0.90 1.00
 		do
 			##########################################
 			# before submitting any more jobs, make sure you aren't at the max. limit
