@@ -1,6 +1,7 @@
 #!/bin/bash
 
 baseDirectory=$HOME/Plumberg_iEBE/iEBE-stable/EBE-Node
+#homeDirectory=$baseDirectory/code_checks_PHASE_SPACE
 homeDirectory=$baseDirectory/code_checks_new_qt_interp
 outfilename=$homeDirectory/"submit_jobs_record_`date +%F`.out"
 jobIDsfilename=$homeDirectory/"jobIDs_`date +%F`.out"
@@ -17,23 +18,21 @@ npphi0=36
 npy0=3
 
 #run at most this many jobs at a time
-nMaxProcessesRunning=12
+nMaxProcessesRunning=16
 
-declare -A qxSizes=( ["X"]=51 ["Y"]=1 ["Z"]=1)
-declare -A qySizes=( ["X"]=1 ["Y"]=51 ["Z"]=1)
-declare -A qzSizes=( ["X"]=1 ["Y"]=1 ["Z"]=51)
-#declare -A qxSizes=( ["X"]=7 ["Y"]=1 ["Z"]=1)
-#declare -A qySizes=( ["X"]=7 ["Y"]=51 ["Z"]=1)
-#declare -A qzSizes=( ["X"]=7 ["Y"]=1 ["Z"]=51)
+declare -A qxSizes=( ["XYZ"]=7 ["X"]=51 ["Y"]=1 ["Z"]=1)
+declare -A qySizes=( ["XYZ"]=7 ["X"]=1 ["Y"]=51 ["Z"]=1)
+declare -A qzSizes=( ["XYZ"]=7 ["X"]=1 ["Y"]=1 ["Z"]=51)
 
 #submit jobs
 for axis in X
 do
-	for nqt0 in 17
+	#for nqt0 in 17 31
+	for nqt0 in 7 11 17 21 25 31
 	do
 		###########
-		#direcName0=$homeDirectory/AXIS_`echo $axis`_qt_`echo $nqt0`_pT_`echo $npt0`_VERBOSE
-		direcName0=$homeDirectory/AXIS_`echo $axis`_sp3
+		#direcName0=$homeDirectory/AXIS_`echo $axis`_qt_`echo $nqt0`_PS12
+		direcName0=$homeDirectory/AXIS_`echo $axis`_qt_`echo $nqt0`_sp3
 		if [ ! -d "$direcName0" ]
 		then
 			mkdir $direcName0

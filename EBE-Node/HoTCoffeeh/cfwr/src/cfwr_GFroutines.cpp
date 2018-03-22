@@ -235,7 +235,7 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 			*CTresult = cfct.eval(point);
 			*resonanceresult = cfr.eval(point);
 
-			/*
+			
 			//if (*thermalresult < 0.0 || *resonanceresult < 0.0 )
 			//{
 				cerr << "WARNING(OKAY): " << qt_interp << "   " << ipt << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << iqz << "   "
@@ -251,9 +251,62 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 							<< tmpC << "   " << tmpCt << "   " << tmpCct << "   " << tmpCr << endl;
 				}
 			//}
-			*/
+			
 		}
 		else if (QT_POINTS_SPACING == 3 && interp_flag == 0)	//use a different distribution of qt points for better accuracy
+		{
+			const int n = qtnpts;
+
+			double tmptan = 25.0*tan(M_PI/(2.0*n));
+			double x0_loc = 0.0;
+			double L_loc = tmptan * q_min;
+
+			double C_at_q[n], Ct_at_q[n], Cct_at_q[n], Cr_at_q[n];	//C - 1
+			double tmpC = 0.0, tmpCt = 0.0, tmpCct = 0.0, tmpCr = 0.0;
+	
+			// set CF values along qt-slice for interpolation
+			for (int iqtidx = 0; iqtidx < qtnpts; ++iqtidx)
+			{
+				//return C - 1!!!
+				get_CF_terms(&tmpC, &tmpCt, &tmpCct, &tmpCr, ipt, ipphi, iqtidx, iqx, iqy, iqz, project_CF && !thermal_pions_only);
+				C_at_q[iqtidx] = tmpC;
+				Ct_at_q[iqtidx] = tmpCt;
+				Cct_at_q[iqtidx] = tmpCct;
+				Cr_at_q[iqtidx] = tmpCr;
+			}
+
+			//set up Chebyshev calculation
+			int npts_loc[1] = { n };
+			int os[1] = { n - 1 };
+			double lls[1] = { x0_loc };
+			double uls[1] = { L_loc };
+			int modes[1] = { 2 };
+			double point[1] = { qt_interp };
+			int dim_loc = 1;
+
+			Chebyshev cf(C_at_q, npts_loc, os, lls, uls, dim_loc, modes);
+			Chebyshev cft(Ct_at_q, npts_loc, os, lls, uls, dim_loc, modes);
+			Chebyshev cfct(Cct_at_q, npts_loc, os, lls, uls, dim_loc, modes);
+			Chebyshev cfr(Cr_at_q, npts_loc, os, lls, uls, dim_loc, modes);
+			*totalresult = cf.eval(point);
+			*thermalresult = cft.eval(point);
+			*CTresult = cfct.eval(point);
+			*resonanceresult = cfr.eval(point);
+
+			cerr << "WARNING: " << qt_interp << "   " << ipt << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << iqz << "   "
+					<< *totalresult << "   " << *thermalresult << "   " << *CTresult << "   " << *resonanceresult << endl;
+			for (int iqtidx = 0; iqtidx < qtnpts; ++iqtidx)
+			{
+				get_CF_terms(&tmpC, &tmpCt, &tmpCct, &tmpCr, ipt, ipphi, iqtidx, iqx, iqy, iqz, project_CF && !thermal_pions_only);
+				C_at_q[iqtidx] = tmpC;
+				Ct_at_q[iqtidx] = tmpCt;
+				Cct_at_q[iqtidx] = tmpCct;
+				Cr_at_q[iqtidx] = tmpCr;
+				cerr << "Check CF terms: " << qt_pts[iqtidx] << "   " << ipt << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << iqz << "   "
+						<< tmpC << "   " << tmpCt << "   " << tmpCct << "   " << tmpCr << endl;
+			}
+		}
+		else if (QT_POINTS_SPACING == 4 && interp_flag == 0)	//use a different distribution of qt points for better accuracy
 		{
 			const int n = (qtnpts + 1) / 2;
 
@@ -291,14 +344,14 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 			int os[1] = { n - 1 };
 			double lls[1] = { x0_loc };
 			double uls[1] = { L_loc };
-			double modes[1] = { 1 };
+			int modes[1] = { 1 };
 			double point[1] = { qt_interp };
 			int dim_loc = 1;
 
-			Chebyshev cf(C_at_q, npts_loc, os, lls, uls, dim_loc);
-			Chebyshev cft(Ct_at_q, npts_loc, os, lls, uls, dim_loc);
-			Chebyshev cfct(Cct_at_q, npts_loc, os, lls, uls, dim_loc);
-			Chebyshev cfr(Cr_at_q, npts_loc, os, lls, uls, dim_loc);
+			Chebyshev cf(C_at_q, npts_loc, os, lls, uls, dim_loc, modes);
+			Chebyshev cft(Ct_at_q, npts_loc, os, lls, uls, dim_loc, modes);
+			Chebyshev cfct(Cct_at_q, npts_loc, os, lls, uls, dim_loc, modes);
+			Chebyshev cfr(Cr_at_q, npts_loc, os, lls, uls, dim_loc, modes);
 			*totalresult = cf.eval(point);
 			*thermalresult = cft.eval(point);
 			*CTresult = cfct.eval(point);

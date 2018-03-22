@@ -288,9 +288,9 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 		{
-if (/*ipT != 0 && ipT != 4 && */ipT != 8)
+if (RUN_TRUNCATED_CALCULATION && /*ipT != 0 && ipT != 4 && */ipT != 8)
 	continue;
-if (ipY != ipY0)
+if (RUN_TRUNCATED_CALCULATION && ipY != ipY0)
 	continue;
 
 			if (doing_moments)
@@ -302,7 +302,7 @@ if (ipY != ipY0)
 
 			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 			{
-if (ipphi > 0)
+if (RUN_TRUNCATED_CALCULATION && ipphi > 0)
 	continue;
 
 				double local_pT = SP_pT[ipT];
@@ -499,9 +499,9 @@ cout << "DUMP: " << daughter_lookup_idx << "   " << ipT << "   " << ipphi << "  
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 		{
-if (/*ipT != 0 && ipT != 4 && */ipT != 8)
+if (RUN_TRUNCATED_CALCULATION && /*ipT != 0 && ipT != 4 && */ipT != 8)
 	continue;
-if (ipY != ipY0)
+if (RUN_TRUNCATED_CALCULATION && ipY != ipY0)
 	continue;
 			if (doing_moments)
 			{
@@ -512,7 +512,7 @@ if (ipY != ipY0)
 
 			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 			{
-if (ipphi > 0)
+if (RUN_TRUNCATED_CALCULATION && ipphi > 0)
 	continue;
 
 				double local_pT = SP_pT[ipT];
@@ -929,7 +929,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 		complex<double> q_dep_factor = one/(one - i*ak);
 		//cout << "CHECK AK: " << akr << "   " << aki << "   "  << q_dep_factor.real() << "   " << q_dep_factor.imag() << endl;
 
-		bool use_exact = true;
+		bool use_exact = bool(RUN_TRUNCATED_CALCULATION);
 		double tempCS[4];
 		if (use_exact)
 		{

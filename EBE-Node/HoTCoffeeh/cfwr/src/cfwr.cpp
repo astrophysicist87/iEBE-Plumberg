@@ -1422,9 +1422,9 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights_Yeq0_alternate()
 	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 	{
-if (ipT != 0 && ipT != 4 && ipT != 8)
+if (RUN_TRUNCATED_CALCULATION && ipT != 0 && ipT != 4 && ipT != 8)
 	continue;
-if (ipphi > 0)
+if (RUN_TRUNCATED_CALCULATION && ipphi > 0)
 	continue;
 		double pT = SP_pT[ipT];
 		double pphi = SP_pphi[ipphi];

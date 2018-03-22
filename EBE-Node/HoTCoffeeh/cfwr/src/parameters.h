@@ -25,6 +25,7 @@ using namespace std;
 											// 1 - Chebyshev nodes from -qmax to +qmax
 											// 2 - Chebyshev nodes for +ve and -ve separately (better convergence)
 											// 3 - Chebyshev nodes for +ve and -ve separately (maybe even better?)
+											// 4 - yet another...
 #define QX_POINTS_SPACING			0		// same
 #define QY_POINTS_SPACING			0		// same
 #define QZ_POINTS_SPACING			0		// same
@@ -36,6 +37,8 @@ using namespace std;
 #define USE_EXP_RECYCLING			1
 #define USE_RAPIDITY_SYMMETRY		1
 #define USE_ADJUSTED_MINIMUM		1
+
+#define RUN_TRUNCATED_CALCULATION	1
 
 #ifndef H5_NO_NAMESPACE
     using namespace H5;
@@ -81,9 +84,10 @@ const double Kphi_min = 0.0;
 const double Kphi_max = 2.0*M_PI;
 
 // Phase-space integral information
-const int n_zeta_pts = 4;
-const int n_v_pts = 4;
-const int n_s_pts = 4;
+const int phase_space_size = 4;
+const int n_zeta_pts = phase_space_size;
+const int n_v_pts = phase_space_size;
+const int n_s_pts = phase_space_size;
 
 // Fitting information
 const size_t fit_max_iterations = 1000;  // stop at this point if not converged 

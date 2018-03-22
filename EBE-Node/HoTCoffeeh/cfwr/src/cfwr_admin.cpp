@@ -963,6 +963,17 @@ void CorrelationFunction::Fill_out_pts(double * pointsarray, int numpoints, doub
 		}
 		else if (spacing_type == 3)
 		{
+			//use Chebyshev on infinite interval
+			double tmptan = 25.0*tan(M_PI/(2.0*numpoints));
+
+			for (int iqd = 0; iqd < numpoints; ++iqd)
+			{
+				double ii = iqd + 1.0;
+				pointsarray[iqd] = -max_val * tmptan * cot(M_PI*(2.0*ii-1.0)/(2.0*numpoints));
+			}
+		}
+		else if (spacing_type == 4)
+		{
 			//break range of points into two sections (+ve and -ve)
 			const int n = (numpoints + 1) / 2;
 
