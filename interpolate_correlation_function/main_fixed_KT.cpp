@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
 	const int coordinates = 1;	//1: input is (qo, qs, ql)
 	double bin_centers[n_bin_centers];	//same in each of the three directions
 	const double delta_q = 0.01;	//bin width of 10 MeV
-	linspace(bin_centers, -0.06, 0.06, n_bin_centers);
+	linspace(bin_centers, -0.05, 0.05, n_bin_centers);
 	//linspace(bin_centers, -0.01, 0.01, n_bin_centers);
 	//nqpts = n_bin_centers*n_bin_centers*n_bin_centers*n_qpts_per_bin*n_qpts_per_bin*n_qpts_per_bin;
 

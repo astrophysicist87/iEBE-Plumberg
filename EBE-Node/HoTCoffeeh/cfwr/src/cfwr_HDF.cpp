@@ -32,9 +32,12 @@ void CorrelationFunction::Initialize_HDF_resonance_array()
 
 void CorrelationFunction::Close_HDF_resonance_array()
 {
-	*global_out_stream_ptr << "Closing HDF resonance array...";
-	int HDFInitializationSuccess = Administrate_resonance_HDF_array(2);
-	*global_out_stream_ptr << "...done.\n";
+	if (!thermal_pions_only)
+	{
+		*global_out_stream_ptr << "Closing HDF resonance array...";
+		int HDFInitializationSuccess = Administrate_resonance_HDF_array(2);
+		*global_out_stream_ptr << "...done.\n";
+	}
 
 	return;
 }

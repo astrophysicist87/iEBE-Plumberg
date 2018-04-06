@@ -12,19 +12,19 @@ using namespace std;
 
 #define USE_SCALING 	0	// quick bug fix - delete once events have been re-run
 #define DO_SLICES_ONLY	1	// do OSL slices only vs. every bin of 3D correlation function
-#define THERMAL_ONLY	1	//ignores resonances, looks just at thermal correlation function
+#define THERMAL_ONLY	0	//ignores resonances, looks just at thermal correlation function
 
 string workingDirectory = "";
 
 const int nKT = 5;
-const int n_bin_centers = 13;
+const int n_bin_centers = 11;
 const int n_qpts_per_bin = 15;
 const int nqpts = n_qpts_per_bin*n_qpts_per_bin*n_qpts_per_bin;
 const int n_pT_pts = 15;
-const int n_pphi_pts = 48;
-const int nqx = 11;
-const int nqy = 11;
-const int nqz = 11;
+const int n_pphi_pts = 36;
+const int nqx = 7;
+const int nqy = 7;
+const int nqz = 7;
 
 const double Kphi_min = 0.0, Kphi_max = 2.0*M_PI;
 

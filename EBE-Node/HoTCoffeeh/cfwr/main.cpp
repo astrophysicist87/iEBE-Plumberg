@@ -349,8 +349,8 @@ if (1) exit(8);
 	//decide whether to compute correlation function or read it in
 	if ((int)(paraRdr->getVal("calculate_CF_mode")) < 2)
 	{
-		correlation_function.Cal_correlationfunction(true);		//if we didn't compute resonance decays, must read them in from files
 		correlation_function.Cal_correlationfunction(false);		//if we didn't compute resonance decays, must read them in from files
+		correlation_function.Cal_correlationfunction(true);		//if we didn't compute resonance decays, must read them in from files
 		output << "Finished calculating correlation function with all resonance decays..." << endl;
 	}
 	else

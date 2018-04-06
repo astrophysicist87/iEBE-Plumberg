@@ -889,10 +889,14 @@ void CorrelationFunction::Set_q_points()
 	double mtarget = all_particles[target_particle_id].mass;
 	double qxmax = abs(init_qx);
 	double qymax = abs(init_qy);
+	qx_max = abs(init_qx);
+	qy_max = abs(init_qy);
+	qz_max = abs(init_qz);
+
 	double qxymax = sqrt(qxmax*qxmax+qymax*qymax);
 	double xi2 = mtarget*mtarget + SP_pT_max*SP_pT_max + 0.25*qxymax*qxymax;	//pretend that Kphi == 0, qx == qo and qs == ql == 0, to maximize qtmax
 	//qtmax = sqrt(xi2 + SP_pT_max*qxymax) - sqrt(xi2 - SP_pT_max*qxymax) + 1.e-10;	//THIS IS THE INCORRECT VERSION - ONLY NEEDED FOR COMPARISONS WITH PREVIOUS CODE VERSIONS!!!
-	qtmax = max( qxymax, qz_pts[qznpts-1] );				//just choose the biggest value (THIS IS THE CORRECT VERSION!!!!!)
+	qtmax = max( qxymax, qz_max );				//just choose the biggest value (THIS IS THE CORRECT VERSION!!!!!)
 
 	//for bug-checking
 	//qtmax = 0.2;
@@ -903,14 +907,18 @@ void CorrelationFunction::Set_q_points()
 	Fill_out_pts(qy_pts, qynpts, abs(init_qy), QY_POINTS_SPACING);
 	Fill_out_pts(qz_pts, qznpts, abs(init_qz), QZ_POINTS_SPACING);
 
-	qx_max = abs(init_qx);
-	qy_max = abs(init_qy);
-	qz_max = abs(init_qz);
-
 	iqt0 = (qtnpts - 1) / 2;
 	iqx0 = (qxnpts - 1) / 2;
 	iqy0 = (qynpts - 1) / 2;
 	iqz0 = (qznpts - 1) / 2;
+
+	/*for (int iqt = 0; iqt < qtnpts; ++iqt)
+	for (int iqx = 0; iqx < qxnpts; ++iqx)
+	for (int iqy = 0; iqy < qynpts; ++iqy)
+	for (int iqz = 0; iqz < qznpts; ++iqz)
+		cout << "CHECK q grid points: " << qt_pts[iqt] << "   " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[iqz] << endl;
+
+	if (1) exit (8);*/
 
 	//cout << "Output iq*0 = " << iqt0 << "   " << iqx0 << "   " << iqy0 << "   " << iqz0 << endl;
 
