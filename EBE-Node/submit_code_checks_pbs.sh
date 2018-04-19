@@ -14,11 +14,10 @@ workingDirectory=$HOME'/Plumberg_iEBE/iEBE-stable/RESULTS_Edec300/results/result
 
 npt0=15
 npphi0=36
-npy0=15
 
 #phase space size to run
 ps0=$1
-mv $srcDirec/cfwr.e $srcDirec/cfwr_`echo $ps0`.e
+#mv $srcDirec/cfwr.e $srcDirec/cfwr_`echo $ps0`.e
 
 #run at most this many jobs at a time
 nMaxProcessesRunning=16
@@ -31,9 +30,9 @@ declare -A dqyVals=( ["XYZ"]=0.025 ["X"]=0.001 ["Y"]=0.003 ["Z"]=0.001)
 declare -A dqzVals=( ["XYZ"]=0.020 ["X"]=0.001 ["Y"]=0.001 ["Z"]=0.003)
 
 #submit jobs
-for axis in XYZ
+for axis in X Y Z XYZ
 do
-	for nqt0 in 17 23 31
+	for nqt0 in 17 23 31 51
 	do
 		for npy0 in 15 21
 		do
@@ -51,7 +50,7 @@ do
 			dqy=${dqyVals[$axis]}
 			dqz=${dqzVals[$axis]}
 
-			for resfrac in 0.00 0.10 0.20 0.30 0.40 0.50 0.60 0.70 0.80 0.90 1.00
+			for resfrac in 0.00 0.25 0.50 0.60 0.70 0.75 1.00
 			do
 				##########################################
 				# before submitting any more jobs, make sure you aren't at the max. limit

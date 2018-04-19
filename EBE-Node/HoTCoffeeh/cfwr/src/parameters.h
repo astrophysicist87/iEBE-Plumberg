@@ -24,21 +24,16 @@ using namespace std;
 #define QT_POINTS_SPACING			2		// 0 - uniform from -qmax to +qmax
 											// 1 - Chebyshev nodes from -qmax to +qmax
 											// 2 - Chebyshev nodes for +ve and -ve separately (better convergence)
-											// 3 - Chebyshev nodes for +ve and -ve separately (maybe even better?)
-											// 4 - yet another...
 #define QX_POINTS_SPACING			0		// same
 #define QY_POINTS_SPACING			0		// same
 #define QZ_POINTS_SPACING			0		// same
+
 #define MIDRAPIDITY_PIONS_ONLY		1		// obvious
-#define USE_EXACT					0		// which emission function (exact is toy boltzmann factor for
-											// comparing with results of Heinz and Wiedemann as a check)
-#define USE_CF						1		// which FO surface
+
 #define USE_FAST_EXP				1
 #define USE_EXP_RECYCLING			1
 #define USE_RAPIDITY_SYMMETRY		1
 #define USE_ADJUSTED_MINIMUM		1
-
-#define RUN_TRUNCATED_CALCULATION	0
 
 #ifndef H5_NO_NAMESPACE
     using namespace H5;

@@ -192,6 +192,7 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 	Stopwatch do_resonance_integrals_sw;
 	do_resonance_integrals_sw.Start();
 
+	//determine whether we need to finish evaluating this function
 	bool doing_spectra = ( iqt == (qtnpts - 1)/2 && iqz == (qznpts - 1)/2 );
 	bool doing_moments = ( !IGNORE_LONG_LIVED_RESONANCES || current_resonance_Gamma >= hbarC / max_lifetime );
 
@@ -260,38 +261,15 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 	Tabulate_resonance_Chebyshev_coefficients(parent_resonance_particle_id);
 	Refine_resonance_grids(parent_resonance_particle_id);
 
-/*
-	const int nProperTime = 1001;
-	double * PropTimePts = new double [nProperTime];
-	double * PropTimeWts = new double [nProperTime];
-	gauss_quadrature(nProperTime, 5, 0.0, 0.0, 0.0, current_resonance_Gamma/hbarC, PropTimePts, PropTimeWts);
-
-	const double bw = 0.1;
-	const double rmax = 20.0, taumax = 20.0;
-	const int r_size = int(1.0+rmax/bw), tau_size = int(1.0+taumax/bw);
-	vector<double> DDC_grid(n_pT_pts*r_size*tau_size, 0.0);
-*/
-/*
-	const int nProperTime = 21;
-	double * PropTimePts = new double [nProperTime];
-	double * PropTimeWts = new double [nProperTime];
-	gauss_quadrature(nProperTime, 5, 0.0, 0.0, 0.0, current_resonance_Gamma/hbarC, PropTimePts, PropTimeWts);
-
-	const double bw = 0.1;
-	const double tmax = 100.0;
-	const int t_size = int(1.0+tmax/bw);
-	vector<double> DDC_grid(n_pT_pts*t_size, 0.0);
-*/
-
 	if (n_body == 2)
 	{
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 		{
-if (RUN_TRUNCATED_CALCULATION && /*ipT != 0 && ipT != 4 && */ipT != 8)
-	continue;
-if (RUN_TRUNCATED_CALCULATION && ipY != ipY0)
-	continue;
+//if (RUN_TRUNCATED_CALCULATION && /*ipT != 0 && ipT != 4 && */ipT != 8)
+//	continue;
+//if (RUN_TRUNCATED_CALCULATION && ipY != ipY0)
+//	continue;
 
 			if (doing_moments)
 			{
@@ -302,8 +280,8 @@ if (RUN_TRUNCATED_CALCULATION && ipY != ipY0)
 
 			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 			{
-if (RUN_TRUNCATED_CALCULATION && ipphi > 0)
-	continue;
+//if (RUN_TRUNCATED_CALCULATION && ipphi > 0)
+//	continue;
 
 				double local_pT = SP_pT[ipT];
 				double local_pphi = SP_pphi[ipphi];
@@ -338,7 +316,6 @@ if (RUN_TRUNCATED_CALCULATION && ipphi > 0)
 						for (int tempidx = 0; tempidx <= 1; ++tempidx)
 						{
 							current_tempidx = tempidx;
-//cout << "PROGRESS: " << current_is << "   " << iv << "   " << izeta << "   " << tempidx << endl;
 							if (tempidx != 0)
 								PKphi = VEC_n2_PPhi_tildeFLIP[NB2_indexer(iv,izeta)];		//also takes Pp --> Pm
 							currentPpm = VEC_n2_Ppm[NB2_indexer(iv,izeta)*2 + tempidx];
@@ -346,92 +323,12 @@ if (RUN_TRUNCATED_CALCULATION && ipphi > 0)
 							if ( doing_spectra )
 								Edndp3(PKT, PKphi, &Csum);
 
-/*
-//try outputting emission function too
-if (ipphi == 0 && ipY == ipY0 && daughter_particle_id == target_particle_id && iqt == 0 && iqz == 0)
-for (int isurf = 0; isurf < FO_length; ++isurf)
-for (int iProperTime = 0; iProperTime < nProperTime; ++iProperTime)
-{
-	FO_surf * surf = &FOsurf_ptr[isurf];
-
-	double FOt = surf->tau;	//ch(0)==1
-	double FOx = surf->xpt;
-	double FOy = surf->ypt;
-	double FOz = 0.0;		//sh(0)==0
-
-	Mres = current_resonance_mass;
-	Gamma = current_resonance_Gamma;
-	double tau = PropTimePts[iProperTime];
-
-	double shift_t = currentPpm[0]*tau/Mres;
-	double shift_x = currentPpm[1]*tau/Mres;
-	double shift_y = currentPpm[2]*tau/Mres;
-	double shift_z = currentPpm[3]*tau/Mres;
-
-	double net_t = FOt + shift_t, net_z = FOz + shift_z;
-	double net_x = FOx + shift_x, net_y = FOy + shift_y;
-
-	int net_tau = (int)(sqrt(net_t*net_t - net_z*net_z)/bw);
-	int net_r = (int)(sqrt(net_x*net_x + net_y*net_y)/bw);
-
-	if (0 <= net_tau && net_tau < tau_size && 0 <= net_r && net_r < r_size)
-		DDC_grid.at( ( ipT * tau_size + net_tau ) * r_size + net_r )
-			+= VEC_n2_zeta_factor[NB2_indexer(iv,izeta)]
-				* Mres * VEC_n2_s_factor * VEC_n2_v_factor[iv]
-				* Gamma * PropTimeWts[iProperTime] * exp(-Gamma*PropTimePts[iProperTime]/hbarC)
-				* S_x_p( parent_resonance_particle_id, isurf, 0.0, PKT, PKphi, VEC_n2_P_Y[iv] );
-}
-*/
-/*
-//try outputting emission function too
-if (ipphi == 0 && ipY == ipY0 && daughter_particle_id == target_particle_id && iqt == 0 && iqz == 0)
-for (int isurf = 0; isurf < FO_length; ++isurf)
-for (int ieta = 0; ieta < 2*eta_s_npts; ++ieta)
-for (int iProperTime = 0; iProperTime < nProperTime; ++iProperTime)
-{
-	FO_surf * surf = &FOsurf_ptr[isurf];
-	double eta_s_loc = (ieta < eta_s_npts) ? -eta_s[eta_s_npts-1-ieta] : eta_s[ieta-eta_s_npts];
-
-	double FOt = surf->tau*cosh(eta_s_loc);
-	double FOx = surf->xpt;
-	double FOy = surf->ypt;
-	double FOz = surf->tau*sinh(eta_s_loc);
-
-	Mres = current_resonance_mass;
-	Gamma = current_resonance_Gamma;
-	double tau = PropTimePts[iProperTime];
-
-	double shift_t = currentPpm[0]*tau/Mres;
-	double net_t = FOt + shift_t;
-	int net_it = (int)(net_t/bw);
-
-	if (0.0 <= net_t && net_t < tmax)
-	{
-		double tmp_S = S_x_p( parent_resonance_particle_id, isurf, eta_s_loc, PKT, PKphi, VEC_n2_P_Y[iv] );
-		double tmp_result = VEC_n2_zeta_factor[NB2_indexer(iv,izeta)]
-					* Mres * VEC_n2_s_factor * VEC_n2_v_factor[iv]
-					* Gamma * PropTimeWts[iProperTime] * exp(-Gamma*PropTimePts[iProperTime]/hbarC) / hbarC
-					* tmp_S;
-
-		DDC_grid.at( ipT * t_size + net_it ) += tmp_result;
-
-		if (iProperTime==0)
-			cout << iv << "   " << izeta << "   " << isurf << "   " << ieta << "   " << eta_s_loc << "   "
-					<< "   " << tmp_S << "\n";
-	}
-}
-*/
 
 							//space-time moments
 							if ( doing_moments )
 							{
 								Set_val_arrays(PKT, PKphi, Del_PKY);
 								eiqxEdndp3(PKT, PKphi, Del_PKY, Csum_vec, local_verbose);
-/*for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
-{
-if (ipT==0 && ipphi==0 && doing_spectra && doing_moments)
-	cout << "CHECK(nb=2,tmpidx): " << PKT << "   " << PKphi << "   " << Del_PKY << "   " << qpt_cs_idx << "   " << VEC_n2_zeta_factor[NB2_indexer(iv,izeta)] << "   " << Csum << "   " << Csum_vec[qpt_cs_idx] << endl;
-}*/
 							}
 						}												// end of tempidx sum
 						zetasum += VEC_n2_zeta_factor[NB2_indexer(iv,izeta)]*Csum;
@@ -439,17 +336,12 @@ if (ipT==0 && ipphi==0 && doing_spectra && doing_moments)
 							for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
 							{
 								zetasum_vec[qpt_cs_idx] += VEC_n2_zeta_factor[NB2_indexer(iv,izeta)]*Csum_vec[qpt_cs_idx];
-/*if (ipT==0 && ipphi==0 && doing_spectra && doing_moments)
-	cout << "CHECK(nb=2,Csum): " << qpt_cs_idx << "   " << VEC_n2_zeta_factor[NB2_indexer(iv,izeta)] << "   " << Csum << "   " << Csum_vec[qpt_cs_idx] << endl;*/
 							}
 					}													// end of zeta sum
 					if (doing_moments)
 						for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
 						{
 							vsum_vec[qpt_cs_idx] += VEC_n2_v_factor[iv]*zetasum_vec[qpt_cs_idx];
-/*if (ipT==0 && ipphi==0 && doing_spectra && doing_moments)
-	cout << "CHECK(nb=2,zetasum): " << qpt_cs_idx << "   " << VEC_n2_v_factor[iv] << "   "
-			<< zetasum << "   " << zetasum_vec[qpt_cs_idx] << "   " << vsum_vec[qpt_cs_idx] << endl;*/
 						}
 					vsum += VEC_n2_v_factor[iv]*zetasum;
 				}														// end of v sum
@@ -457,14 +349,10 @@ if (ipT==0 && ipphi==0 && doing_spectra && doing_moments)
 					for (int qpt_cs_idx = 0; qpt_cs_idx < qspace_cs_slice_length; ++qpt_cs_idx)
 					{
 						ssum_vec[qpt_cs_idx] += Mres*VEC_n2_s_factor*vsum_vec[qpt_cs_idx];
-//if (ipT==0 && ipphi==0 && doing_spectra && doing_moments)
-//	cout << "CHECK(nb=2,vsum): " << qpt_cs_idx << "   " << vsum << "   " << vsum_vec[qpt_cs_idx] << endl;
 					}
 				double ssum = Mres*VEC_n2_s_factor*vsum;
 
 
-//if (ipT==0 && ipphi==0 && doing_spectra && doing_moments)
-//	cout << "CHECK(nb=2): " << ipY << "   " << iqz << "   " << ssum << "   " << ssum_vec[0] << endl;
 
 				//update all gridpoints for all daughter moments
 				if ( doing_moments )
@@ -474,8 +362,6 @@ if (ipT==0 && ipphi==0 && doing_spectra && doing_moments)
 					for (int iqy = 0; iqy < qynpts; ++iqy)
 					for (int itrig = 0; itrig < ntrig; ++itrig)
 					{
-/*if (ipT==0 && ipphi==0 && doing_spectra && doing_moments)
-cout << "DUMP: " << daughter_lookup_idx << "   " << ipT << "   " << ipphi << "   " << ipY << "   " << iqx << "   " << iqy << "   " << itrig << "   " << current_daughters_dN_dypTdpTdphi_moments[daughter_lookup_idx][fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,itrig)] << endl;*/
 						current_daughters_dN_dypTdpTdphi_moments[daughter_lookup_idx][fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,itrig)] += ssum_vec[qpt_cs_idx];
 						++qpt_cs_idx;
 					}
@@ -487,9 +373,6 @@ cout << "DUMP: " << daughter_lookup_idx << "   " << ipT << "   " << ipphi << "  
 					spectra[daughter_particle_id][ipT][ipphi] += ssum;
 					log_spectra[daughter_particle_id][ipT][ipphi] = log(abs(spectra[daughter_particle_id][ipT][ipphi])+1.e-100);
 					sign_spectra[daughter_particle_id][ipT][ipphi] = sgn(spectra[daughter_particle_id][ipT][ipphi]);
-//if (daughter_particle_id==1)
-//	cout << "CHECK2: " << thermal_spectra[daughter_particle_id][ipT][ipphi] << "   " << spectra[daughter_particle_id][ipT][ipphi] << "   "
-//			<< current_daughters_dN_dypTdpTdphi_moments[daughter_lookup_idx][fixQTQZ_indexer(ipT,ipphi,ipY,0,0,0)] << endl;
 				}
 			}
 		}											// end of pT, pphi, pY loops
@@ -499,10 +382,10 @@ cout << "DUMP: " << daughter_lookup_idx << "   " << ipT << "   " << ipphi << "  
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 		{
-if (RUN_TRUNCATED_CALCULATION && /*ipT != 0 && ipT != 4 && */ipT != 8)
-	continue;
-if (RUN_TRUNCATED_CALCULATION && ipY != ipY0)
-	continue;
+//if (RUN_TRUNCATED_CALCULATION && /*ipT != 0 && ipT != 4 && */ipT != 8)
+//	continue;
+//if (RUN_TRUNCATED_CALCULATION && ipY != ipY0)
+//	continue;
 			if (doing_moments)
 			{
 				for (int igrid = 0; igrid < grids_calculated_length; ++igrid)
@@ -512,8 +395,8 @@ if (RUN_TRUNCATED_CALCULATION && ipY != ipY0)
 
 			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 			{
-if (RUN_TRUNCATED_CALCULATION && ipphi > 0)
-	continue;
+//if (RUN_TRUNCATED_CALCULATION && ipphi > 0)
+//	continue;
 
 				double local_pT = SP_pT[ipT];
 				double local_pphi = SP_pphi[ipphi];
@@ -549,7 +432,6 @@ if (RUN_TRUNCATED_CALCULATION && ipphi > 0)
 
 							for (int tempidx = 0; tempidx <= 1; ++tempidx)
 							{
-//cout << "PROGRESS: " << is << "   " << iv << "   " << izeta << "   " << tempidx << endl;
 								current_tempidx = tempidx;
 								if (tempidx != 0)
 									PKphi = VEC_n3_PPhi_tildeFLIP[NB3_indexer(is,iv,izeta)];		//also takes Pp --> Pm
@@ -642,22 +524,6 @@ if (RUN_TRUNCATED_CALCULATION && ipphi > 0)
 	}
 
 	Delete_resonance_running_sum_vectors();
-
-/*
-	//print results
-	if (daughter_particle_id == target_particle_id && iqt == 0 && iqz == 0)
-	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
-	for (int itau = 0; itau < tau_size; ++itau)
-	for (int ir = 0; ir < r_size; ++ir)
-		cout << "DDC: " << SP_pT[ipT] << "   " << bw*itau << "   " << bw*ir << "   " << DDC_grid.at( ( ipT * tau_size + itau ) * r_size + ir ) << "\n";
-*/
-/*
-	//print results
-	if (daughter_particle_id == target_particle_id && iqt == 0 && iqz == 0)
-	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
-	for (int it = 0; it < t_size; ++it)
-		cout << "DDC: " << SP_pT[ipT] << "   " << bw*it << "   " << DDC_grid.at( ipT * t_size + it ) << "\n";
-*/
 
 	do_resonance_integrals_sw.Stop();
 	*global_out_stream_ptr << "\t--> Finished this decay loop through Do_resonance_integrals(...) in " << do_resonance_integrals_sw.printTime() << " seconds." << endl;
@@ -929,7 +795,8 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 		complex<double> q_dep_factor = one/(one - i*ak);
 		//cout << "CHECK AK: " << akr << "   " << aki << "   "  << q_dep_factor.real() << "   " << q_dep_factor.imag() << endl;
 
-		bool use_exact = bool(RUN_TRUNCATED_CALCULATION);
+		//bool use_exact = bool(RUN_TRUNCATED_CALCULATION);
+		bool use_exact = false;
 		double tempCS[4];
 		if (use_exact)
 		{
@@ -1083,32 +950,6 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 
 	}   //end of all q-loops
 
-	/*
-	qpt_cs_idx = 0;
-	//if (current_reso_nbody==2 && current_parent_resonance==49 && current_ipY==ipY0 && current_ipT==0 && current_ipphi==0)
-	//{
-		for (int iqx = 0; iqx < qxnpts; ++iqx)
-		for (int iqy = 0; iqy < qynpts; ++iqy)
-		{
-			//if (current_ipY==ipY0)
-			//{
-				double tempCosCos = 0.0, tempCosSin = 0.0, tempSinCos = 0.0, tempSinSin = 0.0;
-				Cal_dN_dypTdpTdphi_with_weights_toy_func(current_parent_resonance, ptr, phir, spyr,
-																qt_pts[current_iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[current_iqz],
-																&tempCosCos, &tempCosSin, &tempSinCos, &tempSinSin);
-				cout << "cfwr_resonance(): "
-						<< ptr << "   " << phir << "   " << spyr << "   " << spyr+current_pY_shift << "   " << qt_pts[current_iqt] << "   "
-						<< qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[current_iqz] << endl
-						<< "\t\t" << results[qpt_cs_idx++] << "   " << results[qpt_cs_idx++] << "   " << results[qpt_cs_idx++] << "   " << results[qpt_cs_idx++] << endl
-						<< "\t\t" << tempCosCos << "   " << tempCosSin << "   " << tempSinCos << "   " << tempSinSin << endl;
-			//}
-		}
-		//if (current_ipY == ipY0) exit (8);
-	//}
-
-	if (1) exit (8);
-	*/
-
 	return;
 }
 
@@ -1229,9 +1070,6 @@ void CorrelationFunction::Set_val_arrays(double ptr, double phir, double spyr)
 	exp_table_mom_12 = exp_table_12[exp_table_idx];
 	exp_table_mom_22 = exp_table_22[exp_table_idx];
 	use_recycling = grids_calculated[exp_table_idx];	//true if this particular cell has been computed already; false otherwise
-/*if (verbose) cout << "Set_val_arrays(), status: " << exp_table_idx << "   " << use_recycling << "   "
-					<< idx111 << "   " << idx112 << "   " << idx121 << "   " << idx122 << "   " << idx211 << "   " << idx212 << "   " << idx221 << "   " << idx222 << "   "
-					<< npt << "   " << nphi << "   " << npy << "   " << current_is << "   " << current_iv << "   " << current_izeta << endl;*/
 
 	double * f111_arr = refined_resonance_grids[idx111];
 	double * f112_arr = refined_resonance_grids[idx112];
@@ -1276,26 +1114,6 @@ void CorrelationFunction::Set_val_arrays(double ptr, double phir, double spyr)
 				val21_arr[qpt_cs_idx] = sign_of_f121 * exp_table_mom_21[qpt_cs_idx];
 				val12_arr[qpt_cs_idx] = sign_of_f112 * exp_table_mom_12[qpt_cs_idx];
 				val22_arr[qpt_cs_idx] = sign_of_f122 * exp_table_mom_22[qpt_cs_idx];
-	/*if (verbose) cout << "Set_val_arrays(), dump: " << exp_table_idx << "   " << use_recycling << "   "
-						<< exp_table_mom_11[qpt_cs_idx] << "   " << exp_table_mom_21[qpt_cs_idx] << "   " << exp_table_mom_12[qpt_cs_idx] << "   " << exp_table_mom_22[qpt_cs_idx]
-						<< exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]) ) << "   "
-						<< exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]) ) << "   "
-						<< exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]) ) << "   "
-						<< exp( lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) ) << endl;*/
-
-				/*if ( current_reso_nbody==3 && test11 && test12 && test21 && test22 )
-					printf( "MOMENTA: %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le\n",
-							current_resonance_particle_id, daughter_resonance_particle_id, current_ipT, current_ipphi, current_ipY,
-							current_is, current_iv, current_izeta, current_tempidx,
-							iqx, iqy, iCS, iRI, ptr, phir, spyr,
-							lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]),
-							lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]),
-							lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]),
-							lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]),
-							log(exp_table_mom_11[qpt_cs_idx]+1.e-100),
-							log(exp_table_mom_21[qpt_cs_idx]+1.e-100),
-							log(exp_table_mom_12[qpt_cs_idx]+1.e-100),
-							log(exp_table_mom_22[qpt_cs_idx]+1.e-100) );*/
 			
 				++qpt_cs_idx;
 			}
@@ -1416,16 +1234,6 @@ void CorrelationFunction::Set_val_arrays(double ptr, double phir, double spyr)
 				val12_arr[qpt_cs_idx] = sign_of_f112 * exp_table_mom_12[qpt_cs_idx];
 				val22_arr[qpt_cs_idx] = sign_of_f122 * exp_table_mom_22[qpt_cs_idx];
 
-				/*if ( current_reso_nbody==3 && test11 && test12 && test21 && test22 )
-					printf( "MOMENTA: %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %i  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le  %15.8le\n",
-							current_resonance_particle_id, daughter_resonance_particle_id, current_ipT, current_ipphi, current_ipY,
-							current_is, current_iv, current_izeta, current_tempidx,
-							iqx, iqy, iCS, iRI, ptr, phir, spyr,
-							lin_int(del_ptr_pt0, one_by_pTdiff, log_f111_arr[qpt_cs_idx], log_f211_arr[qpt_cs_idx]),
-							lin_int(del_ptr_pt0, one_by_pTdiff, log_f121_arr[qpt_cs_idx], log_f221_arr[qpt_cs_idx]),
-							lin_int(del_ptr_pt0, one_by_pTdiff, log_f112_arr[qpt_cs_idx], log_f212_arr[qpt_cs_idx]),
-							lin_int(del_ptr_pt0, one_by_pTdiff, log_f122_arr[qpt_cs_idx], log_f222_arr[qpt_cs_idx]) );*/
-
 				++qpt_cs_idx;
 			}
 		}
@@ -1527,80 +1335,6 @@ void CorrelationFunction::Set_val_arrays(double ptr, double phir, double spyr)
 			++qpt_cs_idx;
 		}
 	}
-
-	//Do sanity check here...
-	/*
-	qpt_cs_idx = 0;
-
-	cout << "Ranges: (" << pT0 << "," << ptr << "," << pT1 << ");  (" << phi0 << "," << phir << "," << phi1 << "); (" << py0 << "," << pyr << "," << py1 << ")" << endl;
-
-	for (int iqx = 0; iqx < qxnpts; ++iqx)
-	for (int iqy = 0; iqy < qynpts; ++iqy)
-	{
-		cout << "Values: " << qt_pts[current_iqt] << "   " << qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[current_iqz] << endl;
-		///////////////////////
-		double tempCosCos = 0.0, tempCosSin = 0.0, tempSinCos = 0.0, tempSinSin = 0.0;
-		Cal_dN_dypTdpTdphi_with_weights_toy_func(current_parent_resonance, pT0, phi0, py0,
-													qt_pts[current_iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[current_iqz],
-													&tempCosCos, &tempCosSin, &tempSinCos, &tempSinSin);
-		cout << setw(10) << "Sanity check(f111): " << f111_arr[qpt_cs_idx] << "   " << f111_arr[qpt_cs_idx+1] << "   " << f111_arr[qpt_cs_idx+2] << "   " << f111_arr[qpt_cs_idx+3] << endl
-				<< "Sanity check(f111ex): " << tempCosCos << "   " << tempCosSin << "   " << tempSinCos << "   " << tempSinSin << endl;
-		///////////////////////
-		tempCosCos = 0.0, tempCosSin = 0.0, tempSinCos = 0.0, tempSinSin = 0.0;
-		Cal_dN_dypTdpTdphi_with_weights_toy_func(current_parent_resonance, pT1, phi0, py0,
-													qt_pts[current_iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[current_iqz],
-													&tempCosCos, &tempCosSin, &tempSinCos, &tempSinSin);
-		cout << "Sanity check(f211): " << f211_arr[qpt_cs_idx] << "   " << f211_arr[qpt_cs_idx+1] << "   " << f211_arr[qpt_cs_idx+2] << "   " << f211_arr[qpt_cs_idx+3] << endl
-				<< "Sanity check(f211ex): " << tempCosCos << "   " << tempCosSin << "   " << tempSinCos << "   " << tempSinSin << endl;
-		///////////////////////
-		tempCosCos = 0.0, tempCosSin = 0.0, tempSinCos = 0.0, tempSinSin = 0.0;
-		Cal_dN_dypTdpTdphi_with_weights_toy_func(current_parent_resonance, pT0, phi1, py0,
-													qt_pts[current_iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[current_iqz],
-													&tempCosCos, &tempCosSin, &tempSinCos, &tempSinSin);
-		cout << "Sanity check(f121): " << f121_arr[qpt_cs_idx] << "   " << f121_arr[qpt_cs_idx+1] << "   " << f121_arr[qpt_cs_idx+2] << "   " << f121_arr[qpt_cs_idx+3] << endl
-				<< "Sanity check(f121ex): " << tempCosCos << "   " << tempCosSin << "   " << tempSinCos << "   " << tempSinSin << endl;
-		///////////////////////
-		tempCosCos = 0.0, tempCosSin = 0.0, tempSinCos = 0.0, tempSinSin = 0.0;
-		Cal_dN_dypTdpTdphi_with_weights_toy_func(current_parent_resonance, pT1, phi1, py0,
-													qt_pts[current_iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[current_iqz],
-													&tempCosCos, &tempCosSin, &tempSinCos, &tempSinSin);
-		cout << "Sanity check(f221): " << f221_arr[qpt_cs_idx] << "   " << f221_arr[qpt_cs_idx+1] << "   " << f221_arr[qpt_cs_idx+2] << "   " << f221_arr[qpt_cs_idx+3] << endl
-				<< "Sanity check(f221ex): " << tempCosCos << "   " << tempCosSin << "   " << tempSinCos << "   " << tempSinSin << endl;
-
-		///////////////////////
-		tempCosCos = 0.0, tempCosSin = 0.0, tempSinCos = 0.0, tempSinSin = 0.0;
-		Cal_dN_dypTdpTdphi_with_weights_toy_func(current_parent_resonance, pT0, phi0, py1,
-													qt_pts[current_iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[current_iqz],
-													&tempCosCos, &tempCosSin, &tempSinCos, &tempSinSin);
-		cout << "Sanity check(f112): " << f112_arr[qpt_cs_idx] << "   " << f112_arr[qpt_cs_idx+1] << "   " << f112_arr[qpt_cs_idx+2] << "   " << f112_arr[qpt_cs_idx+3] << endl
-				<< "Sanity check(f112ex): " << tempCosCos << "   " << tempCosSin << "   " << tempSinCos << "   " << tempSinSin << endl;
-		///////////////////////
-		tempCosCos = 0.0, tempCosSin = 0.0, tempSinCos = 0.0, tempSinSin = 0.0;
-		Cal_dN_dypTdpTdphi_with_weights_toy_func(current_parent_resonance, pT1, phi0, py1,
-													qt_pts[current_iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[current_iqz],
-													&tempCosCos, &tempCosSin, &tempSinCos, &tempSinSin);
-		cout << "Sanity check(f212): " << f212_arr[qpt_cs_idx] << "   " << f212_arr[qpt_cs_idx+1] << "   " << f212_arr[qpt_cs_idx+2] << "   " << f212_arr[qpt_cs_idx+3] << endl
-				<< "Sanity check(f212ex): " << tempCosCos << "   " << tempCosSin << "   " << tempSinCos << "   " << tempSinSin << endl;
-
-		///////////////////////
-		tempCosCos = 0.0, tempCosSin = 0.0, tempSinCos = 0.0, tempSinSin = 0.0;
-		Cal_dN_dypTdpTdphi_with_weights_toy_func(current_parent_resonance, pT0, phi1, py1,
-													qt_pts[current_iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[current_iqz],
-													&tempCosCos, &tempCosSin, &tempSinCos, &tempSinSin);
-		cout << "Sanity check(f122): " << f122_arr[qpt_cs_idx] << "   " << f122_arr[qpt_cs_idx+1] << "   " << f122_arr[qpt_cs_idx+2] << "   " << f122_arr[qpt_cs_idx+3] << endl
-				<< "Sanity check(f122ex): " << tempCosCos << "   " << tempCosSin << "   " << tempSinCos << "   " << tempSinSin << endl;
-		///////////////////////
-		tempCosCos = 0.0, tempCosSin = 0.0, tempSinCos = 0.0, tempSinSin = 0.0;
-		Cal_dN_dypTdpTdphi_with_weights_toy_func(current_parent_resonance, pT1, phi1, py1,
-													qt_pts[current_iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[current_iqz],
-													&tempCosCos, &tempCosSin, &tempSinCos, &tempSinSin);
-		cout << "Sanity check(f222): " << f222_arr[qpt_cs_idx] << "   " << f222_arr[qpt_cs_idx+1] << "   " << f222_arr[qpt_cs_idx+2] << "   " << f222_arr[qpt_cs_idx+3] << endl
-				<< "Sanity check(f222ex): " << tempCosCos << "   " << tempCosSin << "   " << tempSinCos << "   " << tempSinSin << endl;
-		///////////////////////
-		qpt_cs_idx+=4;
-	}
-	*/
-	//if (1) exit(8);	
 
 	grids_calculated[exp_table_idx] = true;
 
