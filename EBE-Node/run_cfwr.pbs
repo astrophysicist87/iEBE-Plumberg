@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -l walltime=168:00:00
+#PBS -l walltime=672:00:00
 #PBS -l nodes=1:ppn=1
 #PBS -j oe
 #PBS -S /bin/bash
@@ -14,9 +14,9 @@ cd $workingDirectory
 echo 'Now working in '`pwd`
 echo 'Should be in' $workingDirectory
 
-time nice -n 0 ./cfwr.e CF_npphi=`echo $NPPHI` CF_npT=`echo $NPT` CF_npY=`echo $NPY` \
-						chosenParticlesMode=0 CF_resonanceThreshold=`echo $RESFRAC` \
-						qtnpts=`echo $NQT` qxnpts=`echo $NQX` qynpts=`echo $NQY` qznpts=`echo $NQZ` \
+time nice -n 0 ./cfwr.e CF_npphi=`echo $NPPHI` CF_npT=`echo $NPT` CF_npY=`echo $NPY` flag_negative_S=1 \
+						chosenParticlesMode=0 include_bulk_pi=0 CF_resonanceThreshold=`echo $RESFRAC` \
+						qtnpts=`echo $NQT` qxnpts=`echo $NQX` qynpts=`echo $NQY` qznpts=`echo $NQZ` flesh_out_cf=0 \
 						delta_qx=`echo $DQX` delta_qy=`echo $DQY` delta_qz=`echo $DQZ` 1> CFWR_record.out 2> CFWR_err.out
 
 #cd results

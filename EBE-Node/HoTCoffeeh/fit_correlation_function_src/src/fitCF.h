@@ -110,7 +110,7 @@ class FitCF
 		double ***** tmp_moments_real;
 		double ***** tmp_moments_imag;
 		
-		double *** spectra, *** abs_spectra, *** thermal_spectra, *** log_spectra, *** sign_spectra;
+		double *** spectra, *** avgSpectra, *** abs_spectra, *** thermal_spectra, *** log_spectra, *** sign_spectra;
 		
 		// relative momentum information
 		double * qo_pts, * qs_pts, * ql_pts, * q_pts, * q_axes, * qt_pts, * qx_pts, * qy_pts, * qz_pts;
@@ -124,6 +124,8 @@ class FitCF
 		
 		//store correlation functions
 		double ***** CFvals, ***** thermalCFvals, ***** crosstermCFvals, ***** resonancesCFvals;
+		double ***** avgCorrelation_function, ***** avgCorrelation_function_Numerator, ***** avgCorrelation_function_Denominator;
+		double ***** avgThermalCFvals, ***** avgCrosstermCFvals, ***** avgResonancesCFvals;
 		double *** fleshed_out_CF, *** fleshed_out_thermal, *** fleshed_out_crossterm, *** fleshed_out_resonances;
 		double *** Correl_3D_err;
 		double ** lambda_Correl, ** lambda_Correl_err;
@@ -206,20 +208,24 @@ class FitCF
 		double best_fit_rational_function(vector<double> & xdata, vector<double> & ydata, int n, int m, double x, bool & error_report);
 		void Get_total_target_eiqx_dN_dypTdpTdphi_on_pair_momentum_grid(double * eiqx_EdNd3p_in, double * eiqx_EdNd3p_out, double * KT, double * KPHI);
 
+		//average correlation function
+		void Average_correlation_function();
+
+		void find_minimum_chisq_correlationfunction_full(double *** Correl_3D, int ipt, int ipphi, bool fleshing_out_CF /*== true*/);
+
 		// input and output function prototypes
-		void Readin_total_target_eiqx_dN_dypTdpTdphi(int folderindex);
-		void Readin_total_target_eiqx_dN_dypTdpTdphi(string filename);
-		void Output_total_target_eiqx_dN_dypTdpTdphi();
-		void Readin_total_target_eiqx_dN_dypTdpTdphi_evavg();
 		void Output_results(int mode);
 		void Readin_results(int mode);
 		void Read_in_all_dN_dypTdpTdphi();
 		void Readin_resonance_fraction(int folderindex);
 		void Output_correlationfunction();
+		void Output_averaged_correlationfunction();
 		void Output_fleshed_out_correlationfunction(int ipt, int ipphi);
 		void Dump_spectra_array(string output_filename, double *** array_to_dump);
 		void Load_spectra_array(string output_filename, double *** array_to_read);
 		void Output_lambdas();
+		void Read_in_correlationfunction(string CF_filename);
+		void Read_in_correlationfunction_evavg(string CF_filename);
 
 		//parameters that the user is free to define
 		double plumberg_test_variable;

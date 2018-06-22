@@ -69,6 +69,9 @@ const double delta_q = 0.005;
 const double init_q = 0.0;
 
 const int new_nqpts = 51;
+const int new_nqxpts = new_nqpts;
+const int new_nqypts = new_nqpts;
+const int new_nqzpts = new_nqpts;
 
 //all direction-specific q points information here
 //const int qtnpts = 13;

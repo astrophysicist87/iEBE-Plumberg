@@ -89,44 +89,6 @@ FitCF::FitCF(particle_info* all_particles_in, int Nparticle_in, int particle_idx
 	use_delta_f = true;
 	no_df_stem = "";
 
-	/*thermal_target_dN_dypTdpTdphi_moments = new double ****** [n_interp_pT_pts];
-	full_target_dN_dypTdpTdphi_moments = new double ****** [n_interp_pT_pts];
-	for (int ipt = 0; ipt < n_interp_pT_pts; ++ipt)
-	{
-		thermal_target_dN_dypTdpTdphi_moments[ipt] = new double ***** [n_interp_pphi_pts];
-		full_target_dN_dypTdpTdphi_moments[ipt] = new double ***** [n_interp_pphi_pts];
-		for (int ipphi = 0; ipphi < n_interp_pphi_pts; ++ipphi)
-		{
-			thermal_target_dN_dypTdpTdphi_moments[ipt][ipphi] = new double **** [qtnpts];
-			full_target_dN_dypTdpTdphi_moments[ipt][ipphi] = new double **** [qtnpts];
-			for (int iqt = 0; iqt < qtnpts; ++iqt)
-			{
-				thermal_target_dN_dypTdpTdphi_moments[ipt][ipphi][iqt] = new double *** [qxnpts];
-				full_target_dN_dypTdpTdphi_moments[ipt][ipphi][iqt] = new double *** [qxnpts];
-				for (int iqx = 0; iqx < qxnpts; ++iqx)
-				{
-					thermal_target_dN_dypTdpTdphi_moments[ipt][ipphi][iqt][iqx] = new double ** [qynpts];
-					full_target_dN_dypTdpTdphi_moments[ipt][ipphi][iqt][iqx] = new double ** [qynpts];
-					for (int iqy = 0; iqy < qynpts; ++iqy)
-					{
-						thermal_target_dN_dypTdpTdphi_moments[ipt][ipphi][iqt][iqx][iqy] = new double * [qznpts];
-						full_target_dN_dypTdpTdphi_moments[ipt][ipphi][iqt][iqx][iqy] = new double * [qznpts];
-						for (int iqz = 0; iqz < qznpts; ++iqz)
-						{
-							thermal_target_dN_dypTdpTdphi_moments[ipt][ipphi][iqt][iqx][iqy][iqz] = new double [2];
-							full_target_dN_dypTdpTdphi_moments[ipt][ipphi][iqt][iqx][iqy][iqz] = new double [2];
-							for (int itrig = 0; itrig < 2; ++itrig)
-							{
-								thermal_target_dN_dypTdpTdphi_moments[ipt][ipphi][iqt][iqx][iqy][iqz][itrig] = 0.0;
-								full_target_dN_dypTdpTdphi_moments[ipt][ipphi][iqt][iqx][iqy][iqz][itrig] = 0.0;
-							}
-						}
-					}
-				}
-			}
-		}
-	}*/
-
 	thermal_target_dN_dypTdpTdphi_moments = new double [n_interp_pT_pts * n_interp_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig];
 	full_target_dN_dypTdpTdphi_moments = new double [n_interp_pT_pts * n_interp_pphi_pts * qtnpts * qxnpts * qynpts * qznpts * ntrig];
 
@@ -147,6 +109,7 @@ FitCF::FitCF(particle_info* all_particles_in, int Nparticle_in, int particle_idx
 
 	// initialize spectra and correlation function arrays
 	spectra = new double ** [Nparticle];
+	avgSpectra = new double ** [Nparticle];
 	abs_spectra = new double ** [Nparticle];
 	thermal_spectra = new double ** [Nparticle];
 	log_spectra = new double ** [Nparticle];
@@ -154,6 +117,7 @@ FitCF::FitCF(particle_info* all_particles_in, int Nparticle_in, int particle_idx
 	for (int ir = 0; ir < Nparticle; ++ir)
 	{
 		spectra[ir] = new double * [n_interp_pT_pts];
+		avgSpectra[ir] = new double * [n_interp_pT_pts];
 		abs_spectra[ir] = new double * [n_interp_pT_pts];
 		thermal_spectra[ir] = new double * [n_interp_pT_pts];
 		log_spectra[ir] = new double * [n_interp_pT_pts];
@@ -161,6 +125,7 @@ FitCF::FitCF(particle_info* all_particles_in, int Nparticle_in, int particle_idx
 		for (int ipT = 0; ipT < n_interp_pT_pts; ++ipT)
 		{
 			spectra[ir][ipT] = new double [n_interp_pphi_pts];
+			avgSpectra[ir][ipT] = new double [n_interp_pphi_pts];
 			abs_spectra[ir][ipT] = new double [n_interp_pphi_pts];
 			thermal_spectra[ir][ipT] = new double [n_interp_pphi_pts];
 			log_spectra[ir][ipT] = new double [n_interp_pphi_pts];
@@ -168,6 +133,7 @@ FitCF::FitCF(particle_info* all_particles_in, int Nparticle_in, int particle_idx
 			for (int ipphi = 0; ipphi < n_interp_pphi_pts; ++ipphi)
 			{
 				spectra[ir][ipT][ipphi] = 0.0;
+				avgSpectra[ir][ipT][ipphi] = 0.0;
 				abs_spectra[ir][ipT][ipphi] = 0.0;
 				thermal_spectra[ir][ipT][ipphi] = 0.0;
 				log_spectra[ir][ipT][ipphi] = 0.0;
@@ -175,43 +141,6 @@ FitCF::FitCF(particle_info* all_particles_in, int Nparticle_in, int particle_idx
 			}
 		}
 	}
-
-/*
-	//set pT and pphi points
-	SPinterp_pT = new double [n_interp_pT_pts];
-	SPinterp_pT_wts = new double [n_interp_pT_pts];
-	SPinterp_pphi = new double [n_interp_pphi_pts];
-	SPinterp_pphi_wts = new double [n_interp_pphi_pts];
-	sin_SPinterp_pphi = new double [n_interp_pphi_pts];
-	cos_SPinterp_pphi = new double [n_interp_pphi_pts];
-
-	for(int ipt = 0; ipt < n_interp_pT_pts; ++ipt)
-	{
-		double del = 0.5 * (interp_pT_max - interp_pT_min);
-		double cen = 0.5 * (interp_pT_max + interp_pT_min);
-		SPinterp_pT[ipt] = cen - del * cos( M_PI*(2.*(ipt+1.) - 1.) / (2.*n_interp_pT_pts) );
-		//double tmp = - cos( M_PI*(2.*(ipt+1.) - 1.) / (2.*n_interp_pT_pts) );
-		//SPinterp_pT[ipt] = ( (1.-sin(M_PI/n_interp_pT_pts))/(1.+sin(M_PI/n_interp_pT_pts)) ) * ( 1. + tmp ) / ( 1. - tmp );
-	}
-
-	for(int ipphi = 0; ipphi < n_interp_pphi_pts; ++ipphi)
-	{
-		double del = 0.5 * (interp_pphi_max - interp_pphi_min);
-		double cen = 0.5 * (interp_pphi_max + interp_pphi_min);
-		SPinterp_pphi[ipphi] = cen - del * cos( M_PI*(2.*(ipphi+1.) - 1.) / (2.*n_interp_pphi_pts) );
-		sin_SPinterp_pphi[ipphi] = sin(SPinterp_pphi[ipphi]);
-		cos_SPinterp_pphi[ipphi] = cos(SPinterp_pphi[ipphi]);
-	}
-
-	//set p0 and pz points
-	SPinterp_p0 = new double * [n_interp_pT_pts];
-	SPinterp_pz = new double * [n_interp_pT_pts];
-	for(int ipt = 0; ipt < n_interp_pT_pts; ++ipt)
-	{
-		SPinterp_p0[ipt] = new double [eta_s_npts];
-		SPinterp_pz[ipt] = new double [eta_s_npts];
-	}
-*/
 
 	//set pT and pphi points
 	SPinterp_pT = new double [n_interp_pT_pts];
@@ -516,6 +445,57 @@ void FitCF::Allocate_CFvals()
 						thermalCFvals[ipT][ipphi][iqx][iqy][iqz] = 0.0;
 						crosstermCFvals[ipT][ipphi][iqx][iqy][iqz] = 0.0;
 						resonancesCFvals[ipT][ipphi][iqx][iqy][iqz] = 0.0;
+					}
+				}
+			}
+		}
+	}
+	avgCorrelation_function = new double **** [n_interp_pT_pts];
+	avgCorrelation_function_Numerator = new double **** [n_interp_pT_pts];
+	avgCorrelation_function_Denominator = new double **** [n_interp_pT_pts];
+	avgThermalCFvals = new double **** [n_interp_pT_pts];
+	avgCrosstermCFvals = new double **** [n_interp_pT_pts];
+	avgResonancesCFvals = new double **** [n_interp_pT_pts];
+	for (int ipT = 0; ipT < n_interp_pT_pts; ++ipT)
+	{
+		avgCorrelation_function[ipT] = new double *** [n_interp_pphi_pts];
+		avgCorrelation_function_Numerator[ipT] = new double *** [n_interp_pphi_pts];
+		avgCorrelation_function_Denominator[ipT] = new double *** [n_interp_pphi_pts];
+		avgThermalCFvals[ipT] = new double *** [n_interp_pphi_pts];
+		avgCrosstermCFvals[ipT] = new double *** [n_interp_pphi_pts];
+		avgResonancesCFvals[ipT] = new double *** [n_interp_pphi_pts];
+		for (int ipphi = 0; ipphi < n_interp_pphi_pts; ++ipphi)
+		{
+			avgCorrelation_function[ipT][ipphi] = new double ** [qxnpts];
+			avgCorrelation_function_Numerator[ipT][ipphi] = new double ** [qxnpts];
+			avgCorrelation_function_Denominator[ipT][ipphi] = new double ** [qxnpts];
+			avgThermalCFvals[ipT][ipphi] = new double ** [qxnpts];
+			avgCrosstermCFvals[ipT][ipphi] = new double ** [qxnpts];
+			avgResonancesCFvals[ipT][ipphi] = new double ** [qxnpts];
+			for (int iqx = 0; iqx < qxnpts; ++iqx)
+			{
+				avgCorrelation_function[ipT][ipphi][iqx] = new double * [qynpts];
+				avgCorrelation_function_Numerator[ipT][ipphi][iqx] = new double * [qynpts];
+				avgCorrelation_function_Denominator[ipT][ipphi][iqx] = new double * [qynpts];
+				avgThermalCFvals[ipT][ipphi][iqx] = new double * [qynpts];
+				avgCrosstermCFvals[ipT][ipphi][iqx] = new double * [qynpts];
+				avgResonancesCFvals[ipT][ipphi][iqx] = new double * [qynpts];
+				for (int iqy = 0; iqy < qynpts; ++iqy)
+				{
+					avgCorrelation_function[ipT][ipphi][iqx][iqy] = new double [qznpts];
+					avgCorrelation_function_Numerator[ipT][ipphi][iqx][iqy] = new double [qznpts];
+					avgCorrelation_function_Denominator[ipT][ipphi][iqx][iqy] = new double [qznpts];
+					avgThermalCFvals[ipT][ipphi][iqx][iqy] = new double [qznpts];
+					avgCrosstermCFvals[ipT][ipphi][iqx][iqy] = new double [qznpts];
+					avgResonancesCFvals[ipT][ipphi][iqx][iqy] = new double [qznpts];
+					for (int iqz = 0; iqz < qznpts; ++iqz)
+					{
+						avgCorrelation_function[ipT][ipphi][iqx][iqy][iqz] = 0.0;
+						avgCorrelation_function_Numerator[ipT][ipphi][iqx][iqy][iqz] = 0.0;
+						avgCorrelation_function_Denominator[ipT][ipphi][iqx][iqy][iqz] = 0.0;
+						avgThermalCFvals[ipT][ipphi][iqx][iqy][iqz] = 0.0;
+						avgCrosstermCFvals[ipT][ipphi][iqx][iqy][iqz] = 0.0;
+						avgResonancesCFvals[ipT][ipphi][iqx][iqy][iqz] = 0.0;
 					}
 				}
 			}
