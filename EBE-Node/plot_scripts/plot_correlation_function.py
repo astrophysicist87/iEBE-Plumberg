@@ -13,8 +13,8 @@ mpl.rcParams['pdf.fonttype'] = 42
 #################################################################
 # Parameters to run script with
 #################################################################
-#file information
-#filename = sys.argv[1]
+#working directory information
+workingDirectory = sys.argv[1]
 
 #grid information
 npT, npphi = 15, 36
@@ -47,31 +47,34 @@ hbarC = 0.197327053
 #################################################################
 # Shouldn't have to change anything below this line
 #################################################################
-
-#data = loadtxt(filename, usecols=tuple(chosenCols)).reshape(dims)
-
+#########################################################################################
+def pause():
+    programPause = raw_input("Press the <ENTER> key to continue...")
+#########################################################################################
+#########################################################################################
 
 
 
 def generate_plotdata(localdata, iAxis):
 	# shape data arrays appropriately
 	dims = localdata.shape[0:3]
-	#print localdata.shape, dims
+	#print 'localdata.shape =', localdata.shape, ', dims =', dims
 	
-	datax = localdata[:, (dims[1]-1)/2, (dims[2]-1)/2, iAxis]
+	datax = localdata[:, (dims[1]-1)/2, (dims[2]-1)/2, 2]
 	datay = localdata[:, (dims[1]-1)/2, (dims[2]-1)/2, 3]
 	
 	if iAxis==1:
-		datax = localdata[(dims[0]-1)/2, :, (dims[2]-1)/2, iAxis]
+		datax = localdata[(dims[0]-1)/2, :, (dims[2]-1)/2, 2]
 		datay = localdata[(dims[0]-1)/2, :, (dims[2]-1)/2, 3]
 	elif iAxis==2:
-		datax = localdata[(dims[0]-1)/2, (dims[1]-1)/2, :, iAxis]
+		datax = localdata[(dims[0]-1)/2, (dims[1]-1)/2, :, 2]
 		datay = localdata[(dims[0]-1)/2, (dims[1]-1)/2, :, 3]
 	
 	xlower, xupper = min(datax), max(datax)
 	ylower, yupper = min(datay), max(datay)
 	
-	f = interpolate.interp1d(datax, datay, kind='linear')
+	#f = interpolate.interp1d(datax, datay, kind='linear')
+	f = interpolate.interp1d(datax, datay, kind='cubic')
 	plotdatax = linspace(xlower, xupper, 1001)
 	plotdatay = f(plotdatax)
 
@@ -111,22 +114,27 @@ def generate_CF_plot(ipT, ipphi, includeFitCurve):
 	fig, axs = plt.subplots(1, 3, figsize=(15,5))
 	fig.subplots_adjust(wspace=0.0, hspace=0.0)        
 
-	fitData = loadtxt('HBTradii_GF_evavg_grid0.dat').reshape([npT, npphi, 8])
-	lambdas = loadtxt('lambdas.dat').reshape([npT, npphi])
+	fitData = loadtxt(workingDirectory + '/' + 'HBTradii_GF_evavg_grid0.dat').reshape([npT, npphi, 8])
+	lambdas = loadtxt(workingDirectory + '/' + 'lambdas.dat').reshape([npT, npphi])
 	
-	#print 'Loading data file...'
-	#loadedData = loadtxt('correlfunct3D_Pion_+_fleshed_out.dat', usecols=(2,3,4,11)).reshape([npT, npphi, nqx, nqy, nqz, 4])
-	loadedData = loadtxt('correlfunct3D_Pion_+_fleshed_out_%(ipT)d_%(ipphi)d.dat' % {'ipT': ipT, 'ipphi': ipphi}, usecols=(2,3,4,11)).reshape([1, 1, nqx, nqy, nqz, 4])
-	#print 'Data file loaded.'
+	#print 'Loading data files...'
+	loadedDataQXslice = loadtxt(workingDirectory + '/' + 'correlfunct3D_Pion_+_fleshed_out_qx.dat',\
+								usecols=(0,1,2,11)).reshape([npT, npphi, nqx, 1, 1, 4])
+	loadedDataQYslice = loadtxt(workingDirectory + '/' + 'correlfunct3D_Pion_+_fleshed_out_qy.dat',\
+								usecols=(0,1,3,11)).reshape([npT, npphi, 1, nqy, 1, 4])
+	loadedDataQZslice = loadtxt(workingDirectory + '/' + 'correlfunct3D_Pion_+_fleshed_out_qz.dat',\
+								usecols=(0,1,4,11)).reshape([npT, npphi, 1, 1, nqz, 4])
+	#print 'Data files loaded.'
 	#print loadedData.shape, loadedData[0,0].shape
 	
 	dims = [npT, npphi, nqx, nqy, nqz]
+	loadedDataQslices = [loadedDataQXslice, loadedDataQYslice, loadedDataQZslice]
 	
 	for iAxis in xrange(3):
 		#print 'Doing iAxis =', iAxis
 		#print loadedData.shape, loadedData[ipT,ipphi].shape
-		#cols = [2+iAxis, 11]	# chooses q-axes, CF value from CF files
-		plotdatax, plotdatay, lims = generate_plotdata(loadedData[0,0], iAxis)
+		loadedData = loadedDataQslices[iAxis]
+		plotdatax, plotdatay, lims = generate_plotdata(loadedData[ipT,ipphi], iAxis)
 		#print iAxis, lambdas[ipT,ipphi], fitData[ipT, ipphi]
 		if includeFitCurve:
 			plotfity = 1.0 + lambdas[ipT,ipphi]*(getFitToCF(plotdatax, fitData[ipT, ipphi], iAxis) - 1.0)
@@ -146,11 +154,15 @@ def generate_CF_plot(ipT, ipphi, includeFitCurve):
 	#ax1.set_xticklabels([])
 	#ax1.legend(loc=3, prop={'size': plotfontsize})
 	
-	#plt.show()
-	plt.savefig('CF_fit_and_evavg_%(ipT)d_%(ipphi)d.pdf' % {'ipT': ipT, 'ipphi': ipphi}, format='pdf', bbox_inches='tight')
-	print 'Saved to', 'CF_fit_and_evavg_%(ipT)d_%(ipphi)d.pdf' % {'ipT': ipT, 'ipphi': ipphi}
+	#plt.show(block=False)
+	pTFileNames = { 0: '_TopRow', 5: '_MiddleRow', 8: '_BottomRow' }
+	outputFileName = workingDirectory + '/' + 'CF_fit_and_evavg_%(ipT)d_%(ipphi)d' % {'ipT': ipT, 'ipphi': ipphi} + pTFileNames[ipT] + '.pdf'
+	plt.savefig(outputFileName, format='pdf', bbox_inches='tight')
+	print 'Saved to', outputFileName
 
 
+
+'''
 def generate_lambdas_plot(whichIPTtoCircle):
 	# set-up
 	plotfontsize = 12
@@ -196,9 +208,48 @@ def generate_lambdas_plot(whichIPTtoCircle):
 	#plt.show()
 	plt.savefig('lambdas_evavg_%(ipT)d_%(ipphi)d_EDIT.pdf' % {'ipT': whichIPTtoCircle, 'ipphi': chosenIPPHI}, format='pdf', bbox_inches='tight')
 	print 'Saved to', 'lambdas_evavg_%(ipT)d_%(ipphi)d_EDIT.pdf' % {'ipT': whichIPTtoCircle, 'ipphi': chosenIPPHI}
+'''
+
+def generate_lambdas_plot():
+	# set-up
+	plotfontsize = 12
+	#fig, ax = plt.subplots(1, 1, aspect='equal')
+	fig = plt.figure()
+	ax = fig.add_subplot(111, aspect='equal')
+	#fig.subplots_adjust(wspace=0.0, hspace=0.0)        
+	
+	pTData = loadtxt(workingDirectory + '/' + 'HBTradii_GF_evavg_grid0.dat', usecols=(0,1)).reshape([npT, npphi, 2])
+	lambdas = loadtxt(workingDirectory + '/' + 'lambdas.dat').reshape([npT, npphi])
+	
+	chosenIPPHI = 0
+	
+	xdata = pTData[:,0,0]
+	ydata = lambdas[:,0]
+	
+	#xlower, xupper = min(xdata), max(xdata)
+	#ylower, yupper = min(ydata), max(ydata)
+	lims = [0.01, 1.01, 0.0, 1.0]
+	
+	f = interpolate.interp1d(xdata, ydata, kind='cubic')
+	plotdatax = linspace(0.01, 1.01, 1001)
+	plotdatay = f(plotdatax)
+	ax.plot(plotdatax, plotdatay, linestyle='-', color='purple', linewidth=2.5)
+	#ax.axhline(0.0, color='black', linewidth=1)
+	ax.axis(lims)
+	
+	ax.set_xlabel(r'$K_T$ (GeV)', {'fontsize': plotfontsize + 5})
+	ax.set_ylabel(r'$\lambda(K_T)$', {'fontsize': plotfontsize + 5})
+	text(0.5, 0.15, r'$\Phi_K = %(pphi)0.0f$' % {'pphi': 0.0}, ha='center', va='center', transform=ax.transAxes, fontsize=24)
+	
+	#plt.show(block=False)
+	outputFileName = workingDirectory + '/' + 'lambdas_evavg.pdf'
+	plt.savefig(outputFileName, format='pdf', bbox_inches='tight')
+	print 'Saved to', outputFileName
 
 
 
+
+'''
 def generate_R2ij_plot(whichIPTtoCircle):
 	# set-up
 	plotfontsize = 12
@@ -259,6 +310,8 @@ def generate_R2ij_plot(whichIPTtoCircle):
 	#plt.show()
 	plt.savefig('R2ij_evavg_%(ipT)d_%(ipphi)d.pdf' % {'ipT': whichIPTtoCircle, 'ipphi': chosenIPPHI}, format='pdf', bbox_inches='tight')
 	print 'Saved to', 'R2ij_evavg_%(ipT)d_%(ipphi)d.pdf' % {'ipT': whichIPTtoCircle, 'ipphi': chosenIPPHI}
+'''
+
 
 
 def compare_thermal_and_resonance_CF(ipT, ipphi):
@@ -270,23 +323,36 @@ def compare_thermal_and_resonance_CF(ipT, ipphi):
 	
 	GeVToMeV = 1000.0
 
-	fitData = loadtxt('HBTradii_GF_evavg_grid0.dat').reshape([npT, npphi, 8])
-	lambdas = loadtxt('lambdas.dat').reshape([npT, npphi])
+	fitData = loadtxt(workingDirectory + '/' + 'HBTradii_GF_evavg_grid0.dat').reshape([npT, npphi, 8])
+	lambdas = loadtxt(workingDirectory + '/' + 'lambdas.dat').reshape([npT, npphi])
 	
-	#print 'Loading data file...'
-	#loadedData = loadtxt('correlfunct3D_Pion_+_fleshed_out.dat', usecols=(2,3,4,11)).reshape([npT, npphi, nqx, nqy, nqz, 4])
-	loadedData = loadtxt('correlfunct3D_Pion_+_fleshed_out_%(ipT)d_%(ipphi)d.dat' % {'ipT': ipT, 'ipphi': ipphi}, usecols=(2,3,4,11)).reshape([1, 1, nqx, nqy, nqz, 4])
-	loadedThermalData = loadtxt('correlfunct3D_Pion_+_fleshed_out_%(ipT)d_%(ipphi)d.dat' % {'ipT': ipT, 'ipphi': ipphi}, usecols=(2,3,4,8)).reshape([1, 1, nqx, nqy, nqz, 4])
-	#print 'Data file loaded.'
+	#print 'Loading data files...'
+	loadedDataQXslice = loadtxt(workingDirectory + '/' + 'correlfunct3D_Pion_+_fleshed_out_qx.dat',\
+								usecols=(0,1,2,11)).reshape([npT, npphi, nqx, 1, 1, 4])
+	loadedDataQYslice = loadtxt(workingDirectory + '/' + 'correlfunct3D_Pion_+_fleshed_out_qy.dat',\
+								usecols=(0,1,3,11)).reshape([npT, npphi, 1, nqy, 1, 4])
+	loadedDataQZslice = loadtxt(workingDirectory + '/' + 'correlfunct3D_Pion_+_fleshed_out_qz.dat',\
+								usecols=(0,1,4,11)).reshape([npT, npphi, 1, 1, nqz, 4])
+	loadedThermalDataQXslice = loadtxt(workingDirectory + '/' + 'correlfunct3D_Pion_+_fleshed_out_qx.dat',\
+										usecols=(0,1,2,8)).reshape([npT, npphi, nqx, 1, 1, 4])
+	loadedThermalDataQYslice = loadtxt(workingDirectory + '/' + 'correlfunct3D_Pion_+_fleshed_out_qy.dat',\
+										usecols=(0,1,3,8)).reshape([npT, npphi, 1, nqy, 1, 4])
+	loadedThermalDataQZslice = loadtxt(workingDirectory + '/' + 'correlfunct3D_Pion_+_fleshed_out_qz.dat',\
+										usecols=(0,1,4,8)).reshape([npT, npphi, 1, 1, nqz, 4])
+	#print 'Data files loaded.'
 	#print loadedData.shape, loadedData[0,0].shape
 	
 	dims = [npT, npphi, nqx, nqy, nqz]
+	loadedDataQslices = [loadedDataQXslice, loadedDataQYslice, loadedDataQZslice]
+	loadedThermalDataQslices = [loadedThermalDataQXslice, loadedThermalDataQYslice, loadedThermalDataQZslice]
 	
 	for iAxis in xrange(3):
 		#print 'Doing iAxis =', iAxis
 		#print loadedData.shape, loadedData[ipT,ipphi].shape
-		plotdatax, plotdatay, lims = generate_plotdata(loadedData[0,0], iAxis)
-		plotdatax, plotTdatay, lims = generate_plotdata(loadedThermalData[0,0], iAxis)
+		loadedData = loadedDataQslices[iAxis]
+		loadedThermalData = loadedThermalDataQslices[iAxis]
+		plotdatax, plotdatay, lims = generate_plotdata(loadedData[ipT,ipphi], iAxis)
+		plotdatax, plotTdatay, lims = generate_plotdata(loadedThermalData[ipT,ipphi], iAxis)
 		
 		# force x, y, and z axes to have same scale
 		#print lims
@@ -294,7 +360,9 @@ def compare_thermal_and_resonance_CF(ipT, ipphi):
 		lims[1] = 37.5	
 	
 		#print iAxis, lambdas[ipT,ipphi], fitData[ipT, ipphi]
-		Tspectra = loadedThermalData[0,0,nqx/2,nqy/2,nqz/2,3]
+		thermalDims = loadedThermalData.shape
+		#print thermalDims
+		Tspectra = loadedThermalData[ipT,ipphi,thermalDims[2]/2,thermalDims[3]/2,thermalDims[4]/2,3]
 		#print Tspectra
 		#if includeFitCurve:
 		#	plotfity = 1.0 + lambdas[ipT,ipphi]*(getFitToCF(plotdatax, fitData[ipT, ipphi], iAxis) - 1.0)
@@ -321,9 +389,11 @@ def compare_thermal_and_resonance_CF(ipT, ipphi):
 	#ax1.set_xticklabels([])
 	#ax1.legend(loc=3, prop={'size': plotfontsize})
 	
-	#plt.show()
-	plt.savefig('CFevavg_w_v_wo_res_%(ipT)d_%(ipphi)d_EDIT.pdf' % {'ipT': ipT, 'ipphi': ipphi}, format='pdf', bbox_inches='tight')
-	print 'Saved to', 'CFevavg_w_v_wo_res_%(ipT)d_%(ipphi)d_EDIT.pdf' % {'ipT': ipT, 'ipphi': ipphi}
+	#plt.show(block=False)
+	pTFileNames = { 0: '_TopRow', 5: '_MiddleRow', 8: '_BottomRow' }
+	outputFileName = workingDirectory + '/' + 'CFevavg_w_v_wo_res_%(ipT)d_%(ipphi)d' % {'ipT': ipT, 'ipphi': ipphi} + pTFileNames[ipT] + '.pdf'
+	plt.savefig(outputFileName, format='pdf', bbox_inches='tight')
+	print 'Saved to', outputFileName
 
 
 
@@ -333,20 +403,21 @@ def extraPlot(ipT, ipphi):
 	fig, axs = plt.subplots(1, 1)
 	fig.subplots_adjust(wspace=0.0, hspace=0.0)        
 
-	fitData = loadtxt('HBTradii_GF_evavg_grid0.dat').reshape([npT, npphi, 8])
+	fitData = loadtxt(workingDirectory + '/' + 'HBTradii_GF_evavg_grid0.dat').reshape([npT, npphi, 8])
 
 	fitLargeQlambda, fitLargeQR = 0.583404254910389, 5.33478579266871
 	fitSmallQlambda, fitSmallQR = 0.784140991401117, 8.05580378843792
 	fitAllQlambda, fitAllQR = 0.737582423165663, 6.46478233610704
 	
 	#print 'Loading data file...'
-	loadedData = loadtxt('correlfunct3D_Pion_+_fleshed_out_%(ipT)d_%(ipphi)d.dat' % {'ipT': ipT, 'ipphi': ipphi}, usecols=(2,3,4,11)).reshape([1, 1, nqx, nqy, nqz, 4])
+	#loadedData = loadtxt('correlfunct3D_Pion_+_fleshed_out_%(ipT)d_%(ipphi)d.dat' % {'ipT': ipT, 'ipphi': ipphi}, usecols=(2,3,4,11)).reshape([1, 1, nqx, nqy, nqz, 4])
+	loadedData = loadtxt(workingDirectory + '/' + 'correlfunct3D_Pion_+_fleshed_out_qx.dat', usecols=(0,1,2,11)).reshape([npT, npphi, nqx, 1, 1, 4])
 	#print 'Data file loaded.'
 	#print loadedData.shape, loadedData[0,0].shape
 	
 	dims = [npT, npphi, nqx, nqy, nqz]
 	
-	plotdatax, plotdatay, lims = generate_plotdata(loadedData[0,0], 0)
+	plotdatax, plotdatay, lims = generate_plotdata(loadedData[ipT,ipphi], 0)
 	axs.plot(plotdatax, plotdatay, linestyle='-', color='black', linewidth=1.5, label=r'$C_{\mathrm{avg}}$')
 	axs.plot(plotdatax, eval_corr_fit_func(plotdatax,fitSmallQlambda,fitSmallQR), linestyle='-', color='red', linewidth=1.5, label=r'$|q_x| \leq$ 20 MeV')
 	axs.plot(plotdatax, eval_corr_fit_func(plotdatax,fitLargeQlambda,fitLargeQR), linestyle='-', color='green', linewidth=1.5, label=r'$|q_x| \geq$ 20 MeV')
@@ -358,25 +429,27 @@ def extraPlot(ipT, ipphi):
 	#axs.set_ylabel(r'$C_{\mathrm{avg}}$', {'fontsize': plotfontsize + 5})
 	axs.legend(loc=0, prop={'size': plotfontsize+5})
 	
-	#plt.show()
-	plt.savefig('CFevavg_fitrange_X_%(ipT)d_%(ipphi)d.pdf' % {'ipT': ipT, 'ipphi': ipphi}, format='pdf', bbox_inches='tight')
-	print 'Saved to', 'CFevavg_fitrange_X_%(ipT)d_%(ipphi)d.pdf' % {'ipT': ipT, 'ipphi': ipphi}
+	#plt.show(block=False)
+	outputFileName = workingDirectory + '/' + 'CFevavg_fitrange_X_%(ipT)d_%(ipphi)d.pdf' % {'ipT': ipT, 'ipphi': ipphi}
+	plt.savefig(outputFileName, format='pdf', bbox_inches='tight')
+	print 'Saved to', outputFileName
 
 
 def generate_all_plots():
-	#generate_CF_plot(0, 0, True)
-	#generate_CF_plot(5, 0, True)
-	#generate_CF_plot(8, 0, True)
-	#generate_lambdas_plot(0)
+	generate_CF_plot(0, 0, True)
+	generate_CF_plot(5, 0, True)
+	generate_CF_plot(8, 0, True)
+	generate_lambdas_plot()
 	#generate_lambdas_plot(5)
 	#generate_lambdas_plot(8)
 	#generate_R2ij_plot(0)
 	#generate_R2ij_plot(5)
 	#generate_R2ij_plot(8)
-	#compare_thermal_and_resonance_CF(0, 0)
-	#compare_thermal_and_resonance_CF(5, 0)
-	#compare_thermal_and_resonance_CF(8, 0)
-	extraPlot(0, 0)
+	compare_thermal_and_resonance_CF(0, 0)
+	compare_thermal_and_resonance_CF(5, 0)
+	compare_thermal_and_resonance_CF(8, 0)
+	#extraPlot(0, 0)
+	#pause()
 
 
 if __name__ == "__main__":

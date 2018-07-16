@@ -74,25 +74,14 @@ void FitCF::Read_in_correlationfunction(string CF_filename)
 			>> tmp_crossterm
 			>> tmp_resonance
 			>> tmp_CF;
-//*global_out_stream_ptr << "Using " << n_interp_pT_pts << "   " << n_interp_pphi_pts << "   " << qxnpts << "   " << qynpts << "   " << qznpts << endl;
 
-			avgSpectra[target_particle_id][ipt][ipphi] += tmp_spectra;
-//*global_out_stream_ptr << "Checkpoint #1" << endl;
-			/*avgThermalCFvals[indexer(ipt,ipphi,iqx,iqy,iqz)] += tmp_thermal;
-			avgCrosstermCFvals[indexer(ipt,ipphi,iqx,iqy,iqz)] += tmp_crossterm;
-			avgResonancesCFvals[indexer(ipt,ipphi,iqx,iqy,iqz)] += tmp_resonance;
-			avgCorrelation_function_Numerator[indexer(ipt,ipphi,iqx,iqy,iqz)] += tmp_spectra*tmp_spectra*(tmp_CF-1.0);
-			avgCorrelation_function_Denominator[indexer(ipt,ipphi,iqx,iqy,iqz)] += tmp_spectra*tmp_spectra;*/
-			avgThermalCFvals[ipt][ipphi][iqx][iqy][iqz] += tmp_thermal;
-//*global_out_stream_ptr << "Checkpoint #2" << endl;
-			avgCrosstermCFvals[ipt][ipphi][iqx][iqy][iqz] += tmp_crossterm;
-//*global_out_stream_ptr << "Checkpoint #3" << endl;
-			avgResonancesCFvals[ipt][ipphi][iqx][iqy][iqz] += tmp_resonance;
-//*global_out_stream_ptr << "Checkpoint #4" << endl;
-			avgCorrelation_function_Numerator[ipt][ipphi][iqx][iqy][iqz] += tmp_spectra*tmp_spectra*(tmp_CF-1.0);
-//*global_out_stream_ptr << "Checkpoint #5" << endl;
+			avgSpectra[target_particle_id][ipt][ipphi] += double(iqx==0 and iqy==0 and iqz==0) * tmp_spectra;
+			avgThermalCFvals[ipt][ipphi][iqx][iqy][iqz] += tmp_spectra*tmp_spectra*tmp_thermal;
+			avgCrosstermCFvals[ipt][ipphi][iqx][iqy][iqz] += (1.0-double(THERMAL_ONLY))*tmp_spectra*tmp_spectra*tmp_crossterm;
+			avgResonancesCFvals[ipt][ipphi][iqx][iqy][iqz] += (1.0-double(THERMAL_ONLY))*tmp_spectra*tmp_spectra*tmp_resonance;
+			avgCorrelation_function_Numerator[ipt][ipphi][iqx][iqy][iqz]
+				+= ( THERMAL_ONLY ) ? tmp_spectra*tmp_spectra*tmp_thermal : tmp_spectra*tmp_spectra*(tmp_CF-1.0);
 			avgCorrelation_function_Denominator[ipt][ipphi][iqx][iqy][iqz] += tmp_spectra*tmp_spectra;
-//*global_out_stream_ptr << "Checkpoint #6" << endl;
 	}
 
 	iCorrFunc.close();
@@ -158,21 +147,38 @@ void FitCF::Output_results(int mode)
 		modeString = "SVWR_";
 
 	string folderindexstring = "";
-	if (currentfolderindex < 0)
+	if (currentfolderindex < 0 and nEvents != 1)
 		folderindexstring = "avg";
 	else
 		folderindexstring = patch::to_string(currentfolderindex);
 
+	string resultsDirectory = "";
+	if (currentfolderindex != -1 and nEvents == 1)
+		resultsDirectory = "/results-" + patch::to_string(currentfolderindex) + "/results";
+
+	//string averageStem = ( nEvents > 1 ) ? "_evavg" : "";
+	string thermalOrResonanceStem = ( THERMAL_ONLY ) ? "_thermal" : "_resonance";
+
+	cout << "Output filename is " << global_path << resultsDirectory << "/HBTradii_"
+							<< modeString << "ev" << folderindexstring << no_df_stem
+							<< thermalOrResonanceStem << "_grid0.dat" << endl;
+
 	ostringstream filename_stream_HBT_g0;
-	filename_stream_HBT_g0 << global_path << "/HBTradii_" << modeString << "ev" << folderindexstring << no_df_stem << "_grid0.dat";
+	filename_stream_HBT_g0 << global_path << resultsDirectory << "/HBTradii_"
+							<< modeString << "ev" << folderindexstring << no_df_stem
+							<< thermalOrResonanceStem << "_grid0.dat";
 	ofstream outputHBT_g0;
 	outputHBT_g0.open(filename_stream_HBT_g0.str().c_str());
 	ostringstream filename_stream_HBT;
-	filename_stream_HBT << global_path << "/HBTradii_" << modeString << "ev" << folderindexstring << no_df_stem << ".dat";
+	filename_stream_HBT << global_path << resultsDirectory << "/HBTradii_"
+						<< modeString << "ev" << folderindexstring << no_df_stem
+						<< thermalOrResonanceStem << ".dat";
 	ofstream outputHBT;
 	outputHBT.open(filename_stream_HBT.str().c_str());
 	ostringstream filename_stream_HBTcfs;
-	filename_stream_HBTcfs << global_path << "/HBTradii_" << modeString << "cfs_ev" << folderindexstring << no_df_stem << ".dat";
+	filename_stream_HBTcfs << global_path << resultsDirectory << "/HBTradii_"
+							<< modeString << "cfs_ev" << folderindexstring << no_df_stem
+							<< thermalOrResonanceStem << ".dat";
 	ofstream outputHBTcfs;
 	outputHBTcfs.open(filename_stream_HBTcfs.str().c_str());
 
@@ -226,12 +232,18 @@ void FitCF::Output_results(int mode)
 				<< "   " << (*approx_R2os).eval(point) << "   " << (*approx_R2l).eval(point)
 				<< "   " << (*approx_R2sl).eval(point) << "   " << (*approx_R2ol).eval(point) << endl;*/
 			outputHBT << K_T[iKT] << "   " << K_phi[iKphi]
-				<< "   " << interpolate2D(SPinterp_pT, SPinterp_pphi, R2_side_GF, K_T[iKT], K_phi[iKphi], n_interp_pT_pts, n_interp_pphi_pts, interpMode, false, true)
-				<< "   " << interpolate2D(SPinterp_pT, SPinterp_pphi, R2_out_GF, K_T[iKT], K_phi[iKphi], n_interp_pT_pts, n_interp_pphi_pts, interpMode, false, true)
-				<< "   " << interpolate2D(SPinterp_pT, SPinterp_pphi, R2_outside_GF, K_T[iKT], K_phi[iKphi], n_interp_pT_pts, n_interp_pphi_pts, interpMode, false, true)
-				<< "   " << interpolate2D(SPinterp_pT, SPinterp_pphi, R2_long_GF, K_T[iKT], K_phi[iKphi], n_interp_pT_pts, n_interp_pphi_pts, interpMode, false, true)
-				<< "   " << interpolate2D(SPinterp_pT, SPinterp_pphi, R2_sidelong_GF, K_T[iKT], K_phi[iKphi], n_interp_pT_pts, n_interp_pphi_pts, interpMode, false, true)
-				<< "   " << interpolate2D(SPinterp_pT, SPinterp_pphi, R2_outlong_GF, K_T[iKT], K_phi[iKphi], n_interp_pT_pts, n_interp_pphi_pts, interpMode, false, true) << endl;
+				<< "   " << interpolate2D(SPinterp_pT, SPinterp_pphi, R2_side_GF, K_T[iKT], K_phi[iKphi],
+											n_interp_pT_pts, n_interp_pphi_pts, interpMode, false, true)
+				<< "   " << interpolate2D(SPinterp_pT, SPinterp_pphi, R2_out_GF, K_T[iKT], K_phi[iKphi],
+											n_interp_pT_pts, n_interp_pphi_pts, interpMode, false, true)
+				<< "   " << interpolate2D(SPinterp_pT, SPinterp_pphi, R2_outside_GF, K_T[iKT], K_phi[iKphi],
+											n_interp_pT_pts, n_interp_pphi_pts, interpMode, false, true)
+				<< "   " << interpolate2D(SPinterp_pT, SPinterp_pphi, R2_long_GF, K_T[iKT], K_phi[iKphi],
+											n_interp_pT_pts, n_interp_pphi_pts, interpMode, false, true)
+				<< "   " << interpolate2D(SPinterp_pT, SPinterp_pphi, R2_sidelong_GF, K_T[iKT], K_phi[iKphi],
+											n_interp_pT_pts, n_interp_pphi_pts, interpMode, false, true)
+				<< "   " << interpolate2D(SPinterp_pT, SPinterp_pphi, R2_outlong_GF, K_T[iKT], K_phi[iKphi],
+											n_interp_pT_pts, n_interp_pphi_pts, interpMode, false, true) << endl;
 		}
 
 		//do Fourier transforming here for now...
@@ -244,9 +256,18 @@ void FitCF::Output_results(int mode)
 			for (int Morder = 0; Morder < n_order; Morder++)
 			{
 				outputHBTcfs << currentfolderindex << "  " << K_T[iKT] << "  " << Morder
-					<< "  " << R2_side_GF_C[iKT][Morder] << "   " << R2_side_GF_S[iKT][Morder] << "  " << R2_out_GF_C[iKT][Morder] << "  " << R2_out_GF_S[iKT][Morder]
-					<< "  " << R2_outside_GF_C[iKT][Morder] << "   " << R2_outside_GF_S[iKT][Morder] << "  " << R2_long_GF_C[iKT][Morder] << "  " << R2_long_GF_S[iKT][Morder]
-					<< "  " << R2_sidelong_GF_C[iKT][Morder] << "   " << R2_sidelong_GF_S[iKT][Morder] << "  " << R2_outlong_GF_C[iKT][Morder] << "  " << R2_outlong_GF_S[iKT][Morder] << endl;
+					<< "  " << R2_side_GF_C[iKT][Morder]
+					<< "   " << R2_side_GF_S[iKT][Morder]
+					<< "  " << R2_out_GF_C[iKT][Morder]
+					<< "  " << R2_out_GF_S[iKT][Morder]
+					<< "  " << R2_outside_GF_C[iKT][Morder]
+					<< "   " << R2_outside_GF_S[iKT][Morder]
+					<< "  " << R2_long_GF_C[iKT][Morder]
+					<< "  " << R2_long_GF_S[iKT][Morder]
+					<< "  " << R2_sidelong_GF_C[iKT][Morder]
+					<< "   " << R2_sidelong_GF_S[iKT][Morder]
+					<< "  " << R2_outlong_GF_C[iKT][Morder]
+					<< "  " << R2_outlong_GF_S[iKT][Morder] << endl;
 			}
 		}
 	}
@@ -284,11 +305,13 @@ void FitCF::Output_correlationfunction()
 	{
 		double ckp = cos_SPinterp_pphi[ipphi], skp = sin_SPinterp_pphi[ipphi];
 		oCorrFunc << scientific << setprecision(8) << setw(12)
-			<< SPinterp_pT[ipt] << "   " << SPinterp_pphi[ipphi] << "   " << qx_pts[iqx] << "   "
+			<< SPinterp_pT[ipt] << "   " << SPinterp_pphi[ipphi] << "   "
+			<< setprecision(3) << setw(5) << qx_pts[iqx] << "   "
 			<< qy_pts[iqy] << "   " << qz_pts[iqz] << "   "
 			//<< qx_pts[iqx] * ckp + qy_pts[iqy] * skp << "   "
 			//<< -qx_pts[iqx] * skp + qy_pts[iqy] * ckp << "   "
 			//<< qz_pts[iqz] << "   "
+			<< setprecision(6) << setw(10)
 			<< spectra[target_particle_id][ipt][ipphi] << "   "
 			<< thermalCFvals[ipt][ipphi][iqx][iqy][iqz] << "   "
 			<< crosstermCFvals[ipt][ipphi][iqx][iqy][iqz] << "   "
@@ -312,7 +335,15 @@ void FitCF::Output_averaged_correlationfunction()
 	if (!FIT_WITH_PROJECTED_CFVALS)
 		CF_proj_string = "unprojected_";
 
-	oCorrFunc_stream << global_path << "/avg_correlfunct3D_" << CF_proj_string << temp_particle_name << ".dat";
+	string averageStem = ( nEvents > 1 ) ? "avg_" : "";
+	string thermalOrResonanceStem = ( THERMAL_ONLY ) ? "thermal_" : "thermalAndResonance_";
+
+	string resultsDirectory = "";
+	if (currentfolderindex != -1 and nEvents == 1)
+		resultsDirectory = "/results-" + patch::to_string(currentfolderindex) + "/results";
+
+	oCorrFunc_stream << global_path << resultsDirectory << "/" << averageStem << "correlfunct3D_"
+						<< CF_proj_string << thermalOrResonanceStem << temp_particle_name << ".dat";
 	ofstream oCorrFunc;
 	oCorrFunc.open(oCorrFunc_stream.str().c_str());
 
@@ -322,14 +353,19 @@ void FitCF::Output_averaged_correlationfunction()
 	for (int iqy = 0; iqy < qynpts; ++iqy)
 	for (int iqz = 0; iqz < qznpts; ++iqz)
 	{
-		oCorrFunc << scientific << setprecision(8) << setw(12)
-			<< SPinterp_pT[ipt] << "   " << SPinterp_pphi[ipphi] << "   " << qx_pts[iqx] << "   "
-			<< qy_pts[iqy] << "   " << qz_pts[iqz] << "   "
-			<< avgSpectra[target_particle_id][ipt][ipphi] << "   "
-			<< avgThermalCFvals[ipt][ipphi][iqx][iqy][iqz] << "   "
-			<< avgCrosstermCFvals[ipt][ipphi][iqx][iqy][iqz] << "   "
-			<< avgResonancesCFvals[ipt][ipphi][iqx][iqy][iqz] << "   "
-			<< avgCorrelation_function[ipt][ipphi][iqx][iqy][iqz] << endl;
+		oCorrFunc << scientific << left << setprecision(8)
+			<< setw(17) << SPinterp_pT[ipt] /*<< "   " */
+			<< setw(17) << SPinterp_pphi[ipphi] /*<< "   " */
+			<< setprecision(3)
+			<< setw(13) << qx_pts[iqx] /*<< "   " */
+			<< setw(13) << qy_pts[iqy] /*<< "   " */
+			<< setw(13) << qz_pts[iqz] /*<< "   " */
+			<< setprecision(6) 
+			<< setw(15) << avgSpectra[target_particle_id][ipt][ipphi] /*<< "   " */
+			<< setw(15) << avgThermalCFvals[ipt][ipphi][iqx][iqy][iqz] /*<< "   " */
+			<< setw(15) << avgCrosstermCFvals[ipt][ipphi][iqx][iqy][iqz] /*<< "   " */
+			<< setw(15) << avgResonancesCFvals[ipt][ipphi][iqx][iqy][iqz] /*<< "   " */
+			<< setw(15) << avgCorrelation_function[ipt][ipphi][iqx][iqy][iqz] << endl;
 	}
 
 	oCorrFunc.close();
@@ -342,31 +378,124 @@ void FitCF::Output_averaged_correlationfunction()
 
 void FitCF::Output_fleshed_out_correlationfunction(int ipt, int ipphi)
 {
-	ostringstream oCorrFunc_stream;
 	string temp_particle_name = particle_name;
 	replace_parentheses(temp_particle_name);
-	oCorrFunc_stream << global_path << "/correlfunct3D" << "_" << temp_particle_name << "_fleshed_out.dat";
-	ofstream oCorrFunc;
-	if (ipt==0 && ipphi==0)
-		oCorrFunc.open(oCorrFunc_stream.str().c_str());
-	else
-		oCorrFunc.open(oCorrFunc_stream.str().c_str(), ios::app);
 
-	for (int iqx = 0; iqx < new_nqpts; ++iqx)
-	for (int iqy = 0; iqy < new_nqpts; ++iqy)
-	for (int iqz = 0; iqz < new_nqpts; ++iqz)
+	if (SLICE_OF_FLESH_ONLY)
 	{
-		double ckp = cos_SPinterp_pphi[ipphi], skp = sin_SPinterp_pphi[ipphi];
-		oCorrFunc << scientific << setprecision(7) << setw(15)
-			<< SPinterp_pT[ipt] << "   " << SPinterp_pphi[ipphi] << "   " << qx_fleshed_out_pts[iqx] << "   "
-			<< qy_fleshed_out_pts[iqy] << "   " << qz_fleshed_out_pts[iqz] << "   "
-			<< qx_fleshed_out_pts[iqx] * ckp + qy_fleshed_out_pts[iqy] * skp << "   "
-			<< -qx_fleshed_out_pts[iqx] * skp + qy_fleshed_out_pts[iqy] * ckp << "   "
-			<< qz_fleshed_out_pts[iqz] << "   "
-			<< fleshed_out_thermal[iqx][iqy][iqz] << "   " << fleshed_out_crossterm[iqx][iqy][iqz] << "   " << fleshed_out_resonances[iqx][iqy][iqz] << "   " << fleshed_out_CF[iqx][iqy][iqz] << endl;
-	}
+		ostringstream oCorrFunc_qx_stream, oCorrFunc_qy_stream, oCorrFunc_qz_stream;
+		oCorrFunc_qx_stream << global_path << "/correlfunct3D" << "_" << temp_particle_name << "_fleshed_out_qx.dat";
+		oCorrFunc_qy_stream << global_path << "/correlfunct3D" << "_" << temp_particle_name << "_fleshed_out_qy.dat";
+		oCorrFunc_qz_stream << global_path << "/correlfunct3D" << "_" << temp_particle_name << "_fleshed_out_qz.dat";
 
-	oCorrFunc.close();
+		ofstream oCorrFunc_qx, oCorrFunc_qy, oCorrFunc_qz;
+		if (ipt==0 && ipphi==0)
+		{
+			oCorrFunc_qx.open(oCorrFunc_qx_stream.str().c_str());
+			oCorrFunc_qy.open(oCorrFunc_qy_stream.str().c_str());
+			oCorrFunc_qz.open(oCorrFunc_qz_stream.str().c_str());
+		}
+		else
+		{
+			oCorrFunc_qx.open(oCorrFunc_qx_stream.str().c_str(), ios::app);
+			oCorrFunc_qy.open(oCorrFunc_qy_stream.str().c_str(), ios::app);
+			oCorrFunc_qz.open(oCorrFunc_qz_stream.str().c_str(), ios::app);
+		}
+
+		for (int iqx = 0; iqx < new_nqpts; ++iqx)
+		{
+			double ckp = cos_SPinterp_pphi[ipphi], skp = sin_SPinterp_pphi[ipphi];
+			int iqy = (new_nqpts-1)/2;
+			int iqz = (new_nqpts-1)/2;
+			oCorrFunc_qx << scientific << setprecision(7) << setw(15)
+				<< SPinterp_pT[ipt] << "   "
+				<< SPinterp_pphi[ipphi] << "   "
+				<< qx_fleshed_out_pts[iqx] << "   "
+				<< qy_fleshed_out_pts[iqy] << "   "
+				<< qz_fleshed_out_pts[iqz] << "   "
+				<< qx_fleshed_out_pts[iqx] * ckp + qy_fleshed_out_pts[iqy] * skp << "   "
+				<< -qx_fleshed_out_pts[iqx] * skp + qy_fleshed_out_pts[iqy] * ckp << "   "
+				<< qz_fleshed_out_pts[iqz] << "   "
+				<< fleshed_out_thermal[iqx][iqy][iqz] << "   "
+				<< fleshed_out_crossterm[iqx][iqy][iqz] << "   "
+				<< fleshed_out_resonances[iqx][iqy][iqz] << "   "
+				<< fleshed_out_CF[iqx][iqy][iqz] << endl;
+		}
+		for (int iqy = 0; iqy < new_nqpts; ++iqy)
+		{
+			double ckp = cos_SPinterp_pphi[ipphi], skp = sin_SPinterp_pphi[ipphi];
+			int iqx = (new_nqpts-1)/2;
+			int iqz = (new_nqpts-1)/2;
+			oCorrFunc_qy << scientific << setprecision(7) << setw(15)
+				<< SPinterp_pT[ipt] << "   "
+				<< SPinterp_pphi[ipphi] << "   "
+				<< qx_fleshed_out_pts[iqx] << "   "
+				<< qy_fleshed_out_pts[iqy] << "   "
+				<< qz_fleshed_out_pts[iqz] << "   "
+				<< qx_fleshed_out_pts[iqx] * ckp + qy_fleshed_out_pts[iqy] * skp << "   "
+				<< -qx_fleshed_out_pts[iqx] * skp + qy_fleshed_out_pts[iqy] * ckp << "   "
+				<< qz_fleshed_out_pts[iqz] << "   "
+				<< fleshed_out_thermal[iqx][iqy][iqz] << "   "
+				<< fleshed_out_crossterm[iqx][iqy][iqz] << "   "
+				<< fleshed_out_resonances[iqx][iqy][iqz] << "   "
+				<< fleshed_out_CF[iqx][iqy][iqz] << endl;
+		}
+		for (int iqz = 0; iqz < new_nqpts; ++iqz)
+		{
+			double ckp = cos_SPinterp_pphi[ipphi], skp = sin_SPinterp_pphi[ipphi];
+			int iqx = (new_nqpts-1)/2;
+			int iqy = (new_nqpts-1)/2;
+			oCorrFunc_qz << scientific << setprecision(7) << setw(15)
+				<< SPinterp_pT[ipt] << "   "
+				<< SPinterp_pphi[ipphi] << "   "
+				<< qx_fleshed_out_pts[iqx] << "   "
+				<< qy_fleshed_out_pts[iqy] << "   "
+				<< qz_fleshed_out_pts[iqz] << "   "
+				<< qx_fleshed_out_pts[iqx] * ckp + qy_fleshed_out_pts[iqy] * skp << "   "
+				<< -qx_fleshed_out_pts[iqx] * skp + qy_fleshed_out_pts[iqy] * ckp << "   "
+				<< qz_fleshed_out_pts[iqz] << "   "
+				<< fleshed_out_thermal[iqx][iqy][iqz] << "   "
+				<< fleshed_out_crossterm[iqx][iqy][iqz] << "   "
+				<< fleshed_out_resonances[iqx][iqy][iqz] << "   "
+				<< fleshed_out_CF[iqx][iqy][iqz] << endl;
+		}
+
+		oCorrFunc_qx.close();
+		oCorrFunc_qy.close();
+		oCorrFunc_qz.close();
+	}
+	else
+	{
+		ostringstream oCorrFunc_stream;
+		oCorrFunc_stream << global_path << "/correlfunct3D" << "_" << temp_particle_name << "_fleshed_out.dat";
+		ofstream oCorrFunc;
+		if (ipt==0 && ipphi==0)
+			oCorrFunc.open(oCorrFunc_stream.str().c_str());
+		else
+			oCorrFunc.open(oCorrFunc_stream.str().c_str(), ios::app);
+
+		for (int iqx = 0; iqx < new_nqpts; ++iqx)
+		for (int iqy = 0; iqy < new_nqpts; ++iqy)
+		for (int iqz = 0; iqz < new_nqpts; ++iqz)
+		{
+			double ckp = cos_SPinterp_pphi[ipphi], skp = sin_SPinterp_pphi[ipphi];
+			oCorrFunc << scientific << setprecision(7) << setw(15)
+				<< SPinterp_pT[ipt] << "   "
+				<< SPinterp_pphi[ipphi] << "   "
+				<< qx_fleshed_out_pts[iqx] << "   "
+				<< qy_fleshed_out_pts[iqy] << "   "
+				<< qz_fleshed_out_pts[iqz] << "   "
+				<< qx_fleshed_out_pts[iqx] * ckp + qy_fleshed_out_pts[iqy] * skp << "   "
+				<< -qx_fleshed_out_pts[iqx] * skp + qy_fleshed_out_pts[iqy] * ckp << "   "
+				<< qz_fleshed_out_pts[iqz] << "   "
+				<< fleshed_out_thermal[iqx][iqy][iqz] << "   "
+				<< fleshed_out_crossterm[iqx][iqy][iqz] << "   "
+				<< fleshed_out_resonances[iqx][iqy][iqz] << "   "
+				<< fleshed_out_CF[iqx][iqy][iqz] << endl;
+		}
+
+		oCorrFunc.close();
+	}
 				
 	return;
 }
@@ -403,8 +532,15 @@ void FitCF::Readin_results(int mode)
 
 void FitCF::Output_lambdas()
 {
+	string averageStem = ( nEvents > 1 ) ? "avg_" : "";
+	string thermalOrResonanceStem = ( THERMAL_ONLY ) ? "thermal_" : "thermalAndResonance_";
+
+	string resultsDirectory = "";
+	if (currentfolderindex != -1 and nEvents == 1)
+		resultsDirectory = "/results-" + patch::to_string(currentfolderindex) + "/results";
+
 	ostringstream filename_stream_lambdas;
-	filename_stream_lambdas << global_path << "/lambdas.dat";
+	filename_stream_lambdas << global_path << resultsDirectory << "/" << averageStem << thermalOrResonanceStem << "lambdas.dat";
 	ofstream output_lambdas(filename_stream_lambdas.str().c_str());
 
 	for (int ipt = 0; ipt < n_interp_pT_pts; ++ipt)

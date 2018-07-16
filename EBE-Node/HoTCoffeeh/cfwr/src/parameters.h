@@ -34,6 +34,9 @@ using namespace std;
 #define USE_EXP_RECYCLING			1
 #define USE_RAPIDITY_SYMMETRY		1
 #define USE_ADJUSTED_MINIMUM		1
+#define SLICE_OF_FLESH_ONLY			true	// full correlation function (fleshed out) is typically a HUGE file (~10GB),
+											// so use this to output q-slices only (MUCH) smaller
+
 
 #ifndef H5_NO_NAMESPACE
     using namespace H5;

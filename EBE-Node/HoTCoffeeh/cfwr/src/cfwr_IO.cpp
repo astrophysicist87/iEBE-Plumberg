@@ -222,9 +222,18 @@ void CorrelationFunction::Output_results(int mode)
 			for (int Morder = 0; Morder < n_order; Morder++)
 			{
 				outputHBTcfs << K_T[iKT] << "  " << Morder
-					<< "  " << R2_side_GF_C[iKT][Morder] << "   " << R2_side_GF_S[iKT][Morder] << "  " << R2_out_GF_C[iKT][Morder] << "  " << R2_out_GF_S[iKT][Morder]
-					<< "  " << R2_outside_GF_C[iKT][Morder] << "   " << R2_outside_GF_S[iKT][Morder] << "  " << R2_long_GF_C[iKT][Morder] << "  " << R2_long_GF_S[iKT][Morder]
-					<< "  " << R2_sidelong_GF_C[iKT][Morder] << "   " << R2_sidelong_GF_S[iKT][Morder] << "  " << R2_outlong_GF_C[iKT][Morder] << "  " << R2_outlong_GF_S[iKT][Morder] << endl;
+					<< "  " << R2_side_GF_C[iKT][Morder]
+					<< "   " << R2_side_GF_S[iKT][Morder]
+					<< "  " << R2_out_GF_C[iKT][Morder]
+					<< "  " << R2_out_GF_S[iKT][Morder]
+					<< "  " << R2_outside_GF_C[iKT][Morder]
+					<< "   " << R2_outside_GF_S[iKT][Morder]
+					<< "  " << R2_long_GF_C[iKT][Morder]
+					<< "  " << R2_long_GF_S[iKT][Morder]
+					<< "  " << R2_sidelong_GF_C[iKT][Morder]
+					<< "   " << R2_sidelong_GF_S[iKT][Morder]
+					<< "  " << R2_outlong_GF_C[iKT][Morder]
+					<< "  " << R2_outlong_GF_S[iKT][Morder] << endl;
 			}
 		}
 		else if (mode == 1)
@@ -232,9 +241,18 @@ void CorrelationFunction::Output_results(int mode)
 			for (int Morder = 0; Morder < n_order; Morder++)
 			{
 				outputHBTcfs << SP_pT[iKT] << "  " << Morder
-					<< "  " << R2_side_QM_C[iKT][Morder] << "   " << R2_side_QM_S[iKT][Morder] << "  " << R2_out_QM_C[iKT][Morder] << "  " << R2_out_QM_S[iKT][Morder]
-					<< "  " << R2_outside_QM_C[iKT][Morder] << "   " << R2_outside_QM_S[iKT][Morder] << "  " << R2_long_QM_C[iKT][Morder] << "  " << R2_long_QM_S[iKT][Morder]
-					<< "  " << R2_sidelong_QM_C[iKT][Morder] << "   " << R2_sidelong_QM_S[iKT][Morder] << "  " << R2_outlong_QM_C[iKT][Morder] << "  " << R2_outlong_QM_S[iKT][Morder] << endl;
+					<< "  " << R2_side_QM_C[iKT][Morder]
+					<< "   " << R2_side_QM_S[iKT][Morder]
+					<< "  " << R2_out_QM_C[iKT][Morder]
+					<< "  " << R2_out_QM_S[iKT][Morder]
+					<< "  " << R2_outside_QM_C[iKT][Morder]
+					<< "   " << R2_outside_QM_S[iKT][Morder]
+					<< "  " << R2_long_QM_C[iKT][Morder]
+					<< "  " << R2_long_QM_S[iKT][Morder]
+					<< "  " << R2_sidelong_QM_C[iKT][Morder]
+					<< "   " << R2_sidelong_QM_S[iKT][Morder]
+					<< "  " << R2_outlong_QM_C[iKT][Morder]
+					<< "  " << R2_outlong_QM_S[iKT][Morder] << endl;
 			}
 		}
 	}
@@ -319,18 +337,84 @@ void CorrelationFunction::Output_fleshed_out_correlationfunction(int ipT, int ip
 	else
 		oCorrFunc.open(oCorrFunc_stream.str().c_str(), ios::app);
 
-	for (int iqx = 0; iqx < new_nqxpts; ++iqx)
-	for (int iqy = 0; iqy < new_nqypts; ++iqy)
-	for (int iqz = 0; iqz < new_nqzpts; ++iqz)
+	if (SLICE_OF_FLESH_ONLY)
 	{
-		double ckp = cos_SP_pphi[ipphi], skp = sin_SP_pphi[ipphi];
-		oCorrFunc << scientific << setprecision(7) << setw(15)
-			<< SP_pT[ipT] << "   " << SP_pphi[ipphi] << "   " << qx_fleshed_out_pts[iqx] << "   "
-			<< qy_fleshed_out_pts[iqy] << "   " << qz_fleshed_out_pts[iqz] << "   "
-			<< qx_fleshed_out_pts[iqx] * ckp + qy_fleshed_out_pts[iqy] * skp << "   "
-			<< -qx_fleshed_out_pts[iqx] * skp + qy_fleshed_out_pts[iqy] * ckp << "   "
-			<< qz_fleshed_out_pts[iqz] << "   "
-			<< fleshed_out_thermal[iqx][iqy][iqz] << "   " << fleshed_out_crossterm[iqx][iqy][iqz] << "   " << fleshed_out_resonances[iqx][iqy][iqz] << "   " << fleshed_out_CF[iqx][iqy][iqz] << endl;
+		for (int iqx = 0; iqx < new_nqxpts; ++iqx)
+		{
+			double ckp = cos_SP_pphi[ipphi], skp = sin_SP_pphi[ipphi];
+			int iqy = (new_nqpts-1)/2;
+			int iqz = (new_nqpts-1)/2;
+			oCorrFunc << scientific << setprecision(7) << setw(15)
+				<< SP_pT[ipt] << "   "
+				<< SP_pphi[ipphi] << "   "
+				<< qx_fleshed_out_pts[iqx] << "   "
+				<< qy_fleshed_out_pts[iqy] << "   "
+				<< qz_fleshed_out_pts[iqz] << "   "
+				<< qx_fleshed_out_pts[iqx] * ckp + qy_fleshed_out_pts[iqy] * skp << "   "
+				<< -qx_fleshed_out_pts[iqx] * skp + qy_fleshed_out_pts[iqy] * ckp << "   "
+				<< qz_fleshed_out_pts[iqz] << "   "
+				<< fleshed_out_thermal[iqx][iqy][iqz] << "   "
+				<< fleshed_out_crossterm[iqx][iqy][iqz] << "   "
+				<< fleshed_out_resonances[iqx][iqy][iqz] << "   "
+				<< fleshed_out_CF[iqx][iqy][iqz] << endl;
+		}
+		for (int iqy = 0; iqy < new_nqypts; ++iqy)
+		{
+			double ckp = cos_SP_pphi[ipphi], skp = sin_SP_pphi[ipphi];
+			int iqx = (new_nqpts-1)/2;
+			int iqz = (new_nqpts-1)/2;
+			oCorrFunc << scientific << setprecision(7) << setw(15)
+				<< SP_pT[ipt] << "   "
+				<< SP_pphi[ipphi] << "   "
+				<< qx_fleshed_out_pts[iqx] << "   "
+				<< qy_fleshed_out_pts[iqy] << "   "
+				<< qz_fleshed_out_pts[iqz] << "   "
+				<< qx_fleshed_out_pts[iqx] * ckp + qy_fleshed_out_pts[iqy] * skp << "   "
+				<< -qx_fleshed_out_pts[iqx] * skp + qy_fleshed_out_pts[iqy] * ckp << "   "
+				<< qz_fleshed_out_pts[iqz] << "   "
+				<< fleshed_out_thermal[iqx][iqy][iqz] << "   "
+				<< fleshed_out_crossterm[iqx][iqy][iqz] << "   "
+				<< fleshed_out_resonances[iqx][iqy][iqz] << "   "
+				<< fleshed_out_CF[iqx][iqy][iqz] << endl;
+		}
+		for (int iqz = 0; iqz < new_nqzpts; ++iqz)
+		{
+			double ckp = cos_SP_pphi[ipphi], skp = sin_SP_pphi[ipphi];
+			int iqx = (new_nqpts-1)/2;
+			int iqy = (new_nqpts-1)/2;
+			oCorrFunc << scientific << setprecision(7) << setw(15)
+				<< SP_pT[ipt] << "   "
+				<< SP_pphi[ipphi] << "   "
+				<< qx_fleshed_out_pts[iqx] << "   "
+				<< qy_fleshed_out_pts[iqy] << "   "
+				<< qz_fleshed_out_pts[iqz] << "   "
+				<< qx_fleshed_out_pts[iqx] * ckp + qy_fleshed_out_pts[iqy] * skp << "   "
+				<< -qx_fleshed_out_pts[iqx] * skp + qy_fleshed_out_pts[iqy] * ckp << "   "
+				<< qz_fleshed_out_pts[iqz] << "   "
+				<< fleshed_out_thermal[iqx][iqy][iqz] << "   "
+				<< fleshed_out_crossterm[iqx][iqy][iqz] << "   "
+				<< fleshed_out_resonances[iqx][iqy][iqz] << "   "
+				<< fleshed_out_CF[iqx][iqy][iqz] << endl;
+		}
+	}
+	else
+	{
+		for (int iqx = 0; iqx < new_nqxpts; ++iqx)
+		for (int iqy = 0; iqy < new_nqypts; ++iqy)
+		for (int iqz = 0; iqz < new_nqzpts; ++iqz)
+		{
+			double ckp = cos_SP_pphi[ipphi], skp = sin_SP_pphi[ipphi];
+			oCorrFunc << scientific << setprecision(7) << setw(15)
+				<< SP_pT[ipT] << "   " << SP_pphi[ipphi] << "   " << qx_fleshed_out_pts[iqx] << "   "
+				<< qy_fleshed_out_pts[iqy] << "   " << qz_fleshed_out_pts[iqz] << "   "
+				<< qx_fleshed_out_pts[iqx] * ckp + qy_fleshed_out_pts[iqy] * skp << "   "
+				<< -qx_fleshed_out_pts[iqx] * skp + qy_fleshed_out_pts[iqy] * ckp << "   "
+				<< qz_fleshed_out_pts[iqz] << "   "
+				<< fleshed_out_thermal[iqx][iqy][iqz] << "   "
+				<< fleshed_out_crossterm[iqx][iqy][iqz] << "   "
+				<< fleshed_out_resonances[iqx][iqy][iqz] << "   "
+				<< fleshed_out_CF[iqx][iqy][iqz] << endl;
+		}
 	}
 
 	oCorrFunc.close();

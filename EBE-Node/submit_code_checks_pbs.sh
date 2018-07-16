@@ -28,24 +28,31 @@ ps0=$1
 #run at most this many jobs at a time
 nMaxProcessesRunning=16
 
-declare -A qxSizes=( ["XYZ"]=7 ["X"]=51 ["Y"]=1 ["Z"]=1)
-declare -A qySizes=( ["XYZ"]=7 ["X"]=1 ["Y"]=51 ["Z"]=1)
-declare -A qzSizes=( ["XYZ"]=7 ["X"]=1 ["Y"]=1 ["Z"]=51)
-declare -A dqxVals=( ["XYZ"]=0.025 ["X"]=0.003 ["Y"]=0.001 ["Z"]=0.001)
-declare -A dqyVals=( ["XYZ"]=0.025 ["X"]=0.001 ["Y"]=0.003 ["Z"]=0.001)
-declare -A dqzVals=( ["XYZ"]=0.0125 ["X"]=0.001 ["Y"]=0.001 ["Z"]=0.003)
+#declare -A qxSizes=( ["XYZ"]=7 ["X"]=51 ["Y"]=1 ["Z"]=1)
+#declare -A qySizes=( ["XYZ"]=7 ["X"]=1 ["Y"]=51 ["Z"]=1)
+#declare -A qzSizes=( ["XYZ"]=7 ["X"]=1 ["Y"]=1 ["Z"]=51)
+#declare -A dqxVals=( ["XYZ"]=0.025 ["X"]=0.003 ["Y"]=0.001 ["Z"]=0.001)
+#declare -A dqyVals=( ["XYZ"]=0.025 ["X"]=0.001 ["Y"]=0.003 ["Z"]=0.001)
+#declare -A dqzVals=( ["XYZ"]=0.0125 ["X"]=0.001 ["Y"]=0.001 ["Z"]=0.003)
+
+declare -A qxSizes=( ["XYZ"]=7 ["X"]=7 ["Y"]=1 ["Z"]=1)
+declare -A qySizes=( ["XYZ"]=7 ["X"]=1 ["Y"]=7 ["Z"]=1)
+declare -A qzSizes=( ["XYZ"]=7 ["X"]=1 ["Y"]=1 ["Z"]=7)
+declare -A dqxVals=( ["XYZ"]=0.025 ["X"]=0.025 ["Y"]=0.025 ["Z"]=0.025)
+declare -A dqyVals=( ["XYZ"]=0.025 ["X"]=0.025 ["Y"]=0.025 ["Z"]=0.025)
+declare -A dqzVals=( ["XYZ"]=0.0125 ["X"]=0.0125 ["Y"]=0.0125 ["Z"]=0.0125)
 
 #submit jobs
-for axis in XYZ
+for axis in XYZ X Y Z
 do
 	for npt0 in 15
 	do
-		for nqt0 in 51
+		for nqt0 in 31
 		do
 			for npy0 in 15
 			do
 				###########
-				direcName0=$homeDirectory/AXIS_`echo $axis`_qt`echo $nqt0`_pT`echo $npt0`_pY`echo $npy0`_PS`echo $ps0`
+				direcName0=$homeDirectory/EXTRAPCOMP_AXIS_`echo $axis`_qt`echo $nqt0`_pT`echo $npt0`_pY`echo $npy0`_PS`echo $ps0`
 				if [ ! -d "$direcName0" ]
 				then
 					mkdir $direcName0
@@ -58,7 +65,7 @@ do
 				dqy=${dqyVals[$axis]}
 				dqz=${dqzVals[$axis]}
 
-				for resfrac in 0.60
+				for resfrac in 0.60 1.00
 				do
 					##########################################
 					# before submitting any more jobs, make sure you aren't at the max. limit

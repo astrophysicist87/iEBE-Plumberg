@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -l walltime=672:00:00
+#PBS -l walltime=1000:00:00
 #PBS -l nodes=1:ppn=1
 #PBS -j oe
 #PBS -S /bin/bash

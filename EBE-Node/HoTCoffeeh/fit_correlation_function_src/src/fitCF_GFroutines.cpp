@@ -18,6 +18,8 @@
 
 using namespace std;
 
+bool runningOutsideCurrentFolderMode = true;
+
 void FitCF::Get_GF_HBTradii()
 {
 	*global_out_stream_ptr << "--> Getting HBT radii by Gaussian fit method" << endl;
@@ -31,7 +33,7 @@ void FitCF::Get_GF_HBTradii()
 		*global_out_stream_ptr << "   --> Doing pT = " << SPinterp_pT[ipt] << ", pphi = " << SPinterp_pphi[ipphi] << "..." << endl;
 		
 		//determine whether to use fleshed out / projected CFvals
-		double *** CF_for_fitting = CFvals[ipt][ipphi];
+		double *** CF_for_fitting = avgCorrelation_function[ipt][ipphi];
 		if (FLESH_OUT_CF)
 		{
 			Flesh_out_CF(ipt, ipphi);
@@ -57,7 +59,6 @@ void FitCF::Cal_correlationfunction()
 	if (qtnpts == 1)
 		return;
 
-
 	// chooses the qo, qs, ql (or qx, qy, ql) points at which to evaluate correlation function,
 	// and allocates the array to hold correlation function values
 	Set_correlation_function_q_pts();
@@ -66,9 +67,12 @@ void FitCF::Cal_correlationfunction()
 	string local_name = all_particles[target_particle_id].name;
 	replace_parentheses(local_name);
 
+	string averageStem = ( nEvents > 1 ) ? "_evavg" : "";
+	//string thermalOrResonanceStem = ( THERMAL_ONLY ) ? "_thermal" : "_resonance";
+
 	ostringstream filename_stream_correlation_function_evavg;
 	filename_stream_correlation_function_evavg << global_path
-				<< "/correlation_function_" << local_name << "_evavg" << no_df_stem << ".dat";
+				<< "/correlation_function_" << local_name << averageStem << no_df_stem << ".dat";
 
 	//now check if file exists
 	bool avg_file_exists = fexists(filename_stream_correlation_function_evavg.str().c_str());
@@ -87,7 +91,7 @@ void FitCF::Cal_correlationfunction()
 
 			//construct needed filename
 			string resultsDirectory = "";
-			if (currentfolderindex == -1)
+			if (currentfolderindex == -1 or runningOutsideCurrentFolderMode)
 				resultsDirectory = "/results-" + patch::to_string(chosen_events[iEvent]);
 			ostringstream filename_stream_correlation_function;
 			filename_stream_correlation_function << global_path << resultsDirectory
@@ -98,7 +102,10 @@ void FitCF::Cal_correlationfunction()
 			if (file_exists)
 				*global_out_stream_ptr << "    --> Note: file exists." << endl;
 			else
+			{
 				*global_out_stream_ptr << "    --> Note: file does not exist." << endl;
+				exit(8);
+			}
 
 			//now read the file in and average appropriately
 			//keeps running sum for simplicity
@@ -120,12 +127,31 @@ void FitCF::Average_correlation_function()
 
 	for (int ipt = 0; ipt < n_interp_pT_pts; ++ipt)
 	for (int ipphi = 0; ipphi < n_interp_pphi_pts; ++ipphi)
-	for (int iqx = 0; iqx < qxnpts; ++iqx)
-	for (int iqy = 0; iqy < qynpts; ++iqy)
-	for (int iqz = 0; iqz < qznpts; ++iqz)
-		avgCorrelation_function[ipt][ipphi][iqx][iqy][iqz]
-			= 1.0 + avgCorrelation_function_Numerator[ipt][ipphi][iqx][iqy][iqz]
-				/ avgCorrelation_function_Denominator[ipt][ipphi][iqx][iqy][iqz];
+	{
+		avgSpectra[target_particle_id][ipt][ipphi] /= double(nEvents);
+
+		for (int iqx = 0; iqx < qxnpts; ++iqx)
+		for (int iqy = 0; iqy < qynpts; ++iqy)
+		for (int iqz = 0; iqz < qznpts; ++iqz)
+		{
+			avgThermalCFvals[ipt][ipphi][iqx][iqy][iqz] /= double(nEvents);
+			avgCrosstermCFvals[ipt][ipphi][iqx][iqy][iqz] /= double(nEvents);
+			avgResonancesCFvals[ipt][ipphi][iqx][iqy][iqz] /= double(nEvents);
+			avgCorrelation_function_Numerator[ipt][ipphi][iqx][iqy][iqz] /= double(nEvents);
+			avgCorrelation_function_Denominator[ipt][ipphi][iqx][iqy][iqz] /= double(nEvents);
+
+			avgThermalCFvals[ipt][ipphi][iqx][iqy][iqz]
+				/= avgCorrelation_function_Denominator[ipt][ipphi][iqx][iqy][iqz];
+			avgCrosstermCFvals[ipt][ipphi][iqx][iqy][iqz]
+				/= avgCorrelation_function_Denominator[ipt][ipphi][iqx][iqy][iqz];
+			avgResonancesCFvals[ipt][ipphi][iqx][iqy][iqz]
+				/= avgCorrelation_function_Denominator[ipt][ipphi][iqx][iqy][iqz];
+
+			avgCorrelation_function[ipt][ipphi][iqx][iqy][iqz]
+				= 1.0 + avgCorrelation_function_Numerator[ipt][ipphi][iqx][iqy][iqz]
+					/ avgCorrelation_function_Denominator[ipt][ipphi][iqx][iqy][iqz];
+		}
+	}
 
 	*global_out_stream_ptr << "Finished ensemble-averaging EbE correlation functions." << endl;
 
@@ -161,9 +187,9 @@ void FitCF::Flesh_out_CF(int ipt, int ipphi, double sample_scale /*==1.0*/)
 		qy_fleshed_out_pts[iqy] = qy0;
 		qz_fleshed_out_pts[iqz] = qz0;
 
-		fleshed_out_thermal[iqx][iqy][iqz] = interpolate_CF(thermalCFvals[ipt][ipphi], qx0, qy0, qz0, ipt, 0);
-		fleshed_out_crossterm[iqx][iqy][iqz] = interpolate_CF(crosstermCFvals[ipt][ipphi], qx0, qy0, qz0, ipt, 1);
-		fleshed_out_resonances[iqx][iqy][iqz] = interpolate_CF(resonancesCFvals[ipt][ipphi], qx0, qy0, qz0, ipt, 2);
+		fleshed_out_thermal[iqx][iqy][iqz] = interpolate_CF(avgThermalCFvals[ipt][ipphi], qx0, qy0, qz0, ipt, 0);
+		fleshed_out_crossterm[iqx][iqy][iqz] = interpolate_CF(avgCrosstermCFvals[ipt][ipphi], qx0, qy0, qz0, ipt, 1);
+		fleshed_out_resonances[iqx][iqy][iqz] = interpolate_CF(avgResonancesCFvals[ipt][ipphi], qx0, qy0, qz0, ipt, 2);
 		fleshed_out_CF[iqx][iqy][iqz] = 1.0 + fleshed_out_thermal[iqx][iqy][iqz] + fleshed_out_crossterm[iqx][iqy][iqz] + fleshed_out_resonances[iqx][iqy][iqz];
 	}
 
@@ -196,6 +222,38 @@ double FitCF::interpolate_CF(double *** current_C_slice, double qx0, double qy0,
 
 	double fx0 = current_C_slice[iqx0_loc][0][0];
 	double fx1 = current_C_slice[iqx0_loc+1][0][0];
+
+	bool use_log_current_C_slice = true;
+	double *** log_current_C_slice = new double ** [qxnpts];
+	//double *** sgn_current_C_slice = new double ** [qxnpts];
+	for (int iqx = 0; iqx < qxnpts; ++iqx)
+	{
+		log_current_C_slice[iqx] = new double * [qynpts];
+		//sgn_current_C_slice[iqx] = new double * [qynpts];
+		for (int iqy = 0; iqy < qynpts; ++iqy)
+		{
+			log_current_C_slice[iqx][iqy] = new double [qznpts];
+			//sgn_current_C_slice[iqx][iqy] = new double [qznpts];
+			for (int iqz = 0; iqz < qznpts; ++iqz)
+			{
+				log_current_C_slice[iqx][iqy][iqz] = 0.0;
+				//sgn_current_C_slice[iqx][iqy][iqz] = 0.0;
+			}
+		}
+	}
+
+
+	if (use_log_current_C_slice)
+	{
+		for (int iqx = 0; iqx < qxnpts; ++iqx)
+		for (int iqy = 0; iqy < qynpts; ++iqy)
+		for (int iqz = 0; iqz < qznpts; ++iqz)
+		{
+			log_current_C_slice[iqx][iqy][iqz] = log(current_C_slice[iqx][iqy][iqz]+1.0);	//make it positive to avoid NaNs
+			//sgn_current_C_slice[iqx][iqy][iqz] = sgn(current_C_slice[iqx][iqy][iqz]);
+		}
+	}
+
 
 	//interpolate here...
 	double qx_0 = qx_pts[iqx0_loc];
@@ -237,8 +295,29 @@ double FitCF::interpolate_CF(double *** current_C_slice, double qx0, double qy0,
 	}
 	else
 	{
-		fxiyizi = interpolate3D(qx_pts, qy_pts, qz_pts, current_C_slice, qx0, qy0, qz0, qxnpts, qynpts, qznpts, 1, true);
+		if (use_log_current_C_slice)
+		{
+			//separate into "thirds" in each direction == 27 "cubes" in q-space
+			//use linear interpolation in middle "cube"; cubic everywhere else (seems to work best)
+			bool in_central_cube = ( abs(qx0) <= qx_pts[qxnpts-1]/3.0 )
+									and ( abs(qy0) <= qy_pts[qynpts-1]/3.0 )
+									and ( abs(qz0) <= qz_pts[qznpts-1]/3.0 );
+			fxiyizi = exp(interpolate3D(qx_pts, qy_pts, qz_pts, log_current_C_slice, qx0, qy0, qz0, qxnpts, qynpts, qznpts, 1 - int(in_central_cube), true)) - 1.0;
+		}
+		else
+		{
+			fxiyizi = interpolate3D(qx_pts, qy_pts, qz_pts, current_C_slice, qx0, qy0, qz0, qxnpts, qynpts, qznpts, 1, true);
+		}
 	}
+
+	for (int iqx = 0; iqx < qxnpts; ++iqx)
+	{
+		for (int iqy = 0; iqy < qynpts; ++iqy)
+			delete [] log_current_C_slice[iqx][iqy];
+		delete [] log_current_C_slice[iqx];
+	}
+	delete [] log_current_C_slice;
+
 
 	return (fxiyizi);
 }

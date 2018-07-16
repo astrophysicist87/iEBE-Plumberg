@@ -6,24 +6,28 @@
 
 using namespace std;
 
-#define USE_OLD_INTERP			true		// duh
-#define VERBOSE 			3		// specifies level of output - 0 is lowest (no output)
-#define DEBUG				false		// flag for output of debugging statements
-#define USE_LAMBDA			true		// fit correlation function with adjustable intercept parameter
+#define USE_OLD_INTERP					true		// duh
+#define VERBOSE 						3			// specifies level of output - 0 is lowest (no output)
+#define DEBUG							false		// flag for output of debugging statements
+#define USE_LAMBDA						true		// fit correlation function with adjustable intercept parameter
 #define IGNORE_LONG_LIVED_RESONANCES	true		// particularly, whether to include eta or eta' in spectra calculations
-							// true means C(q=0) ~ 1 + \lambda
-#define QT_POINTS_SPACING		1		// 0 - uniform from -qmax to +qmax
-							// 1 - Chebyshev nodes from -qmax to +qmax
-#define QX_POINTS_SPACING		0
-#define QY_POINTS_SPACING		0
-#define QZ_POINTS_SPACING		0
-//#define VARY_ALPHA			false		// (not yet implemented) feature to treat power in exponential as a fit variable (alpha == 2 <==> traditional Gaussian)
-#define Q_AXES_AND_RAYS_ONLY		false		// true - only do points along q-axes (only works for odd points right now)
-							// false - do full grid
-#define FIT_WITH_PROJECTED_CFVALS	true		// as opposed to unprojected CFvals...
-#define FLESH_OUT_CF			true		// refines grid via interpolation before fitting
-#define REGULATE_CF			false		// true (false) means (don't) try to catch spurious values of projected
-							// or regular CF and replace them with median value in that window
+													// true means C(q=0) ~ 1 + \lambda
+#define QT_POINTS_SPACING				1			// 0 - uniform from -qmax to +qmax
+													// 1 - Chebyshev nodes from -qmax to +qmax
+#define QX_POINTS_SPACING				0
+#define QY_POINTS_SPACING				0
+#define QZ_POINTS_SPACING				0
+#define Q_AXES_AND_RAYS_ONLY			false		// true - only do points along q-axes (only works for odd points right now)
+													// false - do full grid
+#define FIT_WITH_PROJECTED_CFVALS		true		// as opposed to unprojected CFvals...
+#define FLESH_OUT_CF					false		// refines grid via interpolation before fitting
+#define REGULATE_CF						false		// true (false) means (don't) try to catch spurious values of projected
+													// or regular CF and replace them with median value in that window
+#define SLICE_OF_FLESH_ONLY				true		// full correlation function (fleshed out) is typically a HUGE file (~10GB),
+													// so use this to output q-slices only (MUCH) smaller
+#define THERMAL_ONLY					true		// duh
+
+
 
 const int ntrig = 2;			// for cos or sin
 
@@ -80,9 +84,9 @@ const int new_nqzpts = new_nqpts;
 //const int qznpts = 7;
 //try to make max. sqrt(q dot q) ~ 0.025 GeV or so
 const double delta_qt = 0.00625;
-const double delta_qx = 0.0125;
-const double delta_qy = 0.0125;
-const double delta_qz = 0.015;
+const double delta_qx = 0.025;
+const double delta_qy = 0.025;
+const double delta_qz = 0.0125;
 //const double delta_qx = 0.003;
 //const double delta_qy = 0.003;
 //const double delta_qz = 0.003;

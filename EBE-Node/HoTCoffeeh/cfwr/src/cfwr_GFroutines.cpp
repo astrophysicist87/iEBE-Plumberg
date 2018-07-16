@@ -407,6 +407,7 @@ double CorrelationFunction::interpolate_CF(double *** current_C_slice, double qx
 
 double CorrelationFunction::interpolate_qi(double q0, double qi0, double qi1, double f1, double f2, bool use_linear)
 {
+	//q0 and qi0 can be either q or q^2, dimensionally
 	double if1 = f1;
 	double if2 = f2;
 	bool use_log = (!use_linear) && (f1 > 0.0) && (f2 > 0.0);

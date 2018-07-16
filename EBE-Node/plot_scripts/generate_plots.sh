@@ -1,11 +1,12 @@
 #!/bin/bash
 
-directoryToProcess=NEW_results
-numberOfEvents=100
+directoryToProcess=../NEW_results
+numberOfEvents=1000
 
-###this should average correlator, etc.
 python collect_results.py $directoryToProcess $numberOfEvents
 
-python compare_CF_resonance_vs_thermal.py $directoryToProcess
+python plot_correlation_function.py $directoryToProcess
 
-python generate_histograms_GF.py $directoryToProcess/complete_FOsurface_properties_GF_`echo $numberOfEvents`evs_COSneq0.dat
+python generate_histograms_GF.py $directoryToProcess
+
+echo 'Finished generating plots.'
