@@ -345,7 +345,7 @@ void CorrelationFunction::Output_fleshed_out_correlationfunction(int ipT, int ip
 			int iqy = (new_nqpts-1)/2;
 			int iqz = (new_nqpts-1)/2;
 			oCorrFunc << scientific << setprecision(7) << setw(15)
-				<< SP_pT[ipt] << "   "
+				<< SP_pT[ipT] << "   "
 				<< SP_pphi[ipphi] << "   "
 				<< qx_fleshed_out_pts[iqx] << "   "
 				<< qy_fleshed_out_pts[iqy] << "   "
@@ -364,7 +364,7 @@ void CorrelationFunction::Output_fleshed_out_correlationfunction(int ipT, int ip
 			int iqx = (new_nqpts-1)/2;
 			int iqz = (new_nqpts-1)/2;
 			oCorrFunc << scientific << setprecision(7) << setw(15)
-				<< SP_pT[ipt] << "   "
+				<< SP_pT[ipT] << "   "
 				<< SP_pphi[ipphi] << "   "
 				<< qx_fleshed_out_pts[iqx] << "   "
 				<< qy_fleshed_out_pts[iqy] << "   "
@@ -383,7 +383,7 @@ void CorrelationFunction::Output_fleshed_out_correlationfunction(int ipT, int ip
 			int iqx = (new_nqpts-1)/2;
 			int iqy = (new_nqpts-1)/2;
 			oCorrFunc << scientific << setprecision(7) << setw(15)
-				<< SP_pT[ipt] << "   "
+				<< SP_pT[ipT] << "   "
 				<< SP_pphi[ipphi] << "   "
 				<< qx_fleshed_out_pts[iqx] << "   "
 				<< qy_fleshed_out_pts[iqy] << "   "

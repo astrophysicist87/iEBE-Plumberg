@@ -60,6 +60,7 @@ SRC		=	main.cpp \
 			$(SRCDIR)/cfwr.cpp \
 			$(SRCDIR)/cfwr_HDF.cpp \
 			$(SRCDIR)/cfwr_admin.cpp \
+			$(SRCDIR)/cfwr_exact.cpp \
 			$(SRCDIR)/cfwr_resonance.cpp \
 			$(SRCDIR)/cfwr_IO.cpp \
 			$(SRCDIR)/cfwr_GFroutines.cpp \

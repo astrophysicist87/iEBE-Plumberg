@@ -162,7 +162,7 @@ def generate_all_plots():
 	#for chosenpT in xrange(0,15,3):
 	#for chosenpT in [0, 9, 18]:
 	#for chosenpT in [0, 6, 12]:
-	for chosenpT in [0, 4, 8]:
+	for chosenpT in [0, 5, 8]:
 		#print chosenpT
 		generate_comparison_plot(chosenpT, chosenpphi, 1)
 	#pause()

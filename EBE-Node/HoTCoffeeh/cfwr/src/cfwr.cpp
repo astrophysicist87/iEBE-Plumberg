@@ -112,11 +112,22 @@ inline void Iint2(double alpha, double beta, double gamma, double & I0r, double 
 	complex<double> ck1(	ea * gsl_cheb_eval (cs_accel_expK1re, alpha),
 							ea * gsl_cheb_eval (cs_accel_expK1im, alpha) );
 
-//cout << "Bessel Check: " << setw(10) << setprecision(8) << ea * gsl_cheb_eval (cs_accel_expK0re, alpha) << "   " << ea * gsl_cheb_eval (cs_accel_expK0im, alpha) << "   " << ea * gsl_cheb_eval (cs_accel_expK1re, alpha) << "   " << ea * gsl_cheb_eval (cs_accel_expK1im, alpha) << "   " << Cck0.real() << "   " << Cck0.imag() << "   " << Cck1.real() << "   " << Cck1.imag() << "   ";
-if (print_stuff) cout << "Bessel Check: " << setw(18) << setprecision(16) << alpha << "   " << beta << "   " << gamma << setw(10) << setprecision(8) << endl;
+/*
+if (print_stuff) 
+	cout << "Bessel Check: " << setw(18) << setprecision(16)
+		<< alpha << "   " << beta << "   " << gamma
+		<< setw(10) << setprecision(8)
+		<< ea * gsl_cheb_eval (cs_accel_expK0re, alpha) << "   "
+		<< ea * gsl_cheb_eval (cs_accel_expK0im, alpha) << "   "
+		<< ea * gsl_cheb_eval (cs_accel_expK1re, alpha) << "   "
+		<< ea * gsl_cheb_eval (cs_accel_expK1im, alpha) << "   "
+		<< Cck0.real() << "   " << Cck0.imag() << "   "
+		<< Cck1.real() << "   " << Cck1.imag() << endl;
+*/
+//if (print_stuff) cout << "Bessel Check: " << setw(18) << setprecision(16) << alpha << "   " << beta << "   " << gamma << setw(10) << setprecision(8) << endl;
 //if (1) exit(8);
 
-//I think this is the fix...
+//Does this fix the omega oscillations?
 //ck0 = Cck0;
 //ck1 = Cck1;
 
@@ -1374,10 +1385,10 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights_Yeq0_alternate()
 	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 	{
-//if (RUN_TRUNCATED_CALCULATION && ipT != 0 && ipT != 4 && ipT != 8)
-//	continue;
-//if (RUN_TRUNCATED_CALCULATION && ipphi > 0)
-//	continue;
+if (RUN_TRUNCATED_CALCULATION && ipT != 0 && ipT != 4 && ipT != 8)
+	continue;
+if (RUN_TRUNCATED_CALCULATION && ipphi > 0)
+	continue;
 		double pT = SP_pT[ipT];
 		double pphi = SP_pphi[ipphi];
 		double px = pT*cos_SP_pphi[ipphi];

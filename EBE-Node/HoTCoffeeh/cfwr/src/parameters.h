@@ -37,6 +37,7 @@ using namespace std;
 #define SLICE_OF_FLESH_ONLY			true	// full correlation function (fleshed out) is typically a HUGE file (~10GB),
 											// so use this to output q-slices only (MUCH) smaller
 
+#define RUN_TRUNCATED_CALCULATION		0
 
 #ifndef H5_NO_NAMESPACE
     using namespace H5;
@@ -82,7 +83,7 @@ const double Kphi_min = 0.0;
 const double Kphi_max = 2.0*M_PI;
 
 // Phase-space integral information
-const int phase_space_size = 21;
+const int phase_space_size = 12;
 const int n_zeta_pts = phase_space_size;
 const int n_v_pts = phase_space_size;
 const int n_s_pts = phase_space_size;

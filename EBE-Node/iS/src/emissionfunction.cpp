@@ -321,6 +321,7 @@ void EmissionFunctionArray::calculate_dN_ptdptdphidy(int particle_idx)
                   double result;
                   result = (prefactor*degen*pdsigma*tau*f0
                             *(1. + (delta_f_shear + delta_f_bulk)*ratio));
+if (result < 0.0) result = 0.0;
 
                   dN_ptdptdphidy_tmp += result*delta_eta;
                   if(CALCULATEDED3P == 1)

@@ -266,10 +266,10 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 		{
-//if (RUN_TRUNCATED_CALCULATION && /*ipT != 0 && ipT != 4 && */ipT != 8)
-//	continue;
-//if (RUN_TRUNCATED_CALCULATION && ipY != ipY0)
-//	continue;
+if (RUN_TRUNCATED_CALCULATION && ipT != 0 && ipT != 4 && ipT != 8)
+	continue;
+if (RUN_TRUNCATED_CALCULATION && ipY != ipY0)
+	continue;
 
 			if (doing_moments)
 			{
@@ -280,8 +280,8 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 
 			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 			{
-//if (RUN_TRUNCATED_CALCULATION && ipphi > 0)
-//	continue;
+if (RUN_TRUNCATED_CALCULATION && ipphi > 0)
+	continue;
 
 				double local_pT = SP_pT[ipT];
 				double local_pphi = SP_pphi[ipphi];
@@ -382,10 +382,10 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 		{
-//if (RUN_TRUNCATED_CALCULATION && /*ipT != 0 && ipT != 4 && */ipT != 8)
-//	continue;
-//if (RUN_TRUNCATED_CALCULATION && ipY != ipY0)
-//	continue;
+if (RUN_TRUNCATED_CALCULATION && ipT != 0 && ipT != 4 && ipT != 8)
+	continue;
+if (RUN_TRUNCATED_CALCULATION && ipY != ipY0)
+	continue;
 			if (doing_moments)
 			{
 				for (int igrid = 0; igrid < grids_calculated_length; ++igrid)
@@ -395,8 +395,8 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 
 			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
 			{
-//if (RUN_TRUNCATED_CALCULATION && ipphi > 0)
-//	continue;
+if (RUN_TRUNCATED_CALCULATION && ipphi > 0)
+	continue;
 
 				double local_pT = SP_pT[ipT];
 				double local_pphi = SP_pphi[ipphi];
@@ -795,8 +795,8 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 		complex<double> q_dep_factor = one/(one - i*ak);
 		//cout << "CHECK AK: " << akr << "   " << aki << "   "  << q_dep_factor.real() << "   " << q_dep_factor.imag() << endl;
 
-		//bool use_exact = bool(RUN_TRUNCATED_CALCULATION);
-		bool use_exact = false;
+		bool use_exact = bool(RUN_TRUNCATED_CALCULATION);
+		//bool use_exact = false;
 		double tempCS[4];
 		if (use_exact)
 		{
@@ -923,7 +923,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 		//}
 
 		bool check_final_increment = false;
-		if (check_final_increment)
+		if (check_final_increment and not use_exact)	//don't bother to check if we're just using exact!
 		{
 			double tempR = 0.0, tempI = 0.0;
 			tempCS[0] = 0.0, tempCS[1] = 0.0, tempCS[2] = 0.0, tempCS[3] = 0.0;
@@ -939,7 +939,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 					<< "\t\t" << newSXCSpm[0] << "   " << newSXCSpm[1] << "   " << newSXCSpm[2] << "   " << newSXCSpm[3] << endl
 					<< "\t\t" << tempCS[0] << "   " << tempCS[1] << "   " << tempCS[2] << "   " << tempCS[3] << endl
 					<< "\t\t" << tempR << "   " << tempI << endl;
-			if (1) exit (8);
+			//if (1) exit (8);
 		}
 
 		//needed to exploit symmetries of sine component

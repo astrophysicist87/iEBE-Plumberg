@@ -20,12 +20,12 @@ using namespace std;
 #define Q_AXES_AND_RAYS_ONLY			false		// true - only do points along q-axes (only works for odd points right now)
 													// false - do full grid
 #define FIT_WITH_PROJECTED_CFVALS		true		// as opposed to unprojected CFvals...
-#define FLESH_OUT_CF					false		// refines grid via interpolation before fitting
+#define FLESH_OUT_CF					true		// refines grid via interpolation before fitting
 #define REGULATE_CF						false		// true (false) means (don't) try to catch spurious values of projected
 													// or regular CF and replace them with median value in that window
 #define SLICE_OF_FLESH_ONLY				true		// full correlation function (fleshed out) is typically a HUGE file (~10GB),
 													// so use this to output q-slices only (MUCH) smaller
-#define THERMAL_ONLY					true		// duh
+#define THERMAL_ONLY					false		// duh
 
 
 

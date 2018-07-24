@@ -247,15 +247,15 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_function_approx(
 
 		complex<double> I0_a_b_g(0,0), I1_a_b_g(0,0), I2_a_b_g(0,0), I3_a_b_g(0,0);
 		complex<double> I0_2a_b_g(0,0), I1_2a_b_g(0,0), I2_2a_b_g(0,0), I3_2a_b_g(0,0);
-		Iexact(alpha, beta, gamma, I0_a_b_g, I1_a_b_g);
-		//Iexact(alpha, beta, gamma, I0_a_b_g, I1_a_b_g, I2_a_b_g, I3_a_b_g);
-		//Iexact(2.0*alpha, beta, gamma, I0_2a_b_g, I1_2a_b_g, I2_2a_b_g, I3_2a_b_g);
+		//Iexact(alpha, beta, gamma, I0_a_b_g, I1_a_b_g);
+		Iexact(alpha, beta, gamma, I0_a_b_g, I1_a_b_g, I2_a_b_g, I3_a_b_g);
+		Iexact(2.0*alpha, beta, gamma, I0_2a_b_g, I1_2a_b_g, I2_2a_b_g, I3_2a_b_g);
 
 		complex<double> term1 = transverse_f0 * (A*I1_a_b_g + B*I0_a_b_g);
-		//complex<double> term2 = C * transverse_f0 * ( A*a*I3_a_b_g + (B*a+b*A)*I2_a_b_g + (B*b+c*A)*I1_a_b_g + B*c*I0_a_b_g );
-		//complex<double> term3 = -sign * C * transverse_f0 * transverse_f0 * ( A*a*I3_2a_b_g + (B*a+b*A)*I2_2a_b_g + (B*b+c*A)*I1_2a_b_g + B*c*I0_2a_b_g );
-		complex<double> term2(0,0);
-		complex<double> term3(0,0);
+		complex<double> term2 = C * transverse_f0 * ( A*a*I3_a_b_g + (B*a+b*A)*I2_a_b_g + (B*b+c*A)*I1_a_b_g + B*c*I0_a_b_g );
+		complex<double> term3 = -sign * C * transverse_f0 * transverse_f0 * ( A*a*I3_2a_b_g + (B*a+b*A)*I2_2a_b_g + (B*b+c*A)*I1_2a_b_g + B*c*I0_2a_b_g );
+		//complex<double> term2(0,0);
+		//complex<double> term3(0,0);
 
 		complex<double> eiqx_S_x_K = term1 + term2 + term3;
 

@@ -423,9 +423,10 @@ double CorrelationFunction::interpolate_qi(double q0, double qi0, double qi1, do
 	return (tmp_result);
 }
 
-
+//only used in cfwr_IO.cpp
 double CorrelationFunction::get_CF(int ipt, int ipphi, int iqt, int iqx, int iqy, int iqz, bool return_projected_value)
-{	//pY==0
+{
+	//pY==0
 	double nonFTd_spectra = spectra[target_particle_id][ipt][ipphi];
 	double cos_transf_spectra = full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,0)]
 									+ full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,3)];		//add real components
@@ -474,18 +475,26 @@ void CorrelationFunction::get_CF_terms(double * totalresult, double * thermalres
 	double sin_transf_spectra = full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,1)]
 									+ full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,2)];		//add imaginary components
 
-	if (return_projected_value)
-	{
-		nonFTd_spectra = nonFTd_tspectra + (nonFTd_spectra - nonFTd_tspectra) / fraction_of_resonances;
-		cos_transf_spectra = cos_transf_tspectra + (cos_transf_spectra - cos_transf_tspectra) / fraction_of_resonances;
-		sin_transf_spectra = sin_transf_tspectra + (sin_transf_spectra - sin_transf_tspectra) / fraction_of_resonances;
-	}
-
 	//non-thermal
 	double NT_spectra = nonFTd_spectra - nonFTd_tspectra;
 	double cosNT_spectra = cos_transf_spectra - cos_transf_tspectra;
 	double sinNT_spectra = sin_transf_spectra - sin_transf_tspectra;
 
+	//project to total number of resonances
+	if (return_projected_value)
+	{
+		NT_spectra /= fraction_of_resonances;
+		cosNT_spectra /= fraction_of_resonances;
+		sinNT_spectra /= fraction_of_resonances;
+	}
+
+	// no net effect if return_projected_value == false
+	// or fraction_of_resonances == 1
+	nonFTd_spectra = nonFTd_tspectra + NT_spectra;
+	cos_transf_spectra = cos_transf_tspectra + cosNT_spectra;
+	sin_transf_spectra = sin_transf_tspectra + sinNT_spectra;
+
+																								//thermal term
 	double num = cos_transf_tspectra*cos_transf_tspectra + sin_transf_tspectra*sin_transf_tspectra;
 	double den = nonFTd_spectra*nonFTd_spectra;
 	*thermalresult = num / den;

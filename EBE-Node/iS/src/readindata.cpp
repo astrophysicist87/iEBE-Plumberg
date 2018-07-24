@@ -246,9 +246,12 @@ void read_FOdata::read_decdat(int length, FO_surf* surf_ptr)
      decdat >> surf_ptr[i].pi22;
      surf_ptr[i].pi23 = 0.0;
 
-     decdat >> temp;
+     //decdat >> temp;
      if(turn_on_bulk == 1)
+	 {
+		 decdat >> temp;	//don't assume this column exists!!!
          surf_ptr[i].bulkPi = temp;
+	 }
      else
          surf_ptr[i].bulkPi = 0.0;
   }
