@@ -89,12 +89,12 @@ def plot_EbE_R2ij(radiiForEvents, direction, ymin, ymax, chosenFigSize):
 	nKT05n, binsKT05n, patchesKT05n = ax.hist(R2ijKT05n, plotbins, histtype='step', normed=1)
 	nKT06n, binsKT06n, patchesKT06n = ax.hist(R2ijKT06n, plotbins, histtype='step', normed=1)
 
-	l01, = ax.plot(delete(binsKT01n,-1) + 0.5*dKT, nKT01n, '-o', label='$K_T = 0.01$ GeV')
-	l02, = ax.plot(delete(binsKT02n,-1) + 0.5*dKT, nKT02n, '-o', label='$K_T = 0.21$ GeV')
-	l03, = ax.plot(delete(binsKT03n,-1) + 0.5*dKT, nKT03n, '-o', label='$K_T = 0.41$ GeV')
-	l04, = ax.plot(delete(binsKT04n,-1) + 0.5*dKT, nKT04n, '-o', label='$K_T = 0.61$ GeV')
-	l05, = ax.plot(delete(binsKT05n,-1) + 0.5*dKT, nKT05n, '-o', label='$K_T = 0.81$ GeV')
-	l06, = ax.plot(delete(binsKT06n,-1) + 0.5*dKT, nKT06n, '-o', label='$K_T = 1.01$ GeV')
+	l01, = ax.plot(delete(binsKT01n,-1) + 0.5*dKT, nKT01n, '-o', markersize=7, label='$K_T = 0.01$ GeV')
+	l02, = ax.plot(delete(binsKT02n,-1) + 0.5*dKT, nKT02n, '-s', markersize=7, label='$K_T = 0.21$ GeV')
+	l03, = ax.plot(delete(binsKT03n,-1) + 0.5*dKT, nKT03n, '-p', markersize=10, label='$K_T = 0.41$ GeV')
+	l04, = ax.plot(delete(binsKT04n,-1) + 0.5*dKT, nKT04n, '-D', markersize=7, label='$K_T = 0.61$ GeV')
+	l05, = ax.plot(delete(binsKT05n,-1) + 0.5*dKT, nKT05n, '-*', markersize=10, label='$K_T = 0.81$ GeV')
+	l06, = ax.plot(delete(binsKT06n,-1) + 0.5*dKT, nKT06n, '-^', markersize=8, label='$K_T = 1.01$ GeV')
 
 	#adds some nice bars in the background of the histogram to give plot some structure
 	dummy1, dummy2, dummy3 = ax.hist(R2ijKT01n, plotbins, histtype='bar', normed=1, edgecolor='black', color='white', alpha=0.5)

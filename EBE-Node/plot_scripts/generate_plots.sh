@@ -7,7 +7,9 @@ python collect_results.py $directoryToProcess $numberOfEvents
 
 python plot_correlation_function.py $directoryToProcess
 
-python generate_histograms_GF.py $directoryToProcess
+python generate_histograms_GF.py $directoryToProcess $numberOfEvents
+
+python generate_histograms.py ../SVWR_results/
 
 python plot_CF_compare_flesh_out.py ../HoTCoffeeh/fit_correlation_function_src ../thesis_plots
 

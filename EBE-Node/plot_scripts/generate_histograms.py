@@ -4,6 +4,7 @@ from pylab import *
 import matplotlib.mlab as mlab
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
+import sys
 
 ################################################################################
 ## Initialize stuff here
@@ -27,12 +28,19 @@ nTrig = 1 # cos only
 panelLabels = ['(a)', '(b)']
 panelCounter = 0
 
-workingDirectory = 'RESULTS_etaBYs_%(ebsstring)s/' % {"ebsstring": ebsvals[0]}
+#workingDirectory = 'RESULTS_etaBYs_%(ebsstring)s/' % {"ebsstring": ebsvals[0]}
+#workingDirectory = 'SVWR_results/'
+workingDirectory = sys.argv[1]
 subDirectoryStem = 'results-'
 
 ################################################################################
+def pause():
+    programPause = raw_input("Press the <ENTER> key to continue...")
+################################################################################
 ## End of initializations
 ################################################################################
+
+'''
 
 def plot_EbE_R2o(ebs, dfstem, radiiForEvents):
 	numplots = 6
@@ -40,7 +48,9 @@ def plot_EbE_R2o(ebs, dfstem, radiiForEvents):
 	ax=plt.axes([0.1,0.15,0.85,0.8])
 	plt.axhline(0.0, color='black', linewidth=1.5)
 	
-	direc = 'RESULTS_etaBYs_%(ebsstring)s/' % {"ebsstring": ebs}
+	#direc = 'RESULTS_etaBYs_%(ebsstring)s/' % {"ebsstring": ebs}
+	#direc = 'SVWR_results/'
+	direc = workingDirectory
 	
 	R2oKT00n = radiiForEvents[:,0] / mean(radiiForEvents[:,0])
 	R2oKT02n = radiiForEvents[:,20] / mean(radiiForEvents[:,20])
@@ -104,14 +114,14 @@ def plot_EbE_R2o(ebs, dfstem, radiiForEvents):
 
 	plt.legend()
 
-	#plt.show()
+	plt.show(block=False)
 
 	filename = '/home/plumberg.1/EBE-results/database/EbE%(ms)s_R2o%(n)i_vs_KT_1000evs%(df)s.pdf' % {"ms": methodStem, "n": chosenOrder, "df": dfstem}
 	print 'Saving to', filename
-	plt.savefig(filename, format='pdf')
+	#plt.savefig(filename, format='pdf')
 	#plt.savefig('/home/plumberg.1/EBE-results/database/EbE_R2o_vs_KT_1000evs%(df)s.eps', format='eps')
 
-	plt.close()
+	#plt.close()
 
 
 def plot_EbE_R2s(ebs, dfstem, radiiForEvents):
@@ -120,7 +130,9 @@ def plot_EbE_R2s(ebs, dfstem, radiiForEvents):
 	ax=plt.axes([0.1,0.15,0.85,0.8])
 	plt.axhline(0.0, color='black', linewidth=1.5)
 	
-	direc = 'RESULTS_etaBYs_%(ebsstring)s/' % {"ebsstring": ebs}
+	#direc = 'RESULTS_etaBYs_%(ebsstring)s/' % {"ebsstring": ebs}
+	#direc = 'SVWR_results/'
+	direc = workingDirectory
 
 	R2sKT00n = radiiForEvents[:,0] / mean(radiiForEvents[:,0])
 	R2sKT02n = radiiForEvents[:,20] / mean(radiiForEvents[:,20])
@@ -183,14 +195,14 @@ def plot_EbE_R2s(ebs, dfstem, radiiForEvents):
 
 	plt.legend()
 
-	#plt.show()
+	plt.show(block=False)
 
 	filename = '/home/plumberg.1/EBE-results/database/EbE%(ms)s_R2s%(n)i_vs_KT_1000evs%(df)s.pdf' % {"ms": methodStem, "n": chosenOrder, "df": dfstem}
 	print 'Saving to', filename
-	plt.savefig(filename, format='pdf')
+	#plt.savefig(filename, format='pdf')
 	#plt.savefig('/home/plumberg.1/EBE-results/database/EbE_R2s_vs_KT_1000evs%(df)s.eps', format='eps')
 
-	plt.close()
+	#plt.close()
 
 
 
@@ -201,7 +213,9 @@ def plot_EbE_R2l(ebs, dfstem, radiiForEvents):
 	ax=plt.axes([0.1,0.15,0.85,0.8])
 	plt.axhline(0.0, color='black', linewidth=1.5)
 	
-	direc = 'RESULTS_etaBYs_%(ebsstring)s/' % {"ebsstring": ebs}
+	#direc = 'RESULTS_etaBYs_%(ebsstring)s/' % {"ebsstring": ebs}
+	#direc = 'SVWR_results/'
+	direc = workingDirectory
 
 	R2lKT00n = radiiForEvents[:,0] / mean(radiiForEvents[:,0])
 	R2lKT02n = radiiForEvents[:,20] / mean(radiiForEvents[:,20])
@@ -264,14 +278,15 @@ def plot_EbE_R2l(ebs, dfstem, radiiForEvents):
 
 	plt.legend()
 
-	#plt.show()
+	plt.show(block=False)
 
 	filename = '/home/plumberg.1/EBE-results/database/EbE%(ms)s_R2l%(n)i_vs_KT_1000evs%(df)s.pdf' % {"ms": methodStem, "n": chosenOrder, "df": dfstem}
 	print 'Saving to', filename
-	plt.savefig(filename, format='pdf')
+	#plt.savefig(filename, format='pdf')
 	#plt.savefig('/home/plumberg.1/EBE-results/database/EbE_R2l_vs_KT_1000evs%(df)s.eps', format='eps')
 
-	plt.close()
+	#plt.close()
+'''
 
 
 #########################################################################################
@@ -289,7 +304,9 @@ def plot_EbE_R2ij_v2(ebs, radiiForEvents, radiiForEventsNODF, direction, ymin, y
 	ax = fig.add_subplot(121)
 	plt.axhline(0.0, color='black', linewidth=1.5)
 	
-	direc = 'RESULTS_etaBYs_%(ebsstring)s/' % {"ebsstring": ebs}
+	#direc = 'RESULTS_etaBYs_%(ebsstring)s/' % {"ebsstring": ebs}
+	#direc = 'SVWR_results/'
+	direc = workingDirectory
 	
 	R2ijKT00n = radiiForEvents[:,0] / mean(radiiForEvents[:,0])
 	R2ijKT02n = radiiForEvents[:,20] / mean(radiiForEvents[:,20])
@@ -327,12 +344,12 @@ def plot_EbE_R2ij_v2(ebs, radiiForEvents, radiiForEventsNODF, direction, ymin, y
 	nKT08n, binsKT08n, patchesKT08n = ax.hist(R2ijKT08n, plotbins, histtype='step', normed=1)
 	nKT10n, binsKT10n, patchesKT10n = ax.hist(R2ijKT10n, plotbins, histtype='step', normed=1)
 
-	l00, = ax.plot(delete(binsKT00n,-1) + 0.5*dKT, nKT00n, '-o', label='$K_T = 0.0$ GeV')
-	l02, = ax.plot(delete(binsKT02n,-1) + 0.5*dKT, nKT02n, '-o', label='$K_T = 0.2$ GeV')
-	l04, = ax.plot(delete(binsKT04n,-1) + 0.5*dKT, nKT04n, '-o', label='$K_T = 0.4$ GeV')
-	l06, = ax.plot(delete(binsKT06n,-1) + 0.5*dKT, nKT06n, '-o', label='$K_T = 0.6$ GeV')
-	l08, = ax.plot(delete(binsKT08n,-1) + 0.5*dKT, nKT08n, '-o', label='$K_T = 0.8$ GeV')
-	l10, = ax.plot(delete(binsKT10n,-1) + 0.5*dKT, nKT10n, '-o', label='$K_T = 1.0$ GeV')
+	l00, = ax.plot(delete(binsKT00n,-1) + 0.5*dKT, nKT00n, '-o', markersize=7, label='$K_T = 0.0$ GeV')
+	l02, = ax.plot(delete(binsKT02n,-1) + 0.5*dKT, nKT02n, '-s', markersize=7, label='$K_T = 0.2$ GeV')
+	l04, = ax.plot(delete(binsKT04n,-1) + 0.5*dKT, nKT04n, '-p', markersize=10, label='$K_T = 0.4$ GeV')
+	l06, = ax.plot(delete(binsKT06n,-1) + 0.5*dKT, nKT06n, '-D', markersize=7, label='$K_T = 0.6$ GeV')
+	l08, = ax.plot(delete(binsKT08n,-1) + 0.5*dKT, nKT08n, '-*', markersize=10, label='$K_T = 0.8$ GeV')
+	l10, = ax.plot(delete(binsKT10n,-1) + 0.5*dKT, nKT10n, '-^', markersize=8, label='$K_T = 1.0$ GeV')
 
 	#adds some nice bars in the background of the histogram to give plot some structure
 	dummy1, dummy2, dummy3 = ax.hist(R2ijKT00n, plotbins, histtype='bar', normed=1, edgecolor='black', color='white', alpha=0.5)
@@ -353,7 +370,9 @@ def plot_EbE_R2ij_v2(ebs, radiiForEvents, radiiForEventsNODF, direction, ymin, y
 	ax2 = fig.add_subplot(122)
 	plt.axhline(0.0, color='black', linewidth=1.5)
 	
-	direc = 'RESULTS_etaBYs_%(ebsstring)s/' % {"ebsstring": ebs}
+	#direc = 'RESULTS_etaBYs_%(ebsstring)s/' % {"ebsstring": ebs}
+	#direc = 'SVWR_results/'
+	direc = workingDirectory
 	
 	R2ijKT00n = radiiForEventsNODF[:,0] / mean(radiiForEventsNODF[:,0])
 	R2ijKT02n = radiiForEventsNODF[:,20] / mean(radiiForEventsNODF[:,20])
@@ -391,12 +410,12 @@ def plot_EbE_R2ij_v2(ebs, radiiForEvents, radiiForEventsNODF, direction, ymin, y
 	nKT08n, binsKT08n, patchesKT08n = ax2.hist(R2ijKT08n, plotbins, histtype='step', normed=1)
 	nKT10n, binsKT10n, patchesKT10n = ax2.hist(R2ijKT10n, plotbins, histtype='step', normed=1)
 
-	ax2.plot(delete(binsKT00n,-1) + 0.5*dKT, nKT00n, '-o', label='$K_T = 0.01$ GeV')
-	ax2.plot(delete(binsKT02n,-1) + 0.5*dKT, nKT02n, '-o', label='$K_T = 0.21$ GeV')
-	ax2.plot(delete(binsKT04n,-1) + 0.5*dKT, nKT04n, '-o', label='$K_T = 0.41$ GeV')
-	ax2.plot(delete(binsKT06n,-1) + 0.5*dKT, nKT06n, '-o', label='$K_T = 0.61$ GeV')
-	ax2.plot(delete(binsKT08n,-1) + 0.5*dKT, nKT08n, '-o', label='$K_T = 0.81$ GeV')
-	ax2.plot(delete(binsKT10n,-1) + 0.5*dKT, nKT10n, '-o', label='$K_T = 1.01$ GeV')
+	ax2.plot(delete(binsKT00n,-1) + 0.5*dKT, nKT00n, '-o', markersize=7, label='$K_T = 0.01$ GeV')
+	ax2.plot(delete(binsKT02n,-1) + 0.5*dKT, nKT02n, '-s', markersize=7, label='$K_T = 0.21$ GeV')
+	ax2.plot(delete(binsKT04n,-1) + 0.5*dKT, nKT04n, '-p', markersize=10, label='$K_T = 0.41$ GeV')
+	ax2.plot(delete(binsKT06n,-1) + 0.5*dKT, nKT06n, '-D', markersize=7, label='$K_T = 0.61$ GeV')
+	ax2.plot(delete(binsKT08n,-1) + 0.5*dKT, nKT08n, '-*', markersize=10, label='$K_T = 0.81$ GeV')
+	ax2.plot(delete(binsKT10n,-1) + 0.5*dKT, nKT10n, '-^', markersize=8, label='$K_T = 1.01$ GeV')
 
 	#adds some nice bars in the background of the histogram to give plot some structure
 	dummy1, dummy2, dummy3 = ax2.hist(R2ijKT00n, plotbins, histtype='bar', normed=1, edgecolor='black', color='white', alpha=0.5)
@@ -416,14 +435,14 @@ def plot_EbE_R2ij_v2(ebs, radiiForEvents, radiiForEventsNODF, direction, ymin, y
 	handles = [l00, l02, l04, l06, l08, l10]
 	labels = [r'$K_T = 0.01$ GeV', r'$K_T = 0.21$ GeV', r'$K_T = 0.41$ GeV', r'$K_T = 0.61$ GeV', r'$K_T = 0.81$ GeV', r'$K_T = 1.01$ GeV']
 	fig.legend(handles, labels, bbox_to_anchor=(0.5,0.9))
-	#plt.show()
+	#plt.show(block=False)
 	#plt.tight_layout()
 
-	filename = '/home/plumberg.1/EBE-results/database/EbE%(ms)s_R2%(ij)s%(n)i_vs_KT_1000evs_both.pdf' % {"ij": direction, "ms": methodStem, "n": chosenOrder}
+	filename = './EbE%(ms)s_R2%(ij)s%(n)i_vs_KT_1000evs_both.pdf' % {"ij": direction, "ms": methodStem, "n": chosenOrder}
 	print 'Saving to', filename
 	plt.savefig(filename, format='pdf', bbox_inches='tight')
 
-	plt.close()
+	#plt.close()
 
 
 
@@ -452,6 +471,7 @@ if __name__ == "__main__":
 		plot_EbE_R2ij_v2(etaBYs, data[:,:,chosenOrder,2], dataNODF[:,:,chosenOrder,2], 's', -0.25, 11.5, (14,6))
 		plot_EbE_R2ij_v2(etaBYs, data[:,:,chosenOrder,3], dataNODF[:,:,chosenOrder,3], 'o', -0.25, 12.5, (14,6))
 		plot_EbE_R2ij_v2(etaBYs, data[:,:,chosenOrder,4], dataNODF[:,:,chosenOrder,4], 'l', -0.25, 11.5, (14,6))
+	#pause()
 
 
 

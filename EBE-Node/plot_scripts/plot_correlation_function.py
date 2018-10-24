@@ -432,10 +432,11 @@ def extraPlot(ipT, ipphi):
 	
 	plotdatax, plotdatay, lims = generate_plotdata(loadedData[ipT,ipphi], 0)
 	axs.plot(plotdatax, plotdatay, linestyle='-', color='black', linewidth=1.5, label=r'$C_{\mathrm{avg}}$')
-	axs.plot(plotdatax, eval_corr_fit_func(plotdatax,fitSmallQlambda,fitSmallQR), linestyle='-', color='red', linewidth=1.5, label=r'$|q_x| \leq$ 20 MeV')
-	axs.plot(plotdatax, eval_corr_fit_func(plotdatax,fitLargeQlambda,fitLargeQR), linestyle='-', color='green', linewidth=1.5, label=r'$|q_x| \geq$ 20 MeV')
-	axs.plot(plotdatax, eval_corr_fit_func(plotdatax,fitAllQlambda,fitAllQR), linestyle='-', color='blue', linewidth=1.5, label=r'All $q_x$')
+	axs.plot(plotdatax, eval_corr_fit_func(plotdatax,fitSmallQlambda,fitSmallQR), linestyle='--', color='red', linewidth=1.5, label=r'$|q_x| \leq$ 20 MeV')
+	axs.plot(plotdatax, eval_corr_fit_func(plotdatax,fitLargeQlambda,fitLargeQR), linestyle='-.', color='green', linewidth=2.0, label=r'$|q_x| \geq$ 20 MeV')
+	axs.plot(plotdatax, eval_corr_fit_func(plotdatax,fitAllQlambda,fitAllQR), linestyle=':', color='blue', linewidth=2.5, label=r'All $q_x$')
 	axs.set_xlabel(r'$q_%(opt1)s$ (GeV)' % {'opt1': qAxesLC[0]}, {'fontsize': plotfontsize + 5})
+	axs.set_ylabel(r'$C(q_x; \,q_y=\,q_z=\,0)$', {'fontsize': plotfontsize + 5})
 	axs.axis(lims)
 	ptpphiString=r'$K_T = %(pt)0.2f$ GeV, $\Phi_K = %(pphi)0.1f$' % {'pt': fitData[ipT, ipphi, 0], 'pphi': fitData[ipT, ipphi, 1]}
 		
@@ -459,11 +460,11 @@ def generate_all_plots():
 	######generate_R2ij_plot(0)
 	######generate_R2ij_plot(5)
 	######generate_R2ij_plot(8)
-	compare_thermal_and_resonance_CF(0, 0)
-	compare_thermal_and_resonance_CF(5, 0)
-	compare_thermal_and_resonance_CF(8, 0)
-	#extraPlot(0, 0)
-	pause()
+	#compare_thermal_and_resonance_CF(0, 0)
+	#compare_thermal_and_resonance_CF(5, 0)
+	#compare_thermal_and_resonance_CF(8, 0)
+	extraPlot(0, 0)
+	#pause()
 
 
 if __name__ == "__main__":
