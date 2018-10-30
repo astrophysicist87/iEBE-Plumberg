@@ -8,7 +8,7 @@ AllArgs="${@:3}"
 
 if [ "$RunSVWR" = true ]
 then
-	./svwr.e $AllArgs
+	valgrind --error-limit=no --track-origins=yes --leak-check=full ./svwr.e $AllArgs
 fi
 
 if [ "$RunCFWR" = true ]

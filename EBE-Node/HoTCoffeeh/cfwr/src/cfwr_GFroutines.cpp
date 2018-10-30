@@ -188,8 +188,12 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 					Ct_at_q[iqtidx] = tmpCt;
 					Cct_at_q[iqtidx] = tmpCct;
 					Cr_at_q[iqtidx] = tmpCr;
-					cerr << "Check CF terms: " << qt_pts[iqtidx] << "   " << ipt << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << iqz << "   "
-							<< tmpC << "   " << tmpCt << "   " << tmpCct << "   " << tmpCr << endl;
+					cerr << "Check CF terms: "
+							<< qt_pts[iqtidx] << "   "
+							<< ipt << "   " << ipphi << "   "
+							<< iqx << "   " << iqy << "   " << iqz << "   "
+							<< tmpC << "   " << tmpCt << "   "
+							<< tmpCct << "   " << tmpCr << endl;
 				}
 			}
 		}
@@ -236,9 +240,9 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 			*resonanceresult = cfr.eval(point);
 
 			
-			//if (*thermalresult < 0.0 || *resonanceresult < 0.0 )
-			//{
-				cerr << "WARNING(OKAY): " << qt_interp << "   " << ipt << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << iqz << "   "
+			if (*thermalresult < 0.0 || *resonanceresult < 0.0 )
+			{
+				cerr << "WARNING: " << qt_interp << "   " << ipt << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << iqz << "   "
 						<< *totalresult << "   " << *thermalresult << "   " << *CTresult << "   " << *resonanceresult << endl;
 				for (int iqtidx = iqt_i; iqtidx <= iqt_f; ++iqtidx)
 				{
@@ -247,17 +251,19 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 					Ct_at_q[iqtidx-shift] = tmpCt;
 					Cct_at_q[iqtidx-shift] = tmpCct;
 					Cr_at_q[iqtidx-shift] = tmpCr;
-					cerr << "Check CF terms: " << qt_pts[iqtidx] << "   " << ipt << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << iqz << "   "
-							<< tmpC << "   " << tmpCt << "   " << tmpCct << "   " << tmpCr << endl;
+					cerr << "Check CF terms: "
+							<< qt_pts[iqtidx] << "   "
+							<< ipt << "   " << ipphi << "   "
+							<< iqx << "   " << iqy << "   " << iqz << "   "
+							<< tmpC << "   " << tmpCt << "   "
+							<< tmpCct << "   " << tmpCr << endl;
 				}
-			//}
-			
+			}			
 		}
 		else	//if not using Chebyshev nodes in qt-direction, just use straight-up linear(0) or cubic(1) interpolation
 		{
 			double C_at_q[qtnpts], Ct_at_q[qtnpts], Cct_at_q[qtnpts], Cr_at_q[qtnpts];	//C - 1
 			double tmpC = 0.0, tmpCt = 0.0, tmpCct = 0.0, tmpCr = 0.0;
-debugger(__LINE__, __FILE__);
 
 			// set CF values along qt-slice for interpolation
 			for (int iqtidx = 0; iqtidx < qtnpts; ++iqtidx)
@@ -269,7 +275,7 @@ debugger(__LINE__, __FILE__);
 				Cct_at_q[iqtidx] = tmpCct;
 				Cr_at_q[iqtidx] = tmpCr;
 			}
-debugger(__LINE__, __FILE__);
+
 			*totalresult = interpolate1D(qt_pts, C_at_q, qt_interp, qtnpts, 1, false);
 			*thermalresult = interpolate1D(qt_pts, Ct_at_q, qt_interp, qtnpts, 1, false);
 			*CTresult = interpolate1D(qt_pts, Cct_at_q, qt_interp, qtnpts, 1, false);
@@ -824,10 +830,16 @@ void CorrelationFunction::Set_full_target_moments(int iqt, int iqz)
 		double loc_qz = qz_pts[iqz];
 		double loc_qt = qt_pts[iqt];
 		current_pY_shift = 0.5 * log(abs((loc_qt+loc_qz + 1.e-100)/(loc_qt-loc_qz + 1.e-100)));
-		if (abs(current_pY_shift) > SP_Del_pY_max)	//if resonance decays basically contribute nothing at this (qt, qz)-pair
+
+		//if resonance decays basically contribute nothing at this (qt, qz)-pair
+		if (abs(current_pY_shift) > SP_Del_pY_max)
 		{
-			cout << "Set_full_target_moments(" << loc_qt << ", " << loc_qz << "): y_{sym} = " << current_pY_shift << " > SP_Del_pY_max = " << SP_Del_pY_max <<
-					" ==>> No contributions to full target moments." << endl;
+			cout << "Set_full_target_moments("
+					<< loc_qt << ", " << loc_qz << "): y_{sym} = "
+					<< current_pY_shift << " > SP_Del_pY_max = "
+					<< SP_Del_pY_max <<
+					" ==>> No contributions to full target moments."
+					<< endl;
 			return;	//don't do anything
 		}
 
@@ -850,11 +862,14 @@ void CorrelationFunction::Set_full_target_moments(int iqt, int iqz)
 				chebyshev_a_cfs[ipY] = 0.0;
 				for (int kpY = 0; kpY < n_pY_pts; ++kpY)
 				{
-					chebyshev_a_cfs[ipY] += exp(abs(SP_Del_pY[kpY])) * chebTcfs[ipY * n_pY_pts + kpY] * current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)];
+					chebyshev_a_cfs[ipY]
+						+= exp(abs(SP_Del_pY[kpY]))
+							* chebTcfs[ipY * n_pY_pts + kpY]
+							* current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)];
 
-					if (ipY==0 && ipT==0 && ipphi==0) cout << "CHECKinterp: " << iqz << "   " << itrig << "   " << SP_Del_pY[kpY]
-						<< "   " << thermal_target_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)]
-						<< "   " << current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)] << endl;
+					//if (ipY==0 && ipT==0 && ipphi==0) cout << "CHECKinterp: " << iqz << "   " << itrig << "   " << SP_Del_pY[kpY]
+					//	<< "   " << thermal_target_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)]
+					//	<< "   " << current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,kpY,iqx,iqy,itrig)] << endl;
 				}
 			}
 
@@ -863,11 +878,12 @@ void CorrelationFunction::Set_full_target_moments(int iqt, int iqz)
 			double current_trig_parity_factor = ( ( tmp_Del_pY < 0.0 )
 												&& ( abs(loc_qt) < abs(loc_qz) )
 												) ? trig_parity_factors[itrig] : 1.0;
-			full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)] += exp(-abs(tmp_Del_pY)) * current_trig_parity_factor
-																						* gsl_cheb_eval (cs_accel_expEdNd3p, abs(tmp_Del_pY));
-			if (ipT==0 && ipphi==0) cout << "CHECKinterp2: " << iqz << "   " << itrig << "   "
-								<< exp(-abs(tmp_Del_pY)) * current_trig_parity_factor
-										* gsl_cheb_eval (cs_accel_expEdNd3p, abs(tmp_Del_pY)) << endl;
+			full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)]
+								+= exp(-abs(tmp_Del_pY)) * current_trig_parity_factor
+									* gsl_cheb_eval (cs_accel_expEdNd3p, abs(tmp_Del_pY));
+			//if (ipT==0 && ipphi==0) cout << "CHECKinterp2: " << iqz << "   " << itrig << "   "
+			//					<< exp(-abs(tmp_Del_pY)) * current_trig_parity_factor
+			///							* gsl_cheb_eval (cs_accel_expEdNd3p, abs(tmp_Del_pY)) << endl;
 		}
 
 		delete [] chebyshev_a_cfs;
@@ -880,7 +896,8 @@ void CorrelationFunction::Set_full_target_moments(int iqt, int iqz)
 		for (int iqx = 0; iqx < qxnpts; ++iqx)
 		for (int iqy = 0; iqy < qynpts; ++iqy)
 		for (int itrig = 0; itrig < ntrig; ++itrig)
-			full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)] += current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY0,iqx,iqy,itrig)];
+			full_target_Yeq0_moments[indexer(ipT, ipphi, iqt, iqx, iqy, iqz, itrig)]
+				+= current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY0,iqx,iqy,itrig)];
 	}
 
 	return;

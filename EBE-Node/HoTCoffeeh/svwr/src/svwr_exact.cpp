@@ -77,6 +77,119 @@ double SourceVariances::Cal_wfi_dN_dypTdpTdphi_function(int local_pid, double pT
 	return (result);
 }
 
+
+void SourceVariances::Output_emission_density(int local_pid)
+{
+	ostringstream filename_stream_emissiondensity;
+	filename_stream_emissiondensity << path << "/emission_density" << no_df_stem << ".dat";
+	ofstream output(filename_stream_emissiondensity.str().c_str());
+
+	for(int isurf=0; isurf<FO_length; ++isurf)
+	{
+		FO_surf * surf = &FOsurf_ptr[isurf];
+		double tau = surf->tau;
+		double x = surf->xpt;
+		double y = surf->ypt;
+		output << tau << "   " << x << "   " << y << "   " << Cal_emission_density_function(local_pid, isurf) << endl;
+	}
+	
+	output.close();
+
+	return;
+
+}
+
+double SourceVariances::Cal_emission_density_function(int local_pid, int isurf)
+{
+	// set particle information
+	double sign = all_particles[local_pid].sign;
+	double degen = all_particles[local_pid].gspin;
+	double localmass = all_particles[local_pid].mass;
+	double mu = all_particles[local_pid].mu;
+
+	// set some freeze-out surface information that's constant the whole time
+	double prefactor = 1.0*degen/(8.0*M_PI*M_PI*M_PI)/(hbarC*hbarC*hbarC);
+	double Tdec = (&FOsurf_ptr[0])->Tdec;
+	double Pdec = (&FOsurf_ptr[0])->Pdec;
+	double Edec = (&FOsurf_ptr[0])->Edec;
+	double one_by_Tdec = 1./Tdec;
+	double deltaf_prefactor = 0.;
+	if (INCLUDE_DELTA_F)
+		deltaf_prefactor = 1./(2.0*Tdec*Tdec*(Edec+Pdec));
+
+	// set the rapidity-integration symmetry factor
+	double eta_odd_factor = 0.0, eta_even_factor = 2.0;
+
+	double dN_dxdytaudtau = 0.0;
+
+	FO_surf*surf = &FOsurf_ptr[isurf];
+
+	double tau = surf->tau;
+	double r = surf->r;
+	double sin_temp_phi = surf->sin_phi;
+	double cos_temp_phi = surf->cos_phi;
+
+	double vx = surf->vx;
+	double vy = surf->vy;
+	double gammaT = surf->gammaT;
+
+	double da0 = surf->da0;
+	double da1 = surf->da1;
+	double da2 = surf->da2;
+
+	double pi00 = surf->pi00;
+	double pi01 = surf->pi01;
+	double pi02 = surf->pi02;
+	double pi11 = surf->pi11;
+	double pi12 = surf->pi12;
+	double pi22 = surf->pi22;
+	double pi33 = surf->pi33;
+
+	for(int ipt = 0; ipt < n_pT_pts; ++ipt)
+	for(int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+	{
+		double pT = SP_pT[ipt];
+		double pphi = SP_pphi[ipphi];
+		double sin_pphi = sin(pphi);
+		double cos_pphi = cos(pphi);
+		double px = pT*cos_pphi;
+		double py = pT*sin_pphi;
+
+		for(int ieta=0; ieta < eta_s_npts; ++ieta)
+		{
+			double p0 = sqrt(pT*pT+localmass*localmass)*cosh(SP_p_y - eta_s[ieta]);
+			double pz = sqrt(pT*pT+localmass*localmass)*sinh(SP_p_y - eta_s[ieta]);
+
+			//now get distribution function, emission function, etc.
+			double f0 = 1./(exp( one_by_Tdec*(gammaT*(p0*1. - px*vx - py*vy) - mu) )+sign);	//thermal equilibrium distributions
+
+			//viscous corrections
+			double deltaf = 0.;
+			//if (INCLUDE_DELTA_F)
+				deltaf = deltaf_prefactor * (1. - sign*f0)
+							* (p0*p0*pi00 - 2.0*p0*px*pi01 - 2.0*p0*py*pi02 + px*px*pi11 + 2.0*px*py*pi12 + py*py*pi22 + pz*pz*pi33);
+
+			//p^mu d^3sigma_mu factor: The plus sign is due to the fact that the DA# variables are for the covariant surface integration
+			double S_x_p = prefactor*(p0*da0 + px*da1 + py*da2)*f0*(1.+deltaf);
+
+			//ignore points where delta f is large or emission function goes negative from pdsigma
+			if ((1. + deltaf < 0.0) || (flagneg == 1 && S_x_p < tol))
+				S_x_p = 0.0;
+
+			double S_x_withweight = S_x_p*tau*eta_s_weight[ieta];
+
+			double weight_factor = pT * SP_pT_weight[ipt] * SP_pphi_weight[ipphi] * eta_even_factor;
+
+			dN_dxdytaudtau += weight_factor * S_x_withweight;
+		}
+	}
+
+	return dN_dxdytaudtau;
+}
+
+
+
+
 double SourceVariances::Cal_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi)
 {
 	// set particle information

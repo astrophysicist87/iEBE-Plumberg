@@ -241,9 +241,7 @@ HoTCoffeehControl = {
     'operationDir'                      :   'results',
     'executables'                       :   ('cfwr.e', 'svwr.e'),
     'entryShell'                        :   'HoTCoffeeh.sh',
-	'saveResultGlobs'					:	['all*dat', 'total*dat', 'correlfunct3D*.dat', 	\
-												'*spectra.dat', 'HBT*dat', 'resonance*h5', 	\
-												'target*h5', 'resonance_fraction.dat', 'chosen_resonances.dat'],
+	'saveResultGlobs'					:	['*.dat', 'Processing_record.txt'],
 }
 HoTCoffeehParameters = {
     'grouping_particles'                :   0,
@@ -273,13 +271,13 @@ HoTCoffeehParameters = {
     'fit_with_projected_cfvals'         :   1,
     'flesh_out_cf'                      :   1,
 	'calculate_CF_mode'                 :   0,
-    'qtnpts'                            :   13,
+    'qtnpts'                            :   51,
     'qxnpts'                            :   7,
     'qynpts'                            :   7,
     'qznpts'                            :   7,
-    'delta_qx'                          :   0.0125,
-    'delta_qy'                          :   0.0125,
-    'delta_qz'                          :   0.015,
+    'delta_qx'                          :   0.025,
+    'delta_qy'                          :   0.025,
+    'delta_qz'                          :   0.0125,
 }
 
 def readInParameters():

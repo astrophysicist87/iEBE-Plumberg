@@ -273,15 +273,15 @@ SourceVariances::SourceVariances(ParameterReader* paraRdr_in, particle_info* par
 	cos_SP_pphi = new double [n_pphi_pts];
 	SP_p0 = new double* [n_pT_pts];
 	SP_pz = new double* [n_pT_pts];
-	double * dummywts3 = new double [n_pT_pts];
-	double * dummywts4 = new double [n_pphi_pts];
+	SP_pT_weight = new double [n_pT_pts];
+	SP_pphi_weight = new double [n_pphi_pts];
 	for(int ipt=0; ipt<n_pT_pts; ipt++)
 	{
 		SP_p0[ipt] = new double [eta_s_npts];
 		SP_pz[ipt] = new double [eta_s_npts];
 	}
-	gauss_quadrature(n_pT_pts, 5, 0.0, 0.0, 0.0, 13.0, SP_pT, dummywts3);
-	gauss_quadrature(n_pphi_pts, 1, 0.0, 0.0, SP_pphi_min, SP_pphi_max, SP_pphi, dummywts4);
+	gauss_quadrature(n_pT_pts, 5, 0.0, 0.0, 0.0, 13.0, SP_pT, SP_pT_weight);
+	gauss_quadrature(n_pphi_pts, 1, 0.0, 0.0, SP_pphi_min, SP_pphi_max, SP_pphi, SP_pphi_weight);
 
 	for(int ipphi=0; ipphi<n_pphi_pts; ipphi++)
 	{

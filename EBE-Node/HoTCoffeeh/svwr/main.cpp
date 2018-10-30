@@ -198,7 +198,9 @@ int main(int argc, char *argv[])
 
 	// Do source variances calculations
 	output << "Calculating HBT radii via source variances method..." << endl;
-	Source_function.Analyze_sourcefunction();		//with previous function, this argument is redundant
+	Source_function.Analyze_sourcefunction();
+
+	Source_function.Output_emission_density(particle_idx);
 
 	// Output most interesting results
 	Source_function.Output_total_target_dN_dypTdpTdphi();

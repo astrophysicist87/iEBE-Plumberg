@@ -75,7 +75,6 @@ void CorrelationFunction::Initialize_HDF_target_full_array()
 /////////////////////////////////////////////
 int CorrelationFunction::Administrate_resonance_HDF_array(int administration_mode)
 {
-debugger(__LINE__, __FILE__);
 	// administration_mode:
 	//	0 - Initialize
 	//	1 - Open (already initialized)
@@ -185,7 +184,7 @@ debugger(__LINE__, __FILE__);
 			}
 			default:
 			{
-				cerr << "administration_mode = " << administration_mode << " not supported!  Exiting..." << endl;
+				cerr << __FUNCTION__ << "(): " << "administration_mode = " << administration_mode << " not supported!  Exiting..." << endl;
 				exit(1);
 				break;
 			}
@@ -195,29 +194,25 @@ debugger(__LINE__, __FILE__);
 	catch(FileIException error)
 	{
 		error.printError();
-		cerr << "FileIException error!" << endl;
-debugger(__LINE__, __FILE__);
+		cerr << __FUNCTION__ << "(): " << "FileIException error!" << endl;
 		return_flag = -1;
 	}
 
 	catch(H5::DataSetIException error)
 	{
 		error.printError();
-		cerr << "DataSetIException error!" << endl;
-debugger(__LINE__, __FILE__);
+		cerr << __FUNCTION__ << "(): " << "DataSetIException error!" << endl;
 		return_flag = -2;
 	}
 
 	catch(H5::DataSpaceIException error)
 	{
 		error.printError();
-		cerr << "DataSpaceIException error!" << endl;
-debugger(__LINE__, __FILE__);
+		cerr << __FUNCTION__ << "(): " << "DataSpaceIException error!" << endl;
 		return_flag = -3;
 	}
 
 	delete [] resonance_chunk;
-debugger(__LINE__, __FILE__);
 
 	return (return_flag);
 }
@@ -314,7 +309,7 @@ int CorrelationFunction::Administrate_target_thermal_HDF_array(int administratio
 			}
 			default:
 			{
-				cerr << "administration_mode = " << administration_mode << " not supported!  Exiting..." << endl;
+				cerr << __FUNCTION__ << "(): " << "administration_mode = " << administration_mode << " not supported!  Exiting..." << endl;
 				exit(1);
 				break;
 			}
@@ -324,24 +319,21 @@ int CorrelationFunction::Administrate_target_thermal_HDF_array(int administratio
 	catch(FileIException error)
 	{
 		error.printError();
-		cerr << "FileIException error!" << endl;
-debugger(__LINE__, __FILE__);
+		cerr << __FUNCTION__ << "(): " << "FileIException error!" << endl;
 		return_flag = -1;
 	}
 
 	catch(H5::DataSetIException error)
 	{
 		error.printError();
-		cerr << "DataSetIException error!" << endl;
-debugger(__LINE__, __FILE__);
+		cerr << __FUNCTION__ << "(): " << "DataSetIException error!" << endl;
 		return_flag = -2;
 	}
 
 	catch(H5::DataSpaceIException error)
 	{
 		error.printError();
-		cerr << "DataSpaceIException error!" << endl;
-debugger(__LINE__, __FILE__);
+		cerr << __FUNCTION__ << "(): " << "DataSpaceIException error!" << endl;
 		return_flag = -3;
 	}
 
@@ -433,7 +425,7 @@ int CorrelationFunction::Administrate_target_full_HDF_array(int administration_m
 			}
 			default:
 			{
-				cerr << "administration_mode = " << administration_mode << " not supported!  Exiting..." << endl;
+				cerr << __FUNCTION__ << "(): " << "administration_mode = " << administration_mode << " not supported!  Exiting..." << endl;
 				exit(1);
 				break;
 			}
@@ -443,21 +435,21 @@ int CorrelationFunction::Administrate_target_full_HDF_array(int administration_m
 	catch(FileIException error)
 	{
 		error.printError();
-		cerr << "FileIException error!" << endl;
+		cerr << __FUNCTION__ << "(): " << "FileIException error!" << endl;
 		return_flag = -1;
 	}
 
 	catch(H5::DataSetIException error)
 	{
 		error.printError();
-		cerr << "DataSetIException error!" << endl;
+		cerr << __FUNCTION__ << "(): " << "DataSetIException error!" << endl;
 		return_flag = -2;
 	}
 
 	catch(H5::DataSpaceIException error)
 	{
 		error.printError();
-		cerr << "DataSpaceIException error!" << endl;
+		cerr << __FUNCTION__ << "(): " << "DataSpaceIException error!" << endl;
 		return_flag = -3;
 	}
 
@@ -507,7 +499,7 @@ int CorrelationFunction::Access_resonance_in_HDF_array(int local_pid, int iqt, i
 			}
 			default:
 			{
-				cerr << "access_mode = " << access_mode << " not supported!  Exiting..." << endl;
+				cerr << __FUNCTION__ << "(): " << "access_mode = " << access_mode << " not supported!  Exiting..." << endl;
 				exit(1);
 				break;
 			}
@@ -517,24 +509,21 @@ int CorrelationFunction::Access_resonance_in_HDF_array(int local_pid, int iqt, i
 	catch(FileIException error)
 	{
 		error.printError();
-		cerr << "FileIException error!" << endl;
-debugger(__LINE__, __FILE__);
+		cerr << __FUNCTION__ << "(): " << "FileIException error!" << endl;
 		return_flag = -1;
 	}
 
 	catch(H5::DataSetIException error)
 	{
 		error.printError();
-		cerr << "DataSetIException error!" << endl;
-debugger(__LINE__, __FILE__);
+		cerr << __FUNCTION__ << "(): " << "DataSetIException error!" << endl;
 		return_flag = -2;
 	}
 
 	catch(H5::DataSpaceIException error)
 	{
 		error.printError();
-		cerr << "DataSpaceIException error!" << endl;
-debugger(__LINE__, __FILE__);
+		cerr << __FUNCTION__ << "(): " << "DataSpaceIException error!" << endl;
 		return_flag = -3;
 	}
 
@@ -559,8 +548,8 @@ int CorrelationFunction::Access_target_thermal_in_HDF_array(int iqt, int iqz, in
 		hsize_t offset[RANK2D] = {HDF_indexer(0, iqt, iqz), 0};
 		hsize_t count[RANK2D] = {1, chunk_size};				// == chunk_dims
 		tta_dataspace->selectHyperslab(H5S_SELECT_SET, count, offset);
-		if (verbose) cout << "In Access_target_thermal_in_HDF_array(...): called with/using arguments " << iqt << "   " << iqz << "   " << access_mode << "   " << 0 << "   "
-							<< chunk_size << "   " << n_pT_pts * n_pphi_pts * n_pY_pts * qxnpts * qynpts * ntrig << "   " << HDF_indexer(0, iqt, iqz) << endl;
+		//if (verbose) cout << "In Access_target_thermal_in_HDF_array(...): called with/using arguments " << iqt << "   " << iqz << "   " << access_mode << "   " << 0 << "   "
+		//					<< chunk_size << "   " << n_pT_pts * n_pphi_pts * n_pY_pts * qxnpts * qynpts * ntrig << "   " << HDF_indexer(0, iqt, iqz) << endl;
 
 		switch(access_mode)
 		{
@@ -577,7 +566,7 @@ int CorrelationFunction::Access_target_thermal_in_HDF_array(int iqt, int iqz, in
 			}
 			default:
 			{
-				cerr << "access_mode = " << access_mode << " not supported!  Exiting..." << endl;
+				cerr << __FUNCTION__ << "(): " << "access_mode = " << access_mode << " not supported!  Exiting..." << endl;
 				exit(1);
 				break;
 			}
@@ -588,24 +577,21 @@ int CorrelationFunction::Access_target_thermal_in_HDF_array(int iqt, int iqz, in
 	catch(FileIException error)
 	{
 		error.printError();
-		cerr << "FileIException error!" << endl;
-debugger(__LINE__, __FILE__);
+		cerr << __FUNCTION__ << "(): " << "FileIException error!" << endl;
 		return_flag = -1;
 	}
 
 	catch(H5::DataSetIException error)
 	{
 		error.printError();
-		cerr << "DataSetIException error!" << endl;
-debugger(__LINE__, __FILE__);
+		cerr << __FUNCTION__ << "(): " << "DataSetIException error!" << endl;
 		return_flag = -2;
 	}
 
 	catch(H5::DataSpaceIException error)
 	{
 		error.printError();
-		cerr << "DataSpaceIException error!" << endl;
-debugger(__LINE__, __FILE__);
+		cerr << __FUNCTION__ << "(): " << "DataSpaceIException error!" << endl;
 		return_flag = -3;
 	}
 
@@ -630,11 +616,11 @@ int CorrelationFunction::Access_target_full_in_HDF_array(int iqt, int iqz, int a
 		hsize_t offset[RANK2D] = {HDF_indexer(0, iqt, iqz), 0};
 		hsize_t count[RANK2D] = {1, chunk_size};				// == chunk_dims
 		tfa_dataspace->selectHyperslab(H5S_SELECT_SET, count, offset);
-		if (verbose)
-			cout << "In Access_full_thermal_in_HDF_array(...): called with/using arguments "
-					<< iqt << "   " << iqz << "   " << access_mode << "   " << 0 << "   "
-					<< chunk_size << "   " << n_pT_pts * n_pphi_pts * n_pY_pts * qxnpts * qynpts * ntrig
-					<< "   " << HDF_indexer(0, iqt, iqz) << endl;
+		//if (verbose)
+		//	cout << "In Access_full_thermal_in_HDF_array(...): called with/using arguments "
+		//			<< iqt << "   " << iqz << "   " << access_mode << "   " << 0 << "   "
+		//			<< chunk_size << "   " << n_pT_pts * n_pphi_pts * n_pY_pts * qxnpts * qynpts * ntrig
+		//			<< "   " << HDF_indexer(0, iqt, iqz) << endl;
 
 		switch(access_mode)
 		{
@@ -650,7 +636,7 @@ int CorrelationFunction::Access_target_full_in_HDF_array(int iqt, int iqz, int a
 			}
 			default:
 			{
-				cerr << "access_mode = " << access_mode << " not supported!  Exiting..." << endl;
+				cerr << __FUNCTION__ << "(): " << "access_mode = " << access_mode << " not supported!  Exiting..." << endl;
 				exit(1);
 				break;
 			}
@@ -661,21 +647,21 @@ int CorrelationFunction::Access_target_full_in_HDF_array(int iqt, int iqz, int a
 	catch(FileIException error)
 	{
 		error.printError();
-		cerr << "FileIException error!" << endl;
+		cerr << __FUNCTION__ << "(): " << "FileIException error!" << endl;
 		return_flag = -1;
 	}
 
 	catch(H5::DataSetIException error)
 	{
 		error.printError();
-		cerr << "DataSetIException error!" << endl;
+		cerr << __FUNCTION__ << "(): " << "DataSetIException error!" << endl;
 		return_flag = -2;
 	}
 
 	catch(H5::DataSpaceIException error)
 	{
 		error.printError();
-		cerr << "DataSpaceIException error!" << endl;
+		cerr << __FUNCTION__ << "(): " << "DataSpaceIException error!" << endl;
 		return_flag = -3;
 	}
 
@@ -726,24 +712,21 @@ int CorrelationFunction::Copy_chunk(int current_resonance_index, int reso_idx_to
 	catch(FileIException error)
 	{
 		error.printError();
-		cerr << "FileIException error!" << endl;
-debugger(__LINE__, __FILE__);
+		cerr << __FUNCTION__ << "(): " << "FileIException error!" << endl;
 		return_flag = -1;
 	}
 
 	catch(H5::DataSetIException error)
 	{
 		error.printError();
-		cerr << "DataSetIException error!" << endl;
-debugger(__LINE__, __FILE__);
+		cerr << __FUNCTION__ << "(): " << "DataSetIException error!" << endl;
 		return_flag = -2;
 	}
 
 	catch(H5::DataSpaceIException error)
 	{
 		error.printError();
-		cerr << "DataSpaceIException error!" << endl;
-debugger(__LINE__, __FILE__);
+		cerr << __FUNCTION__ << "(): " << "DataSpaceIException error!" << endl;
 		return_flag = -3;
 	}
 
@@ -854,7 +837,7 @@ int CorrelationFunction::Administrate_besselcoeffs_HDF_array(int administration_
 			}
 			default:
 			{
-				cerr << "administration_mode = " << administration_mode << " not supported!  Exiting..." << endl;
+				cerr << __FUNCTION__ << "(): " << "administration_mode = " << administration_mode << " not supported!  Exiting..." << endl;
 				exit(1);
 				break;
 			}
@@ -864,24 +847,21 @@ int CorrelationFunction::Administrate_besselcoeffs_HDF_array(int administration_
 	catch(FileIException error)
 	{
 		error.printError();
-		cerr << "FileIException error!" << endl;
-debugger(__LINE__, __FILE__);
+		cerr << __FUNCTION__ << "(): " << "FileIException error!" << endl;
 		return_flag = -1;
 	}
 
 	catch(H5::DataSetIException error)
 	{
 		error.printError();
-		cerr << "DataSetIException error!" << endl;
-debugger(__LINE__, __FILE__);
+		cerr << __FUNCTION__ << "(): " << "DataSetIException error!" << endl;
 		return_flag = -2;
 	}
 
 	catch(H5::DataSpaceIException error)
 	{
 		error.printError();
-		cerr << "DataSpaceIException error!" << endl;
-debugger(__LINE__, __FILE__);
+		cerr << __FUNCTION__ << "(): " << "DataSpaceIException error!" << endl;
 		return_flag = -3;
 	}
 
@@ -929,7 +909,7 @@ int CorrelationFunction::Access_besselcoeffs_in_HDF_array(int ipY, int access_mo
 			}
 			default:
 			{
-				cerr << "access_mode = " << access_mode << " not supported!  Exiting..." << endl;
+				cerr << __FUNCTION__ << "(): " << "access_mode = " << access_mode << " not supported!  Exiting..." << endl;
 				exit(1);
 				break;
 			}
@@ -939,24 +919,21 @@ int CorrelationFunction::Access_besselcoeffs_in_HDF_array(int ipY, int access_mo
 	catch(FileIException error)
 	{
 		error.printError();
-		cerr << "FileIException error!" << endl;
-debugger(__LINE__, __FILE__);
+		cerr << __FUNCTION__ << "(): " << "FileIException error!" << endl;
 		return_flag = -1;
 	}
 
 	catch(H5::DataSetIException error)
 	{
 		error.printError();
-		cerr << "DataSetIException error!" << endl;
-debugger(__LINE__, __FILE__);
+		cerr << __FUNCTION__ << "(): " << "DataSetIException error!" << endl;
 		return_flag = -2;
 	}
 
 	catch(H5::DataSpaceIException error)
 	{
 		error.printError();
-		cerr << "DataSpaceIException error!" << endl;
-debugger(__LINE__, __FILE__);
+		cerr << __FUNCTION__ << "(): " << "DataSpaceIException error!" << endl;
 		return_flag = -3;
 	}
 

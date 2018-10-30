@@ -232,6 +232,9 @@ class SourceVariances
 		void Determine_plane_angle();
 		void Analyze_sourcefunction();
 
+		void Output_emission_density(int local_pid);
+		double Cal_emission_density_function(int local_pid, int isurf);
+
 		double Cal_wfi_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi, int wfi);
 		double Cal_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi);
 		double Cal_xs_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi);
