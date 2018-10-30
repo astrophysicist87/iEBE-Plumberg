@@ -526,7 +526,7 @@ if (RUN_TRUNCATED_CALCULATION && ipphi > 0)
 	Delete_resonance_running_sum_vectors();
 
 	do_resonance_integrals_sw.Stop();
-	*global_out_stream_ptr << "\t--> Finished this decay loop through Do_resonance_integrals(...) in " << do_resonance_integrals_sw.printTime() << " seconds." << endl;
+	*out << "\t--> Finished this decay loop through Do_resonance_integrals(...) in " << do_resonance_integrals_sw.printTime() << " seconds." << endl;
 
 
 	return;

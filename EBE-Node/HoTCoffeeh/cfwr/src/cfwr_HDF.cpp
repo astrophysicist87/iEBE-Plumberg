@@ -23,9 +23,9 @@ int return_flag = 0;
 
 void CorrelationFunction::Initialize_HDF_resonance_array()
 {
-	*global_out_stream_ptr << "Initializing HDF resonance array...";
+	*out << "Initializing HDF resonance array...";
 	int HDFInitializationSuccess = Administrate_resonance_HDF_array(0);
-	*global_out_stream_ptr << "...done.\n";
+	*out << "...done.\n";
 
 	return;
 }
@@ -34,9 +34,9 @@ void CorrelationFunction::Close_HDF_resonance_array()
 {
 	if (!thermal_pions_only)
 	{
-		*global_out_stream_ptr << "Closing HDF resonance array...";
+		*out << "Closing HDF resonance array...";
 		int HDFInitializationSuccess = Administrate_resonance_HDF_array(2);
-		*global_out_stream_ptr << "...done.\n";
+		*out << "...done.\n";
 	}
 
 	return;
@@ -44,27 +44,27 @@ void CorrelationFunction::Close_HDF_resonance_array()
 
 void CorrelationFunction::Reset_HDF_resonance_array()
 {
-	*global_out_stream_ptr << "Resetting HDF resonance array...";
+	*out << "Resetting HDF resonance array...";
 	int HDFInitializationSuccess = Administrate_resonance_HDF_array(3);
-	*global_out_stream_ptr << "...done.\n";
+	*out << "...done.\n";
 
 	return;
 }
 
 void CorrelationFunction::Initialize_HDF_target_thermal_array()
 {
-	*global_out_stream_ptr << "Initializing HDF target thermal array...";
+	*out << "Initializing HDF target thermal array...";
 	int HDFInitializationSuccess = Administrate_target_thermal_HDF_array(0);
-	*global_out_stream_ptr << "...done.\n";
+	*out << "...done.\n";
 
 	return;
 }
 
 void CorrelationFunction::Initialize_HDF_target_full_array()
 {
-	*global_out_stream_ptr << "Initializing HDF target full array...";
+	*out << "Initializing HDF target full array...";
 	int HDFInitializationSuccess = Administrate_target_full_HDF_array(0);
-	*global_out_stream_ptr << "...done.\n";
+	*out << "...done.\n";
 
 	return;
 }
@@ -120,7 +120,7 @@ int CorrelationFunction::Administrate_resonance_HDF_array(int administration_mod
 
 				if (file_does_not_already_exist)
 				{
-					*global_out_stream_ptr << "HDF resonance file doesn't exist!  Initializing to zero..." << endl;
+					*out << "HDF resonance file doesn't exist!  Initializing to zero..." << endl;
 
 					for (int ir = 0; ir < NchosenParticle + 1; ++ir)
 					//for (int iqt = 0; iqt < (qtnpts+1)/2; ++iqt)
@@ -164,7 +164,7 @@ int CorrelationFunction::Administrate_resonance_HDF_array(int administration_mod
 				resonance_file = new H5::H5File(RESONANCE_FILE_NAME, H5F_ACC_RDWR);
 				resonance_dataset = new H5::DataSet( resonance_file->openDataSet( RESONANCE_DATASET_NAME ) );
 				resonance_memspace = new H5::DataSpace (RANK2D, dimsm, NULL);
-				*global_out_stream_ptr << "Resetting HDF resonance array to zero..." << endl;
+				*out << "Resetting HDF resonance array to zero..." << endl;
 
 				hsize_t count[RANK2D] = {1, chunk_size};
 				hsize_t offset[RANK2D] = {0, 0};
@@ -268,7 +268,7 @@ int CorrelationFunction::Administrate_target_thermal_HDF_array(int administratio
 				tta_memspace = new H5::DataSpace (RANK2D, dimsm, NULL);
 				if (file_does_not_already_exist)
 				{
-					*global_out_stream_ptr << "HDF thermal target moments file doesn't exist!  Initializing to zero..." << endl;
+					*out << "HDF thermal target moments file doesn't exist!  Initializing to zero..." << endl;
 
 					for (int iqt = 0; iqt < (qtnpts+1)/2; ++iqt)
 					for (int iqz = 0; iqz < (qznpts+1)/2; ++iqz)
@@ -387,7 +387,7 @@ int CorrelationFunction::Administrate_target_full_HDF_array(int administration_m
 				tfa_memspace = new H5::DataSpace (RANK2D, dimsm, NULL);
 				if (file_does_not_already_exist)
 				{
-					*global_out_stream_ptr << "HDF full target moments file doesn't exist!  Initializing to zero..." << endl;
+					*out << "HDF full target moments file doesn't exist!  Initializing to zero..." << endl;
 
 					for (int iqt = 0; iqt < (qtnpts+1)/2; ++iqt)
 					for (int iqz = 0; iqz < (qznpts+1)/2; ++iqz)
@@ -797,7 +797,7 @@ int CorrelationFunction::Administrate_besselcoeffs_HDF_array(int administration_
 				besselcoeffs_memspace = new H5::DataSpace (RANK2D, dimsm, NULL);
 				if (file_does_not_already_exist)
 				{
-					*global_out_stream_ptr << "HDF besselcoeffs file doesn't exist!  Initializing to zero..." << endl;
+					*out << "HDF besselcoeffs file doesn't exist!  Initializing to zero..." << endl;
 
 					for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 					{

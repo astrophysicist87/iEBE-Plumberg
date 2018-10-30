@@ -193,16 +193,16 @@ void CorrelationFunction::Fourier_transform_emission_function(int iqt, int iqz)
 	//current_pY_shift = 0.0;
 
 	///////
-	*global_out_stream_ptr << "Initializing/opening HDF files...";
+	*out << "Initializing/opening HDF files...";
 	int HDFInitializationSuccess = Administrate_resonance_HDF_array(1);		//open
 	HDFInitializationSuccess = Administrate_target_thermal_HDF_array(1);	//open
 	if (!thermal_pions_only )
 		Set_all_Bessel_grids(iqt, iqz);
 	//Set_all_Bessel_grids(iqt, iqz, 1);
-	*global_out_stream_ptr << "done." << endl << endl;
+	*out << "done." << endl << endl;
 	///////
 
-	*global_out_stream_ptr << "Setting spacetime moments grid..." << endl;
+	*out << "Setting spacetime moments grid..." << endl;
 	BIGsw.Start();
 
 	// loop over decay_channels (idc == 0 corresponds to thermal pions)
@@ -220,7 +220,7 @@ void CorrelationFunction::Fourier_transform_emission_function(int iqt, int iqz)
 	}
 
 	BIGsw.Stop();
-	*global_out_stream_ptr << "\t ...finished all (thermal) space-time moments for loop (iqt = " << iqt << ", iqz = " << iqz << ") in " << BIGsw.printTime() << " seconds." << endl;
+	*out << "\t ...finished all (thermal) space-time moments for loop (iqt = " << iqt << ", iqz = " << iqz << ") in " << BIGsw.printTime() << " seconds." << endl;
 	
 	//only need to calculate spectra, etc. once
 	// Now dump all thermal spectra before continuing with resonance decay calculations
@@ -233,7 +233,7 @@ void CorrelationFunction::Fourier_transform_emission_function(int iqt, int iqz)
 	}
 
 	///////
-	*global_out_stream_ptr << "Cleaning up HDF files...";
+	*out << "Cleaning up HDF files...";
 	{
 		int HDFInitializationSuccess = Administrate_resonance_HDF_array(1);		//open
 		HDFInitializationSuccess = Administrate_target_thermal_HDF_array(1);	//open
@@ -265,7 +265,7 @@ void CorrelationFunction::Fourier_transform_emission_function(int iqt, int iqz)
 		int closeHDFresonanceSpectra = Administrate_resonance_HDF_array(2);
 		closeHDFresonanceSpectra = Administrate_target_thermal_HDF_array(2);
 	}
-	*global_out_stream_ptr << "done." << endl << endl;
+	*out << "done." << endl << endl;
 	///////
 
    return;
@@ -276,7 +276,7 @@ void CorrelationFunction::Compute_phase_space_integrals(int iqt, int iqz)
 
 	if (thermal_pions_only)
 	{
-		*global_out_stream_ptr << "Thermal pions only: no phase-space integrals need to be computed." << endl;
+		*out << "Thermal pions only: no phase-space integrals need to be computed." << endl;
 		return;
 	}
 
@@ -288,7 +288,7 @@ void CorrelationFunction::Compute_phase_space_integrals(int iqt, int iqz)
 
 	int openHDFresonanceSpectra = Administrate_resonance_HDF_array(1);	//open
 
-	*global_out_stream_ptr << "Computing all phase-space integrals..." << endl;
+	*out << "Computing all phase-space integrals..." << endl;
 	BIGsw.Start();
 	
 	// ************************************************************
@@ -334,11 +334,11 @@ void CorrelationFunction::Compute_phase_space_integrals(int iqt, int iqz)
 
 		Delete_decay_channel_info();				// free up memory
 		decay_sw.Stop();
-		*global_out_stream_ptr << " - Finished decay loop for " << decay_channels[idc-1].resonance_name << " in " << decay_sw.printTime() << " seconds." << endl;
+		*out << " - Finished decay loop for " << decay_channels[idc-1].resonance_name << " in " << decay_sw.printTime() << " seconds." << endl;
 	}			
 								// END of decay channel loop
 	BIGsw.Stop();
-	*global_out_stream_ptr << "\t ...finished computing all phase-space integrals for loop (iqt = "
+	*out << "\t ...finished computing all phase-space integrals for loop (iqt = "
 							<< iqt << ", iqz = " << iqz << ") in " << BIGsw.printTime() << " seconds." << endl;
 
 	if ( iqt == (qtnpts - 1)/2 && iqz == (qznpts - 1)/2 )
@@ -355,7 +355,7 @@ bool CorrelationFunction::Do_this_decay_channel(int dc_idx)
 	string local_name = "Thermal pion(+)";
 	if (dc_idx == 0)
 	{
-		if (VERBOSE > 0) *global_out_stream_ptr << endl << local_name << ": doing this one." << endl;
+		if (VERBOSE > 0) *out << endl << local_name << ": doing this one." << endl;
 		return true;
 	}
 	else
@@ -364,7 +364,7 @@ bool CorrelationFunction::Do_this_decay_channel(int dc_idx)
 		Get_current_decay_string(dc_idx, &current_decay_channel_string);
 	}
 	bool tmp_bool = decay_channels[dc_idx-1].include_channel;
-	if (!tmp_bool && VERBOSE > 0) *global_out_stream_ptr << endl << local_name << ": skipping decay " << current_decay_channel_string << "." << endl;
+	if (!tmp_bool && VERBOSE > 0) *out << endl << local_name << ": skipping decay " << current_decay_channel_string << "." << endl;
 
 	return (tmp_bool);
 }
@@ -391,7 +391,7 @@ bool CorrelationFunction::Do_this_daughter_particle(int dc_idx, int daughter_idx
 	particle_info temp_daughter = all_particles[temp_ID];
 
 	if (*daughter_resonance_pid < 0 && temp_daughter.monval != particle_monval && temp_daughter.effective_branchratio >= 1.e-12)
-		*global_out_stream_ptr << "Couldn't find " << temp_daughter.name << " in chosen_resonances!  Results are probably not reliable..." << endl;
+		*out << "Couldn't find " << temp_daughter.name << " in chosen_resonances!  Results are probably not reliable..." << endl;
 
 	//bool daughter_does_not_contribute = ( (temp_daughter.stable == 1 || temp_daughter.effective_branchratio < 1.e-12) && temp_daughter.monval != particle_monval );
 	bool daughter_does_not_contribute = ( (temp_daughter.decays_Npart[0] == 1 || temp_daughter.effective_branchratio < 1.e-12) && temp_daughter.monval != particle_monval );
@@ -399,13 +399,13 @@ bool CorrelationFunction::Do_this_daughter_particle(int dc_idx, int daughter_idx
 	// if daughter particle gives no contribution to final pion spectra
 	if (daughter_does_not_contribute)
 	{
-		if (VERBOSE > 0) *global_out_stream_ptr << "\t * " << local_name << ": in decay " << current_decay_channel_string << ", skipping " << temp_daughter.name
+		if (VERBOSE > 0) *out << "\t * " << local_name << ": in decay " << current_decay_channel_string << ", skipping " << temp_daughter.name
 												<< " (daughter_resonance_pid = " << *daughter_resonance_pid << ")." << endl;
 		return false;
 	}
 	else
 	{
-		if (VERBOSE > 0) *global_out_stream_ptr << "\t * " << local_name << ": in decay " << current_decay_channel_string << ", doing " << temp_daughter.name
+		if (VERBOSE > 0) *out << "\t * " << local_name << ": in decay " << current_decay_channel_string << ", doing " << temp_daughter.name
 												<< " (daughter_resonance_pid = " << *daughter_resonance_pid << ")." << endl;
 		return true;
 	}
@@ -428,7 +428,7 @@ void CorrelationFunction::Set_current_particle_info(int dc_idx)
 		// assume dc_idx > 0
 		string local_name = decay_channels[dc_idx-1].resonance_name;
 
-		if (VERBOSE > 0) *global_out_stream_ptr << endl << local_name << ": doing decay " << current_decay_channel_string << "." << endl
+		if (VERBOSE > 0) *out << endl << local_name << ": doing decay " << current_decay_channel_string << "." << endl
 			<< "\t * " << local_name << ": setting information for this decay channel..." << endl;
 
 		if (dc_idx > 1)
@@ -468,7 +468,7 @@ void CorrelationFunction::Set_current_particle_info(int dc_idx)
 				//previous resonance is the same as this one...
 				recycle_previous_moments = true;
 				recycle_similar_moments = false;
-				if (VERBOSE > 0) *global_out_stream_ptr << "\t * " << decay_channels[dc_idx-1].resonance_name << " (same as the last one)." << endl;
+				if (VERBOSE > 0) *out << "\t * " << decay_channels[dc_idx-1].resonance_name << " (same as the last one)." << endl;
 			}
 			else if ( Search_for_similar_particle( temp_reso_idx, &similar_particle_idx ) )
 			{
@@ -477,7 +477,7 @@ void CorrelationFunction::Set_current_particle_info(int dc_idx)
 				recycle_similar_moments = true;
 				reso_particle_id_of_moments_to_recycle = chosen_resonances[similar_particle_idx];
 				reso_idx_of_moments_to_recycle = similar_particle_idx;
-				if (VERBOSE > 0) *global_out_stream_ptr << "\t * " << decay_channels[dc_idx-1].resonance_name << " (different from the last one, but close enough to "
+				if (VERBOSE > 0) *out << "\t * " << decay_channels[dc_idx-1].resonance_name << " (different from the last one, but close enough to "
 														<< all_particles[reso_particle_id_of_moments_to_recycle].name << ")." << endl;
 			}
 			else
@@ -486,7 +486,7 @@ void CorrelationFunction::Set_current_particle_info(int dc_idx)
 				recycle_similar_moments = false;
 				reso_particle_id_of_moments_to_recycle = -1;	//guarantees it won't be used spuriously
 				reso_idx_of_moments_to_recycle = -1;
-				if (VERBOSE > 0) *global_out_stream_ptr << "\t * " << decay_channels[dc_idx-1].resonance_name << " (different from the last one --> calculating afresh)." << endl;
+				if (VERBOSE > 0) *out << "\t * " << decay_channels[dc_idx-1].resonance_name << " (different from the last one --> calculating afresh)." << endl;
 			}
 		}
 	}
@@ -648,7 +648,7 @@ bool CorrelationFunction::particles_are_the_same(int reso_idx1, int reso_idx2)
 void CorrelationFunction::Recycle_spacetime_moments()
 {
 
-	//*global_out_stream_ptr << "PIDs: " << current_resonance_particle_id << "   " << reso_particle_id_of_moments_to_recycle << endl;
+	//*out << "PIDs: " << current_resonance_particle_id << "   " << reso_particle_id_of_moments_to_recycle << endl;
 	int HDFcopyChunkSuccess = Copy_chunk(current_resonance_particle_id, reso_particle_id_of_moments_to_recycle);
 	if (HDFcopyChunkSuccess < 0) exit(1);
 
@@ -747,48 +747,76 @@ void CorrelationFunction::Set_spectra_logs_and_signs(int local_pid)
 
 void CorrelationFunction::Get_spacetime_moments(int dc_idx, int iqt, int iqz)
 {
-
-//**************************************************************
-//Set resonance name
-//**************************************************************
+	//Set name of current resonance
 	string local_name = "Thermal pion(+)";
 	if (dc_idx > 0)
 		local_name = decay_channels[dc_idx-1].resonance_name;
-//**************************************************************
-//Decide what to do with this resonance / decay channel
-//**************************************************************
-	if (recycle_previous_moments && dc_idx > 1)	// same as earlier resonance
+
+	//Decide what to do with this resonance / decay channel
+	// - if the current resonance is the same as an earlier resonance
+	if (recycle_previous_moments && dc_idx > 1)
 	{
-		if (VERBOSE > 0) *global_out_stream_ptr << local_name
-			<< ": new parent resonance (" << decay_channels[current_decay_channel_idx-1].resonance_name << ", dc_idx = " << current_decay_channel_idx
-			<< " of " << n_decay_channels << ") same as preceding parent resonance \n\t\t--> reusing old dN_dypTdpTdphi_moments!" << endl;
+		if (VERBOSE > 0)
+			*out << local_name
+				<< ": new parent resonance ("
+				<< decay_channels[current_decay_channel_idx-1].resonance_name
+				<< ", dc_idx = " << current_decay_channel_idx
+				<< " of " << n_decay_channels
+				<< ") same as preceding parent resonance "
+				<< "\n\t\t--> reusing old dN_dypTdpTdphi_moments!"
+				<< endl;
 	}
-	else if (recycle_similar_moments && dc_idx > 1)	// sufficiently similar (but different) earlier resonance
+	// - if the current resonance is sufficiently similar to
+	//   (but different from) an earlier resonance
+	else if (recycle_similar_moments && dc_idx > 1)
 	{
-		if (VERBOSE > 0) *global_out_stream_ptr << local_name
-			<< ": new parent resonance (" << decay_channels[current_decay_channel_idx-1].resonance_name << ", dc_idx = " << current_decay_channel_idx
-			<< " of " << n_decay_channels << ") sufficiently close to preceding parent resonance (" << all_particles[reso_particle_id_of_moments_to_recycle].name
-			<< ", reso_particle_id = " << reso_particle_id_of_moments_to_recycle << ") \n\t\t--> reusing old dN_dypTdpTdphi_moments!" << endl;
+		if (VERBOSE > 0)
+			*out << local_name
+				<< ": new parent resonance ("
+				<< decay_channels[current_decay_channel_idx-1].resonance_name
+				<< ", dc_idx = " << current_decay_channel_idx
+				<< " of " << n_decay_channels << ") sufficiently close " 
+				<< "to preceding parent resonance ("
+				<< all_particles[reso_particle_id_of_moments_to_recycle].name
+				<< ", reso_particle_id = "
+				<< reso_particle_id_of_moments_to_recycle
+				<< ") \n\t\t--> reusing old dN_dypTdpTdphi_moments!"
+				<< endl;
+		//Explicitly recycle old moments
 		Recycle_spacetime_moments();
 	}
+	// - otherwise
 	else
 	{
 		if (dc_idx == 0)	//if it's thermal pions
 		{
-			if (VERBOSE > 0) *global_out_stream_ptr << "  --> Computing dN_dypTdpTdphi_moments for thermal pion(+)!" << endl;
+			if (VERBOSE > 0)
+				*out
+					<< "  --> Computing dN_dypTdpTdphi_moments "
+					<< "for thermal pion(+)!" << endl;
 		}
 		else if (dc_idx == 1)	//if it's the first resonance
 		{
-			if (VERBOSE > 0) *global_out_stream_ptr << "  --> Computing dN_dypTdpTdphi_moments for " << local_name << endl;
+			if (VERBOSE > 0)
+				*out
+					<< "  --> Computing dN_dypTdpTdphi_moments for "
+					<< local_name << endl;
 		}
 		else			//if it's a later resonance
 		{
 			if (!recycle_previous_moments && !recycle_similar_moments) 
 			{
+				int this_idx = current_decay_channel_idx;
 				if (VERBOSE > 0)
-					*global_out_stream_ptr << local_name
-						<< ": new parent resonance (" << decay_channels[current_decay_channel_idx-1].resonance_name << ", dc_idx = " << current_decay_channel_idx
-						<< " of " << n_decay_channels << ") dissimilar from all preceding decay_channels \n\t\t--> calculating new dN_dypTdpTdphi_moments!" << endl;
+					*out << local_name
+						<< ": new parent resonance ("
+						<< decay_channels[this_idx-1]
+								.resonance_name
+						<< ", dc_idx = " << this_idx
+						<< " of " << n_decay_channels
+						<< ") dissimilar from all preceding decay_channels "
+						<< "\n\t\t--> calculating new dN_dypTdpTdphi_moments!"
+						<< endl;
 			}
 			else
 			{
@@ -797,22 +825,32 @@ void CorrelationFunction::Get_spacetime_moments(int dc_idx, int iqt, int iqz)
 			}
 		}
 
-		//allows to omit thermal spectra calculations from specified resonances, e.g., all resonances which contribute up to 60% of decay pions
-		if (find(osr.begin(), osr.end(), current_resonance_particle_id) != osr.end())
-			*global_out_stream_ptr << "  --> ACTUALLY SKIPPING WEIGHTED THERMAL SPECTRA FOR " << local_name << endl;
+		// This allows to omit thermal spectra calculations from specified
+		// resonances, e.g., all resonances which contribute up to 60% of
+		// decay pions
+		if ( find( osr.begin(), osr.end(),
+					current_resonance_particle_id ) != osr.end() )
+			*out
+				<< "  --> ACTUALLY SKIPPING WEIGHTED THERMAL SPECTRA FOR "
+				<< local_name << endl;
 		else
 		{
-			*global_out_stream_ptr << "  --> ACTUALLY DOING WEIGHTED THERMAL SPECTRA FOR " << local_name << endl;
-			Set_dN_dypTdpTdphi_moments(current_resonance_particle_id, iqt, iqz);
+			*out
+				<< "  --> ACTUALLY DOING WEIGHTED THERMAL SPECTRA FOR "
+				<< local_name << endl;
+			Set_dN_dypTdpTdphi_moments(
+				current_resonance_particle_id, iqt, iqz );
 		}
 	}
-//**************************************************************
-//Spacetime moments now set
-//**************************************************************
+	//**************************************************************
+	//Spacetime moments now set
+	//**************************************************************
+
 	return;
 }
 
-void CorrelationFunction::Reset_FOcells_array()
+void
+CorrelationFunction::Reset_FOcells_array()
 {
 
 	for (int iFOipT = 0; iFOipT < FO_length * n_pT_pts; ++iFOipT)
@@ -821,7 +859,9 @@ void CorrelationFunction::Reset_FOcells_array()
 	return;
 }
 
-void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int iqz)
+void
+CorrelationFunction::Set_dN_dypTdpTdphi_moments(
+	int local_pid, int iqt, int iqz)
 {
 
 	double localmass = all_particles[local_pid].mass;
@@ -841,7 +881,7 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 	//if ( iqt == (qtnpts - 1)/2 && iqz == (qznpts - 1)/2 )
 	if ( iqt == 0 && iqz == 0 )	//do it right away, so we know which FOcells to skip hereafter
 	{
-		*global_out_stream_ptr << "Computing un-weighted thermal spectra..." << endl;
+		*out << "Computing un-weighted thermal spectra..." << endl;
 		if (local_pid == target_particle_id)
 			Cal_dN_dypTdpTdphi_no_weights_Yeq0_alternate();
 		else
@@ -849,16 +889,16 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 	}
 	else						//otherwise, be sure to load the important FOcells from files!
 	{
-		*global_out_stream_ptr << "Loading important FOcells from file...";
+		*out << "Loading important FOcells from file...";
 		Load_FOcells(local_pid);
-		*global_out_stream_ptr << "done." << endl;
+		*out << "done." << endl;
 	}
 
 	if (local_particle_mode == 1)	//do pions at the end
 		return;
 
 	// get weighted spectra with only most important fluid cells, up to given threshhold
-	*global_out_stream_ptr << "Computing weighted thermal spectra..." << endl;
+	*out << "Computing weighted thermal spectra..." << endl;
 
 	//Compute weighted thermal spectra in this loop
 	{
@@ -885,7 +925,7 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 			Cal_dN_dypTdpTdphi_with_weights(local_pid, ipY, iqt, iqz, BC_chunk, local_particle_mode);
 
 			sw_qtqzpY.Stop();
-			if (VERBOSE > 1) *global_out_stream_ptr << "Finished loop with ( iqt, iqz, ipY ) = ( "
+			if (VERBOSE > 1) *out << "Finished loop with ( iqt, iqz, ipY ) = ( "
 							<< iqt << ", " << iqz << ", " << ipY << " ) in "
 							<< sw_qtqzpY.printTime() << " seconds." << endl;
 		}
@@ -929,7 +969,7 @@ void CorrelationFunction::Set_dN_dypTdpTdphi_moments(int local_pid, int iqt, int
 		Reset_FOcells_array();
 
 	sw.Stop();
-	*global_out_stream_ptr << "Took " << sw.printTime() << " seconds to set dN/dypTdpTdphi moments." << endl;
+	*out << "Took " << sw.printTime() << " seconds to set dN/dypTdpTdphi moments." << endl;
 
 	return;
 }
@@ -1065,7 +1105,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights(int local_pid)
 	}		// end of pT, pphi loop
 
 	sw_ThermalResonanceSpectra.Stop();
-	*global_out_stream_ptr << "\t\t\t*** Took " << sw_ThermalResonanceSpectra.printTime() << " seconds for whole function." << endl;
+	*out << "\t\t\t*** Took " << sw_ThermalResonanceSpectra.printTime() << " seconds for whole function." << endl;
 
 	return;
 }
@@ -1339,7 +1379,7 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 	delete [] alt_long_array_SI;
 
 	sw.Stop();
-	*global_out_stream_ptr << "Total function call took " << sw.printTime() << " seconds." << endl;
+	*out << "Total function call took " << sw.printTime() << " seconds." << endl;
 	
 	return;
 }

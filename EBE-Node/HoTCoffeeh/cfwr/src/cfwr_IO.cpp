@@ -715,7 +715,7 @@ void CorrelationFunction::Read_in_correlationfunction()
 	{
 		iCorrFunc >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy
 					>> thermalCFvals[ipT][ipphi][iqx][iqy][iqz] >> crosstermCFvals[ipT][ipphi][iqx][iqy][iqz] >> resonancesCFvals[ipT][ipphi][iqx][iqy][iqz] >> CFvals[ipT][ipphi][iqx][iqy][iqz];
-		//*global_out_stream_ptr << "Read in CFvals[" << ipT << "][" << ipphi << "][" << iqx << "][" << iqy << "][" << iqz << "] = " << CFvals[ipT][ipphi][iqx][iqy][iqz] << endl;
+		//*out << "Read in CFvals[" << ipT << "][" << ipphi << "][" << iqx << "][" << iqy << "][" << iqz << "] = " << CFvals[ipT][ipphi][iqx][iqy][iqz] << endl;
 	}
 
 	iCorrFunc.close();

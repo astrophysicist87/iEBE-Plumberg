@@ -18,7 +18,7 @@ using namespace std;
 
 void CorrelationFunction::Get_GF_HBTradii()
 {
-	*global_out_stream_ptr << "--> Getting HBT radii by Gaussian fit method" << endl;
+	*out << "--> Getting HBT radii by Gaussian fit method" << endl;
 
 	if (FLESH_OUT_CF)
 		Allocate_fleshed_out_CF();
@@ -28,7 +28,7 @@ void CorrelationFunction::Get_GF_HBTradii()
 	{
 		//if (ipt > 0 or ipphi > 0)
 		//	continue;
-		*global_out_stream_ptr << "   --> Doing pT = " << SP_pT[ipt] << ", pphi = " << SP_pphi[ipphi] << "..." << endl;
+		*out << "   --> Doing pT = " << SP_pT[ipt] << ", pphi = " << SP_pphi[ipphi] << "..." << endl;
 		
 		//determine whether to use fleshed out / projected CFvals
 		double *** CF_for_fitting = CFvals[ipt][ipphi];
@@ -54,7 +54,7 @@ void CorrelationFunction::Get_GF_HBTradii()
 void CorrelationFunction::Cal_correlationfunction(bool project_CF /*==true*/)
 {
 	string projection_stem = ( project_CF ) ? "projected" : "unprojected" ;
-	*global_out_stream_ptr << "Calculating the " << projection_stem << " correlation function..." << endl;
+	*out << "Calculating the " << projection_stem << " correlation function..." << endl;
 
 	//exploits convenient symmetries to get full correlation function
 	//as need for remainder of calculation
@@ -72,7 +72,7 @@ void CorrelationFunction::Cal_correlationfunction(bool project_CF /*==true*/)
 	double * q_interp = new double [4];
 
 	// Then compute full correlation function
-	*global_out_stream_ptr << "Computing the full, " << projection_stem << " correlator in XYZ coordinates..." << endl;
+	*out << "Computing the full, " << projection_stem << " correlator in XYZ coordinates..." << endl;
 	Stopwatch sw;
 	sw.Start();
 	for (int ipt = 0; ipt < n_pT_pts; ++ipt)
@@ -92,7 +92,7 @@ void CorrelationFunction::Cal_correlationfunction(bool project_CF /*==true*/)
 		resonancesCFvals[ipt][ipphi][iqx][iqy][iqz] = tmp3;	//Cr
 	}
 	sw.Stop();
-	*global_out_stream_ptr << "Finished computing " << projection_stem << " correlator in " << sw.printTime() << " seconds." << endl;
+	*out << "Finished computing " << projection_stem << " correlator in " << sw.printTime() << " seconds." << endl;
 
 	//output the un-regulated correlation function to separate file for debugging purposes
 	Output_correlationfunction(project_CF);
@@ -131,7 +131,7 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 	if (qxnpts==1 && qynpts==1 && qznpts==1)
 	{
 		double tmpC = 0.0, tmpCt = 0.0, tmpCct = 0.0, tmpCr = 0.0;
-		*global_out_stream_ptr << "Warning: qt_interp point essentially zero!" << endl
+		*out << "Warning: qt_interp point essentially zero!" << endl
 								<< "\t qt_interp = " << qt_interp << " out of {q_min, q_max} = {" << q_min << ", " << q_max << "};" << endl
 								<< "\t " << ipt << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << iqz << endl;
 		get_CF_terms(&tmpC, &tmpCt, &tmpCct, &tmpCr, ipt, ipphi, iqt0, iqx0, iqy0, iqz0, project_CF && !thermal_pions_only);
@@ -284,7 +284,7 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 	}
 	else
 	{
-		*global_out_stream_ptr << "Warning: qt_interp point was outside of computed grid!" << endl
+		*out << "Warning: qt_interp point was outside of computed grid!" << endl
 								<< "\t qt_interp = " << qt_interp << " out of {q_min, q_max} = {" << q_min << ", " << q_max << "};" << endl
 								<< "\t " << ipt << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << iqz << endl;
 		*totalresult = 0.0;
@@ -566,7 +566,7 @@ void CorrelationFunction::find_minimum_chisq_correlationfunction_full(
         double q_side_local = -q1pts[i] * skp + q2pts[j] * ckp;
         double q_long_local = q3pts[k];
         double correl_local = Correl_3D[i][j][k]-1;
-		//*global_out_stream_ptr << "\t\t" << q1pts[i] << "   " << q2pts[i] << "   " << q3pts[i] << "   " << q_out_local << "   " << q_side_local << "   " << q_long_local << "   " << correl_local << endl;
+		//*out << "\t\t" << q1pts[i] << "   " << q2pts[i] << "   " << q3pts[i] << "   " << q_out_local << "   " << q_side_local << "   " << q_long_local << "   " << correl_local << endl;
         if(correl_local < 1e-15) continue;
 		//if (i==(q1npts-1)/2 && j==(q2npts-1)/2 && k==(q3npts-1)/2)
 		//	Correlfun3D_data.sigma[idx] = 1.e10;	//ignore central point

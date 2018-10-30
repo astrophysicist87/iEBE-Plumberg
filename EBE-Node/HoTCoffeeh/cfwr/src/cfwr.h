@@ -208,7 +208,6 @@ class CorrelationFunction
 		int q1npts, q2npts, q3npts;		//123 indexing allows these to refer to either q[osl]npts or q[xyz]npts
 		double * q1_pts, * q2_pts, * q3_pts;
 		int iqt0, iqx0, iqy0, iqz0, ipY0;
-		vector<vector<int> > sorted_q_pts_list;
 		double ** qlist, * current_qlist_slice;
 		vector<vector<int> > q_axes_and_rays;
 		
@@ -236,7 +235,7 @@ class CorrelationFunction
 		double ** spec_sign_info, ** spec_log_info, ** spec_vals_info;
 		
 		//miscellaneous
-		ofstream * global_out_stream_ptr;
+		ofstream * out;
 		string path;
 		string no_df_stem;
 		int n_resonance, n_decay_channels;
@@ -383,7 +382,6 @@ class CorrelationFunction
 		void Set_correlation_function_q_pts();
 		void Set_q_points();
 		void Set_qlist(int iqt, int iqz);
-		void Set_sorted_q_pts_list();
 		void Get_q_points(double qo, double qs, double ql, double KT, double Kphi, double * qgridpts);
 		void Allocate_resonance_running_sum_vectors();
 		void Delete_resonance_running_sum_vectors();
