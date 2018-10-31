@@ -751,4 +751,155 @@ void CorrelationFunction::Output_resonance_fraction()
 	return;
 }
 
+void CorrelationFunction::Output_parameters_record()
+{
+	ostringstream filename_stream_HCparams;
+	filename_stream_HCparams << path << "/HotCoffeeh_parameters.dat";
+	ofstream output_HCparams(filename_stream_HCparams.str().c_str());
+
+	string tentab = "\t\t\t\t\t\t\t\t\t\t";
+
+	output_HCparams
+		<< "#############################################" << endl
+		<< "## Default parameters for HoTCoffeeh codes ##" << endl
+		<< "#############################################" << endl << endl
+
+		<< "###########################" << endl
+		<< "## SVWR and CFWR parameters" << endl << endl;
+		
+	output_HCparams
+		<< "# Model options" << endl;
+
+	output_HCparams
+		<< "grouping_particles = " << GROUPING_PARTICLES << "\t\t\t\t\t# set to 1 to perform calculations for similar" << endl
+		<< tentab << "# particles together" << endl << endl;
+
+	output_HCparams
+		<< "use_plane_psi_order = " << USE_PLANE_PSI_ORDER << "\t\t\t\t\t# specifies whether to do HBT relative to flow-plane angle," << endl
+		<< tentab << "# and at what order." << endl
+		<< tentab << "#  0 - use plane_psi = 0.0" << endl
+		<< tentab << "# !0 - use flow-plane angle at given order" << endl << endl;
+
+	output_HCparams
+		<< "chosenParticlesMode = " << chosenParticlesMode << "\t\t\t\t\t# 0 - set with threshold" << endl
+		<< tentab << "# 1 - read in chosen particles from file" << endl << endl;
+
+	output_HCparams
+		<< "ignore_long_lived_resonances = " << IGNORE_LONG_LIVED_RESONANCES << "\t\t# do all decay channels (or don't)" << endl << endl;
+
+	output_HCparams
+		<< "include_delta_f	= " << INCLUDE_DELTA_F << "\t\t\t\t\t\t# include viscous CF corrections" << endl << endl;
+
+	output_HCparams
+		<< "flag_negative_S = " << flagneg << "\t\t\t\t\t\t# neglect all FO cells with negative emission function" << endl
+		<< tentab << "# choose flag_negative_S == 0 to agree with iS.e" << endl
+		<< tentab << "# choose flag_negative_S == 1 for the real world" << endl << endl;
+
+	output_HCparams
+		<< "include_bulk_pi = " << INCLUDE_BULK_PI << "\t\t\t\t\t\t# 1 means that there's an extra column in decdat2.dat," << endl
+		<< tentab << "# i.e., bulk pi is NOT(!!!) used in current calculation!!!" << endl << endl;
+
+	output_HCparams
+		<< "# Model parameters " << endl
+		<< "n_order = " << n_order << "\t\t\t\t\t\t\t\t# sets max order for azimuthal averaging (0...nOrder-1)" << endl << endl;
+
+	output_HCparams
+		<< "tolerance = " << tol << "\t\t\t\t\t\t# tolerance for flagging negative FO cells" << endl << endl;
+
+	output_HCparams
+		<< "max_lifetime = " << max_lifetime << "\t\t\t\t\t# resonance is ignored if its lifetime is longer than this value" << endl
+		<< tentab << "# AND ignore_long_lived_resonances is set to 1" << endl << endl;
+
+	output_HCparams
+		<< "particle_diff_tolerance = " << PARTICLE_DIFF_TOLERANCE << "\t\t\t# particles with mass and chemical potential" << endl
+		<< tentab << "# (for each FO-cell) difference less than this value" << endl
+		<< tentab << "# will be considered to be identical (b/c Cooper-Frye)" << endl << endl;
+
+	output_HCparams
+		<< "# Pair momenta" << endl
+		<< "nKT = " << nKT << "\t\t\t\t\t\t\t\t# size of pair momentum KT grid" << endl
+		<< "nKphi = " << nKphi << "\t\t\t\t\t\t\t\t# size of pair momentum Kphi grid" << endl
+		<< "KTmin = " << KTmin << "\t\t\t\t\t\t\t# minimum of pair momentum KT grid" << endl
+		<< "KTmax = " << KTmax << "\t\t\t\t\t\t\t# maximum of pair momentum KT grid" << endl << endl;
+
+	output_HCparams
+		<< "##################" << endl
+		<< "## SVWR parameters" << endl << endl
+
+		<< "# Sub-model parameters" << endl
+		<< "SV_resonanceThreshold = " << SV_resonanceThreshold << "\t\t\t# (approximate) fraction of all resonance contributions to do" << endl
+		<< tentab << "# code sums over all resonances in (approximately) decreasing" << endl
+		<< tentab << "# order until this threshhold is reached," << endl
+		<< tentab << "# only skipping resonances with lifetimes > max_lifetime" << endl << endl;
+
+	output_HCparams
+		<< "# Single-particle momenta" << endl
+		<< "SV_npT = " << SV_npT << "\t\t\t\t\t\t\t\t# size of pT grid for interpolation of (SV-weighted)" << endl
+		<< tentab << "# single-particle spectra" << endl << endl;
+
+	output_HCparams
+		<< "SV_npphi = " << SV_npphi << "\t\t\t\t\t\t\t# size of pphi grid for interpolation of (SV-weighted)" << endl
+		<< tentab << "# single-particle spectra" << endl << endl;
+
+
+	output_HCparams
+		<< "##################" << endl
+		<< "## CFWR parameters" << endl << endl
+
+		<< "# Sub-model options" << endl;
+
+	output_HCparams
+		<< "calculate_CF_mode = " << CALCULATE_CF_MODE << "\t\t\t\t\t# 0 (default) - compute resonance decays, correlation function, and fit" << endl
+		<< tentab << "# 1 - read in resonance decays, compute correlation function, and fit" << endl
+		<< tentab << "# 2 - read in correlation function and fit" << endl << endl;
+
+	output_HCparams
+		<< "fit_with_projected_cfvals = " << FIT_WITH_PROJECTED_CFVALS << "\t\t\t# enable linear extrapolation of sum over chosen" << endl
+		<< tentab << "# resonances to estimate sum over remaining resonances" << endl << endl;
+
+	output_HCparams
+		<< "flesh_out_cf = " << FLESH_OUT_CF << "\t\t\t\t\t\t# refine grid via interpolation before fitting to enable" << endl
+		<< tentab << "# more reliable fit results" << endl << endl;
+
+	output_HCparams
+		<< "# Sub-model parameters" << endl
+		<< "CF_resonanceThreshold = " << CF_resonanceThreshold << "\t\t\t# (approximate) fraction of all resonance contributions to do" << endl
+		<< tentab << "# code sums over all resonances in (approximately) decreasing" << endl
+		<< tentab << "# order until this threshhold is reached," << endl
+		<< tentab << "# only skipping resonances with lifetimes > max_lifetime" << endl << endl;
+
+	output_HCparams
+		<< "# Single-particle momenta" << endl
+		<< "CF_npT = " << n_pT_pts << "\t\t\t\t\t\t\t\t# size of pT grid for interpolation of" << endl
+		<< tentab << "# (Fourier-transformed) single-particle spectra" << endl << endl;
+
+	output_HCparams
+		<< "CF_npphi = " << n_pphi_pts << "\t\t\t\t\t\t\t# size of pphi grid for interpolation of" << endl
+		<< tentab << "# (Fourier-transformed) single-particle spectra" << endl << endl;
+
+	output_HCparams
+		<< "CF_npY = " << n_pY_pts << "\t\t\t\t\t\t\t\t# size of pY grid for interpolation of" << endl
+		<< tentab << "# (Fourier-transformed) single-particle spectra" << endl << endl;
+
+	output_HCparams
+		<< "# Relative momenta" << endl << endl;
+
+	output_HCparams
+		<< "qtnpts = " << qtnpts << endl
+		<< "qxnpts = " << qxnpts << endl
+		<< "qynpts = " << qynpts << endl
+		<< "qznpts = " << qznpts << endl
+		<< "delta_qx = " << delta_qx << endl
+		<< "delta_qy = " << delta_qy << endl
+		<< "delta_qz = " << delta_qz << endl;
+
+	output_HCparams
+		<< "## End of file" << endl;
+
+	output_HCparams.close();
+
+	return;
+
+}
+
 //End of file
