@@ -1,0 +1,123 @@
+# ============================================================================
+#  Makefile fitCF                             Chris Plumberg, September 8, 2015
+# ============================================================================
+##
+##  Environments :	MAIN	= 	main sourcefile	
+##
+##  Usage : 	(g)make	[all]		compile the whole project		
+##			install	make all and copy binary to $INSTPATH
+##			clean		remove objectfiles in obj_$TYPE 
+##			distclean	remove all objectsfiles and binaries
+##  
+
+CC := $(shell `pwd`/configure_compiler_C++.sh)
+CFLAGS= $(shell `pwd`/configure_compiler_C++_Flags.sh)
+#CFLAGS += -g
+
+RM		=	rm -f
+O               =       .o
+LDFLAGS         =       $(CFLAGS)
+SYSTEMFILES     =       $(SRCGNU)
+SRCDIR		=	src
+
+# --------------- Files involved ------------------
+
+ifeq "$(MAIN)" ""
+MAIN		=	fit_correlation_function
+endif
+
+SRC		=	fit_correlation_function.cpp \
+			$(SRCDIR)/readindata.cpp \
+			$(SRCDIR)/fitCF.cpp \
+			$(SRCDIR)/fitCF_admin.cpp \
+			$(SRCDIR)/fitCF_IO.cpp \
+			$(SRCDIR)/fitCF_GFroutines.cpp \
+			$(SRCDIR)/Arsenal.cpp \
+			$(SRCDIR)/gauss_quadrature.cpp \
+			$(SRCDIR)/chebyshev.cpp \
+			$(SRCDIR)/stats.cpp
+
+INC		= 	fit_correlation_function.h \
+			$(SRCDIR)/parameters.h \
+			$(SRCDIR)/readindata.h \
+			$(SRCDIR)/fitCF.h \
+			$(SRCDIR)/Arsenal.h \
+			$(SRCDIR)/Stopwatch.h \
+			$(SRCDIR)/CPStopwatch.h \
+			$(SRCDIR)/fitCF_lib.h \
+			$(SRCDIR)/gauss_quadrature.h \
+			$(SRCDIR)/structs.h \
+			$(SRCDIR)/generate_processing_record.h \
+			$(SRCDIR)/plumberglib.h \
+			$(SRCDIR)/sorter.h \
+			$(SRCDIR)/chebyshev.h \
+			$(SRCDIR)/chebyshev_library.h \
+			$(SRCDIR)/stats.h
+
+# -------------------------------------------------
+
+OBJDIR		=	.
+SRCFILES 	= 	$(SRC) $(INC) GNUmakefile_fitCF
+#OBJECTS		=	$(addprefix $(OBJDIR)/, $(addsuffix $O, \
+#			$(notdir $(basename $(SRC)))))
+OBJECTS		=	$(addprefix $(OBJDIR)/, $(addsuffix $O, \
+			$(basename $(SRC))))
+TARGET		=	$(MAIN)
+#INSTPATH	=	$(HOME)/local/bin
+
+# --------------- Pattern rules -------------------
+
+$(OBJDIR)/%.o: %.cpp
+	$(CC) $(CFLAGS) -c $< -o $@
+
+%.cpp:
+	if [ -f $@ ] ; then touch $@ ; else false ; fi
+
+# -------------------------------------------------
+
+.PHONY:		all mkobjdir clean distclean print_vars
+
+#all:		mkobjdir $(TARGET)
+all:		$(TARGET)
+
+help:
+		@grep '^##' GNUmakefile_fitCF
+
+print_vars:
+		@echo $(CC)
+		@echo $(CFLAGS)
+		@echo $(LDFLAGS)
+		@echo $(OBJECTS)
+		@echo $(notdir $(basename $(SRC)))
+
+mkobjdir:	
+		@echo $(OBJECTS)	
+		-@mkdir -p $(OBJDIR)
+
+$(TARGET):	$(OBJECTS)	
+		@echo $(OBJECTS)	
+		$(CC) $(OBJECTS) -o $(TARGET) $(LDFLAGS) 
+#		strip $(TARGET)
+
+clean:		
+		-rm $(OBJECTS)
+
+distclean:	
+		-rm $(TARGET)
+		-rm -r obj
+
+#install:	$(TARGET)
+#		cp $(TARGET) $(INSTPATH)
+
+# --------------- Dependencies -------------------
+$(SRCDIR)/Arsenal.cpp: $(SRCDIR)/Arsenal.h
+$(SRCDIR)/stats.cpp: $(SRCDIR)/stats.h
+$(SRCDIR)/readindata.cpp: $(SRCDIR)/readindata.h
+$(SRCDIR)/fitCF_admin.cpp: $(SRCDIR)/fitCF.h $(SRCDIR)/Arsenal.h $(SRCDIR)/gauss_quadrature.h $(SRCDIR)/fitCF_lib.h
+$(SRCDIR)/fitCF_IO.cpp: $(SRCDIR)/fitCF.h $(SRCDIR)/Arsenal.h $(SRCDIR)/gauss_quadrature.h $(SRCDIR)/stats.h
+$(SRCDIR)/fitCF_GFroutines.cpp: $(SRCDIR)/fitCF.h $(SRCDIR)/Arsenal.h $(SRCDIR)/gauss_quadrature.h $(SRCDIR)/Stopwatch.h $(SRCDIR)/fitCF_lib.h $(SRCDIR)/stats.h
+$(SRCDIR)/fitCF.cpp: $(SRCDIR)/fitCF.h $(SRCDIR)/Arsenal.h $(SRCDIR)/gauss_quadrature.h $(SRCDIR)/CPStopwatch.h $(SRCDIR)/Stopwatch.h $(SRCDIR)/fitCF_lib.h
+fit_correlation_function.cpp: $(SRCDIR)/Stopwatch.h $(SRCDIR)/CPStopwatch.h $(SRCDIR)/parameters.h $(SRCDIR)/readindata.h $(SRCDIR)/fitCF.h \
+				$(SRCDIR)/generate_processing_record.h $(SRCDIR)/plumberglib.h $(SRCDIR)/sorter.h \
+				fit_correlation_function.h $(SRCDIR)/chebyshev.h
+

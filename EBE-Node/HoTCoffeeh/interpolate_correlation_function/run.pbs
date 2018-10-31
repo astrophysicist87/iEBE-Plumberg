@@ -1,0 +1,16 @@
+#!/bin/bash
+#PBS -l walltime=168:00:00
+#PBS -l nodes=1:ppn=1
+#PBS -j oe
+#PBS -S /bin/bash
+
+ulimit -n 1000
+
+# move to current Directory
+cd $currentDirectory
+echo 'Now working in '`pwd`
+echo 'Should be in' $currentDirectory
+
+time nice -n -20 ./interpolate_CF $workingDirectory 1> $workingDirectory/averaged_CF_slices.out 2> $workingDirectory/interpolate.err
+
+echo 'Finished processing and cleaning up'
