@@ -4,6 +4,8 @@
 #include <string>
 #include <sstream>
 #include <fstream>
+#include <cmath>
+#include <cstdlib>
 
 #include "src/EventRecord.h"
 #include "src/ParticleRecord.h"
@@ -26,6 +28,27 @@ int read_file_catalogue(string catalogue_name, vector<string> & allFilenames)
 	return ( allFilenames.size() );
 }
 
+
+inline void complete_particle(ParticleRecord & p)
+{
+	double E = p.E, px = p.px, py = p.py, pz = p.pz;
+	double t = p.t, x = p.x, y = p.y, z = p.z;
+
+	p.pT 		= sqrt(px*px+py*py);
+	p.pMag 		= sqrt(px*px+py*py+pz*pz);
+	p.pphi 		= atan2(py, px);
+	p.pY 		= 0.5*log(abs((E+pz)/(E-pz+1.e-100)));
+	p.pY = 0.0;
+	p.ps_eta 	= 0.5*log(abs((p.pMag+pz)/(p.pMag-pz+1.e-100)));
+
+	p.rT 		= sqrt(x*x+y*y);
+	p.r 		= sqrt(x*x+y*y+z*z);
+	p.phi 		= atan2(y, x);
+	p.tau 		= sqrt(t*t-z*z);
+	p.eta_s 	= 0.5*log(abs((t+z)/(t-z+1.e-100)));
+
+	return;
+}
 
 
 // function to read in a file containing some number of events
@@ -64,6 +87,8 @@ void read_in_file(string filename, vector<EventRecord> & eventsInFile)
 		particle.x 			= x;
 		particle.y 			= y;
 		particle.z 			= z;
+
+		complete_particle(particle);
 
 		// Decide what to do with new particle
 		// if on first iteration

@@ -15,13 +15,14 @@ CC := g++
 #running with icpc
 #CFLAGS= $(shell ../../crank/configure_compiler_C++_Flags.sh)
 #running with g++
-CFLAGS= -O3 -Wall
-CFLAGS += -lgsl -lgslcblas -g -Wall -Warray-bounds -Wchar-subscripts -Wcomment \
-						-Wenum-compare -Wformat -Wuninitialized -Wmaybe-uninitialized \
-						-Wmain -Wnarrowing -Wnonnull -Wparentheses \
-						-Wreorder -Wreturn-type -Wsequence-point -Wtrigraphs \
-						-Wunused-function -Wunused-but-set-variable -Wunused-variable \
-						-Wwrite-strings
+CFLAGS= -O3
+#CFLAGS += -Wall
+#CFLAGS += -lgsl -lgslcblas -g -Wall -Warray-bounds -Wchar-subscripts -Wcomment \
+#						-Wenum-compare -Wformat -Wuninitialized -Wmaybe-uninitialized \
+#						-Wmain -Wnarrowing -Wnonnull -Wparentheses \
+#						-Wreorder -Wreturn-type -Wsequence-point -Wtrigraphs \
+#						-Wunused-function -Wunused-but-set-variable -Wunused-variable \
+#						-Wwrite-strings
 #CFLAGS += -Wsign-compare -Wpointer-sign
 #CFLAGS += -lgsl -lgslcblas -g
 ###CFLAGS += -lgsl -lgslcblas -g -profile-functions -profile-loops=all -profile-loops-report=2
@@ -40,14 +41,17 @@ endif
 
 SRC		=	main.cpp \
 			$(SRCDIR)/Arsenal.cpp \
-			$(SRCDIR)/ParameterReader.cpp
+			$(SRCDIR)/ParameterReader.cpp \
+			$(SRCDIR)/SingleParticleSpectra.cpp \
+			$(SRCDIR)/HBT_event_generator.cpp
 
 INC		= 	main.h \
 			$(SRCDIR)/EventRecord.h \
 			$(SRCDIR)/ParticleRecord.h \
 			$(SRCDIR)/Stopwatch.h \
 			$(SRCDIR)/Arsenal.h \
-			$(SRCDIR)/ParameterReader.h
+			$(SRCDIR)/ParameterReader.h \
+			$(SRCDIR)/HBT_event_generator.h
 
 # -------------------------------------------------
 
@@ -97,9 +101,9 @@ install:	$(TARGET)
 # --------------- Dependencies -------------------
 $(SRCDIR)/Arsenal.cpp: $(SRCDIR)/Arsenal.h
 $(SRCDIR)/ParameterReader.cpp: $(SRCDIR)/ParameterReader.h $(SRCDIR)/Arsenal.h
-#$(SRCDIR)/HBT_event_generator.cpp: $(SRCDIR)/HBT_event_generator.h $(SRCDIR)/Arsenal.h \
-#									$(SRCDIR)/Stopwatch.h $(SRCDIR)/EventRecord.h \
-#									$(SRCDIR)/ParticleRecord.h
+$(SRCDIR)/HBT_event_generator.cpp: $(SRCDIR)/HBT_event_generator.h $(SRCDIR)/Arsenal.h \
+									$(SRCDIR)/Stopwatch.h $(SRCDIR)/EventRecord.h \
+									$(SRCDIR)/ParticleRecord.h
 ./main.cpp: $(SRCDIR)/Stopwatch.h $(SRCDIR)/ParameterReader.h main.h $(SRCDIR)/EventRecord.h \
-#			$(SRCDIR)/ParticleRecord.h
+			$(SRCDIR)/ParticleRecord.h
 

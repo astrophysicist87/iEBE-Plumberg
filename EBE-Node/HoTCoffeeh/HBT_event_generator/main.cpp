@@ -7,7 +7,7 @@
 #include <sys/time.h>
 
 #include "src/Stopwatch.h"
-//#include "src/HBT_event_generator.h"
+#include "src/HBT_event_generator.h"
 #include "src/ParameterReader.h"
 #include "src/EventRecord.h"
 #include "src/ParticleRecord.h"
@@ -18,20 +18,20 @@ using namespace std;
 int main(int argc, char *argv[])
 {
 	// Display intro
-	cout << endl
-			<< "              HBT event generator              " << endl
-			<< endl
-			<< "  Ver 1.0   ----- Christopher Plumberg, 10/2018" << endl;
+	//cout << endl
+	//		<< "              HBT event generator              " << endl
+	//		<< endl
+	//		<< "  Ver 1.0   ----- Christopher Plumberg, 10/2018" << endl;
 	//cout << endl << "**********************************************************" << endl;
 	//display_logo(2); // Hail to the king~
 	//cout << endl << "**********************************************************" << endl << endl;
    
 
 	// Read-in parameters
-	/*ParameterReader * paraRdr = new ParameterReader;
-	paraRdr->readFromFile("parameters.dat");
+	ParameterReader * paraRdr = new ParameterReader;
+	paraRdr->readFromFile("./parameters.dat");
 	paraRdr->readFromArguments(argc, argv);
-	paraRdr->echo();*/
+	//paraRdr->echo();
 
 
 	// Start timing
@@ -94,19 +94,22 @@ int main(int argc, char *argv[])
 	// Create HBT_event_generator object from allEvents
 	HBT_event_generator HBT_event_ensemble(paraRdr, allEvents);
 
+	HBT_event_ensemble.Compute_spectra();
 
+	/*
 	// Compute correlation function
 	HBT_event_ensemble.Compute_correlation_function();
 
 
 	// Output correlation function
 	HBT_event_ensemble.Output_correlation_function();
+	*/
 
 
 	// Print out run-time
 	sw.Stop();
-	cout 	<< "Finished everything in "
-			<< sw.printTime() << " seconds." << endl;
+	//cout 	<< "Finished everything in "
+	//		<< sw.printTime() << " seconds." << endl;
 
 	// Wrap it up!
 	return (0);
