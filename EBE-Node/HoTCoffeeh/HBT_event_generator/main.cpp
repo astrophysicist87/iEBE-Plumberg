@@ -39,39 +39,19 @@ int main(int argc, char *argv[])
 	sw.Start();
 
 
-	// Specify path
-    string workingDirectory = "./results";
-
-
-	// Load pdg.dat and any relevant resonance information
-	//int particle_idx = 1;	//pion^+
-
-
 	// Specify files containing all position-momentum information
 	// from which to construct HBT correlation function
 	vector<string> all_file_names;
 	read_file_catalogue("./catalogue.dat", all_file_names);
 
 
+	// Vector to hold all event information
+	vector<EventRecord> allEvents;
+
+
 	// Read in the files
-	vector<EventRecord> allEvents, eventsInFile;
+	get_all_events(all_file_names, allEvents);
 
-	allEvents.clear();
-	for (int iFile = 0; iFile < all_file_names.size(); ++iFile)
-	{
-		// Reset
-		eventsInFile.clear();
-
-
-		// Read in this file
-		read_in_file(all_file_names[iFile], eventsInFile);
-
-
-		// Concatenate these events to allEvents vector
-		allEvents.insert( allEvents.end(),
-							eventsInFile.begin(),
-							eventsInFile.end() );
-	}
 
 	// check that everything was read in correctly
 	/*for (int iEvent = 0; iEvent < allEvents.size(); ++iEvent)
@@ -94,13 +74,22 @@ int main(int argc, char *argv[])
 	// Create HBT_event_generator object from allEvents
 	HBT_event_generator HBT_event_ensemble(paraRdr, allEvents);
 
+
+	// Check single-particle spectra first
 	HBT_event_ensemble.Compute_spectra();
 
-	/*
-	// Compute correlation function
+
+	// Numerator and denominator in definition
+	// of correlation function
+	HBT_event_ensemble.Compute_numerator();
+	HBT_event_ensemble.Compute_denominator();
+
+
+	// Compute correlation function itself
 	HBT_event_ensemble.Compute_correlation_function();
 
 
+	/*
 	// Output correlation function
 	HBT_event_ensemble.Output_correlation_function();
 	*/
@@ -110,6 +99,7 @@ int main(int argc, char *argv[])
 	sw.Stop();
 	//cout 	<< "Finished everything in "
 	//		<< sw.printTime() << " seconds." << endl;
+
 
 	// Wrap it up!
 	return (0);

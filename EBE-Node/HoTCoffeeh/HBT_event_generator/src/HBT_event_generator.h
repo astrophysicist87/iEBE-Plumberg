@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <cstdlib>
+#include <complex>
 
 #include "ParameterReader.h"
 #include "Arsenal.h"
@@ -15,6 +16,8 @@
 #include "ParticleRecord.h"
 
 using namespace std;
+
+const complex<double> i(0.0, 1.0);
 
 class HBT_event_generator
 {
@@ -45,6 +48,7 @@ class HBT_event_generator
 
 		vector<double> pT_pts, pphi_pts, pY_pts;
 		vector<double> KT_pts, Kphi_pts, KL_pts;
+		vector<double> qo_pts, qs_pts, ql_pts;
 
 		vector<double> dN_pTdpTdpphidpY;
 		
@@ -111,39 +115,42 @@ class HBT_event_generator
 
 		~HBT_event_generator();
 
+		////////////////////
 		// Library functions
-		//inline int bin_function( double datapoint, const vector<double> & points );
-		//inline int indexer(int ipT, int ipphi, int ipY);
-
-		//inline double get_q0(double m, double qo, double qs, double ql, double KT, double KL);
-
 		inline int bin_function( double datapoint, const vector<double> & points )
 		{
-			//out << "Here..." << endl;
-
 			int result = (int)( ( datapoint - points[0] )
 							* double( points.size()-1 )
 							/ ( points[points.size()-1] - points[0] ) );
 
-			//out << "...to here." << endl;
-
 			// Assume uniform bin-widths for now
 			return ( result );
 		}
-
+		////////////////////
 		inline int indexer(int ipT, int ipphi, int ipY)
 		{
-			return ( ( ipT * n_pphi_bins + ipphi ) * 1 + ipY );
+			return ( ( ipT * n_pphi_bins + ipphi )
+							* n_pY_bins + ipY );
 		}
-
-
+		////////////////////
+		inline int indexer(int iKT, int iKphi, int iKL, int iqo, int iqs, int iql)
+		{
+			return (
+					( ( ( ( iKT * n_Kphi_bins + iKphi )
+								* n_KL_bins + iKL )
+								* n_qo_bins + iqo )
+								* n_qs_bins + iqs )
+								* n_ql_bins + iql
+					);
+		}
+		////////////////////
 		inline double get_q0(double m, double qo, double qs, double ql, double KT, double KL)
 		{
 			double xi2 = m*m + KT*KT + KL*KL + 0.25*(qo*qo + qs*qs + ql*ql);
 
 			return ( sqrt(xi2 + qo*KT + ql*KL) - sqrt(xi2 - qo*KT - ql*KL) );
 		}
-
+		////////////////////
 
 		// Functions to compute single-particle spectra
 		void Compute_spectra();
@@ -158,21 +165,14 @@ class HBT_event_generator
 		void Compute_dN_dpphi();
 		void Compute_dN_2pidpY();
 		// total multiplicity
-		//void Compute_N();
+		void Compute_N();
 
 
 
+		void Compute_numerator();
+		void Compute_denominator();
 
-
-
-
-		//void Compute_correlation_function();
-
-		//void Compute_numerator();
-		//void Compute_denominator();
-
-
-
+		void Compute_correlation_function();
 
 
 

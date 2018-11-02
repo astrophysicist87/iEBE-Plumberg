@@ -6,6 +6,7 @@
 #include <fstream>
 #include <cmath>
 #include <cstdlib>
+#include <complex>
 
 #include "src/EventRecord.h"
 #include "src/ParticleRecord.h"
@@ -28,7 +29,6 @@ int read_file_catalogue(string catalogue_name, vector<string> & allFilenames)
 	return ( allFilenames.size() );
 }
 
-
 inline void complete_particle(ParticleRecord & p)
 {
 	double E = p.E, px = p.px, py = p.py, pz = p.pz;
@@ -38,7 +38,7 @@ inline void complete_particle(ParticleRecord & p)
 	p.pMag 		= sqrt(px*px+py*py+pz*pz);
 	p.pphi 		= atan2(py, px);
 	p.pY 		= 0.5*log(abs((E+pz)/(E-pz+1.e-100)));
-	p.pY = 0.0;
+	//p.pY = 0.0;
 	p.ps_eta 	= 0.5*log(abs((p.pMag+pz)/(p.pMag-pz+1.e-100)));
 
 	p.rT 		= sqrt(x*x+y*y);
@@ -136,6 +136,29 @@ void read_in_file(string filename, vector<EventRecord> & eventsInFile)
 	eventsInFile.push_back(event);
 
 	infile.close();
+
+	return;
+}
+
+void get_all_events(vector<string> & all_file_names, vector<EventRecord> & allEvents)
+{
+	// Read in the files
+	vector<EventRecord> eventsInFile;
+
+	allEvents.clear();
+	for (int iFile = 0; iFile < all_file_names.size(); ++iFile)
+	{
+		// Reset
+		eventsInFile.clear();
+
+		// Read in this file
+		read_in_file(all_file_names[iFile], eventsInFile);
+
+		// Concatenate these events to allEvents vector
+		allEvents.insert( allEvents.end(),
+							eventsInFile.begin(),
+							eventsInFile.end() );
+	}
 
 	return;
 }
