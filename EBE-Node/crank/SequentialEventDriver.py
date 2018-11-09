@@ -241,7 +241,9 @@ HoTCoffeehControl = {
     'operationDir'                      :   'results',
     'executables'                       :   ('cfwr.e', 'svwr.e'),
     'entryShell'                        :   'HoTCoffeeh.sh',
-	'saveResultGlobs'					:	['*.dat', 'Processing_record.txt'],
+    'saveResultGlobs'			:   ['all*dat', 'total*dat', 'correlfunct3D*.dat', 	\
+ 					     '*spectra.dat', 'HBT*dat', 'resonance*h5', 	\
+ 					     'target*h5', 'resonance_fraction.dat', 'chosen_resonances.dat'],
 }
 HoTCoffeehParameters = {
     'grouping_particles'                :   0,
@@ -1180,7 +1182,8 @@ def sequentialEventDriverShell():
         resultDir = controlParameterList['resultDir']
         if path.exists(resultDir):
             rmtree(resultDir)
-            makedirs(resultDir)
+
+        makedirs(resultDir)
 
         # get simulation type
         simulationType = controlParameterList['simulation_type']
