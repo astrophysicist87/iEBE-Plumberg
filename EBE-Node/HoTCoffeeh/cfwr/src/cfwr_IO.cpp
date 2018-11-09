@@ -751,6 +751,7 @@ void CorrelationFunction::Output_resonance_fraction()
 	return;
 }
 
+/*
 void CorrelationFunction::Output_parameters_record()
 {
 	ostringstream filename_stream_HCparams;
@@ -901,5 +902,7 @@ void CorrelationFunction::Output_parameters_record()
 	return;
 
 }
+*/
+
 
 //End of file
