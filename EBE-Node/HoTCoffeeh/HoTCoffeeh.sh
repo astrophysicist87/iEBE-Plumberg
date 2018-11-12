@@ -21,5 +21,9 @@ then
 	echo 'Submitting cfwr.e now...'
         cfwrJobID=`qsub run_cfwr.pbs`
 	echo 'cfwrJobID=', $cfwrJobID
-	#qsub -W after:${cfwrJobID} ./done.sh
+	until [ `qstat -f $cfwrJobID | grep -c 'job_state = C'` -eq 1 ]
+	do
+		sleep 60
+	done
+	echo 'Finished everything in HoTCoffeeh.sh!'
 fi
