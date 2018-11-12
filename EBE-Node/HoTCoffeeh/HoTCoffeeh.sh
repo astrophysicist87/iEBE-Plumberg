@@ -12,14 +12,12 @@ then
 	./svwr.e $AllArgs
 fi
 
-cfwrName=cfwr_`echo $$`
-
 if [ "$RunCFWR" = true ]
 then
 	#valgrind --tool=massif ./cfwr.e $AllArgs
 	#valgrind --error-limit=no --track-origins=yes --leak-check=full ./cfwr.e $AllArgs
 	#valgrind ./cfwr.e $AllArgs
 	#./cfwr.e $AllArgs
-        qsub -N $cfwrName run_cfwr.pbs
-	qsub -hold_jid $cfwrName -N dummy ./done.sh
+        cfwrJobID=`qsub run_cfwr.pbs`
+	qsub -W after:${cfwrJobID} ./done.sh
 fi
