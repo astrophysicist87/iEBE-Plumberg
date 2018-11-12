@@ -62,7 +62,7 @@ hydroParameters = {
                               # need to be the same as dx in superMC
     'dy'        :   0.10,     # lattice spacing in y (fm)
                               # need to be the same as dy in superMC
-    'Edec'      :   0.3,  #
+    'Edec'      :   0.5,  #
     'ndx'       :   2,
     'ndy'       :   2,
     'ndt'       :   5,
@@ -108,7 +108,7 @@ photonEmissionParameters = {
 
 HoTCoffeehParameters = {
     'include_delta_f'                   :   1,
-    'SV_resonanceThreshold'             :   0.60,
-    'CF_resonanceThreshold'             :   0.60,
+    'SV_resonanceThreshold'             :   0.00,
+    'CF_resonanceThreshold'             :   0.00,
     'use_log_fit'                       :   1,
 }

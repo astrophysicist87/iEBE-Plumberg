@@ -804,14 +804,15 @@ def doHBTWithHydroResultFiles(fileList):
 	#run("nice -n %d bash ./" % (ProcessNiceness) \
 	#		+ HoTCoffeehExecutionEntry + " " + runSVWR + " " + runCFWR + " " + assignments, \
 	#	cwd=HoTCoffeehDirectory)
-	print 'Running', "nice -n %d bash ./" % (ProcessNiceness) \
-						+ HoTCoffeehExecutionEntry + " true false " + assignments
+	
+	commandToExecute = "nice -n %d bash ./" % (ProcessNiceness) \
+                                                + HoTCoffeehExecutionEntry + " true false " + assignments
+	
+	print 'Running', commandToExecute
 	
 	write_RUN_CFWR_PBS(HoTCoffeehDirectory, HoTCoffeehOperationDirectory, assignments)
 	
-	run("nice -n %d bash ./" % (ProcessNiceness) \
-			+ HoTCoffeehExecutionEntry + " true true " + assignments, \
-		cwd=HoTCoffeehDirectory)
+	run(commandToExecute, cwd=HoTCoffeehDirectory)
 
 	# save some of the important result files
 	worthStoring = []
