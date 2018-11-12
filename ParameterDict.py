@@ -111,4 +111,8 @@ HoTCoffeehParameters = {
     'SV_resonanceThreshold'             :   0.00,
     'CF_resonanceThreshold'             :   0.00,
     'use_log_fit'                       :   1,
+    'qtnpts'                            :   1,
+    'qxnpts'                            :   1,
+    'qynpts'                            :   1,
+    'qznpts'                            :   1,
 }

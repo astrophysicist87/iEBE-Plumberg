@@ -21,7 +21,8 @@ then
 	#valgrind ./cfwr.e $AllArgs
 	#./cfwr.e $AllArgs
         qsub -N $cfwrName run_cfwr.pbs
+	qsub -hold_jid $cfwrName -N dummy ./done.sh
 fi
 
 # forces HoTCoffeeh.sh and done.sh to wait for run_cfwr.pbs to finish
-qsub -hold_jid $cfwrName -N dummy ./done.sh
+#qsub -hold_jid $cfwrName -N dummy ./done.sh
