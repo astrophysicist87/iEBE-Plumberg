@@ -744,7 +744,6 @@ def write_RUN_CFWR_PBS(HCDirectory, assignments):
 	open(path.join(HCDirectory, "run_cfwr.pbs"), "w").write(
 """
 #!/usr/bin/env bash
-#PBS -N cfwr-%s
 #PBS -l walltime=48:00:00
 #PBS -l mem=8gb
 #PBS -j oe
@@ -754,7 +753,7 @@ cd %s
     ulimit -n 1000
     ./cfwr.e %s
 )
-""" % (HCDirectory, HCDirectory, assignments)
+""" % (HCDirectory, assignments)
     )
 
 def doHBTWithHydroResultFiles(fileList):
@@ -806,7 +805,7 @@ def doHBTWithHydroResultFiles(fileList):
 	#	cwd=HoTCoffeehDirectory)
 	
 	commandToExecute = "nice -n %d bash ./" % (ProcessNiceness) \
-                                                + HoTCoffeehExecutionEntry + " true false " + assignments
+                                                + HoTCoffeehExecutionEntry + " true true " + assignments
 	
 	print 'Running', commandToExecute
 	

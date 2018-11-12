@@ -12,11 +12,16 @@ then
 	./svwr.e $AllArgs
 fi
 
+cfwrName=cfwr-`echo $$`
+
 if [ "$RunCFWR" = true ]
 then
 	#valgrind --tool=massif ./cfwr.e $AllArgs
 	#valgrind --error-limit=no --track-origins=yes --leak-check=full ./cfwr.e $AllArgs
 	#valgrind ./cfwr.e $AllArgs
 	#./cfwr.e $AllArgs
-	qsub run_cfwr.pbs
+        qsub -N $cfwrName run_cfwr.pbs
 fi
+
+# forces HoTCoffeeh.sh and done.sh to wait for run_cfwr.pbs to finish
+qsub -hold_jid $cfwrName -N dummy ./done.sh
