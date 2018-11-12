@@ -20,10 +20,11 @@ then
 	#./cfwr.e $AllArgs
 	echo 'Submitting cfwr.e now...'
         cfwrJobID=`qsub run_cfwr.pbs`
-	echo 'cfwrJobID=', $cfwrJobID
+	echo 'cfwrJobID='$cfwrJobID
 	until [ `qstat -f $cfwrJobID | grep -c 'job_state = C'` -eq 1 ]
 	do
+		echo 'Starting to sleep at' `date`
 		sleep 60
 	done
-	echo 'Finished everything in HoTCoffeeh.sh!'
+	echo 'Finished everything in HoTCoffeeh.sh at '`date`'!'
 fi
