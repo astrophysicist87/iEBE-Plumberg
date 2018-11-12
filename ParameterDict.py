@@ -1,5 +1,5 @@
 controlParameterList = {
-    'simulation_type'       :   'hydro', 
+    'simulation_type'       :   'hybrid', 
     # options: 'hybrid', 'hydro', 'hydroEM', 'hydroEM_with_decaycocktail', 
     #          'hydroEM_preEquilibrium', 'hydroEM_with_decaycocktail_with_urqmd'
     'niceness'              :   0,  
@@ -62,7 +62,7 @@ hydroParameters = {
                               # need to be the same as dx in superMC
     'dy'        :   0.10,     # lattice spacing in y (fm)
                               # need to be the same as dy in superMC
-    'Edec'      :   0.5,  #
+    'Edec'      :   0.3,  #
     'ndx'       :   2,
     'ndy'       :   2,
     'ndt'       :   5,
@@ -111,8 +111,4 @@ HoTCoffeehParameters = {
     'SV_resonanceThreshold'             :   0.00,
     'CF_resonanceThreshold'             :   0.00,
     'use_log_fit'                       :   1,
-    'qtnpts'                            :   1,
-    'qxnpts'                            :   1,
-    'qynpts'                            :   1,
-    'qznpts'                            :   1,
 }

@@ -265,7 +265,8 @@ HoTCoffeehParameters = {
     'SV_npphi'                          :   48,
     'SV_resonanceThreshold'             :   1.00,
     'CF_npT'                           	:   15,
-    'CF_npphi'                          :   48,
+    'CF_npphi'                          :   36,
+    'CF_npY'                            :   21,
     'CF_resonanceThreshold'             :   0.60,
     'use_lambda'                        :   1,
     'use_log_fit'                       :   1,
@@ -805,7 +806,7 @@ def doHBTWithHydroResultFiles(fileList):
 	#	cwd=HoTCoffeehDirectory)
 	
 	commandToExecute = "nice -n %d bash ./" % (ProcessNiceness) \
-                                                + HoTCoffeehExecutionEntry + " false true " + assignments
+                                                + HoTCoffeehExecutionEntry + " true true " + assignments
 	
 	print 'Running', commandToExecute
 	
@@ -1263,6 +1264,9 @@ def sequentialEventDriverShell():
                 hydroResultFiles = [aFile for aFile in hydroWithInitialCondition(aInitialConditionFile)]
                 print controlParameterList['rootDir']            
             
+            #do HBT if possible
+            doHBTWithHydroResultFiles(hydroResultFiles)
+
             # fork simulation type here
             if simulationType == 'hybrid':
                 # perform iSS calculation and return the path to the OSCAR file
@@ -1288,9 +1292,9 @@ def sequentialEventDriverShell():
                 remove(urqmdOutputFilePath)
 
             # Plumberg: add HBT calculations here (defined only for hydroResultFiles so far)
-            print controlParameterList['rootDir']            
-            if simulationType != 'hybrid':
-                doHBTWithHydroResultFiles(hydroResultFiles)
+            #print controlParameterList['rootDir']            
+            #if simulationType != 'hybrid':
+            #doHBTWithHydroResultFiles(hydroResultFiles)
 
             elif simulationType == 'hydro':
                 # perform iS calculation and resonance decays
