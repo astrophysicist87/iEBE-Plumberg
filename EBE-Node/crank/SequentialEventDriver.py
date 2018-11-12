@@ -740,6 +740,22 @@ def iSWithResonancesWithHydroResultFiles(fileList):
         if aFile in worthStoring:
             move(aFile, controlParameterList['eventResultDir'])
 
+def write_RUN_CFWR_PBS(HCDirectory, HCOperationDirectory, assignments):
+	open(path.join(HCDirectory, "run_cfwr.pbs" % i), "w").write(
+"""
+#!/usr/bin/env bash
+#PBS -N cfwr-%s
+#PBS -l walltime=48:00:00
+#PBS -j oe
+#PBS -S /bin/bash
+cd %s
+(cd %s
+    ulimit -n 1000
+    ./cfwr.e %s
+)
+""" % (HCDirectory, HCDirectory, HCOperationDirectory, assignments)
+    )
+
 def doHBTWithHydroResultFiles(fileList):
 	"""
 		Perform HoTCoffeeh calculation.
@@ -788,7 +804,10 @@ def doHBTWithHydroResultFiles(fileList):
 	#		+ HoTCoffeehExecutionEntry + " " + runSVWR + " " + runCFWR + " " + assignments, \
 	#	cwd=HoTCoffeehDirectory)
 	print 'Running', "nice -n %d bash ./" % (ProcessNiceness) \
-						+ HoTCoffeehExecutionEntry + " true true " + assignments
+						+ HoTCoffeehExecutionEntry + " true false " + assignments
+	
+	write_RUN_CFWR_PBS(HoTCoffeehDirectory, HoTCoffeehOperationDirectory, assignments)
+	
 	run("nice -n %d bash ./" % (ProcessNiceness) \
 			+ HoTCoffeehExecutionEntry + " true true " + assignments, \
 		cwd=HoTCoffeehDirectory)
