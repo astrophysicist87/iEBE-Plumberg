@@ -805,7 +805,7 @@ def doHBTWithHydroResultFiles(fileList):
 	#	cwd=HoTCoffeehDirectory)
 	
 	commandToExecute = "nice -n %d bash ./" % (ProcessNiceness) \
-                                                + HoTCoffeehExecutionEntry + " true true " + assignments
+                                                + HoTCoffeehExecutionEntry + " false true " + assignments
 	
 	print 'Running', commandToExecute
 	

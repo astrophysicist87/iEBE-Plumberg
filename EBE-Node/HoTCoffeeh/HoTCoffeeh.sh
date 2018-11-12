@@ -18,6 +18,8 @@ then
 	#valgrind --error-limit=no --track-origins=yes --leak-check=full ./cfwr.e $AllArgs
 	#valgrind ./cfwr.e $AllArgs
 	#./cfwr.e $AllArgs
+	echo 'Submitting cfwr.e now...'
         cfwrJobID=`qsub run_cfwr.pbs`
+	echo 'cfwrJobID=', $cfwrJobID
 	qsub -W after:${cfwrJobID} ./done.sh
 fi
