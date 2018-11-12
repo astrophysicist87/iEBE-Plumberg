@@ -12,7 +12,7 @@ then
 	./svwr.e $AllArgs
 fi
 
-cfwrName=cfwr-`echo $$`
+cfwrName=cfwr_`echo $$`
 
 if [ "$RunCFWR" = true ]
 then
@@ -23,6 +23,3 @@ then
         qsub -N $cfwrName run_cfwr.pbs
 	qsub -hold_jid $cfwrName -N dummy ./done.sh
 fi
-
-# forces HoTCoffeeh.sh and done.sh to wait for run_cfwr.pbs to finish
-#qsub -hold_jid $cfwrName -N dummy ./done.sh
