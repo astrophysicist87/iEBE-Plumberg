@@ -695,6 +695,7 @@ def iSSWithHydroResultFiles(fileList):
             move(aFile, controlParameterList['eventResultDir'])
 
     # return OSCAR file path
+    print 'iSSOSCARFilepath =', iSSOSCARFilepath
     return iSSOSCARFilepath
 
 
