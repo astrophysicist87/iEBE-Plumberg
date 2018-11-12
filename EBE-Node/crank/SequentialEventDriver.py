@@ -158,7 +158,7 @@ hydroParameters = {
 iSSControl = {
     'mainDir'           :   'iSS',
     'operationDir'      :   'results',
-    'saveResultGlobs'   :   ['*vn*.dat'], # files in the operation directory matching these globs will be saved
+    'saveResultGlobs'   :   ['*vn*.dat','OSCAR.DAT'], # files in the operation directory matching these globs will be saved
     'OSCARFile'         :   'OSCAR.DAT',
     'executable'        :   'iSS.e',
 }
