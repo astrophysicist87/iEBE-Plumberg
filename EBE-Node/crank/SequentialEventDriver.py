@@ -810,7 +810,7 @@ def doHBTWithHydroResultFiles(fileList):
 	
 	print 'Running', commandToExecute
 	
-	write_RUN_CFWR_PBS(HoTCoffeehDirectory, HoTCoffeehOperationDirectory, assignments)
+	write_RUN_CFWR_PBS(HoTCoffeehDirectory, assignments)
 	
 	run(commandToExecute, cwd=HoTCoffeehDirectory)
 
