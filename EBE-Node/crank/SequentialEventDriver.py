@@ -241,7 +241,7 @@ HoTCoffeehControl = {
     'operationDir'                      :   'results',
     'executables'                       :   ('cfwr.e', 'svwr.e'),
     'entryShell'                        :   'HoTCoffeeh.sh',
-    'saveResultGlobs'			:   ['all*dat', 'total*dat', 'correlfunct3D*.dat', 	\
+    'saveResultGlobs'			:   ['*', 'all*dat', 'total*dat', 'correlfunct3D*.dat', 	\
  					     '*spectra.dat', 'HBT*dat', 'resonance*h5', 	\
  					     'target*h5', 'resonance_fraction.dat', 'chosen_resonances.dat'],
 }
@@ -669,7 +669,9 @@ def iSSWithHydroResultFiles(fileList):
         if not path.exists(aFile):
             raise ExecutionError("Hydro result file %s not found!" % aFile)
         else:
-            move(aFile, iSSOperationDirectory)
+            copy(aFile, iSSOperationDirectory)
+#            move(aFile, iSSOperationDirectory)
+
     
     # make sure all hadrons up to 2 GeV are calculated
     copy(path.join(iSSDirectory, 'EOS', 'chosen_particles_urqmd_v3.3+.dat'), 
@@ -695,7 +697,7 @@ def iSSWithHydroResultFiles(fileList):
             move(aFile, controlParameterList['eventResultDir'])
 
     # return OSCAR file path
-    print 'iSSOSCARFilepath =', iSSOSCARFilepath
+    #print 'iSSOSCARFilepath =', iSSOSCARFilepath
     return iSSOSCARFilepath
 
 
@@ -724,7 +726,9 @@ def iSWithResonancesWithHydroResultFiles(fileList):
         if not path.exists(aFile):
             raise ExecutionError("Hydro result file %s not found!" % aFile)
         else:
-            move(aFile, iSOperationDirectory)
+            copy(aFile, iSOperationDirectory)
+#            move(aFile, iSOperationDirectory)
+
     copy(path.join(iSDirectory, 'EOS', 'chosen_particles_s95pv1.dat'), 
          path.join(iSDirectory, 'EOS', 'chosen_particles.dat'))
     copy(path.join(iSDirectory, 'EOS', 'pdg-s95pv1_withDecayPhotons.dat'), 
@@ -786,7 +790,8 @@ def doHBTWithHydroResultFiles(fileList):
 		if not path.exists(aFile):
 			raise ExecutionError("Hydro result file %s not found!" % aFile)
 		else:
-			move(aFile, HoTCoffeehOperationDirectory)
+                       copy(aFile, HoTCoffeehOperationDirectory)
+#			move(aFile, HoTCoffeehOperationDirectory)
     
 	# form assignment string
 	assignments = formAssignmentStringFromDict(HoTCoffeehParameters)
@@ -848,7 +853,9 @@ def iSSeventplaneAngleWithHydroResultFiles(fileList):
         if not path.exists(aFile):
             raise ExecutionError("Hydro result file %s not found!" % aFile)
         else:
-            move(aFile, iSSOperationDirectory)
+            copy(aFile, iSSOperationDirectory)
+#            move(aFile, iSSOperationDirectory)
+
     copy(path.join(iSSDirectory, 'EOS', 'chosen_particles_urqmd_v3.3+.dat'), 
          path.join(iSSDirectory, 'EOS', 'chosen_particles.dat'))
     copy(path.join(iSSDirectory, 'EOS', 'pdg-urqmd_v3.3+.dat'), 
@@ -958,7 +965,8 @@ def photonEmissionWithHydroResultFiles(fileList):
         if not path.exists(aFile):
             raise ExecutionError("Hydro result file %s not found!" % aFile)
         else:
-            move(aFile, photonEmOperationDirectory)
+            copy(aFile, photonEmOperationDirectory)
+#            move(aFile, photonEmOperationDirectory)
 
     # form assignment string
     assignments = formAssignmentStringFromDict(photonEmissionParameters)

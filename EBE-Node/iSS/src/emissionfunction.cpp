@@ -214,7 +214,8 @@ EmissionFunctionArray::EmissionFunctionArray(
   dN_dx_filename = "results/dN_dx_%d.dat";
 
   OSCAR_header_filename = "OSCAR_header.txt";
-  OSCAR_output_filename = "OSCAR.DAT";
+  //OSCAR_output_filename = "OSCAR.DAT";
+  OSCAR_output_filename = "results/OSCAR.DAT";
 
   dN_dxtdy_4all = new double*[FO_length];
   for (long l=0; l<FO_length; l++)
@@ -2729,7 +2730,7 @@ void EmissionFunctionArray::shell()
     int historic_format = paraRdr->getVal("use_historic_flow_output_format");
     int MC_sampling = paraRdr->getVal("MC_sampling");
 
-    cout << "Plumberg CHECK: " << MC_Sampling << "   " << USE_OSCAR_FORMAT << endl;
+    //cout << "Plumberg CHECK: " << MC_Sampling << "   " << USE_OSCAR_FORMAT << endl;
 
     int perform_sampling_during_calculation = 0;
     if (MC_sampling==3)

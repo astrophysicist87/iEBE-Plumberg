@@ -326,6 +326,9 @@ int main(int argc, char *argv[])
 		}*/
 	}
 
+	// Save a record of input parameters to allow re-running if necessary
+	//correlation_function.Output_parameters_record();
+
 	//do some clean up
 	output << "Cleaning up..." << endl;
 	for(int i = 0; i < N_stableparticle; ++i)

@@ -430,6 +430,7 @@ class CorrelationFunction
 		void Output_fleshed_out_correlationfunction(int ipt, int ipphi, bool project_CF = true);
 		void Dump_spectra_array(string output_filename, double *** array_to_dump);
 		void Load_spectra_array(string output_filename, double *** array_to_read);
+		//void Output_parameters_record();
 
 		//parameters that the user is free to define
 		double plumberg_test_variable;
