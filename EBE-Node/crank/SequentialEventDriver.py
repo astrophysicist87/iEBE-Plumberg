@@ -1274,7 +1274,7 @@ def sequentialEventDriverShell():
                 print controlParameterList['rootDir']            
             
             #do HBT if possible
-            #doHBTWithHydroResultFiles(hydroResultFiles)
+            doHBTWithHydroResultFiles(hydroResultFiles)
 
             # fork simulation type here
             if simulationType == 'hybrid':
