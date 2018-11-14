@@ -675,8 +675,8 @@ def iSSWithHydroResultFiles(fileList):
 
     
     # make sure all hadrons up to 2 GeV are calculated
-    copy(path.join(iSSDirectory, 'EOS', 'chosen_particles_urqmd_v3.3+.dat'), 
-         path.join(iSSDirectory, 'EOS', 'chosen_particles.dat'))
+    #copy(path.join(iSSDirectory, 'EOS', 'chosen_particles_urqmd_v3.3+.dat'), 
+    #     path.join(iSSDirectory, 'EOS', 'chosen_particles.dat'))
     # make sure to use the pdg table with tagged decay photons
     copy(path.join(iSSDirectory, 'EOS', 'pdg-urqmd_v3.3+.dat'), 
          path.join(iSSDirectory, 'EOS', 'pdg.dat'))
