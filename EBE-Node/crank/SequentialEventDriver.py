@@ -213,6 +213,7 @@ urqmdControl = {
     'saveOutputFile'    :   True, # whether to save the output file
     'executable'        :   'urqmd.e',
     'entryShell'        :   'runqmd.sh',
+    'run_UrQMD'         :   False, # don't run UrQMD by default
 }
 urqmdParameters = {}
 
@@ -1280,30 +1281,27 @@ def sequentialEventDriverShell():
             if simulationType == 'hybrid':
                 # perform iSS calculation and return the path to the OSCAR file
                 OSCARFilePath = iSSWithHydroResultFiles(hydroResultFiles)
-                # perform osc2u
-                osc2uOutputFilePath = osc2uFromOSCARFile(OSCARFilePath)
-                # now urqmd
-                urqmdOutputFilePath = urqmdFromOsc2uOutputFile(
-                                                           osc2uOutputFilePath)
 
-                # copy and concatenate final results from all hydro events 
-                # into one file
-                combinedUrqmdFile = path.join(
-                    controlParameterList['resultDir'], 
-                    controlParameterList['combinedUrqmdFile'])
-                open(combinedUrqmdFile, 'a').writelines(
-                                         open(urqmdOutputFilePath).readlines())
-
-                # bin the combined result file to get flows
-                binUrqmdResultFiles(urqmdOutputFilePath)
-
-                # delete the huge final UrQMD combined file
-                remove(urqmdOutputFilePath)
-
-            # Plumberg: add HBT calculations here (defined only for hydroResultFiles so far)
-            #print controlParameterList['rootDir']            
-            #if simulationType != 'hybrid':
-            #doHBTWithHydroResultFiles(hydroResultFiles)
+		if urqmdControl['run_UrQMD']:
+	                # perform osc2u
+	                osc2uOutputFilePath = osc2uFromOSCARFile(OSCARFilePath)
+	                # now urqmd
+	                urqmdOutputFilePath = urqmdFromOsc2uOutputFile(
+	                                                           osc2uOutputFilePath)
+	
+	                # copy and concatenate final results from all hydro events 
+	                # into one file
+	                combinedUrqmdFile = path.join(
+	                    controlParameterList['resultDir'], 
+	                    controlParameterList['combinedUrqmdFile'])
+	                open(combinedUrqmdFile, 'a').writelines(
+	                                         open(urqmdOutputFilePath).readlines())
+	
+	                # bin the combined result file to get flows
+	                binUrqmdResultFiles(urqmdOutputFilePath)
+	
+	                # delete the huge final UrQMD combined file
+	                remove(urqmdOutputFilePath)
 
             elif simulationType == 'hydro':
                 # perform iS calculation and resonance decays
@@ -1344,11 +1342,11 @@ def sequentialEventDriverShell():
                 urqmdOutputFilePath = urqmdFromOsc2uOutputFile(
                                                            osc2uOutputFilePath)
 
-            #tarfile_name = (
-            #             controlParameterList['eventResultDir'].split('/')[-1])
-            #call("tar -cf %s.tar %s" % (tarfile_name, tarfile_name), 
-            #     shell=True, cwd=resultDir)
-            #call("rm -fr %s" % (tarfile_name,), shell=True, cwd=resultDir)
+            tarfile_name = (
+                         controlParameterList['eventResultDir'].split('/')[-1])
+            call("tar -cf %s.tar %s" % (tarfile_name, tarfile_name), 
+                 shell=True, cwd=resultDir)
+            call("rm -fr %s" % (tarfile_name,), shell=True, cwd=resultDir)
 
             # print current progress to terminal
             stdout.write("PROGRESS: %d events out of %d finished.\n" 
