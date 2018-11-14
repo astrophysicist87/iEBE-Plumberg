@@ -78,7 +78,7 @@ iSSParameters = {
     'include_deltaf_shear'          :   1,
     'calculate_vn'                  :   0,
     'MC_sampling'                   :   2,
-    'number_of_repeated_sampling'   :   10,
+    'number_of_repeated_sampling'   :   10000,
     'y_LB'                          :   -2.5,
     'y_RB'                          :   2.5,
     'sample_y_minus_eta_s_range'    :   2.0,
