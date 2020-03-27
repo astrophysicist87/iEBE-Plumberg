@@ -206,8 +206,8 @@ int main(int argc, char *argv[])
 	if (omit_specific_resonances)
 	{
 		vector<int> thermal_particles_to_omit;
-		thermal_particles_to_omit.push_back(particle_idx);	//push back pion(+) to ignore thermal pions
-		thermal_particles_to_omit.push_back(9);	//push back rho(+) to ignore thermal rhos (if doing phase space integration exactly)
+		//thermal_particles_to_omit.push_back(particle_idx);	//push back pion(+) to ignore thermal pions
+		thermal_particles_to_omit.push_back(8);	//ignore thermal etas
 		//double tmp = 0.0;
 		//double threshhold_of_thermal_resonances_to_omit = 0.6;	//60%
 		//get_important_resonances(particle_idx, &thermal_resonances_to_omit, particle, Nparticle, threshhold_of_thermal_resonances_to_omit, tmp, output);

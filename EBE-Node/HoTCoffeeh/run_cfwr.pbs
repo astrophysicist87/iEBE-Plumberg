@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+#PBS -l walltime=672:00:00
+#PBS -l mem=8gb
+#PBS -j oe
+#PBS -S /bin/bash
+
+cd $PBS_O_WORKDIR
+echo 'Currently in '`pwd`
+(
+    ulimit -n 1000
+    ./cfwr.e  chosenParticlesMode=0 calculate_CF_mode=0 nKT=101 KTmin=0.01 KTmax=1.01\
+		use_plane_psi_order=0 fit_with_projected_cfvals=1 use_lambda=1 qynpts=1\
+		delta_qz=0.0375 delta_qx=0.025 delta_qy=0.025 include_bulk_pi=0\
+		max_lifetime=100.0 use_extrapolation=1 tolerance=0.0 nKphi=48 SV_npphi=48\
+		use_log_fit=1 flag_negative_S=1 CF_resonanceThreshold=0.60\
+		particle_diff_tolerance=0.0 CF_npY=201 CF_npT=15 CF_npphi=36 flesh_out_cf=1\
+		n_order=4 ignore_long_lived_resonances=1 qtnpts=31 grouping_particles=0\
+		SV_resonanceThreshold=0.0 include_delta_f=0 SV_npT=15 qxnpts=7 qznpts=3
+)
