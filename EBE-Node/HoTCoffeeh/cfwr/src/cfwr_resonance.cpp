@@ -266,7 +266,7 @@ void CorrelationFunction::Do_resonance_integrals(int parent_resonance_particle_i
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 		{
-if (RUN_TRUNCATED_CALCULATION && ipT != 0 && ipT != 4 && ipT != 8)
+if (RUN_TRUNCATED_CALCULATION && /*ipT != 0 && ipT != 4 && ipT != 8*/ ipT != 7)
 	continue;
 if (RUN_TRUNCATED_CALCULATION && ipY != ipY0)
 	continue;
@@ -382,7 +382,7 @@ if (RUN_TRUNCATED_CALCULATION && ipphi > 0)
 		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
 		for (int ipY = 0; ipY < n_pY_pts; ++ipY)
 		{
-if (RUN_TRUNCATED_CALCULATION && ipT != 0 && ipT != 4 && ipT != 8)
+if (RUN_TRUNCATED_CALCULATION && /*ipT != 0 && ipT != 4 && ipT != 8*/ ipT != 7)
 	continue;
 if (RUN_TRUNCATED_CALCULATION && ipY != ipY0)
 	continue;
@@ -883,7 +883,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 				SSSpm = lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
 			}
 			
-			/*
+			///*
 			bool check_final_interpolation = true;
 			if (check_final_interpolation)
 			{
@@ -898,7 +898,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 						<< "\t\t" << iCS << ": " << SXCpm << "   " << SXSpm << endl
 						<< "\t\t" << tempCS[2*iCS+0] << "   " << tempCS[2*iCS+1] << endl;
 			}
-			*/
+			//*/
 
 			results[qpt_cs_idx] += akr*SCCpm-aki*SCSpm;
 			results[qpt_cs_idx+1] += akr*SCSpm+aki*SCCpm;
@@ -922,7 +922,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 		    qpt_cs_idx += 4;
 		//}
 
-		bool check_final_increment = false;
+		bool check_final_increment = true;
 		if (check_final_increment and not use_exact)	//don't bother to check if we're just using exact!
 		{
 			double tempR = 0.0, tempI = 0.0;
