@@ -895,8 +895,8 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 				cout << "final interpolation check: "
 						<< ptr << "   " << phir << "   " << spyr << "   " << spyr+current_pY_shift << "   " << qt_pts[current_iqt] << "   "
 						<< qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[current_iqz] << endl
-						<< "\t\t" << iCS << ": " << SXCpm << "   " << SXSpm << endl
-						<< "\t\t" << tempCS[2*iCS+0] << "   " << tempCS[2*iCS+1] << endl;
+						<< "\t\t" << SCCpm << "   " << SCSpm << "   " << SSCpm << "   " << SSSpm << endl
+						<< "\t\t" << tempCS[0] << "   " << tempCS[1] << "   " << tempCS[2] << "   " << tempCS[3] << endl;
 			}
 			//*/
 
