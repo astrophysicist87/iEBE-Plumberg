@@ -795,8 +795,8 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 		complex<double> q_dep_factor = one/(one - i*ak);
 		//cout << "CHECK AK: " << akr << "   " << aki << "   "  << q_dep_factor.real() << "   " << q_dep_factor.imag() << endl;
 
-		bool use_exact = bool(RUN_TRUNCATED_CALCULATION);
-		//bool use_exact = false;
+		//bool use_exact = bool(RUN_TRUNCATED_CALCULATION);
+		bool use_exact = false;
 		double tempCS[4];
 		if (use_exact)
 		{
@@ -883,7 +883,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 				SSSpm = lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
 			}
 			
-			///*
+			/*
 			bool check_final_interpolation = true;
 			if (check_final_interpolation)
 			{
@@ -898,7 +898,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 						<< "\t\t" << SCCpm << "   " << SCSpm << "   " << SSCpm << "   " << SSSpm << endl
 						<< "\t\t" << tempCS[0] << "   " << tempCS[1] << "   " << tempCS[2] << "   " << tempCS[3] << endl;
 			}
-			//*/
+			*/
 
 			results[qpt_cs_idx] += akr*SCCpm-aki*SCSpm;
 			results[qpt_cs_idx+1] += akr*SCSpm+aki*SCCpm;
