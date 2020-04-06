@@ -461,9 +461,9 @@ CorrelationFunction::CorrelationFunction(
 	// - pT points
 	SP_pT 		= new double [n_pT_pts];
 	SP_pT_wts 	= new double [n_pT_pts];
-	/*gauss_quadrature(n_pT_pts, 5, 0.0, 0.0, 0.0,
-						13.0*n_pT_pts/15.0, SP_pT, SP_pT_wts);*/
-	stratify_npts( 1e-6, 1.0+1e-6, 4.0, int(0.75*n_pT_pts), n_pT_pts, SP_pT );
+	gauss_quadrature(n_pT_pts, 5, 0.0, 0.0, 0.0,
+						13.0*n_pT_pts/15.0, SP_pT, SP_pT_wts);
+	//stratify_npts( 1e-6, 1.0+1e-6, 4.0, int(0.75*n_pT_pts), n_pT_pts, SP_pT );
 
 	//for (int ipt = 0; ipt < n_pT_pts; ++ipt)
 	//	cout << ipt << "   " << SP_pT[ipt] << endl;
