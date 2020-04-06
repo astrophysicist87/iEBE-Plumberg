@@ -102,6 +102,28 @@ void stratify_npts(double a, double b, int n1, int npts, double * x)
 	return;
 }
 
+
+void stratify_npts( double min, double a, double b,
+                    int n1, int npts, double * x )
+{
+        // take a and b to be positive
+        // region 1 is "inner" stratum, region 2 is "outer" stratum
+        // a - scale of inner stratum
+        // b - scale of outer stratum
+        int m = npts - n1;
+
+ 		double Delta_x_1 = a / double(n1-1);
+        double Delta_x_2 = (b-a) / (double)m;
+
+        for (int i = 0; i < n1; i++)
+            x[i] = min + (double)i * Delta_x_1;
+        for (int i = n1; i < npts; i++)
+            x[i] = min + a + (double)(i-n1+1) * Delta_x_2;
+
+        return;
+}
+
+
 void scalepoints(double * x, double a, double b, double scale, int n)
 {
 // n is length of x
