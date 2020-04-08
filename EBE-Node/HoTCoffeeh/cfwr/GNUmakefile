@@ -78,7 +78,7 @@ INC		= 	main.h \
 
 # -------------------------------------------------
 
-SRCFILES 	= 	$(SRC) $(INC) GNUmakefile_cfwr
+SRCFILES 	= 	$(SRC) $(INC) GNUmakefile
 OBJECTS				=	$(addprefix $(OBJDIR)/, $(addsuffix $O, \
 						$(notdir $(basename $(SRC)))))
 OBJECTS				+=	$(addsuffix $O, $(basename $(MAINSRC)))
@@ -107,7 +107,7 @@ $(TARGET):	$(OBJECTS)
 all:		mkobjdir $(TARGET)
 
 help:
-		@grep '^##' GNUmakefile_cfwr
+		@grep '^##' GNUmakefile
 
 mkobjdir:	
 		-@mkdir -p $(OBJDIR)
