@@ -87,9 +87,6 @@ INSTPATH	=	..
 
 # --------------- Pattern rules -------------------
 
-$(TARGET):	$(OBJECTS)	
-	$(CC) $(OBJECTS) -o $(TARGET) $(LDFLAGS) 
-
 ./%.o: ./%.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
