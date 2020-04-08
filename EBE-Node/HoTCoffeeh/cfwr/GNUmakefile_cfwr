@@ -86,16 +86,15 @@ INSTPATH	=	..
 
 # --------------- Pattern rules -------------------
 
-%.o: %.cpp
-	$(CC) $(CFLAGS) -c -fPIC $< -o $@
+./%.o: ./%.cpp
+	$(CC) $(CFLAGS) -c $< -o $@
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	-@mkdir -p $(OBJDIR)
-	$(CC) $(CFLAGS) -c -fPIC $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
-#$(SRCDIR)/%.cpp:
-#%.cpp:
-#	if [ -f $@ ] ; then touch $@ ; else false ; fi
+$(SRCDIR)/%.cpp:
+	if [ -f $@ ] ; then touch $@ ; else false ; fi
 
 $(TARGET):	$(OBJECTS)	
 	$(CC) $(OBJECTS) -o $(TARGET) $(LDFLAGS) 
