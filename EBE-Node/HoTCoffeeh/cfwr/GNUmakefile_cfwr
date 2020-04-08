@@ -93,7 +93,8 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	-@mkdir -p $(OBJDIR)
 	$(CC) $(CFLAGS) -c -fPIC $< -o $@
 
-$(SRCDIR)/%.cpp:
+#$(SRCDIR)/%.cpp:
+%.cpp:
 	if [ -f $@ ] ; then touch $@ ; else false ; fi
 
 $(TARGET):	$(OBJECTS)	
