@@ -94,8 +94,8 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	$(CC) $(CFLAGS) -c -fPIC $< -o $@
 
 #$(SRCDIR)/%.cpp:
-%.cpp:
-	if [ -f $@ ] ; then touch $@ ; else false ; fi
+#%.cpp:
+#	if [ -f $@ ] ; then touch $@ ; else false ; fi
 
 $(TARGET):	$(OBJECTS)	
 	$(CC) $(OBJECTS) -o $(TARGET) $(LDFLAGS) 
