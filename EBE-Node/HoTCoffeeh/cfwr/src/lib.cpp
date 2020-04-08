@@ -8,7 +8,7 @@
 #include <boost/spirit/include/phoenix_core.hpp>
 #include <boost/spirit/include/phoenix_operator.hpp>
 
-#include "lib.h"
+#include "../include/lib.h"
 
 using namespace std;
 

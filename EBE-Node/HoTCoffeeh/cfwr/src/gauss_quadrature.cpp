@@ -6,7 +6,7 @@
 # include <ctime>
 # include <cstring>
 
-#include "gauss_quadrature.h"
+#include "../include/gauss_quadrature.h"
 
 using namespace std;
 

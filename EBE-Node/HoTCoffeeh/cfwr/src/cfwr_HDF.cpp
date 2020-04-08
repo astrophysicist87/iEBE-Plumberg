@@ -12,9 +12,9 @@
 
 #include "H5Cpp.h"
 
-#include "cfwr.h"
-#include "cfwr_lib.h"
-#include "lib.h"
+#include "../include/cfwr.h"
+#include "../include/cfwr_lib.h"
+#include "../include/lib.h"
 
 using namespace std;
 

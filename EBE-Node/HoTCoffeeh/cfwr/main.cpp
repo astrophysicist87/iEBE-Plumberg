@@ -11,13 +11,13 @@
 #include<gsl/gsl_rng.h>
 #include<gsl/gsl_randist.h>
 
-#include "src/Stopwatch.h"
-#include "src/parameters.h"
-#include "src/readindata.h"
-#include "src/cfwr.h"
-#include "src/generate_processing_record.h"
-#include "src/lib.h"
-#include "src/ParameterReader.h"
+#include "include/Stopwatch.h"
+#include "include/parameters.h"
+#include "include/readindata.h"
+#include "include/cfwr.h"
+#include "include/generate_processing_record.h"
+#include "include/lib.h"
+#include "include/ParameterReader.h"
 #include "main.h"
 
 using namespace std;

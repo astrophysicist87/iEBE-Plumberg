@@ -7,8 +7,8 @@ See ParameterReader.h for brief description and change log.
 #include <fstream>
 #include "stdlib.h"
 
-#include "Arsenal.h"
-#include "ParameterReader.h"
+#include "../include/Arsenal.h"
+#include "../include/ParameterReader.h"
 
 using namespace std;
 

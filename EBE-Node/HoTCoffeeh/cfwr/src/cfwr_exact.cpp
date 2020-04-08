@@ -14,10 +14,10 @@
 #include<cstdlib>
 #include<numeric>
 
-#include "cfwr.h"
-#include "cfwr_lib.h"
-#include "gauss_quadrature.h"
-#include "bessel.h"
+#include "../include/cfwr.h"
+#include "../include/cfwr_lib.h"
+#include "../include/gauss_quadrature.h"
+#include "../include/bessel.h"
 
 using namespace std;
 

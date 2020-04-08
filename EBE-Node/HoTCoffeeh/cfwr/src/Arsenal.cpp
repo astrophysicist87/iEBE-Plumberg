@@ -12,7 +12,7 @@
 #include<gsl/gsl_rng.h>
 #include<gsl/gsl_randist.h>
 
-#include "Arsenal.h"
+#include "../include/Arsenal.h"
 
 using namespace std;
 

@@ -9,8 +9,8 @@
 #include<vector>
 #include<algorithm>
 
-#include "readindata.h"
-#include "lib.h"
+#include "../include/readindata.h"
+#include "../include/lib.h"
 
 using namespace std;
 

@@ -7,10 +7,10 @@
 #include<vector>
 #include<stdio.h>
 
-#include "cfwr.h"
-#include "cfwr_lib.h"
-#include "Arsenal.h"
-#include "gauss_quadrature.h"
+#include "../include/cfwr.h"
+#include "../include/cfwr_lib.h"
+#include "../include/Arsenal.h"
+#include "../include/gauss_quadrature.h"
 
 using namespace std;
 

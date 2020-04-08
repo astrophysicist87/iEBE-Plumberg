@@ -9,12 +9,12 @@
 #include<time.h>
 #include<complex>
 
-#include "cfwr.h"
-#include "cfwr_lib.h"
-#include "Arsenal.h"
-#include "Stopwatch.h"
-#include "fastexp.h"
-#include "gauss_quadrature.h"
+#include "../include/cfwr.h"
+#include "../include/cfwr_lib.h"
+#include "../include/Arsenal.h"
+#include "../include/Stopwatch.h"
+#include "../include/fastexp.h"
+#include "../include/gauss_quadrature.h"
 
 using namespace std;
 

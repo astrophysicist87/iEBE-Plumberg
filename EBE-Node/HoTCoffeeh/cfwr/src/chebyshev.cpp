@@ -2,8 +2,8 @@
 #include <iostream>
 #include <stdlib.h>
 
-#include "chebyshev_library.h"
-#include "chebyshev.h"
+#include "../include/chebyshev_library.h"
+#include "../include/chebyshev.h"
 
 using namespace std;
 using namespace csf;
