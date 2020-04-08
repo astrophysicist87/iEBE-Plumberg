@@ -36,8 +36,9 @@ ifeq "$(MAIN)" ""
 MAIN		=	cfwr.e
 endif
 
-SRC		=	main.cpp \
-			$(SRCDIR)/lib.cpp \
+MAINSRC     =   main.cpp
+
+SRC		=	$(SRCDIR)/lib.cpp \
 			$(SRCDIR)/cbessik.cpp \
 			$(SRCDIR)/cbessjy.cpp \
 			$(SRCDIR)/bessik.cpp \
@@ -98,6 +99,9 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 
 $(SRCDIR)/%.cpp:
 	if [ -f $@ ] ; then touch $@ ; else false ; fi
+
+$(TARGET):	$(OBJECTS)	
+	$(CC) $(OBJECTS) -o $(TARGET) $(LDFLAGS) 
 
 # -------------------------------------------------
 
