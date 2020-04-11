@@ -881,6 +881,27 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 				val2 = lin_int(del_phir_phi0, one_by_pphidiff, val12, val22);
 
 				SSSpm = lin_int(del_pyr_py0, one_by_pYdiff, val1, val2);
+
+				/*
+				// Add this part here just to make sure approx and exact agree
+				double tempR = 0.0, tempI = 0.0;
+				tempCS[0] = 0.0, tempCS[1] = 0.0, tempCS[2] = 0.0, tempCS[3] = 0.0;
+				Cal_dN_dypTdpTdphi_with_weights_function_and_decay_etas_integ(
+					current_parent_resonance, pT0, phi0, py0,
+					qt_pts[current_iqt], qx_pts[iqx], qy_pts[iqy], qz_pts[current_iqz],
+					&tempCS[0], &tempCS[1], &tempCS[2], &tempCS[3],	&tempR, &tempI);
+				cout << "CHECK GRID: " << endl << "\t\t"
+						<< pT0 << "   " << phi0 << "   " << py0 << "; " << qt_pts[current_iqt] << "   "
+						<< qx_pts[iqx] << "   " << qy_pts[iqy] << "   " << qz_pts[current_iqz] << endl
+						<< "\t\t"
+						<< val11_arr[reversible_qpt_cs_idx+0] << "   "
+						<< val11_arr[reversible_qpt_cs_idx+1] << "   "
+						<< val11_arr[reversible_qpt_cs_idx+2] << "   "
+						<< val11_arr[reversible_qpt_cs_idx+3] << endl
+						<< "\t\t" << tempCS[0] << "   " << tempCS[1]
+						<< "   " << tempCS[2] << "   " << tempCS[3] << endl;
+				*/
+
 			}
 			
 			/*

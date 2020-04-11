@@ -1262,8 +1262,12 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 			double mT = sqrt(pT*pT+localmass*localmass);
 			double alpha = one_by_Tdec*gammaT*mT;
 			
-			Iint2(alpha, beta, gamma, I0_a_b_g_re, I1_a_b_g_re, I2_a_b_g_re, I3_a_b_g_re, I0_a_b_g_im, I1_a_b_g_im, I2_a_b_g_im, I3_a_b_g_im);
-			Iint2(2.0*alpha, beta, gamma, I0_2a_b_g_re, I1_2a_b_g_re, I2_2a_b_g_re, I3_2a_b_g_re, I0_2a_b_g_im, I1_2a_b_g_im, I2_2a_b_g_im, I3_2a_b_g_im);
+			Iint2( alpha, beta, gamma,
+					I0_a_b_g_re, I1_a_b_g_re, I2_a_b_g_re, I3_a_b_g_re,
+					I0_a_b_g_im, I1_a_b_g_im, I2_a_b_g_im, I3_a_b_g_im );
+			Iint2( 2.0*alpha, beta, gamma,
+					I0_2a_b_g_re, I1_2a_b_g_re, I2_2a_b_g_re, I3_2a_b_g_re,
+					I0_2a_b_g_im, I1_2a_b_g_im, I2_2a_b_g_im, I3_2a_b_g_im );
 
 			double A = tau*prefactor*mT*da0;
 			double a = mT*mT*(pi00 + pi33);
@@ -1383,6 +1387,320 @@ void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights(int local_pid, int ipY
 	
 	return;
 }
+
+
+/*
+//////////////////////////////////////////
+void CorrelationFunction::Cal_dN_dypTdpTdphi_with_weights_adjustable(int local_pid, int ipY, int iqt, int iqz, double * BC_chunk, int max_n_terms_to_compute, int local_part_mode)
+{
+
+	Stopwatch sw, sw_FOsurf;
+	sw.Start();
+
+	// set particle information
+	double sign = all_particles[local_pid].sign;
+	double degen = all_particles[local_pid].gspin;
+	double localmass = all_particles[local_pid].mass;
+	double mu = all_particles[local_pid].mu;
+
+	int local_na = n_alpha_points;
+	//double alpha_min = 4.0, alpha_max = 75.0;
+	double alpha_min = 4.0, alpha_max = 200.0;
+	//if (local_part_mode == 1)
+	//{
+	//	local_na = n_alpha_points_PIONS;
+	//	alpha_min = 0.5;
+	//	alpha_max = 400.0;
+	//}
+
+	// set some freeze-out surface information that's constant the whole time
+	double prefactor = 1.0*degen/(8.0*M_PI*M_PI*M_PI)/(hbarC*hbarC*hbarC);
+	double eta_s_symmetry_factor = 2.0;
+	double Tdec = (&FOsurf_ptr[0])->Tdec;
+	double Pdec = (&FOsurf_ptr[0])->Pdec;
+	double Edec = (&FOsurf_ptr[0])->Edec;
+	double one_by_Tdec = 1./Tdec;
+	double deltaf_prefactor = 0.;
+	if (use_delta_f)
+		deltaf_prefactor = 1./(2.0*Tdec*Tdec*(Edec+Pdec));
+
+	double * expK0_Bessel_re = new double [local_na];
+	double * expK0_Bessel_im = new double [local_na];
+	double * expK1_Bessel_re = new double [local_na];
+	double * expK1_Bessel_im = new double [local_na];
+	cs_accel_expK0re->a = alpha_min;
+	cs_accel_expK0re->b = alpha_max;
+	cs_accel_expK0im->a = alpha_min;
+	cs_accel_expK0im->b = alpha_max;
+	cs_accel_expK1re->a = alpha_min;
+	cs_accel_expK1re->b = alpha_max;
+	cs_accel_expK1im->a = alpha_min;
+	cs_accel_expK1im->b = alpha_max;
+
+	for (int ia = 0; ia < local_na; ++ia)
+	{
+		expK0_Bessel_re[ia] = 0.0;
+		expK0_Bessel_im[ia] = 0.0;
+		expK1_Bessel_re[ia] = 0.0;
+		expK1_Bessel_im[ia] = 0.0;
+	}
+
+	double I0_a_b_g_re, I1_a_b_g_re, I2_a_b_g_re, I3_a_b_g_re;
+	double I0_2a_b_g_re, I1_2a_b_g_re, I2_2a_b_g_re, I3_2a_b_g_re;
+	double I0_a_b_g_im, I1_a_b_g_im, I2_a_b_g_im, I3_a_b_g_im;
+	double I0_2a_b_g_im, I1_2a_b_g_im, I2_2a_b_g_im, I3_2a_b_g_im;
+
+	double C = deltaf_prefactor;
+
+	double ** alt_long_array_CR = new double * [qxnpts * qynpts];
+	double ** alt_long_array_CI = new double * [qxnpts * qynpts];
+	double ** alt_long_array_SR = new double * [qxnpts * qynpts];
+	double ** alt_long_array_SI = new double * [qxnpts * qynpts];
+	for (int isa = 0; isa < qxnpts * qynpts; ++isa)
+	{
+		alt_long_array_CR[isa] = new double [n_pT_pts * n_pphi_pts];
+		alt_long_array_CI[isa] = new double [n_pT_pts * n_pphi_pts];
+		alt_long_array_SR[isa] = new double [n_pT_pts * n_pphi_pts];
+		alt_long_array_SI[isa] = new double [n_pT_pts * n_pphi_pts];
+		for (int isa2 = 0; isa2 < n_pT_pts * n_pphi_pts; ++isa2)
+		{
+			alt_long_array_CR[isa][isa2] = 0.0;
+			alt_long_array_CI[isa][isa2] = 0.0;
+			alt_long_array_SR[isa][isa2] = 0.0;
+			alt_long_array_SI[isa][isa2] = 0.0;
+		}
+	}
+
+	/////////////////////////////////////////////////////////////
+	// Loop over all freeze-out surface fluid cells (for now)
+	/////////////////////////////////////////////////////////////
+	int iBC = 0;
+	for (int isurf = 0; isurf < FO_length; ++isurf)
+	{
+		FO_surf * surf = &FOsurf_ptr[isurf];
+
+		double tau = surf->tau;
+		double rpt = surf->r;
+		double phipt = place_in_range(surf->phi, SP_pphi_min, SP_pphi_max);
+
+		double vx = surf->vx;
+		double vy = surf->vy;
+		double gammaT = surf->gammaT;
+
+		double da0 = surf->da0;
+		double da1 = surf->da1;
+		double da2 = surf->da2;
+
+		double pi00 = surf->pi00;
+		double pi01 = surf->pi01;
+		double pi02 = surf->pi02;
+		double pi11 = surf->pi11;
+		double pi12 = surf->pi12;
+		double pi22 = surf->pi22;
+		double pi33 = surf->pi33;
+
+		double qt = qt_pts[iqt];
+		double qz = qz_pts[iqz];
+		double ch_pY = ch_SP_pY[ipY];
+		double sh_pY = sh_SP_pY[ipY];
+		double beta = tau * hbarCm1 * ( qt*ch_pY - qz*sh_pY );
+		double gamma = tau * hbarCm1 * ( qz*ch_pY - qt*sh_pY );
+
+		// Load Bessel Chebyshev coefficients
+		for (int ia = 0; ia < local_na; ++ia)
+			expK0_Bessel_re[ia] = BC_chunk[iBC++];
+		for (int ia = 0; ia < local_na; ++ia)
+			expK0_Bessel_im[ia] = BC_chunk[iBC++];
+		for (int ia = 0; ia < local_na; ++ia)
+			expK1_Bessel_re[ia] = BC_chunk[iBC++];
+		for (int ia = 0; ia < local_na; ++ia)
+			expK1_Bessel_im[ia] = BC_chunk[iBC++];
+
+		cs_accel_expK0re->c = expK0_Bessel_re;
+		cs_accel_expK0im->c = expK0_Bessel_im;
+		cs_accel_expK1re->c = expK1_Bessel_re;
+		cs_accel_expK1im->c = expK1_Bessel_im;
+
+		double * tmpX = oscx[isurf];
+		double * tmpY = oscy[isurf];
+		double short_array_C[n_pT_pts * n_pphi_pts], short_array_S[n_pT_pts * n_pphi_pts];
+		for (int isa = 0; isa < n_pT_pts * n_pphi_pts; ++isa)
+		{
+			short_array_C[isa] = 0.0;
+			short_array_S[isa] = 0.0;
+		}
+
+		/////////////////////////////////////////////////////
+		// Loop over pT and pphi points (as fast as possible)
+		/////////////////////////////////////////////////////
+		int iidx = 0;
+		for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+		{
+			vector<int> FOcells_to_do = FOcells_to_include[isurf * n_pT_pts + ipT];
+
+			double pT = SP_pT[ipT];
+			double mT = sqrt(pT*pT+localmass*localmass);
+			double alpha = one_by_Tdec*gammaT*mT;
+			
+			vector<complex<double> > I0, I1, I2, I3;
+			Iint3( alpha, beta, gamma,
+					&I0, &I1, &I2, &I3,
+					max_n_terms_to_compute );
+
+			double A = tau*prefactor*mT*da0;
+			double a = mT*mT*(pi00 + pi33);
+
+			for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+			{
+				int do_this_FOcell = FOcells_to_do[ipphi];
+				// initialize transverse momentum information
+				double px = pT*cos_SP_pphi[ipphi];
+				double py = pT*sin_SP_pphi[ipphi];
+				double pphi = SP_pphi[ipphi];
+
+				double B = tau*prefactor*(px*da1 + py*da2);
+				double b = -2.0*mT*(px*pi01 + py*pi02);
+				double c = px*px*pi11 + 2.0*px*py*pi12 + py*py*pi22 - mT*mT*pi33;
+
+				double transverse_f0 = exp( one_by_Tdec*(gammaT*(px*vx + py*vy) + mu) );
+				//double term1_re = transverse_f0 * (A*I1_a_b_g_re + B*I0_a_b_g_re);
+				//double term1_im = transverse_f0 * (A*I1_a_b_g_im + B*I0_a_b_g_im);
+
+				//double c1 = A*a, c2 = B*a+b*A, c3 = B*b+c*A, c4 = B*c;
+				//double C1 = C * transverse_f0;
+				//double C2 = -sign * transverse_f0 * C1;
+				//double term2_re = C1 * ( c1*I3_a_b_g_re + c2*I2_a_b_g_re + c3*I1_a_b_g_re + c4*I0_a_b_g_re );
+				//double term3_re = C2 * ( c1*I3_2a_b_g_re + c2*I2_2a_b_g_re + c3*I1_2a_b_g_re + c4*I0_2a_b_g_re );
+				//double term2_im = C1 * ( c1*I3_a_b_g_im + c2*I2_a_b_g_im + c3*I1_a_b_g_im + c4*I0_a_b_g_im );
+				//double term3_im = C2 * ( c1*I3_2a_b_g_im + c2*I2_2a_b_g_im + c3*I1_2a_b_g_im + c4*I0_2a_b_g_im );
+
+				short_array_C[iidx] = (do_this_FOcell>0)*term1_re + (do_this_FOcell==2)*(term2_re + term3_re);
+				//short_array_S[iidx++] = (do_this_FOcell>0)*term1_im + (do_this_FOcell==2)*(term2_im + term3_im);
+				complex<double> I0_f(0,0), I1_f(0,0), I2_f(0,0), I3_f(0,0);
+				complex<double> I0_f2(0,0), I1_f2(0,0), I2_f2(0,0), I3_f2(0,0);
+				int sign_of_kth_term = 1.0;
+				double tf0_factor = 1.0;
+				for (int k = 1; k <= max_n_terms_to_compute - 1; ++k)
+				{
+					double tf0_factor_k = sign_of_kth_term * tf0_factor * transverse_f0;
+					I0_f += tf0_factor_k * I0[k-1];
+					I1_f += tf0_factor_k * I1[k-1];
+					I2_f += tf0_factor_k * I2[k-1];
+					I3_f += tf0_factor_k * I3[k-1];
+					int sign_of_lth_term = 1.0;
+					for (int l = 1; l <= max_n_terms_to_compute - k; ++l)
+					{
+						tf0_factor_k *= transverse_f0;
+						I0_f2 += sign_of_lth_term * tf0_factor_k * I0[k+l-1];
+						I1_f2 += sign_of_lth_term * tf0_factor_k * I1[k+l-1];
+						I2_f2 += sign_of_lth_term * tf0_factor_k * I2[k+l-1];
+						I3_f2 += sign_of_lth_term * tf0_factor_k * I3[k+l-1];
+						sign_of_lth_term *= -sign;
+					}
+					sign_of_kth_term *= -sign;
+					tf0_factor *= transverse_f0;
+				}
+
+				complex<double> term1 = A*I1_f + B*I0_f;
+				complex<double> term2 = C * ( A*a*I3_f + (B*a+b*A)*I2_f + (B*b+c*A)*I1_f + B*c*I0_f );
+				complex<double> term3 = -sign * C * ( A*a*I3_f2 + (B*a+b*A)*I2_f2 + (B*b+c*A)*I1_f2 + B*c*I0_f2 );
+
+				complex<double> eiqx_S_x_K = (do_this_FOcell>0)*term1 + (do_this_FOcell==2)*(term2 + term3);
+
+				short_array_C[iidx] = FOcells_to_do[ipphi] * eiqx_S_x_K.real();
+				short_array_S[iidx++] = FOcells_to_do[ipphi] * eiqx_S_x_K.imag();
+			}
+		}
+
+		////////////////////////////////////////
+		// Loop over qx, qy, pT, and pphi points
+		////////////////////////////////////////
+		long idx = 0;
+		const long iidx_end = (long)n_pT_pts * (long)n_pphi_pts;
+		for (int iqx = 0; iqx < (qxnpts+1)/2; ++iqx)
+		{
+			double cosAx = tmpX[iqx * 2 + 0], sinAx = tmpX[iqx * 2 + 1];
+			for (int iqy = 0; iqy < qynpts; ++iqy)
+			{
+				double cosAy = tmpY[iqy * 2 + 0], sinAy = tmpY[iqy * 2 + 1];
+				double cos_trans_Fourier = cosAx*cosAy - sinAx*sinAy;
+				double sin_trans_Fourier = sinAx*cosAy + cosAx*sinAy;
+				double * ala_CR = alt_long_array_CR[idx];
+				double * ala_CI = alt_long_array_CI[idx];
+				double * ala_SR = alt_long_array_SR[idx];
+				double * ala_SI = alt_long_array_SI[idx++];
+				long iidx_local = 0;
+				while ( iidx_local < iidx_end )
+				{
+					double cos_qx_S_x_K = short_array_C[iidx_local];
+					ala_CR[iidx_local] += cos_trans_Fourier * cos_qx_S_x_K;
+					ala_CI[iidx_local++] -= sin_trans_Fourier * cos_qx_S_x_K;	//phi_T comes with extra minus sign
+				}
+				iidx_local = 0;
+				while ( iidx_local < iidx_end )
+				{
+					double sin_qx_S_x_K = short_array_S[iidx_local];
+					//ala_SR[iidx_local] += cos_trans_Fourier * sin_qx_S_x_K;
+					//ala_SI[iidx_local++] += sin_trans_Fourier * sin_qx_S_x_K;
+					ala_SR[iidx_local] += sin_trans_Fourier * sin_qx_S_x_K;		//phi_T comes with extra minus sign which cancels with minus sign on sin*sin
+					ala_SI[iidx_local++] += cos_trans_Fourier * sin_qx_S_x_K;
+				}
+			}
+		}
+	}
+
+	//use reflection symmetry in transverse plane to get speed-up
+	for (int iqx = 0; iqx < (qxnpts-1)/2; ++iqx)
+	for (int iqy = 0; iqy < qynpts; ++iqy)
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+	{
+		alt_long_array_CR[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] = alt_long_array_CR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		alt_long_array_CI[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] = -alt_long_array_CI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];	//N.B. - sin_trans* odd
+		alt_long_array_SR[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] = -alt_long_array_SR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];	//N.B. - sin_trans* odd
+		alt_long_array_SI[(qxnpts-iqx-1) * qynpts + (qynpts-iqy-1)][ipT * n_pphi_pts + ipphi] = alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+	}
+
+	for (int iqx = 0; iqx < qxnpts; ++iqx)
+	for (int iqy = 0; iqy < qynpts; ++iqy)
+	for (int ipT = 0; ipT < n_pT_pts; ++ipT)
+	for (int ipphi = 0; ipphi < n_pphi_pts; ++ipphi)
+	{
+		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,0)] = alt_long_array_CR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];		//CL,CT
+		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,1)] = alt_long_array_CI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];		//CL,ST
+		//current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,2)] = alt_long_array_SR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		//current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,3)] = alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];
+		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,2)] = alt_long_array_SI[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];		//SL,CT
+		current_dN_dypTdpTdphi_moments[fixQTQZ_indexer(ipT,ipphi,ipY,iqx,iqy,3)] = alt_long_array_SR[iqx * qynpts + iqy][ipT * n_pphi_pts + ipphi];		//SL,ST
+	}
+	//////////
+	//////////
+
+	delete [] expK0_Bessel_re;
+	delete [] expK0_Bessel_im;
+	delete [] expK1_Bessel_re;
+	delete [] expK1_Bessel_im;
+
+	for (int isa = 0; isa < qxnpts * qynpts; ++isa)
+	{
+		delete [] alt_long_array_CR[isa];
+		delete [] alt_long_array_CI[isa];
+		delete [] alt_long_array_SR[isa];
+		delete [] alt_long_array_SI[isa];
+	}
+	delete [] alt_long_array_CR;
+	delete [] alt_long_array_CI;
+	delete [] alt_long_array_SR;
+	delete [] alt_long_array_SI;
+
+	sw.Stop();
+	*out << "Total function call took " << sw.printTime() << " seconds." << endl;
+	
+	return;
+}*/
+
+
+
 
 void CorrelationFunction::Cal_dN_dypTdpTdphi_no_weights_Yeq0_alternate()
 {
