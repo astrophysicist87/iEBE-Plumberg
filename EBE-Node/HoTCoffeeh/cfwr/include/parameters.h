@@ -37,7 +37,7 @@ using namespace std;
 #define SLICE_OF_FLESH_ONLY			true	// full correlation function (fleshed out) is typically a HUGE file (~10GB),
 											// so use this to output q-slices only (MUCH) smaller
 
-#define RUN_TRUNCATED_CALCULATION		1
+#define RUN_TRUNCATED_CALCULATION		0
 
 #ifndef H5_NO_NAMESPACE
     using namespace H5;

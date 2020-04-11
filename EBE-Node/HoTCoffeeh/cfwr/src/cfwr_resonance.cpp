@@ -943,6 +943,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 		    qpt_cs_idx += 4;
 		//}
 
+		/*
 		bool check_final_increment = true;
 		if (check_final_increment and not use_exact)	//don't bother to check if we're just using exact!
 		{
@@ -962,6 +963,7 @@ void CorrelationFunction::eiqxEdndp3(double ptr, double phir, double spyr, doubl
 					<< "\t\t" << tempR << "   " << tempI << endl;
 			//if (1) exit (8);
 		}
+		*/
 
 		//needed to exploit symmetries of sine component
 		reversible_qpt_cs_idx += rev_qpt_cs_step;
