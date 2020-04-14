@@ -245,7 +245,7 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 			
 			//if (*thermalresult < 0.0 || *resonanceresult < 0.0 )
 			//{
-				if (ipT==7 and ipphi==0 and iqz==2)
+				if (ipt==7 and ipphi==0 and iqz==2)
 				{
 				cerr << "WARNING: " << qt_interp << "   " << ipt << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << iqz << "   "
 						<< *totalresult << "   " << *thermalresult << "   " << *CTresult << "   " << *resonanceresult << endl;
@@ -524,10 +524,10 @@ void CorrelationFunction::get_CF_terms(double * totalresult, double * thermalres
 	num = cos_transf_spectra*cos_transf_spectra + sin_transf_spectra*sin_transf_spectra;
 	*totalresult = num / den;
 
-	if (ipT==7 and ipphi==0 and iqz==2)
+	if (ipt==7 and ipphi==0 and iqz==2)
 	{
 		cerr << __FUNCTION__ << ": "
-			<< qt_pts[iqtidx] << "   "
+			<< qt_pts[iqt] << "   "
 			<< qx_pts[iqx] << "   "
 			<< thermal_spectra[target_particle_id][ipt][ipphi] << "   "
 			<< thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,0)] << "   "
