@@ -97,6 +97,9 @@ void CorrelationFunction::Cal_correlationfunction(bool project_CF /*==true*/)
 	//output the un-regulated correlation function to separate file for debugging purposes
 	Output_correlationfunction(project_CF);
 
+	// print this too
+	Output_total_target_eiqx_dN_dypTdpTdphi();
+
 	//added for checking...
 	if (FLESH_OUT_CF)
 	{
@@ -240,8 +243,10 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 			*resonanceresult = cfr.eval(point);
 
 			
-			if (*thermalresult < 0.0 || *resonanceresult < 0.0 )
-			{
+			//if (*thermalresult < 0.0 || *resonanceresult < 0.0 )
+			//{
+				if (ipT==7 and ipphi==0 and iqz==2)
+				{
 				cerr << "WARNING: " << qt_interp << "   " << ipt << "   " << ipphi << "   " << iqx << "   " << iqy << "   " << iqz << "   "
 						<< *totalresult << "   " << *thermalresult << "   " << *CTresult << "   " << *resonanceresult << endl;
 				for (int iqtidx = iqt_i; iqtidx <= iqt_f; ++iqtidx)
@@ -251,14 +256,16 @@ void CorrelationFunction::Compute_correlationfunction(double * totalresult, doub
 					Ct_at_q[iqtidx-shift] = tmpCt;
 					Cct_at_q[iqtidx-shift] = tmpCct;
 					Cr_at_q[iqtidx-shift] = tmpCr;
-					cerr << "Check CF terms: "
+					cerr << __FUNCTION__ << ": "
 							<< qt_pts[iqtidx] << "   "
-							<< ipt << "   " << ipphi << "   "
-							<< iqx << "   " << iqy << "   " << iqz << "   "
+							//<< ipt << "   " << ipphi << "   "
+							//<< iqx << "   " << iqy << "   " << iqz << "   "
+							<< qx_pts[iqx] << "   "
 							<< tmpC << "   " << tmpCt << "   "
 							<< tmpCct << "   " << tmpCr << endl;
 				}
-			}			
+				}
+			//}			
 		}
 		else	//if not using Chebyshev nodes in qt-direction, just use straight-up linear(0) or cubic(1) interpolation
 		{
@@ -500,19 +507,39 @@ void CorrelationFunction::get_CF_terms(double * totalresult, double * thermalres
 	cos_transf_spectra = cos_transf_tspectra + cosNT_spectra;
 	sin_transf_spectra = sin_transf_tspectra + sinNT_spectra;
 
-																								//thermal term
+	//thermal term
 	double num = cos_transf_tspectra*cos_transf_tspectra + sin_transf_tspectra*sin_transf_tspectra;
 	double den = nonFTd_spectra*nonFTd_spectra;
 	*thermalresult = num / den;
 
-	num = 2.0 * (cosNT_spectra*cos_transf_tspectra+sinNT_spectra*sin_transf_tspectra);			//cross term
+	//cross term
+	num = 2.0 * (cosNT_spectra*cos_transf_tspectra+sinNT_spectra*sin_transf_tspectra);
 	*crosstermresult = num / den;
 
-	num = cosNT_spectra*cosNT_spectra+sinNT_spectra*sinNT_spectra;								//resonances only
+	//resonances only
+	num = cosNT_spectra*cosNT_spectra+sinNT_spectra*sinNT_spectra;
 	*resonanceresult = num / den;
 
+	//total
 	num = cos_transf_spectra*cos_transf_spectra + sin_transf_spectra*sin_transf_spectra;
 	*totalresult = num / den;
+
+	if (ipT==7 and ipphi==0 and iqz==2)
+	{
+		cerr << __FUNCTION__ << ": "
+			<< qt_pts[iqtidx] << "   "
+			<< qx_pts[iqx] << "   "
+			<< thermal_spectra[target_particle_id][ipt][ipphi] << "   "
+			<< thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,0)] << "   "
+			<< thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,1)] << "   "
+			<< thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,2)] << "   "
+			<< thermal_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,3)] << "   "
+			<< spectra[target_particle_id][ipt][ipphi] << "   "
+			<< full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,0)] << "   "
+			<< full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,1)] << "   "
+			<< full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,2)] << "   "
+			<< full_target_Yeq0_moments[indexer(ipt,ipphi,iqt,iqx,iqy,iqz,3)] << endl;
+	}
 
 	return;
 }
