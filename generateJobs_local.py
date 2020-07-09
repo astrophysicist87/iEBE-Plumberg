@@ -44,6 +44,12 @@ try:
         compressResultsFolderAnswer = argv[argId]
     else:
         compressResultsFolderAnswer = "yes"
+
+    argId += 1
+    if len(argv)>=argId+1: # whether to compress final results folder
+        parameterDictFilename = argv[argId]
+    else:
+        parameterDictFilename = "ParameterDict.py"
 except:
     print('Usage: generateJobs.py number_of_jobs number_of_events_per_job [working_folder="./PlayGround"] [results_folder="./RESULTS"] [walltime="03:00:00" (per event)] [compress_results_folder="yes"]')
     exit()
@@ -57,8 +63,9 @@ iEbeConfigs = {
     "results_folder"            :   "%s",
     "walltime"                  :   "%s",
     "compress_results_folder"   :   "%s",
+    "parameter_dict_filename"   :   "%s",
 }
-""" % (numberOfJobs, numberOfEventsPerJob, workingFolder, resultsFolder, walltime, compressResultsFolderAnswer)
+""" % (numberOfJobs, numberOfEventsPerJob, workingFolder, resultsFolder, walltime, compressResultsFolderAnswer, parameterDictFilename)
 )
 
 # define colors
@@ -101,12 +108,18 @@ ebeNodeFolder = "EBE-Node"
 crankFolderName = "crank"
 crankFolder = path.join(ebeNodeFolder, crankFolderName)
 
-# copy parameter file into the crank folder
-copy("ParameterDict.py", crankFolder)
+# copy parameter file into the crank folder,
+# but rename it to "ParameterDict.py"
+#copy("ParameterDict.py", crankFolder)
+copy(parameterDictFilename, 
+     path.join(crankFolder, "ParameterDict.py"))
+
 
 # backup parameter files to the result folder
 copy(path.join(crankFolder, "SequentialEventDriver.py"), resultsFolder)
-copy(path.join(crankFolder, "ParameterDict.py"), resultsFolder)
+# rename to ParameterDict.py here as well
+copy(path.join(crankFolder, parameterDictFilename),
+     path.join(resultsFolder, "ParameterDict.py"))
 
 # duplicate EBE-Node folder to working directory, write .pbs file
 for i in range(1, numberOfJobs+1):
@@ -161,11 +174,13 @@ cd %s
 """ % (walltime, watcherDirectory, utilitiesFolder, resultsFolder, numberOfJobs, resultsFolder)
     )
 
-import ParameterDict
+from importlib import import_module
+#import ParameterDict
+parameterDictModule = import_module(path.splitext(parameterDictFilename)[0])
 initial_condition_type = (
-    ParameterDict.initial_condition_control['initial_condition_type'])
+    parameterDictModule.initial_condition_control['initial_condition_type'])
 if initial_condition_type == 'pre-generated':
-    initial_file_path = (ParameterDict.initial_condition_control[
+    initial_file_path = (parameterDictModule.initial_condition_control[
                              'pre-generated_initial_file_path'])
     call("./copy_pre_generated_initial_conditions.sh %d %d %s %s" 
          % (numberOfJobs, numberOfEventsPerJob, initial_file_path, 
