@@ -7,3 +7,6 @@ obj/
 tests/
 *.pyc
 *.txt
+newParameterDict.py
+updatedParameterDict.py
+updatedParameterDict.py

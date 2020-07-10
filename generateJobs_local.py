@@ -117,9 +117,7 @@ copy(parameterDictFilename,
 
 # backup parameter files to the result folder
 copy(path.join(crankFolder, "SequentialEventDriver.py"), resultsFolder)
-# rename to ParameterDict.py here as well
-copy(path.join(crankFolder, parameterDictFilename),
-     path.join(resultsFolder, "ParameterDict.py"))
+copy(path.join(crankFolder, "ParameterDict.py"), resultsFolder)
 
 # duplicate EBE-Node folder to working directory, write .pbs file
 for i in range(1, numberOfJobs+1):
