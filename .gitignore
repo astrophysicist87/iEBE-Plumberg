@@ -10,3 +10,7 @@ tests/
 newParameterDict.py
 updatedParameterDict.py
 updatedParameterDict.py
+EBE-Node/plot_scripts/copy.dat
+EBE-Node/plot_scripts/KPHI.dat
+EBE-Node/plot_scripts/KT.dat
+EBE-Node/plot_scripts/total_Pion_+_dN_dypTdpTdphi_allmoms_ev_no_df.dat
