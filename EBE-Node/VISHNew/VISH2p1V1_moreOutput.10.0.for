@@ -527,6 +527,21 @@ C-------------------------------------------------------------------------------
       DIMENSION F0PPI(NX0:NX,NY0:NY),FPPI(NX0:NX,NY0:NY)   !Stress Tensor in previous and current step
 
 
+C========================================================
+C===========Chris additions==============================
+      Dimension SiLoc(NX0:NX, NY0:NY, NZ0:NZ) ! Local expansion rate \sita
+
+      Dimension DPc00(NX0:NX, NY0:NY, NZ0:NZ) ! Differential part of Pi source term
+      Dimension DPc01(NX0:NX, NY0:NY, NZ0:NZ) !
+      Dimension DPc02(NX0:NX, NY0:NY, NZ0:NZ) !
+      Dimension DPc33(NX0:NX, NY0:NY, NZ0:NZ) !
+
+      Dimension DPc11(NX0:NX, NY0:NY, NZ0:NZ) ! Differential part of Pi source term
+      Dimension DPc12(NX0:NX, NY0:NY, NZ0:NZ) !
+      Dimension DPc22(NX0:NX, NY0:NY, NZ0:NZ) !
+
+C========================================================
+
       CHARACTER*60 EARTERM
       INTEGER TFLAG, EINS
       Parameter (EARTERM='EARLY')  ! 'EARLY' parameter for early ended the program after decoupling
@@ -1128,53 +1143,6 @@ CSHEN====END====================================================================
      &                  PI02(I,J,NZ0)*Hbarc, PI11(I,J,NZ0)*Hbarc, 
      &                  PI12(I,J,NZ0)*Hbarc, PI22(I,J,NZ0)*Hbarc, 
      &                  pi33(I,J,NZ0)*Hbarc
-      enddo
-      enddo
-
-      DO J=NYPhy0,NYPhy
-      DO I=NXPhy0,NXPhy
-           if(mod(I, 5) .eq. 0 .and. mod(J, 5) .eq. 0) then  
-        !Set specific shear viscosity
-        if(IVisflag.ne.0) then
-           ViscousEtaSLocal = ViscousCTemp(Temp(I,J,NZ0))
-        else
-           ViscousEtaSLocal = ViscousC
-        endif
-        !Set specific bulk viscosity
-        if (IVisBulkFlag .eq. 0) then
-          ViscousZetaSLocal = Visbulk
-        else
-          ViscousZetaSLocal = ViscousZetasTempParametrized(
-     &        Temp(I,J,NZ0)*HbarC,
-     &        0.180D0, VisBulkNorm)
-        endif
-        !Print everything to file
-        write(2296, '(12e15.5)')Time, I*DX, J*DY, 
-     &                  Temp(I,J,NZ0)*Hbarc, 
-     &                  Ed(I,J,NZ0)*Hbarc, 
-     &                  Bd(I,J,NZ0), 
-     &                  Sd(I,J,NZ0), 
-     &                  PL(I,J,NZ0)*Hbarc, 
-     &                  SiLoc(I,J,NZ0), 
-     &                  ViscousEtaSLocal, 
-     &                  ViscousZetaSLocal, 
-     &                  1.0/VRelaxT(I,J,NZ0), 
-     &                  1.0/VRelaxT0(I,J,NZ0), 
-     &                  PI00(I,J,NZ0)*Hbarc, 
-     &                  PI01(I,J,NZ0)*Hbarc, 
-     &                  PI02(I,J,NZ0)*Hbarc, 
-     &                  PI11(I,J,NZ0)*Hbarc, 
-     &                  PI12(I,J,NZ0)*Hbarc, 
-     &                  PI22(I,J,NZ0)*Hbarc, 
-     &                  pi33(I,J,NZ0)*Hbarc, 
-     &                  PPI(I,J,NZ0)*Hbarc, 
-     &                  DPc00(I,J,NZ0), 
-     &                  DPc01(I,J,NZ0), 
-     &                  DPc02(I,J,NZ0), 
-     &                  DPc11(I,J,NZ0), 
-     &                  DPc12(I,J,NZ0), 
-     &                  DPc22(I,J,NZ0), 
-     &                  DPc33(I,J,NZ0)
       enddo
       enddo
 
@@ -3732,6 +3700,7 @@ C-------------------------------------------
 !-------End of regulation---------
 !       ---Zhi-End---
 
+
 ! Ver 1.6.29RC5: NXPhy0->NX0, etc
 
        DO 100 K=NZ0,NZ
@@ -4744,6 +4713,58 @@ C            Print *, 'time',time,'Stotal', Stotal,StotalSv,StotalBv
         PPI_NS = (-1.0)*VBulk(I,J,NZ0)*SiLoc(I,J,NZ0) ! Navier-Stokes limit
         write(2294, '(6e15.5)')Time, I*DX, J*DY, 
      &           PPI_NS*Hbarc, PL(I,J,K)*Hbarc, Ed(I,J,NZ0)*Hbarc
+      enddo
+      enddo
+
+      double precision DPcmn2 = 0.0
+      double precision Pimn2 = 0.0
+      DO J=NYPhy0,NYPhy
+      DO I=NXPhy0,NXPhy
+        Pimn2 = PI00(I,J,NZ0)*PI00(I,J,NZ0)
+     &         + PI11(I,J,NZ0)*PI11(I,J,NZ0)
+     &         + PI22(I,J,NZ0)*PI22(I,J,NZ0)
+     &         + PI33(I,J,NZ0)*PI33(I,J,NZ0)
+     &         - 2.0*PI01(I,J,NZ0)*PI01(I,J,NZ0)
+     &         - 2.0*PI02(I,J,NZ0)*PI02(I,J,NZ0)
+     &         + 2.0*PI12(I,J,NZ0)*PI12(I,J,NZ0)
+        DPcmn2 = DPc00(I,J,NZ0)*DPc00(I,J,NZ0)
+     &         + DPc11(I,J,NZ0)*DPc11(I,J,NZ0)
+     &         + DPc22(I,J,NZ0)*DPc22(I,J,NZ0)
+     &         + DPc33(I,J,NZ0)*DPc33(I,J,NZ0)
+     &         - 2.0*DPc01(I,J,NZ0)*DPc01(I,J,NZ0)
+     &         - 2.0*DPc02(I,J,NZ0)*DPc02(I,J,NZ0)
+     &         + 2.0*DPc12(I,J,NZ0)*DPc12(I,J,NZ0)
+        !Print everything to file
+        write(2296, '(32e15.5)')Time, I*DX, J*DY, 
+     &                  Temp(I,J,NZ0)*Hbarc, 
+     &                  Ed(I,J,NZ0)*Hbarc, 
+     &                  Bd(I,J,NZ0), 
+     &                  Sd(I,J,NZ0), 
+     &                  PL(I,J,NZ0)*Hbarc, 
+     &                  ViscousEtaSLocal, 
+     &                  ViscousZetaSLocal, 
+     &                  1.0/VRelaxT(I,J,NZ0), 
+     &                  1.0/VRelaxT0(I,J,NZ0), 
+     &                  PI00(I,J,NZ0)*Hbarc, 
+     &                  PI01(I,J,NZ0)*Hbarc, 
+     &                  PI02(I,J,NZ0)*Hbarc, 
+     &                  PI11(I,J,NZ0)*Hbarc, 
+     &                  PI12(I,J,NZ0)*Hbarc, 
+     &                  PI22(I,J,NZ0)*Hbarc, 
+     &                  pi33(I,J,NZ0)*Hbarc, 
+     &                  PPI(I,J,NZ0)*Hbarc, 
+     &                  SiLoc(I,J,NZ0), 
+     &                  DPc00(I,J,NZ0), 
+     &                  DPc01(I,J,NZ0), 
+     &                  DPc02(I,J,NZ0), 
+     &                  DPc11(I,J,NZ0), 
+     &                  DPc12(I,J,NZ0), 
+     &                  DPc22(I,J,NZ0), 
+     &                  DPc33(I,J,NZ0), 
+     &                  sqrt(abs(DPcmn2))/VRelaxT(I,J,NZ0), 
+     &                  SiLoc(I,J,NZ0)/VRelaxT0(I,J,NZ0), 
+     &                  sqrt(abs(Pimn2))/PL(I,J,NZ0), 
+     &                  abs(PPI(I,J,NZ0))/PL(I,J,NZ0)
       enddo
       enddo
 
