@@ -3970,6 +3970,7 @@ c------------------------------------------------------------------
      &   +Vx(I-1,J,K)*Pi01(I-1,J,K))/(2.0*DX)
         SDY1=(Pi12(I,J+1,K)-Pi12(I,J-1,K)
      &   -Vy(I,J+1,K)*Pi01(I,J+1,K)
+
      &   +Vy(I,J-1,K)*Pi01(I,J-1,K))/(2.0*DY)
         ScT01(i,j,K)=(SDX1+SDY1)*Time  !ScT01
 
@@ -4640,6 +4641,7 @@ C*********************************************************************
        call TriSembdary3(TT00, TT01, TT02,
      &        NX0,NY0,NZ0, NX,NY,NZ, NXPhy0,NYPhy0, NXPhy,NYPhy)
 
+
 C-------------------------------------------------------------------------------------
 
 
@@ -4811,7 +4813,7 @@ C            Print *, 'time',time,'Stotal', Stotal,StotalSv,StotalBv
      &                  lambdaBPiSpiGrid(I,J,NZ0), 
      &                  deltaSpiSpiGrid(I,J,NZ0), 
      &                  lambdaSpiBPiGrid(I,J,NZ0), 
-     &                  phiGrid(I,J,NZ0), 
+     &                  phi7Grid(I,J,NZ0), 
      &                  taupipiGrid(I,J,NZ0), 
      &                  piSigmaGrid(I,J,NZ0)*Hbarc
 
