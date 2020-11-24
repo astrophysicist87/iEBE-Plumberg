@@ -31,7 +31,7 @@ int get_folder_index (string& str);
 
 //N.B. - template stuff must appear in header file (not cpp file)!!!
 
-template <typename T>
+/*template <typename T>
 vector<size_t> ordered(vector<T> const& values, int lt_or_gt = 0)
 {
 	using namespace boost::phoenix;
@@ -76,7 +76,7 @@ void sort_by_column(vector< vector<T> > * values)
 	std::stable_sort((*values).begin(), (*values).end(), cmp<T>);
 
 	return;
-}
+}*/
 
 
 /*USAGE:
