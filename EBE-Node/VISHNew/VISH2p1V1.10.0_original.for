@@ -310,10 +310,6 @@ C======output the chemical potential information at freeze out surface.====
       open(2294, File='results/PPI_NS_evo.dat', 
      &     STATUS='REPLACE')
       open(2295, File='results/pi_evo.dat', status='REPLACE')
-      open(2296, File='results/knudsen_and_reynolds_evo.dat', 
-     &     status='REPLACE')
-      open(2297, File='results/viscous_14_moments_evo.dat', 
-     &     status='REPLACE')
       open(90,File='results/APi.dat',status='REPLACE')
       open(89,File='results/AScource.dat',status='REPLACE')
       open(88,File='results/AScource2.dat',status='REPLACE')
@@ -392,8 +388,6 @@ CSHEN======set up output file for hydro evolution history===================
       Close(2293)
       Close(2294)
       Close(2295)
-      Close(2296)
-      Close(2297)
       if(outputMovie) then 
          close(3773)
       endif
@@ -530,21 +524,6 @@ C-------------------------------------------------------------------------------
       DIMENSION F0PPI(NX0:NX,NY0:NY),FPPI(NX0:NX,NY0:NY)   !Stress Tensor in previous and current step
 
 
-C========================================================
-C===========Chris additions==============================
-      Dimension SiLoc(NX0:NX, NY0:NY, NZ0:NZ) ! Local expansion rate \sita
-
-      Dimension DPc00(NX0:NX, NY0:NY, NZ0:NZ) ! Differential part of Pi source term
-      Dimension DPc01(NX0:NX, NY0:NY, NZ0:NZ) !
-      Dimension DPc02(NX0:NX, NY0:NY, NZ0:NZ) !
-      Dimension DPc33(NX0:NX, NY0:NY, NZ0:NZ) !
-
-      Dimension DPc11(NX0:NX, NY0:NY, NZ0:NZ) ! Differential part of Pi source term
-      Dimension DPc12(NX0:NX, NY0:NY, NZ0:NZ) !
-      Dimension DPc22(NX0:NX, NY0:NY, NZ0:NZ) !
-
-C========================================================
-
       CHARACTER*60 EARTERM
       INTEGER TFLAG, EINS
       Parameter (EARTERM='EARLY')  ! 'EARLY' parameter for early ended the program after decoupling
@@ -589,9 +568,6 @@ C-------------------------------------------------------------------------------
       double precision VisBulkNorm
       Common /ViscousBulk/ Visbulk, BulkTau, IRelaxBulk
       Common /VisBulkopt/  IVisBulkFlag, VisBulkNorm        ! Related to bulk Visousity
-
-! ---Chris-Changes---
-      double precision ViscousEtaSLocal, ViscousZetaSLocal
 
       Common /sFactor/ sFactor
 
@@ -3626,13 +3602,6 @@ C-------------------------------------------
         Dimension DDU1(NX0:NX, NY0:NY, NZ0:NZ) !
         Dimension DDU2(NX0:NX, NY0:NY, NZ0:NZ) !
 
-        Dimension deltaBPiBPiGrid(NX0:NX, NY0:NY, NZ0:NZ) !
-        Dimension lambdaBPiSpiGrid(NX0:NX, NY0:NY, NZ0:NZ) !
-        Dimension deltaSpiSpiGrid(NX0:NX, NY0:NY, NZ0:NZ) !
-        Dimension lambdaSpiBPiGrid(NX0:NX, NY0:NY, NZ0:NZ) !
-        Dimension phi7Grid(NX0:NX, NY0:NY, NZ0:NZ) !
-        Dimension taupipiGrid(NX0:NX, NY0:NY, NZ0:NZ) !
-        Dimension piSigmaGrid(NX0:NX, NY0:NY, NZ0:NZ) !
 
         Dimension DPc00(NX0:NX, NY0:NY, NZ0:NZ) !
         Dimension DPc01(NX0:NX, NY0:NY, NZ0:NZ) !
@@ -3709,7 +3678,6 @@ C-------------------------------------------
 !      End If
 !-------End of regulation---------
 !       ---Zhi-End---
-
 
 ! Ver 1.6.29RC5: NXPhy0->NX0, etc
 
@@ -4206,11 +4174,6 @@ C-------------------------------------------------------------------------------
      &         VRelaxT(I,J,K), deltaSpiSpi, lambdaSpiBPi, 
      &         phi7, taupipi)
 
-            deltaSpiSpiGrid(I,J,K) = deltaSpiSpi
-            lambdaSpiBPiGrid(I,J,K) = lambdaSpiBPi
-            phi7Grid(I,J,K) = phi7
-            taupipiGrid(I,J,K) = taupipi
-
             ! pi source 0,0
             phi7Add = p00**2.0 - p01**2.0 - p02**2.0
      &        -(1.0-u0_temp**2.0)*TrPi2/3.D0 
@@ -4315,17 +4278,12 @@ C-------------------------------------------------------------------------------
             call ViscousBulkTransCoefs(ED(i,j,k)*Hbarc, VRelaxT0(i,j,k), 
      &          deltaBPiBPi, lambdaBPiSpi) ! calculate transport coefficients
 
-            deltaBPiBPiGrid(i,j,k) = deltaBPiBPi
-            lambdaBPiSpiGrid(i,j,k) = lambdaBPiSpi
-
             piSigma = Pi00(i,j,k)*DPc00(i,j,k)+
      &           Pi11(i,j,k)*DPc11(i,j,k) + Pi22(i,j,k)*DPc22(i,j,k)
      &           + Pi33(i,j,k)*DPc33(i,j,k)
      &           - 2.D0*Pi01(i,j,k)*DPc01(i,j,k)
      &           - 2.D0*Pi02(i,j,k)*DPc02(i,j,k)
      &           + 2.D0*Pi12(i,j,k)*DPc12(i,j,k) !Tr(pi*sigma)
-
-            piSigmaGrid(i,j,k) = piSigma
 
             Badd = (-deltaBPiBPi*SiLoc(i,j,k)+sign(1.D0,PPI(i,j,k))*
      &       lambdaBPiSpi/DMax1(abs(PPI(i,j,k)), 1e-30)*piSigma)
@@ -4733,88 +4691,6 @@ C            Print *, 'time',time,'Stotal', Stotal,StotalSv,StotalBv
         PPI_NS = (-1.0)*VBulk(I,J,NZ0)*SiLoc(I,J,NZ0) ! Navier-Stokes limit
         write(2294, '(6e15.5)')Time, I*DX, J*DY, 
      &           PPI_NS*Hbarc, PL(I,J,K)*Hbarc, Ed(I,J,NZ0)*Hbarc
-      enddo
-      enddo
-
-      double precision DPcmn2 = 0.0
-      double precision Pimn2 = 0.0
-
-      DO J=NYPhy0,NYPhy
-      DO I=NXPhy0,NXPhy
-        Pimn2 = PI00(I,J,NZ0)*PI00(I,J,NZ0)
-     &         + PI11(I,J,NZ0)*PI11(I,J,NZ0)
-     &         + PI22(I,J,NZ0)*PI22(I,J,NZ0)
-     &         + PI33(I,J,NZ0)*PI33(I,J,NZ0)
-     &         - 2.0*PI01(I,J,NZ0)*PI01(I,J,NZ0)
-     &         - 2.0*PI02(I,J,NZ0)*PI02(I,J,NZ0)
-     &         + 2.0*PI12(I,J,NZ0)*PI12(I,J,NZ0)
-        DPcmn2 = DPc00(I,J,NZ0)*DPc00(I,J,NZ0)
-     &         + DPc11(I,J,NZ0)*DPc11(I,J,NZ0)
-     &         + DPc22(I,J,NZ0)*DPc22(I,J,NZ0)
-     &         + DPc33(I,J,NZ0)*DPc33(I,J,NZ0)
-     &         - 2.0*DPc01(I,J,NZ0)*DPc01(I,J,NZ0)
-     &         - 2.0*DPc02(I,J,NZ0)*DPc02(I,J,NZ0)
-     &         + 2.0*DPc12(I,J,NZ0)*DPc12(I,J,NZ0)
-        !Print everything to file
-        !NOTA BENE: cf. Subroutine checkPi(...) for normalization of pi33!!!
-        write(2296, '(32e15.5)')Time, I*DX, J*DY, 
-     &                  Temp(I,J,NZ0)*Hbarc, 
-     &                  Ed(I,J,NZ0)*Hbarc, 
-     &                  Bd(I,J,NZ0), 
-     &                  Sd(I,J,NZ0), 
-     &                  PL(I,J,NZ0)*Hbarc, 
-     &                  ViscousEtaSLocal, 
-     &                  ViscousZetaSLocal, 
-     &                  1.0/VRelaxT(I,J,NZ0), 
-     &                  1.0/VRelaxT0(I,J,NZ0), 
-     &                  PI00(I,J,NZ0)*Hbarc, 
-     &                  PI01(I,J,NZ0)*Hbarc, 
-     &                  PI02(I,J,NZ0)*Hbarc, 
-     &                  PI11(I,J,NZ0)*Hbarc, 
-     &                  PI12(I,J,NZ0)*Hbarc, 
-     &                  PI22(I,J,NZ0)*Hbarc, 
-     &                  pi33(I,J,NZ0)*Hbarc, 
-     &                  PPI(I,J,NZ0)*Hbarc, 
-     &                  SiLoc(I,J,NZ0), 
-     &                  DPc00(I,J,NZ0), 
-     &                  DPc01(I,J,NZ0), 
-     &                  DPc02(I,J,NZ0), 
-     &                  DPc11(I,J,NZ0), 
-     &                  DPc12(I,J,NZ0), 
-     &                  DPc22(I,J,NZ0), 
-     &                  DPc33(I,J,NZ0), 
-     &                  sqrt(abs(DPcmn2))/VRelaxT(I,J,NZ0), 
-     &                  SiLoc(I,J,NZ0)/VRelaxT0(I,J,NZ0), 
-     &                  sqrt(abs(Pimn2))/PL(I,J,NZ0), 
-     &                  abs(PPI(I,J,NZ0))/PL(I,J,NZ0)
-
-        !Print everything to file
-        !NOTA BENE: cf. Subroutine checkPi(...) for normalization of pi33!!!
-        write(2297, '(26e15.5)')Time, I*DX, J*DY, 
-     &                  Temp(I,J,NZ0)*Hbarc, 
-     &                  Ed(I,J,NZ0)*Hbarc, 
-     &                  PL(I,J,NZ0)*Hbarc, 
-     &                  getCS2(Ed(I,J,NZ0)*HbarC), 
-     &                  ViscousEtaSLocal*Sd(I,J,NZ0), 
-     &                  ViscousZetaSLocal*Sd(I,J,NZ0), 
-     &                  1.0/VRelaxT(I,J,NZ0), 
-     &                  1.0/VRelaxT0(I,J,NZ0), 
-     &                  PI00(I,J,NZ0)*Hbarc, 
-     &                  PI01(I,J,NZ0)*Hbarc, 
-     &                  PI02(I,J,NZ0)*Hbarc, 
-     &                  PI11(I,J,NZ0)*Hbarc, 
-     &                  PI12(I,J,NZ0)*Hbarc, 
-     &                  PI22(I,J,NZ0)*Hbarc, 
-     &                  pi33(I,J,NZ0)*Hbarc, 
-     &                  PPI(I,J,NZ0)*Hbarc, 
-     &                  deltaBPiBPiGrid(I,J,NZ0), 
-     &                  lambdaBPiSpiGrid(I,J,NZ0), 
-     &                  deltaSpiSpiGrid(I,J,NZ0), 
-     &                  lambdaSpiBPiGrid(I,J,NZ0), 
-     &                  phiGrid(I,J,NZ0), 
-     &                  taupipiGrid(I,J,NZ0), 
-     &                  piSigmaGrid(I,J,NZ0)*Hbarc
-
       enddo
       enddo
 
@@ -5355,7 +5231,6 @@ C----------------------------------------------------------------
 !----------------------------------------------------------------------
 
 
-
       Subroutine checkPi(id, Time, Vx, Vy, Ed, PL,
      &  NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
      &  Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22)
@@ -5482,7 +5357,6 @@ C----------------------------------------------------------------
       Double Precision Pi01(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
       Double Precision Pi02(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
       Double Precision Pi33(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-
       Double Precision Pi11(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
       Double Precision Pi12(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
       Double Precision Pi22(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
@@ -6019,7 +5893,6 @@ C----------------------------------------------------------------
 
       TrPi = p00*p00+p11*p11+p22*p22+p33*Time*Time*p33*Time*Time
      &  -2*p01*p01-2*p02*p02+2*p12*p12
-
 
       Print*, "Tr(Pi^2)=",TrPi
 
