@@ -19,7 +19,7 @@ using namespace std;
 bool fexists(const char *filename)
 {
   ifstream ifile(filename);
-  return ifile;
+  return ifile.good();
 }
 
 std::string get_selfpath() {
