@@ -108,12 +108,15 @@ class SourceVariances
 		
 		//array to temporarily hold results of resonance SV integrations
 		int n_weighting_functions;  //number of source variances to consider
+		int n_quantities_to_average;  //number of miscellaneous quantities to average w.r.t. S(x,K)
 		//double * source_variances_array;
 		double **** integrated_spacetime_moments;
 		double **** dN_dypTdpTdphi_moments;
 		double **** ln_dN_dypTdpTdphi_moments;
 		double **** sign_of_dN_dypTdpTdphi_moments;
 		double **** all_particles_dN_dypTdpTdphi_moments;
+
+		double **** quantities_to_average;
 	
 		//needed for resonance calculations
 		//kinematic info
@@ -233,7 +236,8 @@ class SourceVariances
 		void Analyze_sourcefunction();
 
 		void Output_emission_density(int local_pid);
-		double Cal_emission_density_function(int local_pid, int isurf);
+		double Cal_emission_density_function(int local_pid, int ipt, int isurf);
+		double Cal_emission_density_function(int local_pid, int ipt, int isurf, int ieta);
 
 		double Cal_wfi_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi, int wfi);
 		double Cal_dN_dypTdpTdphi_function(int local_pid, double pT, double pphi);
@@ -299,6 +303,7 @@ class SourceVariances
 		void Output_dN_dypTdpT();
 		void Output_all_dN_dypTdpTdphi();
 		void Output_total_target_dN_dypTdpTdphi();
+		void Output_target_quantities_to_average();
 		void Output_results();
 		void Readin_results();
 		void Read_in_all_dN_dypTdpTdphi();

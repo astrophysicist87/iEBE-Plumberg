@@ -82,6 +82,8 @@ void read_decdat(int length, FO_surf* surf_ptr, string localpath, bool include_b
      decdat >> surf_ptr[i].pi22;
      if (include_bulk_pi) decdat >> surf_ptr[i].bulkPi;
      surf_ptr[i].gammaT = 1./sqrt(1.- surf_ptr[i].vx*surf_ptr[i].vx - surf_ptr[i].vy*surf_ptr[i].vy);
+     surf_ptr[i].vT = sqrt(surf_ptr[i].vx*surf_ptr[i].vx + surf_ptr[i].vy*surf_ptr[i].vy);
+
   }
   decdat.close();
   //cout<<"done"<<endl;
@@ -522,7 +524,8 @@ void get_important_resonances(int chosen_target_particle_idx, vector<int> * chos
 	vector<double> percent_contributions;
 	for (int i = 0; i < Nparticle; i++)
 		percent_contributions.push_back(particle[i].percent_contribution);
-	vector<size_t> sorted_resonance_indices = ordered(percent_contributions);
+	//vector<size_t> sorted_resonance_indices = ordered(percent_contributions);
+	vector<size_t> sorted_resonance_indices(1);	//WRONG
 	reverse(sorted_resonance_indices.begin(), sorted_resonance_indices.end());
 	//vector<int> chosen_resonance_indices_ptr;
 	//double running_total_percentage = 0.0;

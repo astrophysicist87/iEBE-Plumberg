@@ -86,6 +86,7 @@ SourceVariances::SourceVariances(ParameterReader* paraRdr_in, particle_info* par
 	Set_use_delta_f();
 
 	n_weighting_functions = 15;	//AKA, number of SV's
+	n_quantities_to_average = 2;	// in order: vT^2, vT
 
 	zvec = new double [4];
 
@@ -211,30 +212,43 @@ SourceVariances::SourceVariances(ParameterReader* paraRdr_in, particle_info* par
 	//*****************************************************************
 	// Only make dN_dypTdpTdphi_moments large enough to hold all necessary resonance, not decay channels
 	//*****************************************************************
-	dN_dypTdpTdphi_moments = new double *** [Nparticle];
-	ln_dN_dypTdpTdphi_moments = new double *** [Nparticle];
+	dN_dypTdpTdphi_moments         = new double *** [Nparticle];
+	ln_dN_dypTdpTdphi_moments      = new double *** [Nparticle];
 	sign_of_dN_dypTdpTdphi_moments = new double *** [Nparticle];
+	quantities_to_average          = new double *** [Nparticle];
 	for (int ir = 0; ir < Nparticle; ir++)
 	{
-		dN_dypTdpTdphi_moments[ir] = new double ** [n_weighting_functions];
-		ln_dN_dypTdpTdphi_moments[ir] = new double ** [n_weighting_functions];
+		dN_dypTdpTdphi_moments[ir]         = new double ** [n_weighting_functions];
+		ln_dN_dypTdpTdphi_moments[ir]      = new double ** [n_weighting_functions];
 		sign_of_dN_dypTdpTdphi_moments[ir] = new double ** [n_weighting_functions];
+		quantities_to_average[ir]          = new double ** [n_quantities_to_average];
+		for (int iqta = 0; iqta < n_quantities_to_average; iqta++)
+		{
+			quantities_to_average[ir][iqta] = new double * [n_pT_pts];
+			for (int ipT = 0; ipT < n_pT_pts; ipT++)
+			{
+				quantities_to_average[ir][iqta][ipT] = new double [n_pphi_pts];
+				for (int ipphi = 0; ipphi < n_pphi_pts; ipphi++)
+					quantities_to_average[ir][iqta][ipT][ipphi] = 0.0;
+			}
+		}
+
 		for (int wfi = 0; wfi < n_weighting_functions; wfi++)
 		{
-			dN_dypTdpTdphi_moments[ir][wfi] = new double * [n_pT_pts];
-			ln_dN_dypTdpTdphi_moments[ir][wfi] = new double * [n_pT_pts];
+			dN_dypTdpTdphi_moments[ir][wfi]         = new double * [n_pT_pts];
+			ln_dN_dypTdpTdphi_moments[ir][wfi]      = new double * [n_pT_pts];
 			sign_of_dN_dypTdpTdphi_moments[ir][wfi] = new double * [n_pT_pts];
 			for (int ipT = 0; ipT < n_pT_pts; ipT++)
 			{
-				dN_dypTdpTdphi_moments[ir][wfi][ipT] = new double [n_pphi_pts];
-				ln_dN_dypTdpTdphi_moments[ir][wfi][ipT] = new double [n_pphi_pts];
+				dN_dypTdpTdphi_moments[ir][wfi][ipT]         = new double [n_pphi_pts];
+				ln_dN_dypTdpTdphi_moments[ir][wfi][ipT]      = new double [n_pphi_pts];
 				sign_of_dN_dypTdpTdphi_moments[ir][wfi][ipT] = new double [n_pphi_pts];
 				for (int ipphi = 0; ipphi < n_pphi_pts; ipphi++)
-					{
-						dN_dypTdpTdphi_moments[ir][wfi][ipT][ipphi] = 0.0;
-						ln_dN_dypTdpTdphi_moments[ir][wfi][ipT][ipphi] = 0.0;
-						sign_of_dN_dypTdpTdphi_moments[ir][wfi][ipT][ipphi] = 0.0;
-					}
+				{
+					dN_dypTdpTdphi_moments[ir][wfi][ipT][ipphi]         = 0.0;
+					ln_dN_dypTdpTdphi_moments[ir][wfi][ipT][ipphi]      = 0.0;
+					sign_of_dN_dypTdpTdphi_moments[ir][wfi][ipT][ipphi] = 0.0;
+				}
 			}
 		}
 	}
@@ -273,6 +287,8 @@ SourceVariances::SourceVariances(ParameterReader* paraRdr_in, particle_info* par
 	cos_SP_pphi = new double [n_pphi_pts];
 	SP_p0 = new double* [n_pT_pts];
 	SP_pz = new double* [n_pT_pts];
+	//double * dummywts3 = new double [n_pT_pts];
+	//double * dummywts4 = new double [n_pphi_pts];
 	SP_pT_weight = new double [n_pT_pts];
 	SP_pphi_weight = new double [n_pphi_pts];
 	for(int ipt=0; ipt<n_pT_pts; ipt++)

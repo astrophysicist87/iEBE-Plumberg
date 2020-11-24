@@ -235,22 +235,46 @@ void SourceVariances::Output_total_target_dN_dypTdpTdphi()
 	string local_name = all_particles[target_particle_id].name;
 	replace_parentheses(local_name);
 
-	for(int wfi = 0; wfi < n_weighting_functions; wfi++)
+	for (int wfi = 0; wfi < n_weighting_functions; wfi++)
 	{
 		ostringstream filename_stream_target_dN_dypTdpTdphi;
 		filename_stream_target_dN_dypTdpTdphi << path << "/total_" << local_name << "_dN_dypTdpTdphi_mom_"
 								<< setfill('0') << setw(2) << wfi << "_ev" << no_df_stem << ".dat";
 		ofstream output_target_dN_dypTdpTdphi(filename_stream_target_dN_dypTdpTdphi.str().c_str());
 	
-		for(int ipphi = 0; ipphi < n_pphi_pts; ipphi++)
+		for (int ipphi = 0; ipphi < n_pphi_pts; ipphi++)
 		{
-			for(int ipT = 0; ipT < n_pT_pts; ipT++)
+			for (int ipT = 0; ipT < n_pT_pts; ipT++)
 				output_target_dN_dypTdpTdphi << scientific << setprecision(8) << setw(12) << dN_dypTdpTdphi_moments[target_particle_id][wfi][ipT][ipphi] << "   ";
 			output_target_dN_dypTdpTdphi << endl;
 		}
 	
 		output_target_dN_dypTdpTdphi.close();
 	}
+
+	return;
+}
+
+void SourceVariances::Output_target_quantities_to_average()
+{
+	string local_name = all_particles[target_particle_id].name;
+	replace_parentheses(local_name);
+
+	ostringstream filename_stream_target_qta;
+	filename_stream_target_qta << path << "/total_" << local_name << "_quantities_to_average" << no_df_stem << ".dat";
+	ofstream output_target_qta(filename_stream_target_qta.str().c_str());
+
+	for (int iqta = 0; iqta < n_quantities_to_average; iqta++)	
+	for (int ipphi = 0; ipphi < n_pphi_pts; ipphi++)
+	{
+		for (int ipT = 0; ipT < n_pT_pts; ipT++)
+			output_target_qta
+				<< scientific << setprecision(8) << setw(12)
+				<< quantities_to_average[target_particle_id][iqta][ipT][ipphi] << "   ";
+		output_target_qta << endl;	
+	}
+
+	output_target_qta.close();
 
 	return;
 }
@@ -296,7 +320,7 @@ void SourceVariances::Read_in_all_dN_dypTdpTdphi()
 		for(int ipT = 0; ipT < n_pT_pts; ipT++)
 		{
 			input_all_dN_dypTdpTdphi >> dN_dypTdpTdphi_moments[ii][wfi][ipT][ipphi];
-			if (abs(dN_dypTdpTdphi_moments[ii][wfi][ipT][ipphi]) > 1.e-100)
+			if (abs(dN_dypTdpTdphi_moments[ii][wfi][ipT][ipphi]) > 1e-100)
 			{
 				ln_dN_dypTdpTdphi_moments[ii][wfi][ipT][ipphi] = log(abs(dN_dypTdpTdphi_moments[ii][wfi][ipT][ipphi]));
 				sign_of_dN_dypTdpTdphi_moments[ii][wfi][ipT][ipphi] = sgn(dN_dypTdpTdphi_moments[ii][wfi][ipT][ipphi]);
