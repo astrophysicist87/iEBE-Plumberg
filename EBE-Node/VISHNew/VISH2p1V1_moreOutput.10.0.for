@@ -4795,9 +4795,10 @@ C            Print *, 'time',time,'Stotal', Stotal,StotalSv,StotalBv
         !Print everything to file
         !NOTA BENE: cf. Subroutine checkPi(...) for normalization of pi33!!!
       if(Ed(I,J,NZ0)*Hbarc .ge. Edec) then
-        write(2297, '(26e15.5)')Time, I*DX, J*DY, 
+        write(2297, '(27e15.5)')Time, I*DX, J*DY, 
      &                  Temp(I,J,NZ0)*Hbarc, 
      &                  Ed(I,J,NZ0)*Hbarc, 
+     &                  Edec, 
      &                  PL(I,J,NZ0)*Hbarc, 
      &                  getCS2(Ed(I,J,NZ0)*HbarC), 
      &                  ViscousEtaSLocal*Sd(I,J,NZ0), 
@@ -4819,7 +4820,7 @@ C            Print *, 'time',time,'Stotal', Stotal,StotalSv,StotalBv
      &                  phi7Grid(I,J,NZ0), 
      &                  taupipiGrid(I,J,NZ0), 
      &                  piSigmaGrid(I,J,NZ0)*Hbarc
-      endif
+      end if
 
       enddo
       enddo
