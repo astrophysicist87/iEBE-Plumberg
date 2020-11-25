@@ -3626,13 +3626,13 @@ C-------------------------------------------
         Dimension DDU1(NX0:NX, NY0:NY, NZ0:NZ) !
         Dimension DDU2(NX0:NX, NY0:NY, NZ0:NZ) !
 
-        Dimension deltaBPiBPiGrid(NX0:NX, NY0:NY, NZ0:NZ) !
-        Dimension lambdaBPiSpiGrid(NX0:NX, NY0:NY, NZ0:NZ) !
-        Dimension deltaSpiSpiGrid(NX0:NX, NY0:NY, NZ0:NZ) !
-        Dimension lambdaSpiBPiGrid(NX0:NX, NY0:NY, NZ0:NZ) !
-        Dimension phi7Grid(NX0:NX, NY0:NY, NZ0:NZ) !
-        Dimension taupipiGrid(NX0:NX, NY0:NY, NZ0:NZ) !
-        Dimension piSigmaGrid(NX0:NX, NY0:NY, NZ0:NZ) !
+        double precision ::  deltaBPiBPiGrid(NX0:NX, NY0:NY, NZ0:NZ) !
+        double precision ::  lambdaBPiSpiGrid(NX0:NX, NY0:NY, NZ0:NZ) !
+        double precision ::  deltaSpiSpiGrid(NX0:NX, NY0:NY, NZ0:NZ) !
+        double precision ::  lambdaSpiBPiGrid(NX0:NX, NY0:NY, NZ0:NZ) !
+        double precision ::  phi7Grid(NX0:NX, NY0:NY, NZ0:NZ) !
+        double precision ::  taupipiGrid(NX0:NX, NY0:NY, NZ0:NZ) !
+        double precision ::  piSigmaGrid(NX0:NX, NY0:NY, NZ0:NZ) !
 
         Dimension DPc00(NX0:NX, NY0:NY, NZ0:NZ) !
         Dimension DPc01(NX0:NX, NY0:NY, NZ0:NZ) !
@@ -3970,6 +3970,7 @@ c------------------------------------------------------------------
      &   +Vx(I-1,J,K)*Pi01(I-1,J,K))/(2.0*DX)
         SDY1=(Pi12(I,J+1,K)-Pi12(I,J-1,K)
      &   -Vy(I,J+1,K)*Pi01(I,J+1,K)
+
 
      &   +Vy(I,J-1,K)*Pi01(I,J-1,K))/(2.0*DY)
         ScT01(i,j,K)=(SDX1+SDY1)*Time  !ScT01
@@ -4640,6 +4641,7 @@ C*********************************************************************
 
        call TriSembdary3(TT00, TT01, TT02,
      &        NX0,NY0,NZ0, NX,NY,NZ, NXPhy0,NYPhy0, NXPhy,NYPhy)
+
 
 
 C-------------------------------------------------------------------------------------
