@@ -3626,13 +3626,13 @@ C-------------------------------------------
         Dimension DDU1(NX0:NX, NY0:NY, NZ0:NZ) !
         Dimension DDU2(NX0:NX, NY0:NY, NZ0:NZ) !
 
-        double precision ::  deltaBPiBPiGrid(NX0:NX, NY0:NY, NZ0:NZ) !
-        double precision ::  lambdaBPiSpiGrid(NX0:NX, NY0:NY, NZ0:NZ) !
-        double precision ::  deltaSpiSpiGrid(NX0:NX, NY0:NY, NZ0:NZ) !
-        double precision ::  lambdaSpiBPiGrid(NX0:NX, NY0:NY, NZ0:NZ) !
-        double precision ::  phi7Grid(NX0:NX, NY0:NY, NZ0:NZ) !
-        double precision ::  taupipiGrid(NX0:NX, NY0:NY, NZ0:NZ) !
-        double precision ::  piSigmaGrid(NX0:NX, NY0:NY, NZ0:NZ) !
+        double precision :: deltaBPiBPiGrid(NX0:NX, NY0:NY, NZ0:NZ) !
+        double precision :: lambdaBPiSpiGrid(NX0:NX, NY0:NY, NZ0:NZ) !
+        double precision :: deltaSpiSpiGrid(NX0:NX, NY0:NY, NZ0:NZ) !
+        double precision :: lambdaSpiBPiGrid(NX0:NX, NY0:NY, NZ0:NZ) !
+        double precision :: phi7Grid(NX0:NX, NY0:NY, NZ0:NZ) !
+        double precision :: taupipiGrid(NX0:NX, NY0:NY, NZ0:NZ) !
+        double precision :: piSigmaGrid(NX0:NX, NY0:NY, NZ0:NZ) !
 
         Dimension DPc00(NX0:NX, NY0:NY, NZ0:NZ) !
         Dimension DPc01(NX0:NX, NY0:NY, NZ0:NZ) !
