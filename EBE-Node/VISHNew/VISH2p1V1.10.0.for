@@ -4795,7 +4795,7 @@ C            Print *, 'time',time,'Stotal', Stotal,StotalSv,StotalBv
         !Print everything to file
         !NOTA BENE: cf. Subroutine checkPi(...) for normalization of pi33!!!
       if(Ed(I,J,NZ0)*Hbarc .ge. Edec1) then
-        write(2297, '(26e18.8)')Time, I*DX, J*DY, 
+        write(2297, '(26G18.8)')Time, I*DX, J*DY, 
      &                  Temp(I,J,NZ0)*Hbarc, 
      &                  Ed(I,J,NZ0)*Hbarc, 
      &                  PL(I,J,NZ0)*Hbarc, 

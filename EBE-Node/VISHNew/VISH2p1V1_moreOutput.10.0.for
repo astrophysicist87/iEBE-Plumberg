@@ -4761,7 +4761,7 @@ C            Print *, 'time',time,'Stotal', Stotal,StotalSv,StotalBv
      &         + 2.0*DPc12(I,J,NZ0)*DPc12(I,J,NZ0)
         !Print everything to file
         !NOTA BENE: cf. Subroutine checkPi(...) for normalization of pi33!!!
-        write(2296, '(32e15.5)')Time, I*DX, J*DY, 
+        write(2296, '(32G15.5)')Time, I*DX, J*DY, 
      &                  Temp(I,J,NZ0)*Hbarc, 
      &                  Ed(I,J,NZ0)*Hbarc, 
      &                  Bd(I,J,NZ0), 
