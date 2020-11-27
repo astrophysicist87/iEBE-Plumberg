@@ -52,7 +52,8 @@ C===============================================================================
 
 ! change to 1 to ignore checks
 #define silent_checkPi 0
-#define outputPiviolation .false.
+#define outputPiviolation .true.
+#define outputKnAndRe .false.
 #define outputMovie .false.
 
 #define echo_level 5
@@ -310,8 +311,10 @@ C======output the chemical potential information at freeze out surface.====
       open(2294, File='results/PPI_NS_evo.dat', 
      &     STATUS='REPLACE')
       open(2295, File='results/pi_evo.dat', status='REPLACE')
+      if (outputKnAndRe) then
       open(2296, File='results/knudsen_and_reynolds_evo.dat', 
      &     status='REPLACE')
+      endif
       open(2297, File='results/viscous_14_moments_evo.dat', 
      &     status='REPLACE')
       open(90,File='results/APi.dat',status='REPLACE')
@@ -392,7 +395,9 @@ CSHEN======set up output file for hydro evolution history===================
       Close(2293)
       Close(2294)
       Close(2295)
-      Close(2296)
+      if (outputKnAndRe) then
+         Close(2296)
+      endif
       Close(2297)
       if(outputMovie) then 
          close(3773)
@@ -4761,6 +4766,7 @@ C            Print *, 'time',time,'Stotal', Stotal,StotalSv,StotalBv
      &         + 2.0*DPc12(I,J,NZ0)*DPc12(I,J,NZ0)
         !Print everything to file
         !NOTA BENE: cf. Subroutine checkPi(...) for normalization of pi33!!!
+      if (outputKnAndRe) then
         write(2296, '(32G15.5)')Time, I*DX, J*DY, 
      &                  Temp(I,J,NZ0)*Hbarc, 
      &                  Ed(I,J,NZ0)*Hbarc, 
@@ -4791,11 +4797,11 @@ C            Print *, 'time',time,'Stotal', Stotal,StotalSv,StotalBv
      &                  SiLoc(I,J,NZ0)/VRelaxT0(I,J,NZ0), 
      &                  sqrt(abs(Pimn2))/PL(I,J,NZ0), 
      &                  abs(PPI(I,J,NZ0))/PL(I,J,NZ0)
-
+      endif
         !Print everything to file
         !NOTA BENE: cf. Subroutine checkPi(...) for normalization of pi33!!!
       if(Ed(I,J,NZ0)*Hbarc .ge. Edec1) then
-        write(2297, '(26e18.8)')Time, I*DX, J*DY, 
+        write(2297, '(26G18.8)')Time, I*DX, J*DY, 
      &                  Temp(I,J,NZ0)*Hbarc, 
      &                  Ed(I,J,NZ0)*Hbarc, 
      &                  PL(I,J,NZ0)*Hbarc, 
