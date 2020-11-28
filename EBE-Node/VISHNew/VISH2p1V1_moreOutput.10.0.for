@@ -4802,29 +4802,29 @@ C            Print *, 'time',time,'Stotal', Stotal,StotalSv,StotalBv
         !NOTA BENE: cf. Subroutine checkPi(...) for normalization of pi33!!!
       if(Ed(I,J,NZ0)*Hbarc .ge. Edec1) then
         write(2297, '(26G18.8)')Time, I*DX, J*DY, 
-     &                  Temp(I,J,NZ0)*Hbarc, 
-     &                  Ed(I,J,NZ0)*Hbarc, 
-     &                  PL(I,J,NZ0)*Hbarc, 
+     &                  Temp(I,J,NZ0), 
+     &                  Ed(I,J,NZ0), 
+     &                  PL(I,J,NZ0), 
      &                  getCS2(Ed(I,J,NZ0)*HbarC), 
      &                  ViscousEtaSLocal*Sd(I,J,NZ0), 
      &                  ViscousZetaSLocal*Sd(I,J,NZ0), 
      &                  1.0/VRelaxT(I,J,NZ0), 
      &                  1.0/VRelaxT0(I,J,NZ0), 
-     &                  PI00(I,J,NZ0)*Hbarc, 
-     &                  PI01(I,J,NZ0)*Hbarc, 
-     &                  PI02(I,J,NZ0)*Hbarc, 
-     &                  PI11(I,J,NZ0)*Hbarc, 
-     &                  PI12(I,J,NZ0)*Hbarc, 
-     &                  PI22(I,J,NZ0)*Hbarc, 
-     &                  pi33(I,J,NZ0)*Hbarc, 
-     &                  PPI(I,J,NZ0)*Hbarc, 
+     &                  PI00(I,J,NZ0), 
+     &                  PI01(I,J,NZ0), 
+     &                  PI02(I,J,NZ0), 
+     &                  PI11(I,J,NZ0), 
+     &                  PI12(I,J,NZ0), 
+     &                  PI22(I,J,NZ0), 
+     &                  pi33(I,J,NZ0), 
+     &                  PPI(I,J,NZ0), 
      &                  deltaBPiBPiGrid(I,J,NZ0), 
      &                  lambdaBPiSpiGrid(I,J,NZ0), 
      &                  deltaSpiSpiGrid(I,J,NZ0), 
      &                  lambdaSpiBPiGrid(I,J,NZ0), 
      &                  phi7Grid(I,J,NZ0), 
      &                  taupipiGrid(I,J,NZ0), 
-     &                  piSigmaGrid(I,J,NZ0)*Hbarc
+     &                  piSigmaGrid(I,J,NZ0)
       end if
 
       enddo
