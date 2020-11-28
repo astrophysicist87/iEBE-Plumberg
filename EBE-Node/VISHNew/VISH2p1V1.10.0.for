@@ -595,9 +595,6 @@ C-------------------------------------------------------------------------------
       Common /ViscousBulk/ Visbulk, BulkTau, IRelaxBulk
       Common /VisBulkopt/  IVisBulkFlag, VisBulkNorm        ! Related to bulk Visousity
 
-! ---Chris-Changes---
-      double precision ViscousEtaSLocal, ViscousZetaSLocal
-
       Common /sFactor/ sFactor
 
       Integer IViscousEqsType
@@ -4773,8 +4770,8 @@ C            Print *, 'time',time,'Stotal', Stotal,StotalSv,StotalBv
      &                  Bd(I,J,NZ0), 
      &                  Sd(I,J,NZ0), 
      &                  PL(I,J,NZ0)*Hbarc, 
-     &                  ViscousEtaSLocal, 
-     &                  ViscousZetaSLocal, 
+     &                  VCoefi(I,J,NZ0)/Sd(I,J,NZ0), 
+     &                  VBulk(I,J,NZ0)/Sd(I,J,NZ0), 
      &                  1.0/VRelaxT(I,J,NZ0), 
      &                  1.0/VRelaxT0(I,J,NZ0), 
      &                  PI00(I,J,NZ0)*Hbarc, 
@@ -4801,14 +4798,13 @@ C            Print *, 'time',time,'Stotal', Stotal,StotalSv,StotalBv
         !Print everything to file
         !NOTA BENE: cf. Subroutine checkPi(...) for normalization of pi33!!!
       if(Ed(I,J,NZ0)*Hbarc .ge. Edec1) then
-        write(2297, '(27G18.8)')Time, I*DX, J*DY, 
+        write(2297, '(26G18.8)')Time, I*DX, J*DY, 
      &                  Temp(I,J,NZ0), 
      &                  Ed(I,J,NZ0), 
      &                  PL(I,J,NZ0), 
      &                  getCS2(Ed(I,J,NZ0)*HbarC), 
-     &                  Sd(I,J,NZ0), 
-     &                  ViscousEtaSLocal, 
-     &                  ViscousZetaSLocal, 
+     &                  VCoefi(I,J,NZ0), 
+     &                  VBulk(I,J,NZ0), 
      &                  1.0/VRelaxT(I,J,NZ0), 
      &                  1.0/VRelaxT0(I,J,NZ0), 
      &                  PI00(I,J,NZ0), 
