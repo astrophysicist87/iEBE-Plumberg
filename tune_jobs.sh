@@ -80,9 +80,9 @@ case "$sys" in
 					superMCParameters:'finalFactor'=${ff} \
                 	superMCParameters:'dx'='0.1' \
                 	superMCParameters:'dy'='0.1' \
-					superMCParameters:'maxx'='20.0' \
-					superMCParameters:'maxy'='20.0' \
-					hydroParameters:'iLS'=200 \
+					superMCParameters:'maxx'='15.0' \
+					superMCParameters:'maxy'='15.0' \
+					hydroParameters:'iLS'=150 \
                 	hydroParameters:'dx'='0.1' \
                 	hydroParameters:'dy'='0.1' \
 					HoTCoffeehControl:'runHoTCoffeeh'=False
