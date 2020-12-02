@@ -10,8 +10,9 @@
 ##			distclean	remove all objectsfiles and binaries
 ##  
 
+#FC := /home/plumberg/.local/bin/h5fc
 FC := h5fc
-FFLAGS= -O3 -cpp -lm -lz -fno-align-commons
+FFLAGS= -Wall -O3 -cpp -lm -lz -fno-align-commons
 
 RM		=	rm -f
 O               =       .o
@@ -27,7 +28,7 @@ endif
 
 SRC		=	VISH2p1V1.10.0.for PhyBdary-1.10.for InputEOS-1.3.for \
                   OSCARoutput.for Arsenal-0.8.for Initialization-1.03.for \
-                  InputFun-1.29RC6.for Jetoutputh5.for cornelius2.f90
+                  InputFun-1.29RC6.for 	Jetoutputh5.for cornelius2.f90
 
 INC		= 	
 

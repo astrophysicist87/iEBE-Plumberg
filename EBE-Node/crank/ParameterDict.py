@@ -7,10 +7,10 @@ controlParameterList = {
 }
 
 initial_condition_control = {
-    'centrality': '0-1%',  # centrality bin
+    'centrality': '0-10%',  # centrality bin
     'cut_type': 'total_entropy',
     # centrality cut variable: total_entropy or Npart
-    'initial_condition_type': 'pre-generated',
+    'initial_condition_type': 'superMC',
     # type of initial conditions: superMC or pre-generated
     'pre-generated_initial_file_path': 'smooth_ICs', 
     # file path for the pre-generated initial condition files
@@ -27,7 +27,7 @@ superMCParameters = {
     'finalFactor'                   :   28.656,
     'alpha'                         :   0.14,      # WN/BC mixing ratio in MCGlb
     'lambda'                        :   0.288,      # saturation scale parameter in MCKLN
-    'operation'                     :   3,
+    'operation'                     :   1,
     'include_NN_correlation'        :   1,
     'cc_fluctuation_model'          :   6,
     'cc_fluctuation_Gamma_theta'    :   0.75,       
@@ -49,10 +49,10 @@ preEquilibriumParameters = {
 hydroParameters = {
     'vis'       	:   0.08,
     'Ivisflag'  :   0,        # flag to use temperature dependent eta/s(T)
-    'IvisBulkFlag'  :   0,    # flag for temperature dependence of bulk viscosity
-    'visbulknorm'   :   0.0,  # the overall normalization of the bulk viscosity 
+    'IvisBulkFlag'  :   1,    # flag for temperature dependence of bulk viscosity
+    'visbulknorm'   :   1.0,  # the overall normalization of the bulk viscosity 
                               # (set to 0.0 for shear only simulation)
-    'IviscousEqsType'  :  1,  # type of evolution equations for viscous quantities 
+    'IviscousEqsType'  :  2,  # type of evolution equations for viscous quantities 
                               # (1: Israel-Stewart eq. 2: DNMR eq.)
     'T0'        :   0.6,      # tau_0
     'dt'        :   0.02,     # dtau
@@ -62,10 +62,10 @@ hydroParameters = {
                               # need to be the same as dx in superMC
     'dy'        :   0.10,     # lattice spacing in y (fm)
                               # need to be the same as dy in superMC
-    'Edec'      :   0.5,  #
-    'ndx'       :   1,
-    'ndy'       :   1,
-    'ndt'       :   1,
+    'Edec'      :   0.3,  #
+    'ndx'       :   2,
+    'ndy'       :   2,
+    'ndt'       :   5,
     'IhydroJetoutput' :   0,  # switch for output hydro evolution history
     'InitialURead'    :   0,  # set it to be 1 when simulation_type == hydroEM_preEquilibrium
     'Initialpitensor' :   1,  # initialization of pi tensor
@@ -76,9 +76,9 @@ iSSParameters = {
     'turn_on_bulk'                  :   0,
     'include_deltaf_bulk'           :   0,
     'include_deltaf_shear'          :   1,
-    'calculate_vn'                  :   1,
-    'MC_sampling'                   :   0,
-    'number_of_repeated_sampling'   :   10,
+    'calculate_vn'                  :   0,
+    'MC_sampling'                   :   2,
+    'number_of_repeated_sampling'   :   10000,
     'y_LB'                          :   -2.5,
     'y_RB'                          :   2.5,
     'sample_y_minus_eta_s_range'    :   2.0,
@@ -107,8 +107,12 @@ photonEmissionParameters = {
 }
 
 HoTCoffeehParameters = {
-	'include_delta_f'					:	1,
-    'SV_resonanceThreshold'             :   0.60,
-    'CF_resonanceThreshold'             :   0.60,
+    'include_delta_f'                   :   1,
+    'SV_resonanceThreshold'             :   0.00,
+    'CF_resonanceThreshold'             :   0.00,
     'use_log_fit'                       :   1,
+    'qtnpts'                            :   1,
+    'qxnpts'                            :   1,
+    'qynpts'                            :   1,
+    'qznpts'                            :   1,
 }

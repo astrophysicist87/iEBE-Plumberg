@@ -16,7 +16,8 @@ export HDF5_CXXLINKER=$(shell ../../crank/configure_compiler_C++.sh)
 export HDF5_CLINKER=$(shell ../../crank/configure_compiler_C++.sh)
 
 # Set compiler and flags
-CC := h5c++
+#CC := h5c++
+CC := /home/plumberg/.local/bin/h5c++
 CFLAGS= $(shell ../../crank/configure_compiler_C++_Flags.sh)
 CFLAGS += -lgsl -lgslcblas -g
 

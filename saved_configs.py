@@ -2,8 +2,8 @@
 iEbeConfigs = {
     "number_of_jobs"            :   1,
     "number_of_events_per_job"  :   1,
-    "working_folder"            :   "/home1/plumberg.1/Plumberg_iEBE/iEBE-stable/PlayGround",
-    "results_folder"            :   "/home1/plumberg.1/Plumberg_iEBE/iEBE-stable/RESULTS",
+    "working_folder"            :   "/projects/jnorhos/plumberg/iEBE-Plumberg/PlayGround",
+    "results_folder"            :   "/projects/jnorhos/plumberg/iEBE-Plumberg/RESULTS",
     "walltime"                  :   "3:00:00",
-    "compress_results_folder"   :   "yes",
+    "parameter_dict_filename"   :   "ParameterDict.py",
 }

@@ -10,7 +10,8 @@
 ##			distclean	remove all objectsfiles and binaries
 ##  
 
-CC := h5c++
+#CC := h5c++
+CC := /home/plumberg/.local/bin/h5c++
 CFLAGS = -O3
 
 RM		=	rm -f

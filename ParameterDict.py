@@ -1,5 +1,5 @@
 controlParameterList = {
-    'simulation_type'       :   'hybrid', 
+    'simulation_type'       :   'hydro', 
     # options: 'hybrid', 'hydro', 'hydroEM', 'hydroEM_with_decaycocktail', 
     #          'hydroEM_preEquilibrium', 'hydroEM_with_decaycocktail_with_urqmd'
     'niceness'              :   0,  
@@ -49,10 +49,10 @@ preEquilibriumParameters = {
 hydroParameters = {
     'vis'       	:   0.08,
     'Ivisflag'  :   0,        # flag to use temperature dependent eta/s(T)
-    'IvisBulkFlag'  :   0,    # flag for temperature dependence of bulk viscosity
-    'visbulknorm'   :   0.0,  # the overall normalization of the bulk viscosity 
+    'IvisBulkFlag'  :   1,    # flag for temperature dependence of bulk viscosity
+    'visbulknorm'   :   1.0,  # the overall normalization of the bulk viscosity 
                               # (set to 0.0 for shear only simulation)
-    'IviscousEqsType'  :  1,  # type of evolution equations for viscous quantities 
+    'IviscousEqsType'  :  2,  # type of evolution equations for viscous quantities 
                               # (1: Israel-Stewart eq. 2: DNMR eq.)
     'T0'        :   0.6,      # tau_0
     'dt'        :   0.02,     # dtau
