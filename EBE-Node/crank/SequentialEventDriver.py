@@ -1211,6 +1211,7 @@ def sequentialEventDriverShell():
 
         # create result folder
         resultDir = controlParameterList['resultDir']
+        print('resultDir =', resultDir)
         if path.exists(resultDir):
             rmtree(resultDir)
 
@@ -1223,6 +1224,7 @@ def sequentialEventDriverShell():
 
         # generate initial conditions then loop over initial conditions
         initial_condition_list = get_initial_condition_list()
+        print('initial_condition_list =', initial_condition_list)
         nev = len(initial_condition_list)
 
         # print current progress to terminal

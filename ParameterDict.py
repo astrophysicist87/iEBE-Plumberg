@@ -19,6 +19,12 @@ initial_condition_control = {
     'pre-generated_initial_file_read_in_mode': 2, # read in mode for VISH2+1
 }
 
+superMCControl = {
+    # if using superMC to generate initial conditions
+    'initialFiles':   'sd*.dat',
+    #'filesToSave':    'sn_ecc_eccp_10_event_%(ev)s.dat',
+}
+
 superMCParameters = {
     'model_name'                    :   'MCGlb',    # MCGlb or MCKLN
     'Aproj'                         :   197,
