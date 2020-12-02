@@ -240,6 +240,7 @@ EbeCollectorParameters = {
 HoTCoffeehControl = {
     'mainDir'                           :   'HoTCoffeeh',
     'operationDir'                      :   'results',
+    'runHoTCoffeeh'			:   False,
     'executables'                       :   ('cfwr.e', 'svwr.e'),
     'entryShell'                        :   'HoTCoffeeh.sh',
     'saveResultGlobs'			:   ['all*dat', 'total*dat', 'correlfunct3D*.dat', 	\
@@ -1276,8 +1277,12 @@ def sequentialEventDriverShell():
                 hydroResultFiles = [aFile for aFile in hydroWithInitialCondition(aInitialConditionFile)]
                 print controlParameterList['rootDir']            
             
-            #do HBT if possible
-            doHBTWithHydroResultFiles(hydroResultFiles)
+            print(controlParameterList['rootDir'])
+            print('simulationType =', simulationType)
+            print('HoTCoffeehControl[runHoTCoffeeh] =', HoTCoffeehControl['runHoTCoffeeh'] )
+            if simulationType != 'hybrid' and HoTCoffeehControl['runHoTCoffeeh']:
+                print('Doing HBT!')
+                doHBTWithHydroResultFiles(hydroResultFiles)
 
             # fork simulation type here
             if simulationType == 'hybrid':

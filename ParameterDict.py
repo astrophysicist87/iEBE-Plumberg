@@ -112,6 +112,10 @@ photonEmissionParameters = {
     'enable_polyakov_suppression'   :    0,
 }
 
+HoTCoffeehControl = {
+    'runHoTCoffeeh'                     :   False,
+}
+
 HoTCoffeehParameters = {
     'include_delta_f'                   :   1,
     'SV_resonanceThreshold'             :   0.00,

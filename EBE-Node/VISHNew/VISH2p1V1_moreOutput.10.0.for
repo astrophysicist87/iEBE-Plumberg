@@ -53,7 +53,7 @@ C===============================================================================
 ! change to 1 to ignore checks
 #define silent_checkPi 0
 #define outputPiviolation .true.
-#define outputKnAndRe .true.
+#define outputKnAndRe .false.
 #define outputMovie .false.
 
 #define echo_level 5
@@ -4797,7 +4797,7 @@ C            Print *, 'time',time,'Stotal', Stotal,StotalSv,StotalBv
       endif
         !Print everything to file
         !NOTA BENE: cf. Subroutine checkPi(...) for normalization of pi33!!!
-      if(Ed(I,J,NZ0)*Hbarc .ge. Edec1) then
+C      if(Ed(I,J,NZ0)*Hbarc .ge. Edec1) then
         write(2297, '(26G18.8)')Time, I*DX, J*DY, 
      &                  Temp(I,J,NZ0), 
      &                  Ed(I,J,NZ0), 
@@ -4822,7 +4822,7 @@ C            Print *, 'time',time,'Stotal', Stotal,StotalSv,StotalBv
      &                  phi7Grid(I,J,NZ0), 
      &                  taupipiGrid(I,J,NZ0), 
      &                  piSigmaGrid(I,J,NZ0)
-      end if
+C      end if
 
       enddo
       enddo
