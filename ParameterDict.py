@@ -27,7 +27,7 @@ superMCParameters = {
     'finalFactor'                   :   28.656,
     'alpha'                         :   0.14,      # WN/BC mixing ratio in MCGlb
     'lambda'                        :   0.288,      # saturation scale parameter in MCKLN
-    'operation'                     :   1,
+    'operation'                     :   3,
     'include_NN_correlation'        :   1,
     'cc_fluctuation_model'          :   6,
     'cc_fluctuation_Gamma_theta'    :   0.75,       
