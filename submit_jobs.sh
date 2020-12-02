@@ -25,7 +25,7 @@ case "$sys" in
 			./generateJobs_cluster.py 1 $count qgp \
 				PlayGround_EA_${sys}_C${cen} \
 				RESULTS_EA_${sys}_C${cen} \
-				18:00:00 "no" \
+				18:00:00 \
 				ParameterDict_EA_${sys}_C${cen}.py \
 
 			./submitJobs_cluster.py
@@ -54,7 +54,7 @@ case "$sys" in
 			./generateJobs_cluster.py 1 $count qgp \
 				PlayGround_EA_${sys}_C${cen} \
 				RESULTS_EA_${sys}_C${cen} \
-				18:00:00 "no" \
+				18:00:00 \
 				ParameterDict_EA_${sys}_C${cen}.py
 
 			./submitJobs_cluster.py
@@ -82,7 +82,7 @@ case "$sys" in
 			./generateJobs_cluster.py 1 10000 qgp \
 				PlayGround_EA_${sys}_C${cen} \
 				RESULTS_EA_${sys}_C${cen} \
-				24:00:00 "no" \
+				24:00:00 \
 				ParameterDict_EA_${sys}_C${cen}.py
 
 			./submitJobs_cluster.py
@@ -110,7 +110,7 @@ case "$sys" in
 			./generateJobs_cluster.py 1 10000 qgp \
 				PlayGround_EA_${sys}_C${cen} \
 				RESULTS_EA_${sys}_C${cen} \
-				24:00:00 "no" \
+				24:00:00 \
 				ParameterDict_EA_${sys}_C${cen}.py
 
 			./submitJobs_cluster.py
@@ -138,7 +138,7 @@ case "$sys" in
 			./generateJobs_cluster.py 1 10000 qgp \
 				PlayGround_EA_${sys}_C${cen} \
 				RESULTS_EA_${sys}_C${cen} \
-				24:00:00 "no" \
+				24:00:00 \
 				ParameterDict_EA_${sys}_C${cen}.py
 
 			./submitJobs_cluster.py
