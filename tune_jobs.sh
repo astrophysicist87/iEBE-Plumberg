@@ -82,7 +82,7 @@ case "$sys" in
                 	superMCParameters:'dy'='0.1' \
 					superMCParameters:'maxx'='15.0' \
 					superMCParameters:'maxy'='15.0' \
-					hydroParameters:'iLS'=150 \
+					hydroParameters:'iLS'=150  \
                 	hydroParameters:'dx'='0.1' \
                 	hydroParameters:'dy'='0.1' \
 					HoTCoffeehControl:'runHoTCoffeeh'=False
