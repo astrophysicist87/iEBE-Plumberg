@@ -67,8 +67,8 @@ case "$sys" in
 		do
 			python updateParameterDict.py ParameterDict_EA_${sys}_C${cen}.py \
 				initial_condition_control:'centrality'=${cen} \
-				superMCParameters:'Aproj'=64 \
-				superMCParameters:'Atarg'=64 \
+				superMCParameters:'Aproj'=63 \
+				superMCParameters:'Atarg'=63 \
 				superMCParameters:'ecm'=200 \
 				superMCParameters:'finalFactor'=28.656 \
 				superMCParameters:'maxx'='20.0' \
