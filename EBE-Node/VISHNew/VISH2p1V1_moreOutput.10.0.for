@@ -4384,6 +4384,7 @@ C-------------------------------------------------------------------------------
       !dmaxRatio = 0D0
       !Iwhich = -1
       !Imax = -1000
+
       !Jmax = -1000
       !Kmax = -1000
       !
@@ -5858,7 +5859,7 @@ C----------------------------------------------------------------
         
         if(violationType > 0D0) then 
            iFlag = 1
-           write(583, '(4F18.8)')Time, violationType, I*DX, J*DY
+           write(583, '(5F18.8)')Time, violationType, I*DX, J*DY, Ed(I,J,K)
         endif
 
       End Do
@@ -5866,7 +5867,7 @@ C----------------------------------------------------------------
       End Do
 
       if(iFlag .eq. 0) then 
-         write(583, '(4F18.8)')Time, 0D0, 10D0, 10D0
+         write(583, '(5F18.8)')Time, 0D0, 10D0, 10D0, Ed(I,J,K)
       endif
       End Subroutine
 !-----------------------------------------------------------------------
@@ -5965,7 +5966,7 @@ C----------------------------------------------------------------
 
         If (bulkPi_scale > max(maxBulkPiRatio*pressure_scale,
      &      absNumericalzero)) Then
-          write(584, '(3F18.8)')Time, I*DX, J*DY
+          write(584, '(3F18.8)')Time, I*DX, J*DY, Ed(I,J,K)
         End If
 
       End Do
