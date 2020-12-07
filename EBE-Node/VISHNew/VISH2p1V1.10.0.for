@@ -5858,7 +5858,8 @@ C----------------------------------------------------------------
         
         if(violationType > 0D0) then 
            iFlag = 1
-           write(583, '(5F18.8)')Time, violationType, I*DX, J*DY, Ed(I,J,K)
+           write(583, '(5F18.8)')Time, violationType, I*DX, J*DY,
+     &      Ed(I,J,K)
         endif
 
       End Do
