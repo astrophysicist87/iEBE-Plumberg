@@ -5799,6 +5799,8 @@ C----------------------------------------------------------------
       Double Precision gamma_perp
       Common /maxPiRatio/ maxPiRatio
 
+      PARAMETER (PI=3.141592653d0, HBARC=.19733d0)
+
       iFlag = 0
 
       Do K=NZ0,NZ
@@ -5859,7 +5861,7 @@ C----------------------------------------------------------------
         if(violationType > 0D0) then 
            iFlag = 1
            write(583, '(5F18.8)')Time, violationType, I*DX, J*DY,
-     &      Ed(I,J,K)
+     &      Ed(I,J,K)*HBARC
         endif
 
       End Do
@@ -5966,7 +5968,8 @@ C----------------------------------------------------------------
 
         If (bulkPi_scale > max(maxBulkPiRatio*pressure_scale,
      &      absNumericalzero)) Then
-          write(584, '(3F18.8)')Time, I*DX, J*DY, Ed(I,J,K)
+          write(584, '(4F18.8)')Time, I*DX, J*DY,
+     &      Ed(I,J,K)*HBARC
         End If
 
       End Do
