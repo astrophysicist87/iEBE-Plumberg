@@ -5795,11 +5795,11 @@ C----------------------------------------------------------------
       Double Precision :: absNumericalzero = 1D-2
       Double Precision :: relNumericalzero = 1D-2  !Xsi_0 in Zhi's thesis
 
+      Double Precision :: HC = 0.19733d0
+
       Double Precision maxPiRatio
       Double Precision gamma_perp
       Common /maxPiRatio/ maxPiRatio
-
-      PARAMETER (PI=3.141592653d0, HBARC=.19733d0)
 
       iFlag = 0
 
@@ -5861,7 +5861,7 @@ C----------------------------------------------------------------
         if(violationType > 0D0) then 
            iFlag = 1
            write(583, '(5F18.8)')Time, violationType, I*DX, J*DY,
-     &      Ed(I,J,K)*HBARC
+     &      Ed(I,J,K)*HC
         endif
 
       End Do
@@ -5955,6 +5955,8 @@ C----------------------------------------------------------------
       Double Precision :: absNumericalzero = 1D-2
       Double Precision :: relNumericalzero = 1D-2  !Xsi_0 in Zhi's thesis
 
+      Double Precision :: HC = 0.19733d0
+
       Double Precision maxBulkPiRatio
       Common /maxBulkPiRatio/ maxBulkPiRatio
 
@@ -5969,7 +5971,7 @@ C----------------------------------------------------------------
         If (bulkPi_scale > max(maxBulkPiRatio*pressure_scale,
      &      absNumericalzero)) Then
           write(584, '(4F18.8)')Time, I*DX, J*DY,
-     &      Ed(I,J,K)*HBARC
+     &      Ed(I,J,K)*HC
         End If
 
       End Do
