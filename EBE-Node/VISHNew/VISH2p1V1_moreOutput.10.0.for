@@ -2570,7 +2570,7 @@ CSHEN======end=================================================================
         VCBeta(i,j,k)=1.D0/dmax1(Ed(i,j,k)+PL(i,j,k),1e-30)
         VRelaxT(i,j,k)=1.0/dmax1(5.0*VCoefi(i,j,k)*VCBeta(i,j,k),1e-30)
 
-        if(IViscousEqsType .eq. 2) then   ! 14-moments results
+        if((IViscousEqsType.eq.2).or.(IViscousEqsType.eq.3)) then   ! 14-moments results
           VRelaxT(i,j,k)=(Ed(i,j,k)+PL(i,j,k))
      &      /dMax1(VCoefi(i,j,k)*5.D0,1e-30)
         EndIf
@@ -2721,12 +2721,22 @@ C---J.Liu-----------------------------------------------------------------------
       Implicit Double Precision (A-H, O-Z)
       Double precision :: lambdaSpiBPi
 
+      Integer IViscousEqsType
+      Common/ViscousEqsControl/ IViscousEqsType
+
       taupi = 1.D0/dMax1(taupi_inverse, 1e-30)
 
-      deltaSpiSpi = 4.0*taupi/3.0
-      lambdaSpiBPi= 6.0*taupi/5.0
-      phi7 = 4.0*9.0/70.0/DMax1(Ed+PL, 1e-30)
-      taupipi = 10.0*taupi/7.0
+      if (IViscousEqsType .eq. 2) then 
+        deltaSpiSpi = 4.0*taupi/3.0
+        lambdaSpiBPi= 6.0*taupi/5.0
+        phi7 = 4.0*9.0/70.0/DMax1(Ed+PL, 1e-30)
+        taupipi = 10.0*taupi/7.0
+      else if (IViscousEqsType .eq. 3) then 
+        deltaSpiSpi  = 0D0
+        lambdaSpiBPi = 0D0
+        phi7         = 0D0
+        taupipi      = 0D0
+      endif
 
       Return
       End
@@ -2738,11 +2748,20 @@ C---J.Liu-----------------------------------------------------------------------
       ! Ed input should be in unit of GeV/fm^3
       Implicit Double Precision (A-H, O-Z)
       double precision lambdaBPiSpi
+
+      Integer IViscousEqsType
+      Common/ViscousEqsControl/ IViscousEqsType
+
       tauBPi = 1.D0/dMax1(tauBPi_inverse, 1e-18)
       cs2 = getCS2(Ed)
 
-      deltaBPiBPi = 2.D0/3.D0*tauBPi
-      lambdaBPiSpi = 8.D0/5.D0*(1.D0/3.D0 - cs2)*tauBPi
+      if (IViscousEqsType .eq. 2) then 
+        deltaBPiBPi = 2.D0/3.D0*tauBPi
+        lambdaBPiSpi = 8.D0/5.D0*(1.D0/3.D0 - cs2)*tauBPi
+      else if (IViscousEqsType .eq. 3) then 
+        deltaBPiBPi  = 0D0
+        lambdaBPiSpi = 0D0
+      endif
 
       Return
       End
@@ -4169,7 +4188,8 @@ C-------------------------------------------------------------------------------
             PScT12(i,j,K)=PScT12(i,j,K) +( Pi12(I,J,K)*ADLnT+
      &         PA*Pi12(I,J,K)-PT*(Pi12(I,J,K)-PS*DPc12(i,j,K)))*(-1.0)
 
-          else if(IViscousEqsType .eq. 2) then
+          else if(    (IViscousEqsType .eq. 2)
+     &            .or.(IViscousEqsType .eq. 3)) then
           ! shear terms from 14-moments expansion 
             p00 = Pi00(I,J,K)    ! some short hand
             p01 = Pi01(I,J,K)
@@ -4314,7 +4334,7 @@ C-------------------------------------------------------------------------------
             Badd=-0.5*(SiLoc(I,J,K)/U0(I,J,K)    !high precision version to reduce round-off error
      &          +(DB0Ln +Vx(I,J,K)*DB1Ln +Vy(I,J,K)*DB2Ln)*ff)
 
-          elseif(IViscousEqsType .eq. 2) then   
+          elseif((IViscousEqsType.eq.2).or.(IViscousEqsType.eq.3)) then
           ! Bulk pressure terms from 14-moments expansion     
             call ViscousBulkTransCoefs(ED(i,j,k)*Hbarc, VRelaxT0(i,j,k), 
      &          deltaBPiBPi, lambdaBPiSpi) ! calculate transport coefficients
