@@ -411,7 +411,7 @@ C            Stop
      &                    dummy, U1(I,J,NZ0), U2(I,J,NZ0),
      &                    dummy, dummy, dummy, dummy,
      &                    dummy, dummy, dummy, dummy,
-     &                    dummy, dummy, dummy, 
+     &                    dummy, dummy, dummy
                 U0(I,J,NZ0)  = sqrt(1.0+U1(I,J,NZ0)**2+U2(I,J,NZ0)**2)
 
                 PU0(I,J,NZ0) = U0(I,J,NZ0)
