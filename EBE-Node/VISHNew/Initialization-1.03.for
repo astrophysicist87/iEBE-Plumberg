@@ -499,7 +499,7 @@ C *************************J.Liu changes end********************************
 
       If (ViscousC>1D-6) Then
 
-       if((IInit.ne.4).or.(IEin.ne.0)) ! if not reading in Chris' version
+       if((IInit.ne.4).or.(IEin.ne.0)) then ! if not reading in Chris' version
         if(Initialpitensor .eq. 1) then
           call TransportPi6(Pi00,Pi01,Pi02,Pi33, Pi11,Pi12,Pi22,
      &    PPI,Ed,Sd,PL,Temp,Temp0,U0,U1,U2,PU0,PU1,PU2, DX,DY,DZ,DT,
