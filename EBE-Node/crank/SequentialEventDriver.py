@@ -453,8 +453,9 @@ def get_pre_generated_initial_conditions_list():
         Yield the pre-generated initial conditions absolute path
     """
     # set directory strings
+    initial_condition_dirName = initial_condition_control['pre-generated_initial_file_path']
     initial_condition_path = path.join(controlParameterList['rootDir'], 
-                                       'initial_conditions')
+                                       initial_condition_dirName)
     print 'Initial conditions path:', initial_condition_path
     
     #copytree( path.commonprefix(fileList), HoTCoffeehOperationDirectory )

@@ -12,9 +12,9 @@ initial_condition_control = {
     # centrality cut variable: total_entropy or Npart
     'initial_condition_type': 'superMC',
     # type of initial conditions: superMC or pre-generated
-    'pre-generated_initial_file_path': 'smooth_ICs', 
+    'pre-generated_initial_file_path': 'pregenerated_ICs', 
     # file path for the pre-generated initial condition files
-    'pre-generated_initial_file_pattern': 'sdAvg_order_[0-9]*_block.dat',  
+    'pre-generated_initial_file_pattern': '*.dat',  
     # name pattern for the initial condition files
     'pre-generated_initial_file_read_in_mode': 2, # read in mode for VISH2+1
 }
@@ -41,7 +41,7 @@ superMCParameters = {
     'maxy'                          :   13.0,       # grid size in y (fm)
     'dx'                            :   0.1,        # grid spacing in x (fm)
     'dy'                            :   0.1,        # grid spacing in y (fm)
-	'nev'							:	1,
+    'nev'                           :   1,
 }
 
 # only effective when simulation_type == hydroEM_preEquilibrium
