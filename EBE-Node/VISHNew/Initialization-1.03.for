@@ -402,7 +402,8 @@ C====Input the initial condition from IP-Glasma file====
 C====Input the initial condition from IP-Glasma file (Chris' version)====
 C			Print*,'ERROR: this option is not yet supported.'
 C            Stop
-            OPEN(2,file='Initial/Initial_IPGlasma_ed_u_pi.dat',status='old')
+            OPEN(2,file='Initial/Initial_IPGlasma_ed_u_pi.dat',
+     &           status='old')
 
             do I = NXPhy0, NXPhy, 1
               do J = NYPhy0, NYPhy, 1
