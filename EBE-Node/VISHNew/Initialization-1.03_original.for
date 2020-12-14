@@ -398,38 +398,6 @@ C====Input the initial condition from IP-Glasma file====
             enddo
             Ed=Ed/HbarC
             close(2)
-        elseif ((IInit.eq.4).and.(IEin.eq.0)) then
-C====Input the initial condition from IP-Glasma file (Chris' version)====
-C			Print*,'ERROR: this option is not yet supported.'
-C            Stop
-            OPEN(2,file='Initial/Initial_IPGlasma_ed_u_pi.dat',status='old')
-
-            do I = NXPhy0, NXPhy, 1
-              do J = NYPhy0, NYPhy, 1
-                read(2,*) dummy, dummy, dummy, Ed(I,J,NZ0),
-     &                    dummy, U1(I,J,NZ0), U2(I,J,NZ0),
-     &                    dummy, dummy, dummy, dummy,
-     &                    dummy, dummy, dummy, dummy,
-     &                    dummy, dummy, dummy, 
-                U0(I,J,NZ0)  = sqrt(1.0+U1(I,J,NZ0)**2+U2(I,J,NZ0)**2)
-
-                PU0(I,J,NZ0) = U0(I,J,NZ0)
-                PU1(I,J,NZ0) = U1(I,J,NZ0)
-                PU2(I,J,NZ0) = U2(I,J,NZ0)
-              enddo
-            enddo
-            
-            Pi00 = 0.0d0
-            Pi01 = 0.0d0
-            Pi02 = 0.0d0
-            Pi11 = 0.0d0
-            Pi12 = 0.0d0
-            Pi22 = 0.0d0
-            Pi33 = 0.0d0
-            PPI = 0.0d0
-
-            Ed=Ed/HbarC
-            close(2)
         else
             Print*,'Init=',IInit,' is not supported by this version.'! ---Zhi-Changes---
             Stop
@@ -498,7 +466,6 @@ C *************************J.Liu changes end********************************
 
       If (ViscousC>1D-6) Then
 
-       if((IInit.ne.4).or.(IEin.ne.0)) ! if not reading in Chris' version
         if(Initialpitensor .eq. 1) then
           call TransportPi6(Pi00,Pi01,Pi02,Pi33, Pi11,Pi12,Pi22,
      &    PPI,Ed,Sd,PL,Temp,Temp0,U0,U1,U2,PU0,PU1,PU2, DX,DY,DZ,DT,
@@ -514,7 +481,6 @@ C *************************J.Liu changes end********************************
           Pi33 = 0.0d0
           PPI = 0.0d0
         endif
-       endif
 
 !-------------- Jia changes--------------------------------------------
 C Read in pi_mu nu and overwrite what TransportPi6() gives. Then scale this tensor
