@@ -412,7 +412,7 @@ C            Stop
      &                    U1(I,J,NZ0), U2(I,J,NZ0), dummy,
      &                    Pi00(I,J,NZ0), Pi01(I,J,NZ0), Pi02(I,J,NZ0),
      &                    dummy, Pi11(I,J,NZ0), Pi12(I,J,NZ0), 
-     &                    dummy, Pi22(I,J,NZ0), dummy, Pi33(I,J,NZ0), 
+     &                    dummy, Pi22(I,J,NZ0), dummy, Pi33(I,J,NZ0)
                 U0(I,J,NZ0)  = sqrt(1.0+U1(I,J,NZ0)**2+U2(I,J,NZ0)**2)
 
                 PU0(I,J,NZ0) = U0(I,J,NZ0)
