@@ -405,13 +405,29 @@ C            Stop
             OPEN(2,file='Initial/Initial_IPGlasma_ed_u_pi.dat',
      &           status='old')
 
+            if(Initialpitensor .eq. 1) then
             do I = NXPhy0, NXPhy, 1
               do J = NYPhy0, NYPhy, 1
-                read(2,*) dummy, dummy, dummy, Ed(I,J,NZ0),
-     &                    dummy, U1(I,J,NZ0), U2(I,J,NZ0),
-     &                    dummy, dummy, dummy, dummy,
-     &                    dummy, dummy, dummy, dummy,
-     &                    dummy, dummy, dummy
+                read(2,*) dummy, dummy, Ed(I,J,NZ0), dummy,
+     &                    U1(I,J,NZ0), U2(I,J,NZ0), dummy,
+     &                    Pi00(I,J,NZ0), Pi01(I,J,NZ0), Pi02(I,J,NZ0),
+     &                    dummy, Pi11(I,J,NZ0), Pi12(I,J,NZ0), 
+     &                    dummy, Pi22(I,J,NZ0), dummy, Pi33(I,J,NZ0), 
+                U0(I,J,NZ0)  = sqrt(1.0+U1(I,J,NZ0)**2+U2(I,J,NZ0)**2)
+
+                PU0(I,J,NZ0) = U0(I,J,NZ0)
+                PU1(I,J,NZ0) = U1(I,J,NZ0)
+                PU2(I,J,NZ0) = U2(I,J,NZ0)
+              enddo
+            enddo
+            PPI = 0.0d0
+            else
+            do I = NXPhy0, NXPhy, 1
+              do J = NYPhy0, NYPhy, 1
+                read(2,*) dummy, dummy, Ed(I,J,NZ0), dummy,
+     &                    U1(I,J,NZ0), U2(I,J,NZ0), dummy,
+     &                    dummy, dummy, dummy, dummy, dummy
+     &                    dummy, dummy, dummy, dummy, dummy
                 U0(I,J,NZ0)  = sqrt(1.0+U1(I,J,NZ0)**2+U2(I,J,NZ0)**2)
 
                 PU0(I,J,NZ0) = U0(I,J,NZ0)
@@ -428,7 +444,16 @@ C            Stop
             Pi22 = 0.0d0
             Pi33 = 0.0d0
             PPI = 0.0d0
+            endif
 
+            Pi00 = Pi00/HbarC
+            Pi01 = Pi01/HbarC
+            Pi02 = Pi02/HbarC
+            Pi11 = Pi11/HbarC
+            Pi12 = Pi12/HbarC
+            Pi22 = Pi22/HbarC
+            Pi33 = Pi33/HbarC
+            PPI = PPI/HbarC
             Ed=Ed/HbarC
             close(2)
         else
