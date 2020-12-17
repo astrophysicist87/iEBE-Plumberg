@@ -142,6 +142,7 @@ C-------------------------------------------------------------------------------
       DIMENSION F0Pi22(NX0:NX,NY0:NY),FPi22(NX0:NX,NY0:NY)   !Stress Tensor in previous and current step
       DIMENSION F0Pi33(NX0:NX,NY0:NY),FPi33(NX0:NX,NY0:NY)   !Stress Tensor in previous and current step
 
+      DIMENSION PLPLUSPPI(NX0:NX,NY0:NY,NZ0:NZ)   !To store PL+PPI temporarily; added by Chris P.
 
       CHARACTER*60 EARTERM
       INTEGER TFLAG, EINS
@@ -408,8 +409,9 @@ C            Stop
             if(Initialpitensor .eq. 1) then
             do I = NXPhy0, NXPhy, 1
               do J = NYPhy0, NYPhy, 1
-                read(2,*) dummy, dummy, Ed(I,J,NZ0), dummy,
-     &                    U1(I,J,NZ0), U2(I,J,NZ0), dummy,
+                read(2,*) dummy, dummy,
+     &                    Ed(I,J,NZ0), PLPLUSPPI(I,J,NZ0),
+     &                    dummy, U1(I,J,NZ0), U2(I,J,NZ0), dummy,
      &                    Pi00(I,J,NZ0), Pi01(I,J,NZ0), Pi02(I,J,NZ0),
      &                    dummy, Pi11(I,J,NZ0), Pi12(I,J,NZ0), 
      &                    dummy, Pi22(I,J,NZ0), dummy, Pi33(I,J,NZ0)
@@ -453,7 +455,8 @@ C            Stop
             Pi12 = Pi12/HbarC
             Pi22 = Pi22/HbarC
             Pi33 = Pi33/HbarC
-            PPI = PPI/HbarC
+C           PPI = PPI/HbarC
+            PLPLUSPPI = PLPLUSPPI/HbarC
             Ed=Ed/HbarC
             close(2)
         else
@@ -468,6 +471,19 @@ C            Stop
 !---------- Then convert energy to pressure, entropy, temperature ------
       call EntropyTemp3 (Ed,PL, Temp,CMu,Sd,
      &         NX0,NY0,NZ0, NX,NY,NZ, NXPhy0,NYPhy0, NXPhy,NYPhy)
+
+
+
+!---------- For Chris' IP-Glasma initialization, must reset PPI --------
+      if ((IInit.eq.4).and.(IEin.eq.0)) then
+        do I = NXPhy0, NXPhy, 1
+          do J = NYPhy0, NYPhy, 1
+            PPI(I,J,NZ0) = PLPLUSPPI(I,J,NZ0) - PL(I,J,NZ0)
+          enddo
+        enddo
+      endif
+
+
 
 !---------- Use sFactor ------------------------------------------------
 ! VER-1.03: add support for sFactor parameter
