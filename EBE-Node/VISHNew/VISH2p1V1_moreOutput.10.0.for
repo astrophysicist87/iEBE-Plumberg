@@ -2636,6 +2636,8 @@ CSHEN======end=================================================================
         VCBeta0(i,j,k)=VisBulkBeta*6.0/(Sd(i,j,k)*Temp(i,j,k))
         XiTtP(i,j,k)=(VBulk(i,j,k)*Temp(i,j,k))*VRelaxT0(i,j,k)  !(Xi T/tau_Pi)  for extra term in full I-S
 
+
+
         VBulk(i,j,k)=VBulk(i,j,k)*ff
         VRelaxT0(i,j,k)=VRelaxT0(i,j,k)*ff
       else
@@ -3849,7 +3851,9 @@ C--------------------------------------
         eeH = DM0 - VP_local*DM
 
         !eeH = quadESolver(ED(I,J,K),DM0,DM,PPI(I,J,K),IDebug,I,J) ! use Ed from last time step as a starting point
+C        Print*,'Check 1(before): ', I, J, ED(I,J,K)
         ED(I,J,K) = dmax1(eeH, 1D-10)
+C        Print*,'Check 1(after): ', I, J, ED(I,J,K)
         DM = dmax1(DM, 1D-10)
         !VP = (DM0-eeH)/DM
         VP = VP_local
@@ -3957,8 +3961,22 @@ C--------------------------------------
 
 !=======================================================================
 
+C      DO K=NZ0,NZ
+C      DO J=NYPhy0,NYPhy
+C      DO I=NXPhy0,NXPhy
+C        Print*,'Check 2(before): ', I, J, ED(I,J,K)
+C      ENDDO
+C      ENDDO
+C      ENDDO
        call TriSembdary3(Bd,PL, Ed,
      &        NX0,NY0,NZ0, NX,NY,NZ, NXPhy0,NYPhy0, NXPhy,NYPhy)
+C      DO K=NZ0,NZ
+C      DO J=NYPhy0,NYPhy
+C      DO I=NXPhy0,NXPhy
+C        Print*,'Check 2(after): ', I, J, ED(I,J,K)
+C      ENDDO
+C      ENDDO
+C      ENDDO
 
       If (ViscousC>1D-6) Then
 
@@ -4059,12 +4077,26 @@ c------------------------------------------------------------------
        end if
 
 C---------------------------------------------------------------------
+C      DO K=NZ0,NZ
+C      DO J=NYPhy0,NYPhy
+C      DO I=NXPhy0,NXPhy
+C        Print*,'Check 3(before): ', I, J, ED(I,J,K)
+C      ENDDO
+C      ENDDO
+C      ENDDO
         call EntropyTemp3 (Ed,PL, Temp,CMu,Sd,
      &         NX0,NY0,NZ0, NX,NY,NZ, NXPhy0,NYPhy0, NXPhy,NYPhy)
 
         call ViscousCoefi8(Ed,Sd,PL,Temp,
      &  VCoefi,VCBeta,VRelaxT,etaTtp, VBulk, VCBeta0,VRelaxT0,XiTtP,
      &  Time,DX,DY,DT,NX0,NY0,NZ0, NX,NY,NZ, NXPhy0,NYPhy0, NXPhy,NYPhy)
+C      DO K=NZ0,NZ
+C      DO J=NYPhy0,NYPhy
+C      DO I=NXPhy0,NXPhy
+C        Print*,'Check 3(after): ', I, J, ED(I,J,K)
+C      ENDDO
+C      ENDDO
+C      ENDDO
 C--------------------
 
       If (ViscousC>1D-6 .or. VisBulk>1D-6) Then

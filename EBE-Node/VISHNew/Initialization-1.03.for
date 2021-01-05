@@ -615,6 +615,30 @@ C Read in pi_mu nu and overwrite what TransportPi6() gives. Then scale this tens
 !-------------- changes end--------------------------------------------
       End If  !ViscousC>1D-6
 
+
+
+
+
+
+        if ((IInit.eq.4).and.(IEin.eq.0)) then
+C====CHECKS====
+
+            do I = NXPhy0, NXPhy, 1
+              do J = NYPhy0, NYPhy, 1
+                Print*,'Check: ', I, J, Ed(I,J,NZ0),
+     &                 PLPLUSPPI(I,J,NZ0),
+     &                 U1(I,J,NZ0), U1(I,J,NZ0), U2(I,J,NZ0),
+     &                 Pi00(I,J,NZ0), Pi01(I,J,NZ0), Pi02(I,J,NZ0),
+     &                 Pi11(I,J,NZ0), Pi12(I,J,NZ0), Pi22(I,J,NZ0),
+     &                 Pi33(I,J,NZ0), PPI(I,J,NZ0)
+              enddo
+            enddo
+
+        endif
+
+
+
+
 !CHANGES
 !   ---Zhi-Changes---
 !-------Regulate Pi(mu,nu) before adding it to T tensor
