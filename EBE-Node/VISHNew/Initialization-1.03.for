@@ -475,7 +475,8 @@ C           PPI = PPI/HbarC
 
 
 !---------- For Chris' IP-Glasma initialization, must reset PPI --------
-      if ((IInit.eq.4).and.(IEin.eq.0)) then
+      if ((IInit.eq.4).and.(IEin.eq.0).and.
+          & (Initialpitensor.ne.1)) then
         do I = NXPhy0, NXPhy, 1
           do J = NYPhy0, NYPhy, 1
             PPI(I,J,NZ0) = PLPLUSPPI(I,J,NZ0) - PL(I,J,NZ0)

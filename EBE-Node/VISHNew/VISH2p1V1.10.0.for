@@ -2636,6 +2636,9 @@ CSHEN======end=================================================================
         VCBeta0(i,j,k)=VisBulkBeta*6.0/(Sd(i,j,k)*Temp(i,j,k))
         XiTtP(i,j,k)=(VBulk(i,j,k)*Temp(i,j,k))*VRelaxT0(i,j,k)  !(Xi T/tau_Pi)  for extra term in full I-S
 
+
+
+
         VBulk(i,j,k)=VBulk(i,j,k)*ff
         VRelaxT0(i,j,k)=VRelaxT0(i,j,k)*ff
       else
@@ -2757,6 +2760,7 @@ C---J.Liu-----------------------------------------------------------------------
 
       if (IViscousEqsType .eq. 2) then 
         deltaBPiBPi = 2.D0/3.D0*tauBPi
+C        deltaBPiBPi = (1.D0 - cs2)*tauBPi
         lambdaBPiSpi = 8.D0/5.D0*(1.D0/3.D0 - cs2)*tauBPi
       else if (IViscousEqsType .eq. 3) then 
         deltaBPiBPi  = 0D0
@@ -4278,6 +4282,9 @@ C-------------------------------------------------------------------------------
             taupipiAdd = p01*s01-p11*s11-p12*s12
      &        -u0_temp**2.0*vx_temp*(p01*s0d-p11*s1d-p12*s2d)
      &        +(1.0+u0_temp**2*vx_temp**2)*TrPiSigma/3.D0
+
+
+
             PScT11(i,j,k)=PScT11(i,j,k) + (-PT)
      &        *(taupi*u0_temp*PA*p11-(p11-PS*s11)
      &         -deltaSpiSpi*p11*theta_temp+lambdaSpiBPi*ppi_temp*s11
@@ -4396,6 +4403,8 @@ C-------------------------------------------------------------------------------
 
         PISc(i,j,K)=0.0 +( PPI(I,J,K)*BAdd+
      &      PA*PPI(I,J,K)-PT0*(PPI(I,J,K)+PS0*SiLoc(i,j,K)))*(-1.0)
+        Print *, "bulk terms: ", time, i*dx, j*dy, -PPI(I,J,K)*BAdd, 
+     &      -PA*PPI(I,J,K), PT0*PPI(I,J,K), PS0*SiLoc(i,j,K)
 
  710   continue
 
@@ -4728,7 +4737,8 @@ C            Print *, 'time',time,'Stotal', Stotal,StotalSv,StotalBv
      &  AE,ATemp, APL, APLdx,APLdy, AScT00, AScT01, AScT02,
      &  AP11dx,AP22dy,  AP33,AP00, AP01,AP02, AP11, Ap12, AP22,SxyT,
      &  PaScT00,PaScT01,PaScT02, difScT0102,difPLxy, difPixy, difVxVy,
-     &  NXPhy0,NYPhy0, NXPhy,NYPhy, NX0,NX,NY0,NY,NZ0,NZ)  !PNEW NNEW something related to root finding
+     &  NXPhy0,NYPhy0, NXPhy,NYPhy, NX0,NX,NY0,NY,NZ0,NZ,
+     &  EpsXMag, EpsPMag, TEpsPMag)  !PNEW NNEW something related to root finding
 
 
 
@@ -4736,7 +4746,7 @@ C            Print *, 'time',time,'Stotal', Stotal,StotalSv,StotalBv
       GV=Hbarc !fm-1 change to GEV
 
       Write(92,'(2f8.3,9e14.4)') Time-TT0, VAver,
-     &   EpsX,EpsP,TEpsP,Stotal
+     &   EpsX,EpsP,TEpsP,EpsXMag,EpsPMag,TEpsPMag,Stotal,0D0,0D0
 
       Call snapshotEccentricity(Time-TT0,Vx,Vy,Ed,9,DX,DY,
      &  NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ)
@@ -4869,7 +4879,8 @@ C###############################################################################
      &  AE,ATemp, APL, APLdx,APLdy, AScT00, AScT01, AScT02,
      &  AP11dx,AP22dy,  AP33,AP00, AP01,AP02, AP11, Ap12, AP22,SxyT,
      &  PaScT00,PaScT01,PaScT02, difScT0102,difPLxy, difPixy, difVxVy,
-     &  NXPhy0,NYPhy0, NXPhy,NYPhy, NX0,NX,NY0,NY,NZ0,NZ)  !PNEW NNEW  related to root finding
+     &  NXPhy0,NYPhy0, NXPhy,NYPhy, NX0,NX,NY0,NY,NZ0,NZ,
+     &  EpsXMag, EpsPMag, TEpsPMag)  !PNEW NNEW  related to root finding
 
       Implicit Double Precision (A-H, O-Z)
       Dimension Vx(NX0:NX, NY0:NY, NZ0:NZ) !fluid velocity
@@ -4912,6 +4923,16 @@ C###############################################################################
        VavX1=0.0
        VavY1=0.0
 
+       EpsXc=0.0
+       EpsXs=0.0
+       EpsXMag=0.0
+       EpsPc=0.0
+       EpsPs=0.0
+       EpsPMag=0.0
+       TEpsPc=0.0
+       TEpsPs=0.0
+       TEpsPMag=0.0
+
       DO 100 K=NZ0,NZ
       DO 100 J=-NYPhy,NYPhy
       DO 100 I=-NXPhy,NXPhy
@@ -4926,6 +4947,8 @@ C###############################################################################
         y2=yy*yy
 
         EpsX1=EpsX1+(y2-x2)*Ed(I,J,K)*gamma   !*
+        EpsXc=EpsXc+(y2-x2)*Ed(I,J,K)*gamma   !*
+        EpsXs=EpsXs+2.0*xx*yy*Ed(I,J,K)*gamma !*
         EpsX2=EpsX2+(y2+x2)*Ed(I,J,K)*gamma   !*
 
         !angle = 2*atan2(YY,XX)
@@ -4940,17 +4963,24 @@ C###############################################################################
 
         ep=Ed(I,J,K)+PL(I,J,K)
         TXX=ep*U1(I,J,K)*U1(I,J,K)+PL(I,J,K)
+        TXY=ep*U1(I,J,K)*U2(I,J,K)
         TYY=ep*U2(I,J,K)*U2(I,J,K)+PL(I,J,K)
 
         EpsP1=EpsP1+(TXX-TYY)
+        EpsPc=EpsPc+(TXX-TYY)
+        EpsPs=EpsPs+2.0*TXY
         EpsP2=EpsP2+(TXX+TYY)
 
         TTXX=TXX+Pi11(I,J,K)+PPI(I,J,K)
      &   +PPI(I,J,K)*U1(I,J,K)*U1(I,J,K)
+        TTXY=TXY+Pi12(I,J,K)
+     &   +PPI(I,J,K)*U1(I,J,K)*U2(I,J,K)
         TTYY=TYY+Pi22(I,J,K)+PPI(I,J,K)
      &   +PPI(I,J,K)*U2(I,J,K)*U2(I,J,K)
 
         TEpsP1=TEpsP1+(TTXX-TTYY)
+        TEpsPc=TEpsPc+(TTXX-TTYY)
+        TEpsPs=TEpsPs+2.0*TTXY
         TEpsP2=TEpsP2+(TTXX+TTYY)
 
         Vr=sqrt(Vx(I,J,K)**2+Vy(I,J,K)**2)
@@ -4965,6 +4995,10 @@ C###############################################################################
         EpsX=EpsX1/EpsX2  !spacial ellipticity
         EpsP=EpsP1/EpsP2  !Momentum  ellipticity
         TEpsP=TEpsP1/TEpsP2 ! total Momentum  ellipticity
+
+        EpsXMag=sqrt(EpsXc**2+EpsXs**2)/EpsX2  !spacial ellipticity
+        EpsPMag=sqrt(EpsPc**2+EpsPs**2)/EpsP2  !Momentum  ellipticity
+        TEpsPMag=sqrt(TEpsPc**2+TEpsPs**2)/TEpsP2 ! total Momentum  ellipticity
 
         Vaver=Vaver1/Vaver2
         VavX=VaVX1/Vaver2
