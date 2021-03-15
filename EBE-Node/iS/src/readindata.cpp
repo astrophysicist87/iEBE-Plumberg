@@ -333,6 +333,8 @@ void read_FOdata::read_FOsurfdat_MUSIC_boost_invariant(int length,
      surf_ptr[idx].Tdec = dummy*hbarC;
      ss >> dummy;
      surf_ptr[idx].muB = dummy*hbarC;
+     ss >> dummy;              // muS
+     ss >> dummy;              // muC
      ss >> dummy;              // (e+P)/T
      surf_ptr[idx].Pdec = dummy*surf_ptr[idx].Tdec - surf_ptr[idx].Edec;
      surf_ptr[idx].Bn = 0.0;
